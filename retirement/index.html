@@ -20,12 +20,12 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   background:#fff;border-bottom:1px solid #E8EAF0;flex-wrap:wrap;}
 h1{font-size:15px;font-weight:700;color:#111;}
 .subtitle{font-size:10px;color:#999;}
-.sc-tabs{display:flex;gap:5px;}
-.sc-btn{padding:4px 11px;font-size:11px;border-radius:6px;cursor:pointer;
-  border:1px solid #ddd;background:#fff;color:#888;font-family:inherit;}
-.sc-btn.on-base{background:#EAF3FF;color:#1565C0;border-color:#90CAF9;font-weight:700;}
-.sc-btn.on-opt{background:#E8F5EE;color:#1D7A50;border-color:#81C784;font-weight:700;}
-.sc-btn.on-pes{background:#FFF3E0;color:#E65100;border-color:#FFB74D;font-weight:700;}
+/* ── 접이식 상세 섹션(민감도 체크·자동설계 근거) ── */
+.collapsible{font-size:11px;}
+.collapsible > summary{cursor:pointer;color:#666;font-weight:700;padding:2px 0;list-style:none;}
+.collapsible > summary::-webkit-details-marker{display:none;}
+.collapsible > summary::before{content:'▸ ';}
+.collapsible[open] > summary::before{content:'▾ ';}
 
 /* ── 메트릭 바 ── */
 .metrics-bar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
@@ -368,11 +368,6 @@ button{font-family:inherit;cursor:pointer;}
     <div class="subtitle" id="subtitle">51세 → 57세 은퇴 · 사적연금 한도 1,400만원/년</div>
   </div>
   <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-    <div class="sc-tabs">
-      <button class="sc-btn on-base" onclick="setSc('base',this)">기본</button>
-      <button class="sc-btn" onclick="setSc('opt',this)">낙관</button>
-      <button class="sc-btn" onclick="setSc('pes',this)">비관</button>
-    </div>
     <button onclick="if(confirm('모든 설정값을 초기화할까요?'))resetState();"
       style="padding:3px 9px;font-size:10px;border-radius:5px;border:1px solid #E8EAF0;background:#fff;color:#AAB0BB;">
       ↺ 초기화
@@ -470,7 +465,11 @@ button{font-family:inherit;cursor:pointer;}
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500" class="locked-range" oninput="syncInput('plimit');upd()">
 </div><button class="suggest-btn" style="background:linear-gradient(135deg,#1D9E75,#D85A30);" onclick="autoSuggest()">🎯 세금·건보료 최소화 + 기대수명 맞춤 자동설계</button>
-<div class="suggest-result" id="suggest-box"></div>
+<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. 아래는 상세 계산 근거(선택) -->
+<details class="collapsible" style="margin-top:6px;">
+  <summary>자동설계 상세 근거 보기</summary>
+  <div class="suggest-result" id="suggest-box"></div>
+</details>
 <div class="suggest-result" id="fit90-box"></div>
 </div>
 
@@ -951,14 +950,16 @@ button{font-family:inherit;cursor:pointer;}
     <div class="phase-cards" id="phase-cards"></div>
   </div>
   <div class="chart-wrap">
-    <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px;">시나리오별 비교</div>
-    <table>
-      <thead><tr>
-        <th style="text-align:left">시나리오</th>
-        <th>수익률</th><th>물가</th><th>공백기 월수령</th><th>완성기 월수령</th><th>은퇴시 총자산</th><th>런웨이</th>
-      </tr></thead>
-      <tbody id="sc-body"></tbody>
-    </table>
+    <details class="collapsible">
+      <summary>수익률 민감도 체크 (낙관·비관 시나리오 비교)</summary>
+      <table style="margin-top:6px;">
+        <thead><tr>
+          <th style="text-align:left">시나리오</th>
+          <th>수익률</th><th>물가</th><th>공백기 월수령</th><th>완성기 월수령</th><th>은퇴시 총자산</th><th>런웨이</th>
+        </tr></thead>
+        <tbody id="sc-body"></tbody>
+      </table>
+    </details>
   </div>
   <div class="note">※ 사적연금 한도(<span id="note-limit">1,400</span>만원/년)는 농협·미래에셋 연금저축+IRP 개인납입분 합산. 퇴직IRP 원금은 퇴직소득세 분류과세(한도 무관). ISA 200만원 비과세·초과 9.9% 분리과세. 참고용 시뮬레이션입니다.</div>
 </div>
@@ -986,7 +987,7 @@ function _initLockStates(){
     _setArrBtns(id, true);
   });
 }
-let sc='base', chartTab='flow', mainChart=null;
+let chartTab='flow', mainChart=null;
 const SA={base:{r:0,inf:0}, opt:{r:2,inf:-0.5}, pes:{r:-2,inf:1}};
 
 /* ── 슬라이더 잠금/화살표 제어 ── */
@@ -1339,7 +1340,7 @@ function limitCheck(changed){
 /* ── 자동 최적 플랜 (세금·건보료 최소화 + 기대수명까지 자산 최대 활용) ── */
 function autoSuggest(){
   const p   = getP();
-  const adj = SA[sc]; // 현재 시나리오(기본/낙관/비관) 조정값
+  const adj = SA.base; // 자동설계는 항상 기본 시나리오 기준으로 산정
   const yrs = Math.max(0, p.ret - p.age);
   const monLimit = Math.round(p.plimit / 12);
   const gapYrs   = Math.max(1, p.npage - p.ret);
@@ -1488,7 +1489,7 @@ function autoSuggest(){
 
   // 실제 시뮬레이션으로 p.life세 잔여자산 확인 (사적연금 한도 제약으로 농협 등이 완전 소진되지 않을 수 있음)
   const p2 = getP(); // sv()로 갱신된 슬라이더 값 반영
-  const simRes = simulate(p2, SA[sc]);
+  const simRes = simulate(p2, SA.base);
   const lastRow = simRes.rows[simRes.rows.length-1];
   const leftoverAsset = lastRow ? Math.round((lastRow.privB + lastRow.tirpB + lastRow.isaB)*10)/10 : 0; // 억원
 
@@ -1881,7 +1882,6 @@ function getP(){
   };
 }
 
-function setSc(s,btn){ sc=s; document.querySelectorAll('.sc-btn').forEach(b=>b.className='sc-btn'); btn.className='sc-btn on-'+s; upd(); }
 function setTab(t){ chartTab=t; ['flow','asset'].forEach(x=>document.getElementById('tb-'+x).className='tab-btn'+(x===t?' on':'')); upd(); }
 
 
@@ -2205,7 +2205,7 @@ function upd(){
 
   // 시뮬레이션 — 시나리오 3종(낙관/기본/비관)을 한 번씩만 계산해 캐싱, 아래 비교표에서 재사용
   const scenarioResults = {opt:simulate(p,SA.opt), base:simulate(p,SA.base), pes:simulate(p,SA.pes)};
-  const res = scenarioResults[sc];
+  const res = scenarioResults.base; // 메인 대시보드는 항상 기본 시나리오 기준 (낙관/비관은 아래 접이식 비교표에서만 확인)
 
   // 메트릭 카드
   document.getElementById('m1').textContent=Math.round(res.gapMonthly)+'만';
@@ -2269,7 +2269,7 @@ function upd(){
   // 시나리오 비교
   const scList=['opt','base','pes'], scL={opt:'낙관',base:'기본',pes:'비관'};
   document.getElementById('sc-body').innerHTML=scList.map(s=>{
-    const r=scenarioResults[s], a=SA[s], isCur=s===sc, ok=r.runway===p.life;
+    const r=scenarioResults[s], a=SA[s], isCur=s==='base', ok=r.runway===p.life;
     return '<tr class="'+(isCur?'cur-row':'')+'">'
       +'<td style="font-weight:'+(isCur?700:400)+';color:'+(s==='opt'?'#1D7A50':s==='pes'?'#E65100':'#1565C0')+'">'+scL[s]+'</td>'
       +'<td>'+(p.rnh+a.r)+'%</td>'
