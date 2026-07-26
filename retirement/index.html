@@ -1646,38 +1646,35 @@ function showPlanBanner(d){
      "오늘 기준 실질 가치"로 항상 일치함
    - 안세공(비공제) 비과세 인출은 한도 자체가 명목 고정액(1,500만원/연)이므로 물가 미반영
 */
+// 월납입 복리 계좌(농협·미래에셋 연금저축) 은퇴시점 미래가치 — 매월 21일 납입 기준
+// 매월 21일 납입: 기존 잔액은 1개월 전체 복리, 납입금은 10/30개월 복리(선형 근사)
+// 수식: b_new = b*(1+rm) + mon*(1 + rm*10/30)
+function calcMonthlyDepositFV(balance, monthlyPay, payStartAge, payEndAge, curAge, retAge, annualR){
+  const rm = annualR/100/12;
+  const depGrow = 1 + rm * (10/30); // 납입금 당월 10일치 복리
+  let b = balance;
+  for(let age=curAge; age<retAge; age++){
+    const paying = age>=payStartAge && age<=payEndAge;
+    const mon = paying ? monthlyPay : 0;
+    for(let m=0;m<12;m++) b = b*(1+rm) + mon*depGrow;
+  }
+  return Math.max(0, Math.round(b));
+}
+
+// 은퇴 후 월 수령액 계산 — 목표 수령액(물가반영)과 "잔액/12"(연내 소진 방지) 중 작은 값
+function calcMonthlyPayout(balance, payoutStartAge, curAge, monthlyPay, infMul){
+  if(curAge<payoutStartAge || balance<=0) return 0;
+  return Math.min(Math.round(monthlyPay*infMul), Math.ceil(balance/12));
+}
+
 function simulate(p, adj){
   const yrs   = Math.max(0, p.ret-p.age);
   const rNh   = p.rnh+adj.r,  rMf  = p.rmf+adj.r,  rIrp = p.rirp+adj.r;
   const rTirp = p.rtirp+adj.r, rIsa = p.risa+adj.r, infR = p.inf+adj.inf;
 
-  // ── 은퇴 시점 각 계좌 미래가치 (월복리, 매월 21일 납입 기준) ──
-  // 매월 21일 납입:
-  //   - 기존 잔액: 1일~말일 = 1개월 전체 복리
-  //   - 납입금: 21일~말일 = 10/30개월 복리 (선형 근사: rm * 10/30)
-  // 수식: b_new = b*(1+rm) + mon*(1 + rm*10/30)
-  const nhFV = (function(){
-    const rm = rNh/100/12;
-    const depGrow = 1 + rm * (10/30); // 납입금 당월 10일치 복리
-    let b = p.nh;
-    for(let age=p.age; age<p.ret; age++){
-      const paying = age>=p.nhstart && age<=p.nhend;
-      const mon = paying ? p.nhm : 0;
-      for(let m=0;m<12;m++) b = b*(1+rm) + mon*depGrow;
-    }
-    return Math.max(0,Math.round(b));
-  })();
-  const mfFV = (function(){
-    const rm = rMf/100/12;
-    const depGrow = 1 + rm * (10/30);
-    let b = p.mf;
-    for(let age=p.age; age<p.ret; age++){
-      const paying = age>=p.mfstart && age<=p.mfend;
-      const mon = paying ? p.mfm : 0;
-      for(let m=0;m<12;m++) b = b*(1+rm) + mon*depGrow;
-    }
-    return Math.max(0,Math.round(b));
-  })();
+  // ── 은퇴 시점 각 계좌 미래가치 ──
+  const nhFV = calcMonthlyDepositFV(p.nh, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
+  const mfFV = calcMonthlyDepositFV(p.mf, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
   // IRP FV: 매년 1월 일시납, 납입 시작~종료 기간 반영 (은퇴나이 초과 방지)
   const irpFV = calcISA_FV(p.irp, p.irpy, p.age,
     Math.max(p.age, p.irpstart),
@@ -1727,18 +1724,14 @@ function simulate(p, adj){
     const infMul = Math.pow(1+infR/100, age - p.age);
 
     // 각 계좌 수령액 계산 (잔액 부족 시 남은 잔액 전체 수령)
-    const mfOn  = age>=p.mfage  && mfB>0;
-    const irpOn = age>=p.irpage && irpB>0;
-
-    let mfInc  = mfOn  ? Math.min(Math.round(p.mfpay*infMul),  Math.ceil(mfB /12)) : 0;
-    let irpInc = irpOn ? Math.min(Math.round(p.irppay*infMul), Math.ceil(irpB/12)) : 0;
-
-    // 농협: 물가증액 PMT(57~기대수명) 기반 인출 — 한도 흡수 로직 제거
-    // (한도 여유분을 흡수하면 PMT 산정의 전제(life세 소진)가 깨지므로,
-    //  사적연금 한도 여유분은 IRP개인납입이 우선 활용하도록 함)
-    let nhInc = (age>=p.nhage && nhB>0) ? Math.min(Math.round(p.nhpay*infMul), Math.ceil(nhB/12)) : 0;
+    // 농협/미래에셋/IRP개인납입은 "사적연금 합산 한도"를 공유하는 계좌 그룹
+    let nhInc  = calcMonthlyPayout(nhB,  p.nhage,  age, p.nhpay,  infMul);
+    let mfInc  = calcMonthlyPayout(mfB,  p.mfage,  age, p.mfpay,  infMul);
+    let irpInc = calcMonthlyPayout(irpB, p.irpage, age, p.irppay, infMul);
 
     // 사적연금 합산 한도 초과 시 비례 조정
+    // (한도 여유분을 농협이 흡수하면 PMT 산정의 전제(life세 소진)가 깨지므로,
+    //  사적연금 한도 여유분은 IRP개인납입이 우선 활용하도록 함 — 비례 조정 방식 유지)
     const pSum = nhInc+mfInc+irpInc;
     if(pSum>privLimMon && pSum>0){
       const s2=privLimMon/pSum;
@@ -1747,8 +1740,8 @@ function simulate(p, adj){
     const privInc = nhInc+mfInc+irpInc;
 
     const npInc   = age>=p.npage ? p.np : 0;
-    const tirpInc = age>=p.tage && tirpB>0 ? Math.min(Math.round(p.tm*infMul), Math.ceil(tirpB/12)) : 0;
-    const isaInc  = age>=p.isaage && isaB>0 ? Math.min(Math.round(p.isam*infMul), Math.ceil(isaB/12)) : 0;
+    const tirpInc = calcMonthlyPayout(tirpB, p.tage,   age, p.tm,   infMul);
+    const isaInc  = calcMonthlyPayout(isaB,  p.isaage, age, p.isam, infMul);
 
     // 안세공(비공제) 비과세 인출 — 공백기에만, 1,500만원 한도 미포함
     // (비과세 한도 자체가 명목 금액이므로 물가상승 미반영, 정액 균등 소진 유지)
@@ -2214,8 +2207,9 @@ function upd(){
   document.getElementById('gauge-text').textContent=
     '공백기 월 '+totalPrivMon+'만 · 완성기 월 '+fullPrivMon+'만 / 한도 '+monLimit+'만원 ('+pct2+'%)';
 
-  // 시뮬레이션
-  const res=simulate(p, SA[sc]);
+  // 시뮬레이션 — 시나리오 3종(낙관/기본/비관)을 한 번씩만 계산해 캐싱, 아래 비교표에서 재사용
+  const scenarioResults = {opt:simulate(p,SA.opt), base:simulate(p,SA.base), pes:simulate(p,SA.pes)};
+  const res = scenarioResults[sc];
 
   // 메트릭 카드
   document.getElementById('m1').textContent=Math.round(res.gapMonthly)+'만';
@@ -2279,7 +2273,7 @@ function upd(){
   // 시나리오 비교
   const scList=['opt','base','pes'], scL={opt:'낙관',base:'기본',pes:'비관'};
   document.getElementById('sc-body').innerHTML=scList.map(s=>{
-    const r=simulate(p,SA[s]), a=SA[s], isCur=s===sc, ok=r.runway===p.life;
+    const r=scenarioResults[s], a=SA[s], isCur=s===sc, ok=r.runway===p.life;
     return '<tr class="'+(isCur?'cur-row':'')+'">'
       +'<td style="font-weight:'+(isCur?700:400)+';color:'+(s==='opt'?'#1D7A50':s==='pes'?'#E65100':'#1565C0')+'">'+scL[s]+'</td>'
       +'<td>'+(p.rnh+a.r)+'%</td>'
