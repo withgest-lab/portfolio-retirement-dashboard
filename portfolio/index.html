@@ -59,6 +59,13 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .toggle-ctrl{background:var(--color-section-bg);color:var(--color-text);border:none;cursor:pointer;
   border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;font-family:inherit;}
 
+/* ── 접이식 상세 섹션 ── */
+.collapsible summary{cursor:pointer;color:var(--color-tertiary);font-weight:600;font-size:11px;
+  padding:4px 0;list-style:none;}
+.collapsible summary::-webkit-details-marker{display:none;}
+.collapsible summary::before{content:'▸ ';}
+.collapsible[open] summary::before{content:'▾ ';}
+
 /* ── 차트 ── */
 .chart-wrap{margin-top:10px;}
 canvas#lineChart{width:100%!important;display:block;}
@@ -229,7 +236,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </div>
   </div>
   <div class="toggles" id="assetToggles"></div>
-  <div class="chart-wrap"><canvas id="lineChart" height="260"></canvas></div>
+  <details class="collapsible" style="margin:4px 0 2px;">
+    <summary>종목별 보기</summary>
+    <div class="toggles" id="assetTogglesDetail" style="margin-top:6px;"></div>
+  </details>
+  <div class="chart-wrap"><canvas id="lineChart" height="320"></canvas></div>
   <div class="stat-bar" id="statBar"></div>
 </div>
 
@@ -253,7 +264,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <tbody id="soldTbody"></tbody>
     </table>
   </div>
-  <div class="add-form" style="padding-top:14px;margin-top:14px;border-top:1px solid var(--color-section-bg);">
+  <details class="collapsible" style="margin-top:14px;border-top:1px solid var(--color-section-bg);padding-top:10px;">
+    <summary>이력 수동 기록 추가 (자산/현금에는 반영되지 않음)</summary>
+  <div class="add-form" style="padding-top:14px;">
     <label>날짜<input id="tl_date" type="date" style="width:110px"></label>
     <label>종목명
       <input id="tl_name" placeholder="" style="width:95px" autocomplete="off"
@@ -299,6 +312,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <button class="btn btn-primary" onclick="addTradeLog_manual()">기록 추가</button>
     </div>
   </div>
+  </details>
   <div id="tradeLogStatus" style="font-size:12px;color:var(--color-secondary);min-height:16px;padding:4px 0;"></div>
 </div>
 
@@ -651,9 +665,19 @@ const FX_KEY      = 'pf_fx_v1';
 const ETF_BRANDS = /^(TIGER|KODEX|KINDEX|ARIRANG|HANARO|KBSTAR|ACE|SOL|TIMEFOLIO)/i;
 function isETF(a){return ETF_BRANDS.test(a.name);}
 
-/* 도넛 카테고리 그룹 */
-const DONUT_CAT_LABELS = {etf:'ETF(개인연금)',overseas:'해외주식',domestic:'국내주식',pension_personal:'개인연금',pension_retirement:'퇴직연금',irp:'IRP 개인',isa:'ISA',crypto:'가상자산',cash:'현금'};
-const DONUT_CAT_COLS   = {etf:'#34c759',overseas:'#007aff',domestic:'#ff9500',pension_personal:'#af52de',pension_retirement:'#30b0c7',irp:'#5856d6',isa:'#00b5ad',crypto:'#ff3b30',cash:'#8e8e93'};
+/* 도넛 카테고리 그룹 — 국내주식을 ETF/일반으로 세분화, 미국·일본주식은 "해외주식"으로 통합.
+   pension_personal/irp/isa/crypto/cash 는 CAT_LABELS·CAT_COLS 값을 그대로 재사용(중복 정의 제거).
+   pension_retirement는 라벨만 동일하고 색상은 도넛 차트에서 의도적으로 다른 값을 사용(기존값 유지). */
+const DONUT_CAT_LABELS = {
+  etf:'ETF(개인연금)', overseas:'해외주식', domestic:'국내주식',
+  pension_personal:CAT_LABELS.pension_personal, pension_retirement:CAT_LABELS.pension_retirement,
+  irp:CAT_LABELS.irp, isa:CAT_LABELS.isa, crypto:CAT_LABELS.crypto, cash:CAT_LABELS.cash,
+};
+const DONUT_CAT_COLS = {
+  etf:'#34c759', overseas:'#007aff', domestic:'#ff9500',
+  pension_personal:CAT_COLS.pension_personal, pension_retirement:'#30b0c7',
+  irp:CAT_COLS.irp, isa:CAT_COLS.isa, crypto:CAT_COLS.crypto, cash:CAT_COLS.cash,
+};
 function donutCatKey(a){
   if(a.category==='stock_us'||a.category==='stock_jp') return 'overseas';
   if(a.category==='stock_kr'&&isETF(a)) return 'etf';
@@ -3472,17 +3496,26 @@ function renderStatBar(){
   }).join('')+'</div>';
 }
 
+// 배경색 밝기에 따라 검정/흰색 중 대비가 더 잘 되는 글자색을 골라줌 (파스텔톤 색상에서도 가독성 확보)
+function readableTextColor(hex){
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+  const luminance = (0.299*r + 0.587*g + 0.114*b);
+  return luminance > 150 ? '#1c1c1e' : '#ffffff';
+}
 function renderToggles(){
   const allSelected = assets.every(a=>selectedAssets.has(a.id));
   const noneSelected = assets.every(a=>!selectedAssets.has(a.id));
   document.getElementById('assetToggles').innerHTML=
     `<button class="toggle-ctrl" onclick="selectAll()" style="background:${allSelected&&showSum?'#1c1c1e':'var(--color-section-bg)'};color:${allSelected&&showSum?'#fff':'var(--color-text)'}">전체 선택</button>`+
     `<button class="toggle-ctrl" onclick="deselectAll()" style="background:${noneSelected&&!showSum?'#ff3b30':'var(--color-section-bg)'};color:${noneSelected&&!showSum?'#fff':'var(--color-text)'}">전체 해제</button>`+
-    `<button class="toggle-ctrl" onclick="toggleSum()" style="background:${showSum?'var(--color-accent)':'var(--color-section-bg)'};color:${showSum?'#fff':'var(--color-text)'}">합계</button>`
-    +assets.map((a,i)=>{
+    `<button class="toggle-ctrl" onclick="toggleSum()" style="background:${showSum?'var(--color-accent)':'var(--color-section-bg)'};color:${showSum?'#fff':'var(--color-text)'}">합계</button>`;
+  // 종목별 개별 토글은 접이식 안에 — 선택 시 배경을 실색으로 채워 가독성 개선(연한 틴트+같은색 글자 조합 방지)
+  document.getElementById('assetTogglesDetail').innerHTML = assets.map((a,i)=>{
       const col=a.category==='cash'?'#82E0AA':LINE_COLS[i%LINE_COLS.length];
-      return`<button class="toggle-pill ${selectedAssets.has(a.id)?'on':''}"
-        style="background:${col}18;color:${col};border-color:${selectedAssets.has(a.id)?col:'transparent'};"
+      const on = selectedAssets.has(a.id);
+      return`<button class="toggle-pill ${on?'on':''}"
+        style="background:${on?col:'transparent'};color:${on?readableTextColor(col):col};border-color:${col};"
         onclick="toggleAsset('${a.id}')">${a.name}</button>`;
     }).join('');
 }
