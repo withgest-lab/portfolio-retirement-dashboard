@@ -341,7 +341,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
 
   <!-- 매수/매도 탭 -->
-  <div style="margin-top:16px;">
+  <details class="collapsible" style="margin-top:16px;">
+    <summary>매수/매도/현금 기록 추가</summary>
+  <div style="margin-top:10px;">
     <div class="trade-tabs">
       <button class="trade-tab" id="tab_buy" onclick="switchTab('buy')"
         style="color:var(--color-accent);border-bottom-color:var(--color-accent);">매수</button>
@@ -480,6 +482,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </div>
     <div class="form-status" id="formStatus"></div>
   </div>
+  </details>
 </div>
 
 <!-- 3. 비중 현황 -->
@@ -1057,13 +1060,25 @@ function migrateSoldHistory(){
   }catch(e){}
 }
 
-// 통화에 맞는 현금 자산이 정확히 1개일 때 잔액 자동 조정 (매수: 차감, 매도: 가산)
-// 반환: 조정된 현금 자산 이름 또는 null
+// 매수/매도 시 해당 통화의 현금 잔액을 자동으로 조정 (매수: 차감, 매도: 가산)
+// 버그 수정: 해당 통화의 현금 행이 아직 없으면(예: 다른 통화 종목을 처음 매매하는 경우)
+// 예전에는 조용히 아무 반영도 하지 않아 매매 대금이 통째로 유실됐음(매도만 되고 매수 차감이
+// 안 되거나 그 반대) -> 0원짜리 현금 행을 자동 생성한 뒤 반영하도록 수정.
+// 반환: 조정된 현금 자산 이름 또는 null(같은 통화 현금 행이 2개 이상이라 모호한 경우만)
 function adjustCashBalance(currency, amountInCurrency, sign){
-  const cashAssets = assets.filter(a=>a.category==='cash' && a.currency===currency);
-  if(cashAssets.length!==1) return null;
+  let cashAssets = assets.filter(a=>a.category==='cash' && a.currency===currency);
+  if(cashAssets.length===0){
+    const created = {id:uid(), ticker:'—', name:`현금(${currency})`, category:'cash', quantity:1,
+      avgPrice:0, currentPrice:0, prevPrice:0, currency};
+    assets.push(created);
+    cashAssets = [created];
+  }
+  if(cashAssets.length>1){
+    console.warn(`[현금 자동반영 건너뜀] ${currency} 현금 행이 ${cashAssets.length}개 있어 어느 것을 조정할지 모호합니다. 수동으로 확인해 주세요.`);
+    return null;
+  }
   const cash = cashAssets[0];
-  const newAmt = Math.max(0, (cash.avgPrice||0) + sign*amountInCurrency); // 현금은 0 미만 불가
+  const newAmt = (cash.avgPrice||0) + sign*amountInCurrency;
   cash.avgPrice = newAmt; cash.currentPrice = newAmt; cash.prevPrice = newAmt;
   return cash.name;
 }
