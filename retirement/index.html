@@ -1349,12 +1349,8 @@ function autoSuggest(){
   const rNh=p.rnh+adj.r, rMf=p.rmf+adj.r, rIrp=p.rirp+adj.r, rTirp=p.rtirp+adj.r, rIsa=p.risa+adj.r;
   const infR = p.inf+adj.inf; // 물가상승률(연%, 시나리오 반영)
 
-  const nhFV = (function(){ const rm=rNh/100/12; const dg=1+rm*(10/30); let b=p.nh;
-    for(let a=p.age;a<p.ret;a++){ const pay=a>=p.nhstart&&a<=p.nhend?p.nhm:0; for(let m=0;m<12;m++) b=b*(1+rm)+pay*dg; }
-    return Math.max(0,Math.round(b)); })();
-  const mfFV = (function(){ const rm=rMf/100/12; const dg=1+rm*(10/30); let b=p.mf;
-    for(let a=p.age;a<p.ret;a++){ const pay=a>=p.mfstart&&a<=p.mfend?p.mfm:0; for(let m=0;m<12;m++) b=b*(1+rm)+pay*dg; }
-    return Math.max(0,Math.round(b)); })();
+  const nhFV = calcMonthlyDepositFV(p.nh, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
+  const mfFV = calcMonthlyDepositFV(p.mf, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
   // IRP FV (autoSuggest)
   const irpFV = calcISA_FV(p.irp, p.irpy, p.age, Math.max(p.age,p.irpstart), Math.min(p.ret-1,p.irpend), p.ret, rIrp);
   const tirpFV= calcFV(p.tirp, 0,         yrs, rTirp);
