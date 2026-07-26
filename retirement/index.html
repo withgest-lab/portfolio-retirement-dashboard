@@ -143,8 +143,9 @@ h1{font-size:15px;font-weight:700;color:#111;}
 .itag-legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block;}
 
 /* ── 숫자 입력 ── */
-.ival-input{font-size:11px;font-weight:700;padding:2px 3px;border-radius:5px;
-  width:60px;text-align:center;border-width:1.5px;border-style:solid;
+/* 화살표·잠금 제거로 확보된 폭을 입력칸에 배분 (가독성 향상) */
+.ival-input{font-size:13px;font-weight:700;padding:4px 5px;border-radius:6px;
+  width:78px;text-align:center;border-width:1.5px;border-style:solid;
   outline:none;-moz-appearance:textfield;}
 .ival-input::-webkit-inner-spin-button,
 .ival-input::-webkit-outer-spin-button{-webkit-appearance:none;}
@@ -209,9 +210,9 @@ input[type=range]:hover::-moz-range-thumb{background:#555;}
 .c2-label{font-size:9px;color:#888;font-weight:600;margin-bottom:1px;}
 /* c2-ctrl: irow-ctrl과 동일하게 flex-end 정렬 → 잠금버튼 수직 일치 */
 .c2-ctrl{display:flex;align-items:center;gap:2px;justify-content:flex-end;}
-.c2-input{font-size:11px;font-weight:700;width:38px;text-align:center;
-  border-width:1.5px;border-style:solid;border-radius:4px;
-  padding:2px 2px;outline:none;-moz-appearance:textfield;}
+.c2-input{font-size:13px;font-weight:700;width:46px;text-align:center;
+  border-width:1.5px;border-style:solid;border-radius:5px;
+  padding:3px 2px;outline:none;-moz-appearance:textfield;}
 .c2-input::-webkit-inner-spin-button,
 .c2-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 .c2-input:focus{box-shadow:0 0 0 2px rgba(29,158,117,0.2);}
@@ -256,8 +257,8 @@ input[type=range]:hover::-moz-range-thumb{background:#555;}
   font-size:9px;color:#085041;margin-bottom:3px;}
 .limit-gauge-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   color:#085041;opacity:.75;}
-.limit-gauge-val{font-weight:700;font-size:10px;color:#085041;
-  white-space:nowrap;}
+.limit-gauge-val{font-weight:700;font-size:9px;color:#085041;
+  white-space:normal;line-height:1.4;}
 .limit-gauge{height:5px;border-radius:3px;background:#E8EAF0;overflow:hidden;}
 .limit-gauge-fill{height:100%;border-radius:3px;transition:width .3s,background .3s;}
 
