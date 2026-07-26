@@ -117,18 +117,18 @@ h1{font-size:15px;font-weight:700;color:#111;}
 /* irow 전체: 라벨(위) + 컨트롤(중간) + 슬라이더(아래) 3단 구조 */
 .irow-top{
   display:grid;
-  grid-template-columns:auto 1fr;
+  grid-template-columns:80px 1fr;  /* 라벨 칸 폭 고정 → 모든 행의 입력칸이 같은 x 위치에서 시작 */
   align-items:center;
-  gap:4px;
-  padding:4px 0 1px;
+  gap:6px;
+  padding:5px 0;
 }
-/* 라벨: 2줄까지 허용, 작게, 최소 너비 확보 */
+/* 라벨: 폭 고정(2줄까지 허용, 작게) — 행마다 폭이 달라지지 않도록 auto 대신 고정값 사용 */
 .ilabel{
   font-size:9px;color:#888;
   white-space:normal;word-break:keep-all;
-  line-height:1.35;min-width:52px;max-width:80px;
+  line-height:1.3;
 }
-.irow-ctrl{display:flex;align-items:center;gap:2px;flex-shrink:0;justify-content:flex-end;}
+.irow-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0;justify-content:flex-end;}
 
 /* ── 입력 필요도 표시: 좌측 색띠 ── */
 .irow.tag-req{border-left:4px solid #F59E0B;padding-left:6px;}
@@ -151,9 +151,10 @@ h1{font-size:15px;font-weight:700;color:#111;}
 .ival-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 .ival-input:focus{box-shadow:0 0 0 2px rgba(29,158,117,0.2);}
 .ival-input:disabled{cursor:not-allowed;opacity:0.5;}
-.c2-input:disabled{cursor:not-allowed;opacity:0.5;}
 button:disabled{cursor:not-allowed !important;}
-.unit-tag{font-size:9px;color:#AAB0BB;margin-left:1px;white-space:nowrap;}
+/* 폭 고정(만원/세/%) → 단위 텍스트 길이와 무관하게 입력칸 오른쪽 끝이 항상 같은 위치에 오도록 함 */
+.unit-tag{font-size:9px;color:#AAB0BB;white-space:nowrap;
+  width:24px;text-align:left;flex-shrink:0;}
 
 /* ── 화살표 & 잠금 버튼 ── */
 .arr-btn{width:19px;height:19px;border:1px solid #D0D3DC;border-radius:4px;
@@ -167,7 +168,7 @@ button:disabled{cursor:not-allowed !important;}
 .lock-btn.locked{background:#FFF8E1;border-color:#EF9F27;}
 .lock-btn.unlocked{background:#E1F5EE;border-color:#5DCAA5;}
 /* 슬라이더 전체 숨김 (드래그 조작이 어렵다는 피드백으로 예전부터 비활성화됨 — 숫자 입력만 사용) */
-input[type=range], .c2-range { display:none !important; }
+input[type=range] { display:none !important; }
 input[type=range].locked-range{pointer-events:none;opacity:0.3;}
 input[type=range].unlocked-range{pointer-events:auto;opacity:1;}
 /* 슬라이더 핸들 최소화 */
@@ -202,36 +203,6 @@ input[type=range]:hover::-moz-range-thumb{background:#555;}
 .exp input[type=range]::-moz-range-thumb{background:#D85A30;}
 .base-s input[type=range]::-moz-range-thumb{background:#AAB0BB;}
 
-/* ── 2열 납입 기간 행 ── */
-.irow-2col{display:grid;grid-template-columns:1fr 1fr;gap:6px;
-  margin-bottom:8px;padding-right:2px;}
-.c2-item{display:flex;flex-direction:column;gap:2px;}
-.c2-item.tag-req{border-left:4px solid #F59E0B;padding-left:6px;}
-.c2-label{font-size:9px;color:#888;font-weight:600;margin-bottom:1px;}
-/* c2-ctrl: irow-ctrl과 동일하게 flex-end 정렬 → 잠금버튼 수직 일치 */
-.c2-ctrl{display:flex;align-items:center;gap:2px;justify-content:flex-end;}
-.c2-input{font-size:13px;font-weight:700;width:46px;text-align:center;
-  border-width:1.5px;border-style:solid;border-radius:5px;
-  padding:3px 2px;outline:none;-moz-appearance:textfield;}
-.c2-input::-webkit-inner-spin-button,
-.c2-input::-webkit-outer-spin-button{-webkit-appearance:none;}
-.c2-input:focus{box-shadow:0 0 0 2px rgba(29,158,117,0.2);}
-/* c2-range: 위아래 여백 명시 */
-.c2-range{width:100%;cursor:pointer;height:4px;margin:3px 0 2px;display:block;
-  padding:0 3px;box-sizing:border-box;
-  -webkit-appearance:none;appearance:none;background:transparent;}
-.c2-range::-webkit-slider-thumb{
-  -webkit-appearance:none;width:6px;height:6px;border-radius:50%;
-  background:#888;border:none;cursor:pointer;margin-top:-1px;}
-.c2-range::-moz-range-thumb{
-  width:6px;height:6px;border-radius:50%;background:#888;border:none;cursor:pointer;}
-.c2-range::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:#E0E2E8;}
-.c2-range::-moz-range-track{height:4px;border-radius:2px;background:#E0E2E8;}
-.c2-range.locked-range{pointer-events:none;opacity:0.3;}
-.c2-range.unlocked-range{pointer-events:auto;opacity:1;}
-.c2-ctrl .arr-btn{width:16px;height:16px;font-size:9px;}
-.c2-ctrl .lock-btn{width:16px;height:16px;font-size:8px;}
-
 /* ── 색상 토큰 ── */
 .nh  input[type=range]{accent-color:#1D9E75;}
 .mf  input[type=range]{accent-color:#0F6E56;}
@@ -241,13 +212,13 @@ input[type=range]:hover::-moz-range-thumb{background:#555;}
 .isa input[type=range]{accent-color:#888780;}
 .exp input[type=range]{accent-color:#D85A30;}
 .base-s input[type=range]{accent-color:#AAB0BB;}
-.nh  .ival-input,.nh  .c2-input{color:#085041;background:#E1F5EE;border-color:#5DCAA5;}
-.mf  .ival-input,.mf  .c2-input{color:#085041;background:#C8EDE1;border-color:#1D9E75;}
-.irp .ival-input,.irp .c2-input{color:#0C447C;background:#E6F1FB;border-color:#85B7EB;}
-.dc  .ival-input,.dc  .c2-input{color:#3C3489;background:#EEEDFE;border-color:#AFA9EC;}
-.np  .ival-input,.np  .c2-input{color:#633806;background:#FAEEDA;border-color:#EF9F27;}
-.isa .ival-input,.isa .c2-input{color:#444441;background:#F1EFE8;border-color:#B4B2A9;}
-.exp .ival-input,.exp .c2-input{color:#712B13;background:#FAECE7;border-color:#F0997B;}
+.nh  .ival-input{color:#085041;background:#E1F5EE;border-color:#5DCAA5;}
+.mf  .ival-input{color:#085041;background:#C8EDE1;border-color:#1D9E75;}
+.irp .ival-input{color:#0C447C;background:#E6F1FB;border-color:#85B7EB;}
+.dc  .ival-input{color:#3C3489;background:#EEEDFE;border-color:#AFA9EC;}
+.np  .ival-input{color:#633806;background:#FAEEDA;border-color:#EF9F27;}
+.isa .ival-input{color:#444441;background:#F1EFE8;border-color:#B4B2A9;}
+.exp .ival-input{color:#712B13;background:#FAECE7;border-color:#F0997B;}
 .base-s .ival-input{color:#5F5E5A;background:#F5F4F2;border-color:#D3D1C7;}
 
 /* ── 한도 게이지 ── */
@@ -468,28 +439,23 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="nhm-r" min="0" max="150" step="5" value="50"  oninput="syncInput('nhm');scheduleUpd()">
-</div><div class="irow-2col">
-  <div class="c2-item">
-    <div class="c2-label">납입시작</div>
-    <div class="c2-ctrl">
-      <input type="number" id="nhstart" value="51" min="40" max="65" step="1"
-        class="c2-input" style="color:#085041;background:#E1F5EE;border-color:#5DCAA5;"
-        onblur="onBlurFix('nhstart')" oninput="syncSlider('nhstart');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-    <input type="range" id="nhstart-r" min="40" max="65" step="1" value="51"
-      class="c2-range" style="accent-color:#1D9E75;" oninput="syncInput('nhstart');scheduleUpd()">
+</div><div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('nhstart')" oninput="syncSlider('nhstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
   </div>
-  <div class="c2-item">
-    <div class="c2-label">납입종료</div>
-    <div class="c2-ctrl">
-      <input type="number" id="nhend" value="57" min="50" max="75" step="1"
-        class="c2-input" style="color:#085041;background:#E1F5EE;border-color:#5DCAA5;"
-        onblur="onBlurFix('nhend')" oninput="syncSlider('nhend')"><span class="unit-tag">세</span>
+  <input type="range" id="nhstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('nhstart');scheduleUpd()">
+</div><div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhend" value="57" min="50" max="75" step="1" onblur="onBlurFix('nhend')" oninput="syncSlider('nhend')"><span class="unit-tag">세</span>
       <button class="lock-btn locked" id="lock-nhend" onclick="toggleLock('nhend')">🔒</button>
     </div>
-    <input type="range" id="nhend-r" min="50" max="75" step="1" value="57"
-      class="c2-range locked-range" style="accent-color:#1D9E75;" oninput="syncInput('nhend');scheduleUpd()">
   </div>
+  <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('nhend');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
     <span class="ilabel">수령 시작<br>나이</span>
@@ -532,28 +498,23 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="mfm-r" min="0" max="150" step="5" value="0"  oninput="syncInput('mfm');scheduleUpd()">
-</div><div class="irow-2col">
-  <div class="c2-item">
-    <div class="c2-label">납입시작</div>
-    <div class="c2-ctrl">
-      <input type="number" id="mfstart" value="51" min="40" max="65" step="1"
-        class="c2-input" style="color:#085041;background:#C8EDE1;border-color:#1D9E75;"
-        onblur="onBlurFix('mfstart')" oninput="syncSlider('mfstart');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-    <input type="range" id="mfstart-r" min="40" max="65" step="1" value="51"
-      class="c2-range" style="accent-color:#0F6E56;" oninput="syncInput('mfstart');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('mfstart')" oninput="syncSlider('mfstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
   </div>
-  <div class="c2-item">
-    <div class="c2-label">납입종료</div>
-    <div class="c2-ctrl">
-      <input type="number" id="mfend" value="57" min="50" max="75" step="1"
-        class="c2-input" style="color:#085041;background:#C8EDE1;border-color:#1D9E75;"
-        onblur="onBlurFix('mfend')" oninput="syncSlider('mfend')"><span class="unit-tag">세</span>
+  <input type="range" id="mfstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('mfstart');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfend" value="57" min="50" max="75" step="1" onblur="onBlurFix('mfend')" oninput="syncSlider('mfend')"><span class="unit-tag">세</span>
       <button class="lock-btn locked" id="lock-mfend" onclick="toggleLock('mfend')">🔒</button>
     </div>
-    <input type="range" id="mfend-r" min="50" max="75" step="1" value="57"
-      class="c2-range locked-range" style="accent-color:#0F6E56;" oninput="syncInput('mfend');scheduleUpd()">
   </div>
+  <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('mfend');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
     <span class="ilabel">수령 시작<br>나이</span>
@@ -596,28 +557,23 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="irpy-r" min="0" max="1200" step="50" value="300"  oninput="syncInput('irpy');scheduleUpd()">
-</div><div class="irow-2col">
-  <div class="c2-item">
-    <div class="c2-label">납입시작</div>
-    <div class="c2-ctrl">
-      <input type="number" id="irpstart" value="51" min="40" max="65" step="1"
-        class="c2-input" style="color:#0C447C;background:#E6F1FB;border-color:#85B7EB;"
-        onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-    <input type="range" id="irpstart-r" min="40" max="65" step="1" value="51"
-      class="c2-range" style="accent-color:#378ADD;" oninput="syncInput('irpstart');scheduleUpd()">
+</div><div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irpstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
   </div>
-  <div class="c2-item">
-    <div class="c2-label">납입종료</div>
-    <div class="c2-ctrl">
-      <input type="number" id="irpend" value="57" min="50" max="75" step="1"
-        class="c2-input" style="color:#0C447C;background:#E6F1FB;border-color:#85B7EB;"
-        onblur="onBlurFix('irpend')" oninput="syncSlider('irpend')"><span class="unit-tag">세</span>
+  <input type="range" id="irpstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('irpstart');scheduleUpd()">
+</div><div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irpend" value="57" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend')"><span class="unit-tag">세</span>
       <button class="lock-btn locked" id="lock-irpend" onclick="toggleLock('irpend')">🔒</button>
     </div>
-    <input type="range" id="irpend-r" min="50" max="75" step="1" value="57"
-      class="c2-range locked-range" style="accent-color:#378ADD;" oninput="syncInput('irpend');scheduleUpd()">
   </div>
+  <input type="range" id="irpend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('irpend');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
     <span class="ilabel">수령 시작<br>나이</span>
@@ -700,28 +656,23 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="isay-r" min="0" max="2000" step="100" value="2000"  oninput="syncInput('isay');scheduleUpd()">
-</div><div class="irow-2col">
-  <div class="c2-item">
-    <div class="c2-label">납입시작</div>
-    <div class="c2-ctrl">
-      <input type="number" id="isastart" value="51" min="40" max="65" step="1"
-        class="c2-input" style="color:#444441;background:#F1EFE8;border-color:#B4B2A9;"
-        onblur="onBlurFix('isastart')" oninput="syncSlider('isastart');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-    <input type="range" id="isastart-r" min="40" max="65" step="1" value="51"
-      class="c2-range" style="accent-color:#888780;" oninput="syncInput('isastart');scheduleUpd()">
+</div><div class="irow isa">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="isastart" value="51" min="40" max="65" step="1" onblur="onBlurFix('isastart')" oninput="syncSlider('isastart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
   </div>
-  <div class="c2-item">
-    <div class="c2-label">납입종료</div>
-    <div class="c2-ctrl">
-      <input type="number" id="isaend" value="57" min="50" max="75" step="1"
-        class="c2-input" style="color:#444441;background:#F1EFE8;border-color:#B4B2A9;"
-        onblur="onBlurFix('isaend')" oninput="syncSlider('isaend')"><span class="unit-tag">세</span>
+  <input type="range" id="isastart-r" min="40" max="65" step="1" value="51" oninput="syncInput('isastart');scheduleUpd()">
+</div><div class="irow isa">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="isaend" value="57" min="50" max="75" step="1" onblur="onBlurFix('isaend')" oninput="syncSlider('isaend')"><span class="unit-tag">세</span>
       <button class="lock-btn locked" id="lock-isaend" onclick="toggleLock('isaend')">🔒</button>
     </div>
-    <input type="range" id="isaend-r" min="50" max="75" step="1" value="57"
-      class="c2-range locked-range" style="accent-color:#888780;" oninput="syncInput('isaend');scheduleUpd()">
   </div>
+  <input type="range" id="isaend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('isaend');scheduleUpd()">
 </div><div style="background:#F5F4F2;border-radius:5px;padding:4px 7px;margin:2px 0 5px;font-size:9px;color:#888;">💡 <span id="isa-info">계산 중...</span></div>
 <div class="irow isa">
   <div class="irow-top">
@@ -2136,7 +2087,7 @@ function applyInputTags(){
   function tag(id, cls){
     const el = document.getElementById(id);
     if(!el) return;
-    const row = el.closest('.irow') || el.closest('.c2-item');
+    const row = el.closest('.irow');
     if(!row) return;
     row.classList.add(cls);
   }
