@@ -1,0 +1,695 @@
+name,ticker,category,currency
+삼성전자,005930.KS,stock_kr,KRW
+SK하이닉스,000660.KS,stock_kr,KRW
+삼성전기,009150.KS,stock_kr,KRW
+SK스퀘어,402340.KS,stock_kr,KRW
+LG이노텍,011070.KS,stock_kr,KRW
+DB하이텍,000990.KS,stock_kr,KRW
+리노공업,058470.KS,stock_kr,KRW
+하나마이크론,067310.KS,stock_kr,KRW
+네패스아크,399720.KS,stock_kr,KRW
+ISC,095340.KS,stock_kr,KRW
+케이씨텍,281820.KS,stock_kr,KRW
+원익IPS,240810.KS,stock_kr,KRW
+HPSP,403870.KS,stock_kr,KRW
+피에스케이,319660.KS,stock_kr,KRW
+주성엔지니어링,036930.KS,stock_kr,KRW
+코미코,183300.KS,stock_kr,KRW
+한미반도체,042700.KS,stock_kr,KRW
+이오테크닉스,039030.KS,stock_kr,KRW
+LG에너지솔루션,373220.KS,stock_kr,KRW
+삼성SDI,006400.KS,stock_kr,KRW
+SK이노베이션,096770.KS,stock_kr,KRW
+에코프로비엠,247540.KS,stock_kr,KRW
+포스코퓨처엠,003670.KS,stock_kr,KRW
+일진머티리얼즈,020150.KS,stock_kr,KRW
+동화기업,025900.KS,stock_kr,KRW
+엔켐,348370.KS,stock_kr,KRW
+솔브레인,357780.KS,stock_kr,KRW
+천보,278280.KS,stock_kr,KRW
+나노신소재,121600.KS,stock_kr,KRW
+피엔티,137400.KS,stock_kr,KRW
+삼성바이오로직스,207940.KS,stock_kr,KRW
+셀트리온,068270.KS,stock_kr,KRW
+한미약품,128940.KS,stock_kr,KRW
+유한양행,000100.KS,stock_kr,KRW
+종근당,185750.KS,stock_kr,KRW
+녹십자,006280.KS,stock_kr,KRW
+동아에스티,170900.KS,stock_kr,KRW
+보령,003850.KS,stock_kr,KRW
+HLB,028300.KS,stock_kr,KRW
+레고켐바이오,141080.KS,stock_kr,KRW
+오스코텍,039200.KS,stock_kr,KRW
+바이넥스,053030.KS,stock_kr,KRW
+휴젤,145020.KS,stock_kr,KRW
+메디톡스,086900.KS,stock_kr,KRW
+파마리서치,214450.KS,stock_kr,KRW
+현대차,005380.KS,stock_kr,KRW
+기아,000270.KS,stock_kr,KRW
+현대모비스,012330.KS,stock_kr,KRW
+현대위아,011210.KS,stock_kr,KRW
+만도,204320.KS,stock_kr,KRW
+한온시스템,018880.KS,stock_kr,KRW
+한국타이어앤테크놀로지,161390.KS,stock_kr,KRW
+금호타이어,073240.KS,stock_kr,KRW
+넥센타이어,002350.KS,stock_kr,KRW
+현대글로비스,086280.KS,stock_kr,KRW
+HD현대중공업,329180.KS,stock_kr,KRW
+삼성중공업,010140.KS,stock_kr,KRW
+한화오션,042660.KS,stock_kr,KRW
+현대미포조선,010620.KS,stock_kr,KRW
+HD한국조선해양,009540.KS,stock_kr,KRW
+두산에너빌리티,034020.KS,stock_kr,KRW
+두산밥캣,241560.KS,stock_kr,KRW
+두산로보틱스,454910.KS,stock_kr,KRW
+LS ELECTRIC,010120.KS,stock_kr,KRW
+HD현대일렉트릭,267260.KS,stock_kr,KRW
+효성중공업,298040.KS,stock_kr,KRW
+현대로템,064350.KS,stock_kr,KRW
+한화에어로스페이스,012450.KS,stock_kr,KRW
+LIG넥스원,079550.KS,stock_kr,KRW
+한국항공우주,047810.KS,stock_kr,KRW
+한화시스템,272210.KS,stock_kr,KRW
+빅텍,065450.KS,stock_kr,KRW
+퍼스텍,090410.KS,stock_kr,KRW
+POSCO홀딩스,005490.KS,stock_kr,KRW
+현대제철,004020.KS,stock_kr,KRW
+고려아연,010130.KS,stock_kr,KRW
+풍산,103140.KS,stock_kr,KRW
+동국제강,460860.KS,stock_kr,KRW
+세아베스틸지주,001430.KS,stock_kr,KRW
+KG스틸,016380.KS,stock_kr,KRW
+한국철강,104700.KS,stock_kr,KRW
+넥스틸,022100.KS,stock_kr,KRW
+LG화학,051910.KS,stock_kr,KRW
+롯데케미칼,011170.KS,stock_kr,KRW
+금호석유,011780.KS,stock_kr,KRW
+OCI홀딩스,010060.KS,stock_kr,KRW
+한화솔루션,009830.KS,stock_kr,KRW
+효성화학,298000.KS,stock_kr,KRW
+SK가스,018670.KS,stock_kr,KRW
+S-Oil,010950.KS,stock_kr,KRW
+GS,078930.KS,stock_kr,KRW
+한국가스공사,036460.KS,stock_kr,KRW
+한국전력,015760.KS,stock_kr,KRW
+KB금융,105560.KS,stock_kr,KRW
+신한지주,055550.KS,stock_kr,KRW
+하나금융지주,086790.KS,stock_kr,KRW
+우리금융지주,316140.KS,stock_kr,KRW
+NH투자증권,005940.KS,stock_kr,KRW
+미래에셋증권,006800.KS,stock_kr,KRW
+삼성증권,016360.KS,stock_kr,KRW
+한국투자증권,030490.KS,stock_kr,KRW
+키움증권,039490.KS,stock_kr,KRW
+삼성화재,000810.KS,stock_kr,KRW
+DB손해보험,005830.KS,stock_kr,KRW
+메리츠화재,000060.KS,stock_kr,KRW
+현대해상,001450.KS,stock_kr,KRW
+삼성생명,032830.KS,stock_kr,KRW
+한화생명,088350.KS,stock_kr,KRW
+미래에셋생명,085620.KS,stock_kr,KRW
+동양생명,082640.KS,stock_kr,KRW
+SK텔레콤,017670.KS,stock_kr,KRW
+KT,030200.KS,stock_kr,KRW
+LG유플러스,032640.KS,stock_kr,KRW
+삼성SDS,018260.KS,stock_kr,KRW
+카카오,035720.KS,stock_kr,KRW
+네이버,035420.KS,stock_kr,KRW
+카카오뱅크,323410.KS,stock_kr,KRW
+카카오페이,377300.KS,stock_kr,KRW
+크래프톤,259960.KS,stock_kr,KRW
+엔씨소프트,036570.KS,stock_kr,KRW
+넷마블,251270.KS,stock_kr,KRW
+펄어비스,263750.KS,stock_kr,KRW
+컴투스,078340.KS,stock_kr,KRW
+NHN,181710.KS,stock_kr,KRW
+이마트,139480.KS,stock_kr,KRW
+롯데쇼핑,023530.KS,stock_kr,KRW
+신세계,004170.KS,stock_kr,KRW
+현대백화점,069960.KS,stock_kr,KRW
+GS리테일,007070.KS,stock_kr,KRW
+BGF리테일,282330.KS,stock_kr,KRW
+CJ제일제당,097950.KS,stock_kr,KRW
+오리온,271560.KS,stock_kr,KRW
+빙그레,005180.KS,stock_kr,KRW
+농심,004370.KS,stock_kr,KRW
+삼양식품,003230.KS,stock_kr,KRW
+롯데제과,004990.KS,stock_kr,KRW
+하이트진로,000080.KS,stock_kr,KRW
+오비맥주,002140.KS,stock_kr,KRW
+CJ,001040.KS,stock_kr,KRW
+현대건설,000720.KS,stock_kr,KRW
+GS건설,006360.KS,stock_kr,KRW
+대우건설,047040.KS,stock_kr,KRW
+DL이앤씨,375500.KS,stock_kr,KRW
+HDC현대산업개발,294870.KS,stock_kr,KRW
+삼성엔지니어링,028050.KS,stock_kr,KRW
+대한항공,003490.KS,stock_kr,KRW
+아시아나항공,020560.KS,stock_kr,KRW
+한진칼,180640.KS,stock_kr,KRW
+CJ대한통운,000120.KS,stock_kr,KRW
+HMM,011200.KS,stock_kr,KRW
+팬오션,028670.KS,stock_kr,KRW
+삼성물산,028260.KS,stock_kr,KRW
+SK,034730.KS,stock_kr,KRW
+LG,003550.KS,stock_kr,KRW
+한화,000880.KS,stock_kr,KRW
+두산,000150.KS,stock_kr,KRW
+현대중공업지주,267250.KS,stock_kr,KRW
+호텔신라,008770.KS,stock_kr,KRW
+파라다이스,034230.KS,stock_kr,KRW
+GKL,114090.KS,stock_kr,KRW
+한국콜마,161890.KS,stock_kr,KRW
+아모레퍼시픽,090430.KS,stock_kr,KRW
+LG생활건강,051900.KS,stock_kr,KRW
+코스맥스,192820.KS,stock_kr,KRW
+에코프로,086520.KQ,stock_kr,KRW
+HLB,028300.KQ,stock_kr,KRW
+셀트리온제약,068760.KQ,stock_kr,KRW
+알테오젠,196170.KQ,stock_kr,KRW
+리가켐바이오,141080.KQ,stock_kr,KRW
+휴마시스,205470.KQ,stock_kr,KRW
+클래시스,214150.KQ,stock_kr,KRW
+제이엘케이,452400.KQ,stock_kr,KRW
+에스티팜,237690.KQ,stock_kr,KRW
+오스템임플란트,048260.KQ,stock_kr,KRW
+덴티움,145720.KQ,stock_kr,KRW
+메가스터디교육,215200.KQ,stock_kr,KRW
+카카오게임즈,293490.KQ,stock_kr,KRW
+펄어비스,263750.KQ,stock_kr,KRW
+위메이드,112040.KQ,stock_kr,KRW
+컴투스홀딩스,063080.KQ,stock_kr,KRW
+더블유게임즈,192080.KQ,stock_kr,KRW
+케이엠더블유,032500.KQ,stock_kr,KRW
+에스에프에이,056190.KQ,stock_kr,KRW
+원익홀딩스,030530.KQ,stock_kr,KRW
+엘앤에프,066970.KQ,stock_kr,KRW
+코스모신소재,005070.KQ,stock_kr,KRW
+에코프로에이치엔,383220.KQ,stock_kr,KRW
+SK바이오팜,326030.KQ,stock_kr,KRW
+에이비엘바이오,298380.KQ,stock_kr,KRW
+보로노이,310210.KQ,stock_kr,KRW
+파멥신,208340.KQ,stock_kr,KRW
+지씨셀,144510.KQ,stock_kr,KRW
+TIGER 200,102110.KS,stock_kr,KRW
+TIGER 코스닥150,232080.KS,stock_kr,KRW
+TIGER S&P500,360750.KS,stock_kr,KRW
+TIGER 나스닥100,133690.KS,stock_kr,KRW
+TIGER 미국배당다우존스,458730.KS,stock_kr,KRW
+TIGER 미국나스닥100TR,391600.KS,stock_kr,KRW
+TIGER 미국S&P500레버리지,393160.KS,stock_kr,KRW
+TIGER 테크TOP10,381170.KS,stock_kr,KRW
+TIGER 반도체TOP10,396500.KS,stock_kr,KRW
+TIGER 글로벌AI,441760.KS,stock_kr,KRW
+TIGER 2차전지TOP10,305720.KS,stock_kr,KRW
+TIGER 차이나CSI300,192090.KS,stock_kr,KRW
+TIGER 리츠부동산인프라,182480.KS,stock_kr,KRW
+TIGER 단기채권액티브,157450.KS,stock_kr,KRW
+TIGER 미국달러단기채권액티브,329650.KS,stock_kr,KRW
+TIGER 한국형TDF2050,394270.KS,stock_kr,KRW
+TIGER 200커버드콜ATM,294400.KS,stock_kr,KRW
+TIGER 미국테크TOP10 INDXX,381180.KS,stock_kr,KRW
+TIGER 글로벌멀티에셋TIF액티브,434060.KS,stock_kr,KRW
+TIGER 일본닛케이225,241180.KS,stock_kr,KRW
+TIGER 200 IT,157490.KS,stock_kr,KRW
+TIGER 200 금융,139270.KS,stock_kr,KRW
+TIGER 레버리지,123320.KS,stock_kr,KRW
+TIGER 인버스,114820.KS,stock_kr,KRW
+TIGER 200선물레버리지,282690.KS,stock_kr,KRW
+TIGER 200선물인버스2X,252670.KS,stock_kr,KRW
+TIGER 원유선물Enhanced,217770.KS,stock_kr,KRW
+TIGER 골드선물(H),130680.KS,stock_kr,KRW
+TIGER 미국채10년선물,305080.KS,stock_kr,KRW
+KODEX 200,069500.KS,stock_kr,KRW
+KODEX 코스닥150,229200.KS,stock_kr,KRW
+KODEX S&P500,379800.KS,stock_kr,KRW
+KODEX 나스닥100,379810.KS,stock_kr,KRW
+KODEX 미국AI전력핵심인프라,487230.KS,stock_kr,KRW
+KODEX 글로벌로봇,276990.KS,stock_kr,KRW
+KODEX 레버리지,122630.KS,stock_kr,KRW
+KODEX 인버스,114800.KS,stock_kr,KRW
+KODEX 코스닥150레버리지,233740.KS,stock_kr,KRW
+KODEX 반도체,091160.KS,stock_kr,KRW
+KODEX 2차전지산업,305540.KS,stock_kr,KRW
+KODEX 미국배당프리미엄액티브,441800.KS,stock_kr,KRW
+KODEX 골드선물(H),132030.KS,stock_kr,KRW
+KODEX 단기채권,153130.KS,stock_kr,KRW
+KODEX TDF2050액티브,401170.KS,stock_kr,KRW
+KODEX 은행,091170.KS,stock_kr,KRW
+KODEX 보험,140700.KS,stock_kr,KRW
+KODEX 자동차,091180.KS,stock_kr,KRW
+KODEX 바이오,244580.KS,stock_kr,KRW
+KODEX 차이나H레버리지(H),204480.KS,stock_kr,KRW
+KODEX 미국30년국채울트라선물(H),453850.KS,stock_kr,KRW
+KODEX 한국부동산리츠인프라,432320.KS,stock_kr,KRW
+KBSTAR 미국S&P500,360200.KS,stock_kr,KRW
+KBSTAR 나스닥100,368590.KS,stock_kr,KRW
+KBSTAR 200,148020.KS,stock_kr,KRW
+KBSTAR 글로벌리얼티,352560.KS,stock_kr,KRW
+KBSTAR 미국배당킹,421470.KS,stock_kr,KRW
+KBSTAR 200고배당커버드콜ATM,315270.KS,stock_kr,KRW
+ACE 미국빅테크TOP7 Plus,441640.KS,stock_kr,KRW
+ACE 글로벌인컴TOP10 SOLACTIVE,411060.KS,stock_kr,KRW
+ACE 중국본토CSI300,314250.KS,stock_kr,KRW
+SOL 미국S&P500,433500.KS,stock_kr,KRW
+SOL 미국배당다우존스,446720.KS,stock_kr,KRW
+SOL 한국형TDF2040액티브,394280.KS,stock_kr,KRW
+SOL 금리우대채권혼합50,448290.KS,stock_kr,KRW
+ARIRANG 고배당주,161510.KS,stock_kr,KRW
+ARIRANG 미국S&P500(H),269540.KS,stock_kr,KRW
+ARIRANG 신흥국MSCI(합성H),195980.KS,stock_kr,KRW
+HANARO 글로벌생산기지온쇼어링,446470.KS,stock_kr,KRW
+HANARO 200,293180.KS,stock_kr,KRW
+TIMEFOLIO 미국나스닥100액티브,441680.KS,stock_kr,KRW
+TIMEFOLIO Korea플러스배당액티브,438900.KS,stock_kr,KRW
+Apple,AAPL,stock_us,USD
+Microsoft,MSFT,stock_us,USD
+NVIDIA,NVDA,stock_us,USD
+Broadcom,AVGO,stock_us,USD
+Taiwan Semiconductor (TSMC),TSM,stock_us,USD
+AMD,AMD,stock_us,USD
+Intel,INTC,stock_us,USD
+Qualcomm,QCOM,stock_us,USD
+Micron Technology,MU,stock_us,USD
+Applied Materials,AMAT,stock_us,USD
+Lam Research,LRCX,stock_us,USD
+KLA Corporation,KLAC,stock_us,USD
+Texas Instruments,TXN,stock_us,USD
+Analog Devices,ADI,stock_us,USD
+Marvell Technology,MRVL,stock_us,USD
+ON Semiconductor,ON,stock_us,USD
+Skyworks Solutions,SWKS,stock_us,USD
+Monolithic Power Systems,MPWR,stock_us,USD
+Entegris,ENTG,stock_us,USD
+Teradyne,TER,stock_us,USD
+Kulicke and Soffa,KLIC,stock_us,USD
+Cabot Microelectronics,CCMP,stock_us,USD
+Axcelis Technologies,ACLS,stock_us,USD
+Onto Innovation,ONTO,stock_us,USD
+Cohu,COHU,stock_us,USD
+Alphabet A (Google),GOOGL,stock_us,USD
+Alphabet C (Google),GOOG,stock_us,USD
+Amazon,AMZN,stock_us,USD
+Meta,META,stock_us,USD
+Tesla,TSLA,stock_us,USD
+Netflix,NFLX,stock_us,USD
+Salesforce,CRM,stock_us,USD
+Oracle,ORCL,stock_us,USD
+ServiceNow,NOW,stock_us,USD
+Workday,WDAY,stock_us,USD
+Adobe,ADBE,stock_us,USD
+Intuit,INTU,stock_us,USD
+Autodesk,ADSK,stock_us,USD
+Fortinet,FTNT,stock_us,USD
+Palo Alto Networks,PANW,stock_us,USD
+CrowdStrike,CRWD,stock_us,USD
+Zscaler,ZS,stock_us,USD
+Datadog,DDOG,stock_us,USD
+Cloudflare,NET,stock_us,USD
+Snowflake,SNOW,stock_us,USD
+MongoDB,MDB,stock_us,USD
+HubSpot,HUBS,stock_us,USD
+Twilio,TWLO,stock_us,USD
+Okta,OKTA,stock_us,USD
+Splunk,SPLK,stock_us,USD
+Veeva Systems,VEEV,stock_us,USD
+Tyler Technologies,TYL,stock_us,USD
+Fair Isaac (FICO),FICO,stock_us,USD
+SS&C Technologies,SSNC,stock_us,USD
+Palantir,PLTR,stock_us,USD
+C3.ai,AI,stock_us,USD
+UiPath,PATH,stock_us,USD
+Symbotic,SYM,stock_us,USD
+SoundHound AI,SOUN,stock_us,USD
+Berkshire Hathaway B,BRK-B,stock_us,USD
+JPMorgan Chase,JPM,stock_us,USD
+Visa,V,stock_us,USD
+Mastercard,MA,stock_us,USD
+Bank of America,BAC,stock_us,USD
+Goldman Sachs,GS,stock_us,USD
+Morgan Stanley,MS,stock_us,USD
+American Express,AXP,stock_us,USD
+Citigroup,C,stock_us,USD
+Wells Fargo,WFC,stock_us,USD
+BlackRock,BLK,stock_us,USD
+Charles Schwab,SCHW,stock_us,USD
+Fidelity,FIS,stock_us,USD
+PayPal,PYPL,stock_us,USD
+Block (Square),SQ,stock_us,USD
+Coinbase,COIN,stock_us,USD
+Robinhood,HOOD,stock_us,USD
+Interactive Brokers,IBKR,stock_us,USD
+CME Group,CME,stock_us,USD
+Intercontinental Exchange,ICE,stock_us,USD
+Nasdaq Inc,NDAQ,stock_us,USD
+S&P Global,SPGI,stock_us,USD
+Moody's,MCO,stock_us,USD
+Aflac,AFL,stock_us,USD
+MetLife,MET,stock_us,USD
+Prudential,PRU,stock_us,USD
+Hartford Financial,HIG,stock_us,USD
+Lincoln National,LNC,stock_us,USD
+Johnson & Johnson,JNJ,stock_us,USD
+Eli Lilly,LLY,stock_us,USD
+UnitedHealth,UNH,stock_us,USD
+AbbVie,ABBV,stock_us,USD
+Merck,MRK,stock_us,USD
+Pfizer,PFE,stock_us,USD
+Abbott Laboratories,ABT,stock_us,USD
+Thermo Fisher Scientific,TMO,stock_us,USD
+Danaher,DHR,stock_us,USD
+Intuitive Surgical,ISRG,stock_us,USD
+Boston Scientific,BSX,stock_us,USD
+Stryker,SYK,stock_us,USD
+Medtronic,MDT,stock_us,USD
+Zimmer Biomet,ZBH,stock_us,USD
+Becton Dickinson,BDX,stock_us,USD
+Baxter International,BAX,stock_us,USD
+Edwards Lifesciences,EW,stock_us,USD
+ResMed,RMD,stock_us,USD
+Insulet,PODD,stock_us,USD
+Penumbra,PEN,stock_us,USD
+Moderna,MRNA,stock_us,USD
+BioNTech,BNTX,stock_us,USD
+Regeneron,REGN,stock_us,USD
+Vertex Pharmaceuticals,VRTX,stock_us,USD
+Biogen,BIIB,stock_us,USD
+Gilead Sciences,GILD,stock_us,USD
+Amgen,AMGN,stock_us,USD
+Bristol-Myers Squibb,BMY,stock_us,USD
+Zoetis,ZTS,stock_us,USD
+Walmart,WMT,stock_us,USD
+Costco,COST,stock_us,USD
+Nike,NKE,stock_us,USD
+McDonald's,MCD,stock_us,USD
+Starbucks,SBUX,stock_us,USD
+Home Depot,HD,stock_us,USD
+Lowe's,LOW,stock_us,USD
+Target,TGT,stock_us,USD
+Procter & Gamble,PG,stock_us,USD
+Coca-Cola,KO,stock_us,USD
+PepsiCo,PEP,stock_us,USD
+Colgate-Palmolive,CL,stock_us,USD
+Kimberly-Clark,KMB,stock_us,USD
+Church & Dwight,CHD,stock_us,USD
+Clorox,CLX,stock_us,USD
+Estee Lauder,EL,stock_us,USD
+Ulta Beauty,ULTA,stock_us,USD
+Tapestry,TPR,stock_us,USD
+Capri Holdings,CPRI,stock_us,USD
+Ralph Lauren,RL,stock_us,USD
+PVH Corp,PVH,stock_us,USD
+Yum Brands,YUM,stock_us,USD
+Chipotle,CMG,stock_us,USD
+Shake Shack,SHAK,stock_us,USD
+Darden Restaurants,DRI,stock_us,USD
+Texas Roadhouse,TXRH,stock_us,USD
+Dollar General,DG,stock_us,USD
+Dollar Tree,DLTR,stock_us,USD
+TJX Companies,TJX,stock_us,USD
+Ross Stores,ROST,stock_us,USD
+Gap,GAP,stock_us,USD
+Abercrombie & Fitch,ANF,stock_us,USD
+ExxonMobil,XOM,stock_us,USD
+Chevron,CVX,stock_us,USD
+ConocoPhillips,COP,stock_us,USD
+EOG Resources,EOG,stock_us,USD
+Pioneer Natural Resources,PXD,stock_us,USD
+Devon Energy,DVN,stock_us,USD
+Coterra Energy,CTRA,stock_us,USD
+Marathon Petroleum,MPC,stock_us,USD
+Valero Energy,VLO,stock_us,USD
+Phillips 66,PSX,stock_us,USD
+Kinder Morgan,KMI,stock_us,USD
+Williams Companies,WMB,stock_us,USD
+Enterprise Products,EPD,stock_us,USD
+NextEra Energy,NEE,stock_us,USD
+Duke Energy,DUK,stock_us,USD
+Southern Company,SO,stock_us,USD
+Dominion Energy,D,stock_us,USD
+American Electric Power,AEP,stock_us,USD
+Exelon,EXC,stock_us,USD
+Xcel Energy,XEL,stock_us,USD
+Entergy,ETR,stock_us,USD
+AT&T,T,stock_us,USD
+Verizon,VZ,stock_us,USD
+T-Mobile,TMUS,stock_us,USD
+Comcast,CMCSA,stock_us,USD
+Charter Communications,CHTR,stock_us,USD
+Disney,DIS,stock_us,USD
+Warner Bros Discovery,WBD,stock_us,USD
+Paramount Global,PARA,stock_us,USD
+Fox Corp,FOX,stock_us,USD
+Boeing,BA,stock_us,USD
+Caterpillar,CAT,stock_us,USD
+Deere & Company,DE,stock_us,USD
+Honeywell,HON,stock_us,USD
+3M,MMM,stock_us,USD
+General Electric,GE,stock_us,USD
+Emerson Electric,EMR,stock_us,USD
+Parker Hannifin,PH,stock_us,USD
+Illinois Tool Works,ITW,stock_us,USD
+Eaton,ETN,stock_us,USD
+Rockwell Automation,ROK,stock_us,USD
+Ametek,AME,stock_us,USD
+United Technologies,RTX,stock_us,USD
+Northrop Grumman,NOC,stock_us,USD
+Lockheed Martin,LMT,stock_us,USD
+General Dynamics,GD,stock_us,USD
+L3Harris Technologies,LHX,stock_us,USD
+Leidos,LDOS,stock_us,USD
+TransDigm,TDG,stock_us,USD
+Heico,HEI,stock_us,USD
+United Parcel Service,UPS,stock_us,USD
+FedEx,FDX,stock_us,USD
+Union Pacific,UNP,stock_us,USD
+CSX,CSX,stock_us,USD
+Norfolk Southern,NSC,stock_us,USD
+J.B. Hunt Transport,JBHT,stock_us,USD
+Old Dominion Freight,ODFL,stock_us,USD
+United Airlines,UAL,stock_us,USD
+Delta Air Lines,DAL,stock_us,USD
+Southwest Airlines,LUV,stock_us,USD
+American Airlines,AAL,stock_us,USD
+American Tower,AMT,stock_us,USD
+Crown Castle,CCI,stock_us,USD
+Prologis,PLD,stock_us,USD
+Equinix,EQIX,stock_us,USD
+Public Storage,PSA,stock_us,USD
+Simon Property,SPG,stock_us,USD
+Realty Income,O,stock_us,USD
+VICI Properties,VICI,stock_us,USD
+Digital Realty,DLR,stock_us,USD
+Extra Space Storage,EXR,stock_us,USD
+S&P500 ETF (SPY),SPY,stock_us,USD
+QQQ (나스닥100 ETF),QQQ,stock_us,USD
+Dow Jones ETF (DIA),DIA,stock_us,USD
+Russell 2000 ETF (IWM),IWM,stock_us,USD
+VOO (S&P500 ETF),VOO,stock_us,USD
+VTI (전체시장 ETF),VTI,stock_us,USD
+SCHD (배당 ETF),SCHD,stock_us,USD
+VYM (고배당 ETF),VYM,stock_us,USD
+GLD (금 ETF),GLD,stock_us,USD
+SLV (은 ETF),SLV,stock_us,USD
+TLT (장기채권 ETF),TLT,stock_us,USD
+IEF (중기채권 ETF),IEF,stock_us,USD
+HYG (하이일드채권 ETF),HYG,stock_us,USD
+LQD (투자등급채권 ETF),LQD,stock_us,USD
+ARK Innovation ETF,ARKK,stock_us,USD
+ARK Genomic Revolution,ARKG,stock_us,USD
+XLK (기술섹터 ETF),XLK,stock_us,USD
+XLF (금융섹터 ETF),XLF,stock_us,USD
+XLV (헬스케어 ETF),XLV,stock_us,USD
+XLE (에너지 ETF),XLE,stock_us,USD
+XLU (유틸리티 ETF),XLU,stock_us,USD
+XLI (산업재 ETF),XLI,stock_us,USD
+SOXX (반도체 ETF),SOXX,stock_us,USD
+SMH (반도체 ETF),SMH,stock_us,USD
+BOTZ (로봇/AI ETF),BOTZ,stock_us,USD
+ROBO (로보틱스 ETF),ROBO,stock_us,USD
+ICLN (청정에너지 ETF),ICLN,stock_us,USD
+ARKW (차세대인터넷 ETF),ARKW,stock_us,USD
+VNQ (리츠 ETF),VNQ,stock_us,USD
+XLRE (부동산 ETF),XLRE,stock_us,USD
+EFA (선진국 ETF),EFA,stock_us,USD
+EEM (신흥국 ETF),EEM,stock_us,USD
+VEA (선진국 ETF),VEA,stock_us,USD
+VWO (신흥국 ETF),VWO,stock_us,USD
+BND (채권 ETF),BND,stock_us,USD
+AGG (채권 ETF),AGG,stock_us,USD
+SQQQ (나스닥3배인버스),SQQQ,stock_us,USD
+TQQQ (나스닥3배레버리지),TQQQ,stock_us,USD
+SPXU (S&P3배인버스),SPXU,stock_us,USD
+UPRO (S&P3배레버리지),UPRO,stock_us,USD
+Airbnb,ABNB,stock_us,USD
+Uber,UBER,stock_us,USD
+Lyft,LYFT,stock_us,USD
+DoorDash,DASH,stock_us,USD
+Shopify,SHOP,stock_us,USD
+Spotify,SPOT,stock_us,USD
+Zoom Video,ZM,stock_us,USD
+Peloton,PTON,stock_us,USD
+Instacart,CART,stock_us,USD
+Reddit,RDDT,stock_us,USD
+Pinterest,PINS,stock_us,USD
+Snap,SNAP,stock_us,USD
+Twitter/X,X,stock_us,USD
+Match Group,MTCH,stock_us,USD
+IAC,IAC,stock_us,USD
+Lucid Group,LCID,stock_us,USD
+Rivian,RIVN,stock_us,USD
+NIO,NIO,stock_us,USD
+BYD,BYDDY,stock_us,USD
+Li Auto,LI,stock_us,USD
+Xpeng,XPEV,stock_us,USD
+ChargePoint,CHPT,stock_us,USD
+EVgo,EVGO,stock_us,USD
+Intuitive Machines,LUNR,stock_us,USD
+Rocket Lab,RKLB,stock_us,USD
+Virgin Galactic,SPCE,stock_us,USD
+Joby Aviation,JOBY,stock_us,USD
+QuantumScape,QS,stock_us,USD
+Solid Power,SLDP,stock_us,USD
+나부테스코,6268.T,stock_jp,JPY
+Toyota (토요타),7203.T,stock_jp,JPY
+Sony Group,6758.T,stock_jp,JPY
+SoftBank Group,9984.T,stock_jp,JPY
+Nintendo,7974.T,stock_jp,JPY
+Honda,7267.T,stock_jp,JPY
+Keyence,6861.T,stock_jp,JPY
+Fast Retailing (유니클로),9983.T,stock_jp,JPY
+Mitsubishi UFJ Financial,8306.T,stock_jp,JPY
+Tokyo Electron,8035.T,stock_jp,JPY
+Shin-Etsu Chemical,4063.T,stock_jp,JPY
+Recruit Holdings,6098.T,stock_jp,JPY
+Daikin Industries,6367.T,stock_jp,JPY
+Fanuc,6954.T,stock_jp,JPY
+Murata Manufacturing,6981.T,stock_jp,JPY
+TDK,6762.T,stock_jp,JPY
+Panasonic Holdings,6752.T,stock_jp,JPY
+Hitachi,6501.T,stock_jp,JPY
+Fujitsu,6702.T,stock_jp,JPY
+NTT,9432.T,stock_jp,JPY
+KDDI,9433.T,stock_jp,JPY
+SoftBank Corp,9434.T,stock_jp,JPY
+Nippon Steel,5401.T,stock_jp,JPY
+JFE Holdings,5411.T,stock_jp,JPY
+Sumitomo Metal Mining,5713.T,stock_jp,JPY
+Mitsubishi Corporation,8058.T,stock_jp,JPY
+Mitsui & Co,8031.T,stock_jp,JPY
+Itochu,8001.T,stock_jp,JPY
+Marubeni,8002.T,stock_jp,JPY
+Sumitomo,8053.T,stock_jp,JPY
+Toyota Industries,6201.T,stock_jp,JPY
+Denso,6902.T,stock_jp,JPY
+Aisin,7259.T,stock_jp,JPY
+Subaru,7270.T,stock_jp,JPY
+Mazda,7261.T,stock_jp,JPY
+Yamaha Motor,7272.T,stock_jp,JPY
+Suzuki Motor,7269.T,stock_jp,JPY
+Nissan,7201.T,stock_jp,JPY
+Mitsubishi Motors,7211.T,stock_jp,JPY
+Takeda Pharmaceutical,4502.T,stock_jp,JPY
+Astellas Pharma,4503.T,stock_jp,JPY
+Daiichi Sankyo,4568.T,stock_jp,JPY
+Eisai,4523.T,stock_jp,JPY
+Shionogi,4507.T,stock_jp,JPY
+ORIX,8591.T,stock_jp,JPY
+Nomura Holdings,8604.T,stock_jp,JPY
+Daiwa Securities,8601.T,stock_jp,JPY
+Japan Exchange Group,8697.T,stock_jp,JPY
+Tokio Marine,8766.T,stock_jp,JPY
+MS&AD Insurance,8725.T,stock_jp,JPY
+Sompo Holdings,8630.T,stock_jp,JPY
+Seven & i Holdings,3382.T,stock_jp,JPY
+Aeon,8267.T,stock_jp,JPY
+Lawson,2651.T,stock_jp,JPY
+FamilyMart,8028.T,stock_jp,JPY
+Nitori Holdings,9843.T,stock_jp,JPY
+Shimano,7309.T,stock_jp,JPY
+Hoya,7741.T,stock_jp,JPY
+Olympus,7733.T,stock_jp,JPY
+Terumo,4543.T,stock_jp,JPY
+SMC Corporation,6273.T,stock_jp,JPY
+Yokogawa Electric,6841.T,stock_jp,JPY
+Advantest,6857.T,stock_jp,JPY
+Renesas Electronics,6723.T,stock_jp,JPY
+Rohm,6963.T,stock_jp,JPY
+Kyocera,6971.T,stock_jp,JPY
+Alps Alpine,6770.T,stock_jp,JPY
+Disco Corporation,6146.T,stock_jp,JPY
+Lasertec,6920.T,stock_jp,JPY
+SBI Holdings,8473.T,stock_jp,JPY
+Rakuten Group,4755.T,stock_jp,JPY
+Mercari,4385.T,stock_jp,JPY
+DeNA,2432.T,stock_jp,JPY
+CyberAgent,4751.T,stock_jp,JPY
+GREE,3632.T,stock_jp,JPY
+Bandai Namco,7832.T,stock_jp,JPY
+Capcom,9697.T,stock_jp,JPY
+Konami,9766.T,stock_jp,JPY
+Square Enix,9684.T,stock_jp,JPY
+Koei Tecmo,3635.T,stock_jp,JPY
+Canon,7751.T,stock_jp,JPY
+Nikon,7731.T,stock_jp,JPY
+Ricoh,7752.T,stock_jp,JPY
+Konica Minolta,4902.T,stock_jp,JPY
+Seiko Epson,6724.T,stock_jp,JPY
+Brother Industries,6448.T,stock_jp,JPY
+Bridgestone,5108.T,stock_jp,JPY
+Sumitomo Rubber,5110.T,stock_jp,JPY
+Komatsu,6301.T,stock_jp,JPY
+Kubota,6326.T,stock_jp,JPY
+Kawasaki Heavy Industries,7012.T,stock_jp,JPY
+Mitsubishi Heavy Industries,7011.T,stock_jp,JPY
+IHI Corporation,7013.T,stock_jp,JPY
+Toray Industries,3402.T,stock_jp,JPY
+Teijin,3401.T,stock_jp,JPY
+Asahi Kasei,3407.T,stock_jp,JPY
+Kuraray,3405.T,stock_jp,JPY
+Mitsui Chemicals,4183.T,stock_jp,JPY
+Asahi Group Holdings,2502.T,stock_jp,JPY
+Kirin Holdings,2503.T,stock_jp,JPY
+Sapporo Holdings,2501.T,stock_jp,JPY
+Suntory (비상장),2587.T,stock_jp,JPY
+Japan Tobacco,2914.T,stock_jp,JPY
+Ajinomoto,2802.T,stock_jp,JPY
+Nissin Foods,2897.T,stock_jp,JPY
+Calbee,2229.T,stock_jp,JPY
+Shiseido,4911.T,stock_jp,JPY
+Kao,4452.T,stock_jp,JPY
+Unicharm,8113.T,stock_jp,JPY
+Lion,4912.T,stock_jp,JPY
+Mitsui Fudosan,8801.T,stock_jp,JPY
+Mitsubishi Estate,8802.T,stock_jp,JPY
+Sumitomo Realty,8830.T,stock_jp,JPY
+Tokyo Tatemono,8804.T,stock_jp,JPY
+East Japan Railway,9020.T,stock_jp,JPY
+West Japan Railway,9021.T,stock_jp,JPY
+Central Japan Railway,9022.T,stock_jp,JPY
+Keio,9008.T,stock_jp,JPY
+Odakyu,9007.T,stock_jp,JPY
+Japan Airlines,9201.T,stock_jp,JPY
+ANA Holdings,9202.T,stock_jp,JPY
+Nippon Yusen,9101.T,stock_jp,JPY
+Mitsui OSK Lines,9104.T,stock_jp,JPY
+Kawasaki Kisen,9107.T,stock_jp,JPY
+Nippon Telegraph (NTT Data),9613.T,stock_jp,JPY
+NEC,6701.T,stock_jp,JPY
+Sharp,6753.T,stock_jp,JPY
+Toshiba,6502.T,stock_jp,JPY
+Bitcoin (BTC),BTC-USD,crypto,USD
+Ethereum (ETH),ETH-USD,crypto,USD
+Ripple (XRP),XRP-USD,crypto,USD
+Solana (SOL),SOL-USD,crypto,USD
+BNB,BNB-USD,crypto,USD
+Dogecoin (DOGE),DOGE-USD,crypto,USD
+Cardano (ADA),ADA-USD,crypto,USD
+Avalanche (AVAX),AVAX-USD,crypto,USD
+Polkadot (DOT),DOT-USD,crypto,USD
+Chainlink (LINK),LINK-USD,crypto,USD
+Litecoin (LTC),LTC-USD,crypto,USD
+Polygon (MATIC),MATIC-USD,crypto,USD
+Uniswap (UNI),UNI-USD,crypto,USD
+Stellar (XLM),XLM-USD,crypto,USD
+Cosmos (ATOM),ATOM-USD,crypto,USD
