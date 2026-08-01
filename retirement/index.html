@@ -116,16 +116,9 @@ h1{font-size:15px;font-weight:700;color:#111;}
 }
 .irow-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0;justify-content:flex-end;}
 
-/* ── 입력 필요도 표시: 좌측 색띠 ── */
-.irow.tag-req{border-left:4px solid #F59E0B;padding-left:6px;}
-.irow.tag-auto .ival-input,.irow.tag-auto input[type=number]{background:#F3F4F6;}
-.irow.tag-opt{border-left:4px solid #60A5FA;padding-left:6px;background:rgba(96,165,250,0.06);}
-
-/* ── 범례 ── */
-.itag-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:8.5px;color:#666;
-  padding:5px 8px;margin-bottom:6px;background:#F9FAFB;border-radius:6px;}
-.itag-legend span{display:flex;align-items:center;gap:3px;}
-.itag-legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block;}
+/* ── 자동계산 필드 구분: 수동 입력값과 확실히 구분되도록 배경·글자색·테두리 모두 회색 처리 ── */
+.irow.tag-auto .ival-input,.irow.tag-auto input[type=number]{
+  background:#F3F4F6;color:#9CA3AF;border-color:#D8DCE3;}
 
 /* ── 숫자 입력 ── */
 /* 화살표·잠금 제거로 확보된 폭을 입력칸에 배분 (가독성 향상) */
@@ -291,7 +284,6 @@ button{font-family:inherit;cursor:pointer;}
 .acct-body .irow-ctrl{justify-content:flex-start;}
 .acct-body .ival-input{width:100%;font-size:11.5px;padding:3px 5px;}
 .acct-body .unit-tag{width:auto;}
-.acct-body .irow.tag-req,.acct-body .irow.tag-opt{padding-left:5px;border-left-width:3px;}
 
 /* 짝을 이루는 필드 2개(수령 시작/월 수령액 등)를 한 줄에 나란히 배치 */
 .fv-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:0;}
@@ -515,7 +507,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="fv-row">
 <div class="irow isa">
   <div class="irow-top">
-    <span class="ilabel">인출 시작<br>나이</span>
+    <span class="ilabel">인출 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="isaage" value="57" min="55" max="75" step="1" onblur="onBlurFix('isaage')" oninput="syncSlider('isaage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
@@ -523,7 +515,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="isaage-r" min="55" max="75" step="1" value="57"  oninput="syncInput('isaage');scheduleUpd()">
 </div><div class="irow isa">
   <div class="irow-top">
-    <span class="ilabel">월 인출액<br>(공백기)</span>
+    <span class="ilabel">월 인출액</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="isam" value="90" min="0" max="300" step="5" onblur="onBlurFix('isam')" oninput="syncSlider('isam');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
@@ -587,7 +579,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="fv-row">
 <div class="irow nh">
   <div class="irow-top">
-    <span class="ilabel">수령 시작<br>나이</span>
+    <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="nhage" value="57" min="55" max="80" step="1" onblur="onBlurFix('nhage')" oninput="syncSlider('nhage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
@@ -595,7 +587,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="nhage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('nhage');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
-    <span class="ilabel">월 수령액<br>목표</span>
+    <span class="ilabel">월 수령액</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="nhpay" value="70" min="0" max="300" step="5" onblur="onBlurFix('nhpay')" oninput="syncSlider('nhpay');limitCheck('nhpay')"><span class="unit-tag">만원</span>
       </div>
@@ -654,7 +646,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="fv-row">
 <div class="irow mf">
   <div class="irow-top">
-    <span class="ilabel">수령 시작<br>나이</span>
+    <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="mfage" value="57" min="55" max="80" step="1" onblur="onBlurFix('mfage')" oninput="syncSlider('mfage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
@@ -662,7 +654,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="mfage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('mfage');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
-    <span class="ilabel">월 수령액<br>목표</span>
+    <span class="ilabel">월 수령액</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="mfpay" value="46" min="0" max="200" step="5" onblur="onBlurFix('mfpay')" oninput="syncSlider('mfpay');limitCheck('mfpay')"><span class="unit-tag">만원</span>
       </div>
@@ -713,7 +705,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="fv-row">
 <div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">수령 시작<br>나이</span>
+    <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="irpage" value="70" min="55" max="80" step="1" onblur="onBlurFix('irpage')" oninput="syncSlider('irpage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
@@ -721,7 +713,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="irpage-r" min="55" max="80" step="1" value="70"  oninput="syncInput('irpage');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">월 수령액<br>목표</span>
+    <span class="ilabel">월 수령액</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="irppay" value="0" min="0" max="150" step="5" onblur="onBlurFix('irppay')" oninput="syncSlider('irppay');limitCheck('irppay')"><span class="unit-tag">만원</span>
       </div>
@@ -770,7 +762,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="fv-row">
 <div class="irow dc">
   <div class="irow-top">
-    <span class="ilabel">수령 시작<br>나이</span>
+    <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="tage" value="65" min="55" max="80" step="1" onblur="onBlurFix('tage')" oninput="syncSlider('tage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
@@ -796,7 +788,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="fv-row">
 <div class="irow np">
   <div class="irow-top">
-    <span class="ilabel">수령 시작<br>나이</span>
+    <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="npage" value="65" min="60" max="70" step="1" onblur="onBlurFix('npage')" oninput="syncSlider('npage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
@@ -2315,13 +2307,10 @@ applyInputTags();
 
 /* ── 자동 제안 시 입력 필요도 뱃지 표시 ── */
 function applyInputTags(){
-  const REQ  = ['age','ret','life','exp','plimit',
-    'nh','nhm','nhstart','nhend','nhprin',
-    'mf','mfm','mfstart','mfend','mfprin',
-    'irp','irpy','irpstart','irpend',
-    'tirp','tirptax','np','npage','isa','isay','isastart','isaend'];
+  // 자동설계가 채워주는 필드만 표시(회색 배경·글자색)로 구분 — REQ/OPT 배지·색띠·범례는
+  // "복잡해 보인다"는 피드백으로 제거하고, 수동 입력값과 확실히 구분되어야 하는
+  // 자동계산 필드 표시만 남김
   const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','tage','tm'];
-  const OPT  = ['rnh','rmf','rirp','rtirp','risa','inf'];
 
   function tag(id, cls){
     const el = document.getElementById(id);
@@ -2330,21 +2319,7 @@ function applyInputTags(){
     if(!row) return;
     row.classList.add(cls);
   }
-  REQ.forEach(id=>tag(id,'tag-req'));
   AUTO.forEach(id=>tag(id,'tag-auto'));
-  OPT.forEach(id=>tag(id,'tag-opt'));
-
-  // 범례를 패널 ① 최상단에 삽입
-  const panel1 = document.querySelector('.panel-title');
-  if(panel1 && !document.querySelector('.itag-legend')){
-    const legend = document.createElement('div');
-    legend.className = 'itag-legend';
-    legend.innerHTML =
-      '<span><i class="sw" style="background:#F59E0B"></i>필수입력</span>'+
-      '<span><i class="sw" style="background:#9CA3AF;border:1px dashed #9CA3AF"></i>자동계산(제안 후 채워짐)</span>'+
-      '<span><i class="sw" style="background:#60A5FA"></i>선택(기본값 OK)</span>';
-    panel1.insertAdjacentElement('afterend', legend);
-  }
 }
 
 </script>
