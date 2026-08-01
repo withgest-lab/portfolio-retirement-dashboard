@@ -767,6 +767,14 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="tirp-r" min="0" max="100000" step="1000" value="32000"  oninput="syncInput('tirp');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
+    <span class="ilabel">연간 DC 적립액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tdc" value="0" min="0" max="3000" step="50" onblur="onBlurFix('tdc')" oninput="syncSlider('tdc');scheduleUpd()"><span class="unit-tag">만원</span>
+      </div>
+  </div>
+  <input type="range" id="tdc-r" min="0" max="3000" step="50" value="0" oninput="syncInput('tdc');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
     <span class="ilabel">퇴직소득세 추정치<br>(일시금 기준)</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="tirptax" value="3200" min="0" max="30000" step="100" onblur="onBlurFix('tirptax')" oninput="syncSlider('tirptax');scheduleUpd()"><span class="unit-tag">만원</span>
@@ -1209,15 +1217,6 @@ function tirpTaxDiscount(withdrawalYear){
   return 0.3;
 }
 
-/* ── 은퇴 시점 미래가치 계산 (월복리, 퇴직IRP 잔액 운용용) ── */
-function calcFV(pv, monthly, years, annualR){
-  const rm = annualR/100/12;
-  const n  = Math.max(0, Math.round(years*12));
-  if(rm===0) return Math.max(0, Math.round(pv + monthly*n));
-  const grow = Math.pow(1+rm, n);
-  return Math.max(0, Math.round(pv*grow + monthly*(grow-1)/rm));
-}
-
 /* ── 물가상승 반영 연금(Growing Annuity) PMT — 연단위 인출 구조 ──
    simulate()의 stepBalance()는 인출액을 "해당 나이의 1년 동안 12회 동일액"으로 적용하고,
    매년(나이가 바뀔 때) infMul=(1+물가)^(연차)만큼 한 번에 점프 증액한다.
@@ -1352,7 +1351,6 @@ function limitCheck(changed){
 function autoSuggest(){
   const p   = getP();
   const adj = SA.base; // 자동설계는 항상 기본 시나리오 기준으로 산정
-  const yrs = Math.max(0, p.ret - p.age);
   const monLimit = Math.round(p.plimit / 12);
   const gapYrs   = Math.max(1, p.npage - p.ret);
 
@@ -1365,7 +1363,8 @@ function autoSuggest(){
   const mfFV = calcMonthlyDepositFV(p.mf, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
   // IRP FV (autoSuggest)
   const irpFV = calcISA_FV(p.irp, p.irpy, p.age, Math.max(p.age,p.irpstart), Math.min(p.ret-1,p.irpend), p.ret, rIrp);
-  const tirpFV= calcFV(p.tirp, 0,         yrs, rTirp);
+  // 퇴직연금(DC) FV: 현재 잔액 + 은퇴 전까지 매년 회사가 적립하는 DC 적립액(연납입 방식과 동일 패턴)
+  const tirpFV= calcISA_FV(p.tirp, p.tdc, p.age, p.age, p.ret, p.ret, rTirp);
   // ISA FV: 매년 1월 첫째주 일시납 (연초납입 → 12개월 복리)
   const isaFV = calcISA_FV(
     p.isa,
@@ -1693,7 +1692,8 @@ function simulate(p, adj){
     Math.max(p.age, p.irpstart),
     Math.min(p.ret - 1, p.irpend),  // 은퇴 직전 나이까지만 납입
     p.ret, rIrp);
-  const tirpFV = calcFV(p.tirp, 0, yrs, rTirp);
+  // 퇴직연금(DC) FV: 현재 잔액 + 은퇴 전까지 매년 회사가 적립하는 DC 적립액
+  const tirpFV = calcISA_FV(p.tirp, p.tdc, p.age, p.age, p.ret, p.ret, rTirp);
   // ISA FV: 매년 1월 첫째주 일시납 (연초납입 → 12개월 복리)
   const isaFV = calcISA_FV(
     p.isa,
@@ -1821,7 +1821,7 @@ const ALL_FIELDS = [
   'nh','nhm','nhstart','nhend','nhage','nhpay','nhprin',
   'mf','mfm','mfstart','mfend','mfage','mfpay','mfprin',
   'irp','irpy','irpstart','irpend','irpage','irppay',
-  'tirp','tage','tm','tirptax',
+  'tirp','tdc','tage','tm','tirptax',
   'np','npage',
   'isa','isay','isastart','isaend','isaage','isam',
   'rnh','rmf','rirp','rtirp','risa','inf'
@@ -1890,7 +1890,7 @@ function getP(){
     nh:gv('nh'),nhm:gv('nhm'),nhstart:gv('nhstart'),nhend:gv('nhend'),nhage:gv('nhage'),nhpay:gv('nhpay'),nhprin:gv('nhprin'),
     mf:gv('mf'),mfm:gv('mfm'),mfstart:gv('mfstart'),mfend:gv('mfend'),mfage:gv('mfage'),mfpay:gv('mfpay'),mfprin:gv('mfprin'),
     irp:gv('irp'),irpy:gv('irpy'),irpstart:gv('irpstart'),irpend:gv('irpend'),irpage:gv('irpage'),irppay:gv('irppay'),
-    tirp:gv('tirp'),tage:gv('tage'),tm:gv('tm'),tirptax:gv('tirptax'),
+    tirp:gv('tirp'),tdc:gv('tdc'),tage:gv('tage'),tm:gv('tm'),tirptax:gv('tirptax'),
     np:gv('np'),npage:gv('npage'),
     isa:gv('isa'),isay:gv('isay'),isastart:gv('isastart'),isaend:gv('isaend'),isaage:gv('isaage'),isam:gv('isam'),
     plimit:gv('plimit'),
