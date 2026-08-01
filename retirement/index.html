@@ -215,6 +215,13 @@ input[type=range]:hover::-moz-range-thumb{background:#555;}
 hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 .sec-label{font-size:9px;font-weight:700;color:#AAB0BB;margin:8px 0 4px;letter-spacing:.3px;}
 
+/* 수익률·물가상승률: 라벨과 입력칸이 서로 붙어서 자연스러운 폭만 차지하도록(전체폭 늘어짐 방지) */
+.rates-fields{display:flex;flex-wrap:wrap;gap:8px 22px;}
+.rates-fields .irow{margin-bottom:0;}
+.rates-fields .irow-top{display:flex;align-items:center;gap:7px;padding:3px 0;}
+.rates-fields .ilabel{font-size:12px;font-weight:600;color:#555;white-space:nowrap;}
+.rates-fields .ival-input{width:64px;}
+
 /* ── 오른쪽 차트 영역 ── */
 .chart-wrap{background:#fff;border:1px solid #E8EAF0;border-radius:10px;
   padding:11px 13px;margin-bottom:8px;}
@@ -236,7 +243,7 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
   word-break:keep-all;line-height:1.4;} /* 줄바꿈 허용 */
 /* 테이블: 좁은 화면 overflow 방지 */
 .chart-wrap{overflow-x:hidden;}
-table{width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed;}
+table{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
 th{padding:5px 4px;text-align:right;font-weight:600;color:#AAB0BB;
   border-bottom:1.5px solid #eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 th:first-child{text-align:left;}
@@ -267,7 +274,9 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row .irow{margin-bottom:0;}
 .basic-row .irow-top{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:0;}
 .basic-row .ilabel{white-space:nowrap;}
-.basic-row .suggest-btn{width:auto;margin:0 0 0 auto;padding:8px 14px;}
+.basic-row .suggest-btn{width:auto;flex-shrink:0;margin:0 0 0 auto;padding:6px 16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  line-height:1.3;}
 
 /* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ── */
 .acct-grid{display:grid;gap:8px;grid-template-columns:repeat(5,1fr);margin-top:4px;}
@@ -315,8 +324,8 @@ button{font-family:inherit;cursor:pointer;}
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);
   z-index:1000;align-items:center;justify-content:center;padding:16px;}
 .modal-backdrop.show{display:flex;}
-.modal-box{background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:85vh;
-  overflow-y:auto;padding:16px 18px 18px;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+.modal-box{background:#fff;border-radius:14px;max-width:700px;width:100%;max-height:85vh;
+  overflow-y:auto;padding:16px 18px 18px;box-shadow:0 20px 60px rgba(0,0,0,0.25);box-sizing:border-box;}
 .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;
   padding-bottom:8px;border-bottom:2px solid #F0F2F5;}
 .modal-title{font-size:13px;font-weight:700;color:#111;}
@@ -452,7 +461,10 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500"  oninput="syncInput('plimit');scheduleUpd()">
-</div><button class="suggest-btn" style="background:linear-gradient(135deg,#1D9E75,#D85A30);" onclick="autoSuggest()">🎯 세금·건보료 최소화 + 기대수명 맞춤 자동설계</button>
+</div><button class="suggest-btn" style="background:linear-gradient(135deg,#1D9E75,#D85A30);" onclick="autoSuggest()">
+  <span style="font-size:13px;">🎯 자동설계</span>
+  <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
+</button>
 </div>
 <!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. 아래는 상세 계산 근거(선택) -->
 <details class="collapsible" style="margin-top:6px;">
@@ -817,9 +829,10 @@ button{font-family:inherit;cursor:pointer;}
 <details class="collapsible">
   <summary>고급 : 수익률 · 물가상승률 가정</summary>
 <div class="sec-label" style="margin-top:8px;">계좌별 수익률</div>
+<div class="rates-fields">
 <div class="irow nh">
   <div class="irow-top">
-    <span class="ilabel">농협<br>연금저축</span>
+    <span class="ilabel">농협 연금저축</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
@@ -827,7 +840,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
-    <span class="ilabel">미래에셋<br>연금저축</span>
+    <span class="ilabel">미래에셋 연금저축</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
@@ -835,7 +848,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">미래에셋<br>IRP</span>
+    <span class="ilabel">미래에셋 IRP</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
@@ -857,16 +870,20 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
-</div><hr class="div">
+</div>
+</div>
+<hr class="div">
 <div class="sec-label">물가상승률</div>
+<div class="rates-fields">
 <div class="irow exp">
   <div class="irow-top">
-    <span class="ilabel">물가<br>상승률</span>
+    <span class="ilabel">물가상승률</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
   <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
+</div>
 </div>
 </details>
 </div>
