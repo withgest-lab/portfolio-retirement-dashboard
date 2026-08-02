@@ -9,15 +9,18 @@
 <style>
 /* ── 리셋 & 기본 ── */
 *{box-sizing:border-box;margin:0;padding:0;}
+html{--topbar-h:50px;} /* top-bar 실제 높이 — 좁은 화면에서 버튼이 2줄로 줄바꿈되면 JS(syncTopBarPad)가 재조정 */
 html,body{height:100%;}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   background:#F4F6F9;font-size:14px;color:#222;
-  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+  padding-top:var(--topbar-h);} /* top-bar가 fixed로 빠지며 비는 자리 채움 */
 
-/* ── 상단 헤더 ── */
-.top-bar{flex:0 0 auto;display:flex;align-items:center;
+/* ── 상단 헤더 (항상 화면 상단에 고정 — 패널을 펼쳐도 버튼이 계속 보이도록) ── */
+.top-bar{display:flex;align-items:center;
   justify-content:space-between;gap:8px;padding:6px 14px;
-  background:#fff;border-bottom:1px solid #E8EAF0;flex-wrap:wrap;}
+  background:#fff;border-bottom:1px solid #E8EAF0;flex-wrap:wrap;
+  position:fixed;top:0;left:0;right:0;z-index:30;}
 h1{font-size:16px;font-weight:700;color:#111;}
 .subtitle{font-size:11px;color:#999;}
 /* ── 접이식 상세 섹션(민감도 체크·자동설계 근거) ── */
@@ -363,7 +366,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ── 인라인 패널 공용(모달 아님, 대시보드 흐름 안에서 펼침/접힘) — "세금 상식"·"건보료 설계" 둘 다 사용 ── */
 .inline-panel{display:none;flex:0 0 auto;background:#fff;border:1px solid #E8EAF0;border-radius:10px;
-  margin:0 14px 8px;padding:10px 14px 12px;}
+  margin:0 14px 8px;padding:10px 14px 12px;scroll-margin-top:calc(var(--topbar-h) + 6px);}
 .inline-panel.show{display:block;}
 .inline-panel-title{font-size:12px;font-weight:700;color:#333;margin-bottom:4px;}
 .health-ref-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0;padding:5px 8px;background:#F8F9FB;border-radius:6px;}
@@ -2922,6 +2925,15 @@ function upd(){
   // 건보료 설계 패널이 열려 있으면 슬라이더 조작 시에도 실시간 갱신
   renderHealthPanel();
 }
+
+// top-bar가 position:fixed로 화면 상단에 고정되면서 비는 공간을 실제 높이만큼 body 여백으로 채움.
+// 좁은 화면에서 버튼이 2줄로 줄바꿈되어 top-bar가 높아지는 경우까지 대응하기 위해 고정값 대신 매번 측정.
+function syncTopBarPad(){
+  const bar = document.querySelector('.top-bar');
+  if(bar) document.documentElement.style.setProperty('--topbar-h', bar.getBoundingClientRect().height + 'px');
+}
+syncTopBarPad();
+window.addEventListener('resize', syncTopBarPad);
 
 if(!loadState()) upd(); else upd();
 _initLockStates();
