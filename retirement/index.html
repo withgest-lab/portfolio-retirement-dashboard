@@ -11,58 +11,60 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
-  background:#F4F6F9;font-size:13px;color:#222;
+  background:#F4F6F9;font-size:14px;color:#222;
   display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;}
 
 /* ── 상단 헤더 ── */
 .top-bar{flex:0 0 auto;display:flex;align-items:center;
-  justify-content:space-between;gap:8px;padding:8px 14px;
+  justify-content:space-between;gap:8px;padding:6px 14px;
   background:#fff;border-bottom:1px solid #E8EAF0;flex-wrap:wrap;}
-h1{font-size:15px;font-weight:700;color:#111;}
-.subtitle{font-size:10px;color:#999;}
+h1{font-size:16px;font-weight:700;color:#111;}
+.subtitle{font-size:11px;color:#999;}
 /* ── 접이식 상세 섹션(민감도 체크·자동설계 근거) ── */
-.collapsible{font-size:11px;}
+.collapsible{font-size:12px;}
 .collapsible > summary{cursor:pointer;color:#666;font-weight:700;padding:2px 0;list-style:none;}
 .collapsible > summary::-webkit-details-marker{display:none;}
 .collapsible > summary::before{content:'▸ ';}
 .collapsible[open] > summary::before{content:'▾ ';}
 
-/* ── 메트릭 바 ── */
+/* ── 메트릭 바(요약 카드): 세로 높이 최소화 — 라벨 1줄 + 값·부연설명을 한 줄에 같이 표시 ── */
 .metrics-bar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
-  gap:6px;padding:7px 14px;background:#F4F6F9;}
-.mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:8px 10px;}
-.mlabel{font-size:9px;color:#AAB0BB;margin-bottom:2px;}
-.mval{font-size:16px;font-weight:700;line-height:1;}
-.msub{font-size:9px;color:#BBB;margin-top:2px;}
-.badge{display:inline-block;font-size:9px;font-weight:700;
+  gap:6px;padding:6px 14px;background:#F4F6F9;}
+.mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:5px 8px;}
+.mlabel{font-size:9.5px;color:#AAB0BB;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mval-row{display:flex;align-items:baseline;gap:4px;min-width:0;}
+.mval{font-size:16px;font-weight:700;line-height:1.15;white-space:nowrap;}
+.msub{font-size:9px;color:#BBB;margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mval-row .badge{margin-top:0;}
+.badge{display:inline-block;font-size:10px;font-weight:700;
   padding:2px 5px;border-radius:4px;margin-top:2px;}
-.badge-ok{background:#E8F5EE;color:#1D9E75;}
-.badge-warn{background:#FFF3E0;color:#E65100;}
+.badge-ok{background:#E4F9EE;color:#059669;}
+.badge-warn{background:#FFF1DC;color:#C2410C;}
 
 /* ── 플랜 배너 ── */
 .plan-banner{flex:0 0 auto;display:none;overflow:hidden;max-height:0;
-  background:linear-gradient(135deg,#0F172A,#1E3A5F 50%,#0F4C3A);
+  background:linear-gradient(135deg,#0F766E,#0369A1 50%,#6D28D9);
   border-bottom:1px solid rgba(255,255,255,0.08);}
 .plan-banner.show{display:block;max-height:none;padding:10px 14px;}
-.pb-title{font-size:11px;font-weight:700;color:rgba(255,255,255,0.9);
+.pb-title{font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);
   margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;}
 .pb-close{background:transparent;border:none;color:rgba(255,255,255,0.4);
-  font-size:13px;cursor:pointer;padding:0;}
+  font-size:14px;cursor:pointer;padding:0;}
 .pb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;}
 .pb-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
   border-radius:7px;padding:7px 10px;}
-.pb-label{font-size:9px;color:rgba(255,255,255,0.55);margin-bottom:3px;}
-.pb-val{font-size:15px;font-weight:700;}
-.pb-sub{font-size:9px;margin-top:2px;opacity:.7;}
+.pb-label{font-size:10px;color:rgba(255,255,255,0.55);margin-bottom:3px;}
+.pb-val{font-size:16px;font-weight:700;}
+.pb-sub{font-size:10px;margin-top:2px;opacity:.7;}
 .pb-phases{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
 .pb-phase{background:rgba(255,255,255,0.05);border-radius:6px;padding:6px 9px;}
-.pb-phase-title{font-size:9px;font-weight:700;margin-bottom:4px;}
-.pb-phase-row{display:flex;align-items:center;gap:4px;font-size:10px;
+.pb-phase-title{font-size:10px;font-weight:700;margin-bottom:4px;}
+.pb-phase-row{display:flex;align-items:center;gap:4px;font-size:11px;
   color:rgba(255,255,255,0.8);margin-bottom:2px;}
 .pb-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
-.pb-insight{background:rgba(255,255,170,0.1);border:1px solid rgba(255,255,170,0.2);
-  border-radius:6px;padding:5px 9px;margin-top:7px;font-size:10px;
-  color:rgba(255,255,170,0.9);line-height:1.6;}
+.pb-insight{background:rgba(255,214,102,0.16);border:1px solid rgba(255,214,102,0.3);
+  border-radius:6px;padding:5px 9px;margin-top:7px;font-size:11px;
+  color:#FFE9A8;line-height:1.6;}
 
 /* ── 메인 레이아웃: 입력(상단, 가로 활용) → 결과(하단, 전체폭) ── */
 .main-layout{display:flex;flex-direction:column;}
@@ -75,28 +77,28 @@ h1{font-size:15px;font-weight:700;color:#111;}
 
 /* ── 카드 패널 ── */
 .panel{background:#fff;border:1px solid #E8EAF0;border-radius:10px;
-  padding:10px 20px 14px 14px;margin-bottom:8px;}
-.panel-title{font-size:11px;font-weight:700;color:#333;
-  margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid #F0F2F5;}
+  padding:8px 16px 10px 14px;margin-bottom:6px;}
+.panel-title{font-size:12px;font-weight:700;color:#333;
+  margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #F0F2F5;}
 
 /* ── 자동 제안 버튼 ── */
-.suggest-btn{width:100%;padding:8px;font-size:11px;font-weight:700;
+.suggest-btn{width:100%;padding:8px;font-size:12px;font-weight:700;
   border:none;border-radius:8px;cursor:pointer;font-family:inherit;
-  background:linear-gradient(135deg,#1D9E75,#1565C0);color:#fff;
+  background:linear-gradient(135deg,#10B981,#FB923C);color:#fff;
   margin:5px 0 7px;display:flex;align-items:center;justify-content:center;gap:4px;}
 .suggest-btn:hover{opacity:.88;}
-.suggest-result{background:#F0FBF6;border:1px solid #C8EFE0;border-radius:8px;
-  padding:8px 10px;margin-bottom:7px;font-size:10px;color:#085041;display:none;}
+.suggest-result{background:#E4F9EE;border:1px solid #B7ECD3;border-radius:8px;
+  padding:8px 10px;margin-bottom:7px;font-size:11px;color:#047857;display:none;}
 .suggest-result.show{display:block;}
 .suggest-result ul{margin:4px 0 0 12px;line-height:1.8;}
 
 /* ── 포트폴리오 연동 버튼 ── */
-.pf-sync-btn{margin-left:auto;font-size:9px;font-weight:600;padding:3px 8px;border-radius:20px;
+.pf-sync-btn{margin-left:auto;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;
   border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;white-space:nowrap;
   font-family:inherit;opacity:0.85;}
 .pf-sync-btn:hover{opacity:1;}
 .pf-sync-btn:active{transform:scale(0.96);}
-#pfSyncStatus{font-size:10px;color:#8A8A8A;min-height:14px;padding:0 2px 4px;}
+#pfSyncStatus{font-size:11px;color:#8A8A8A;min-height:14px;padding:0 2px 4px;}
 
 /* ── 단일 irow ── */
 .irow{margin-bottom:2px;padding-right:2px;}
@@ -110,20 +112,20 @@ h1{font-size:15px;font-weight:700;color:#111;}
 }
 /* 라벨: 폭 고정(2줄까지 허용, 작게) — 행마다 폭이 달라지지 않도록 auto 대신 고정값 사용 */
 .ilabel{
-  font-size:9px;color:#888;
+  font-size:10px;color:#888;
   white-space:normal;word-break:keep-all;
   line-height:1.3;
 }
 .irow-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0;justify-content:flex-end;}
 
-/* ── 자동계산 필드 구분: 수동 입력값과 확실히 구분되도록 배경·글자색·테두리 모두 회색 처리 ── */
+/* ── 자동계산 필드 구분: 수동 입력값(밝은 색상)과 확실히 구분되도록 무채색 회색만 사용 ── */
 .irow.tag-auto .ival-input,.irow.tag-auto input[type=number]{
-  background:#F3F4F6;color:#9CA3AF;border-color:#D8DCE3;}
+  background:#F1F2F5;color:#98A0AC;border-color:#DDE1E6;}
 
 /* ── 숫자 입력 ── */
 /* 화살표·잠금 제거로 확보된 폭을 입력칸에 배분 (가독성 향상) */
-.ival-input{font-size:13px;font-weight:700;padding:4px 5px;border-radius:6px;
-  width:78px;text-align:center;border-width:1.5px;border-style:solid;
+.ival-input{font-size:14px;font-weight:700;padding:4px 5px;border-radius:6px;
+  width:80px;text-align:center;border-width:1.5px;border-style:solid;
   outline:none;-moz-appearance:textfield;}
 .ival-input::-webkit-inner-spin-button,
 .ival-input::-webkit-outer-spin-button{-webkit-appearance:none;}
@@ -131,8 +133,8 @@ h1{font-size:15px;font-weight:700;color:#111;}
 .ival-input:disabled{cursor:not-allowed;opacity:0.5;}
 button:disabled{cursor:not-allowed !important;}
 /* 폭 고정(만원/세/%) → 단위 텍스트 길이와 무관하게 입력칸 오른쪽 끝이 항상 같은 위치에 오도록 함 */
-.unit-tag{font-size:9px;color:#AAB0BB;white-space:nowrap;
-  width:24px;text-align:left;flex-shrink:0;}
+.unit-tag{font-size:10px;color:#AAB0BB;white-space:nowrap;
+  width:26px;text-align:left;flex-shrink:0;}
 
 /* ── 화살표 & 잠금 버튼 ── */
 .arr-btn{width:19px;height:19px;border:1px solid #D0D3DC;border-radius:4px;
@@ -143,8 +145,8 @@ button:disabled{cursor:not-allowed !important;}
 .lock-btn{width:19px;height:19px;border:1px solid #D0D3DC;border-radius:4px;
   background:#fff;font-size:9px;cursor:pointer;display:flex;align-items:center;
   justify-content:center;padding:0;flex-shrink:0;}
-.lock-btn.locked{background:#FFF8E1;border-color:#EF9F27;}
-.lock-btn.unlocked{background:#E1F5EE;border-color:#5DCAA5;}
+.lock-btn.locked{background:#FFF1DC;border-color:#FBAE55;}
+.lock-btn.unlocked{background:#E4F9EE;border-color:#34D399;}
 /* 슬라이더 전체 숨김 (드래그 조작이 어렵다는 피드백으로 예전부터 비활성화됨 — 숫자 입력만 사용) */
 input[type=range] { display:none !important; }
 input[type=range].locked-range{pointer-events:none;opacity:0.3;}
@@ -163,57 +165,57 @@ input[type=range]::-moz-range-track{
   height:4px;border-radius:2px;background:#E0E2E8;}
 input[type=range]:hover::-webkit-slider-thumb{background:#555;}
 input[type=range]:hover::-moz-range-thumb{background:#555;}
-/* 색상 클래스별 핸들 색상 */
-.nh  input[type=range]::-webkit-slider-thumb{background:#1D9E75;}
-.mf  input[type=range]::-webkit-slider-thumb{background:#0F6E56;}
-.irp input[type=range]::-webkit-slider-thumb{background:#378ADD;}
-.dc  input[type=range]::-webkit-slider-thumb{background:#7F77DD;}
-.np  input[type=range]::-webkit-slider-thumb{background:#EF9F27;}
-.isa input[type=range]::-webkit-slider-thumb{background:#888780;}
-.exp input[type=range]::-webkit-slider-thumb{background:#D85A30;}
-.base-s input[type=range]::-webkit-slider-thumb{background:#AAB0BB;}
-.nh  input[type=range]::-moz-range-thumb{background:#1D9E75;}
-.mf  input[type=range]::-moz-range-thumb{background:#0F6E56;}
-.irp input[type=range]::-moz-range-thumb{background:#378ADD;}
-.dc  input[type=range]::-moz-range-thumb{background:#7F77DD;}
-.np  input[type=range]::-moz-range-thumb{background:#EF9F27;}
-.isa input[type=range]::-moz-range-thumb{background:#888780;}
-.exp input[type=range]::-moz-range-thumb{background:#D85A30;}
-.base-s input[type=range]::-moz-range-thumb{background:#AAB0BB;}
+/* 색상 클래스별 핸들 색상 — 밝고 경쾌한 팔레트(계좌별로 서로 뚜렷이 구분, 회색 계열은 자동입력 전용) */
+.nh  input[type=range]::-webkit-slider-thumb{background:#10B981;}
+.mf  input[type=range]::-webkit-slider-thumb{background:#14B8A6;}
+.irp input[type=range]::-webkit-slider-thumb{background:#0EA5E9;}
+.dc  input[type=range]::-webkit-slider-thumb{background:#8B5CF6;}
+.np  input[type=range]::-webkit-slider-thumb{background:#F97316;}
+.isa input[type=range]::-webkit-slider-thumb{background:#F43F5E;}
+.exp input[type=range]::-webkit-slider-thumb{background:#F04438;}
+.base-s input[type=range]::-webkit-slider-thumb{background:#64748B;}
+.nh  input[type=range]::-moz-range-thumb{background:#10B981;}
+.mf  input[type=range]::-moz-range-thumb{background:#14B8A6;}
+.irp input[type=range]::-moz-range-thumb{background:#0EA5E9;}
+.dc  input[type=range]::-moz-range-thumb{background:#8B5CF6;}
+.np  input[type=range]::-moz-range-thumb{background:#F97316;}
+.isa input[type=range]::-moz-range-thumb{background:#F43F5E;}
+.exp input[type=range]::-moz-range-thumb{background:#F04438;}
+.base-s input[type=range]::-moz-range-thumb{background:#64748B;}
 
 /* ── 색상 토큰 ── */
-.nh  input[type=range]{accent-color:#1D9E75;}
-.mf  input[type=range]{accent-color:#0F6E56;}
-.irp input[type=range]{accent-color:#378ADD;}
-.dc  input[type=range]{accent-color:#7F77DD;}
-.np  input[type=range]{accent-color:#EF9F27;}
-.isa input[type=range]{accent-color:#888780;}
-.exp input[type=range]{accent-color:#D85A30;}
-.base-s input[type=range]{accent-color:#AAB0BB;}
-.nh  .ival-input{color:#085041;background:#E1F5EE;border-color:#5DCAA5;}
-.mf  .ival-input{color:#085041;background:#C8EDE1;border-color:#1D9E75;}
-.irp .ival-input{color:#0C447C;background:#E6F1FB;border-color:#85B7EB;}
-.dc  .ival-input{color:#3C3489;background:#EEEDFE;border-color:#AFA9EC;}
-.np  .ival-input{color:#633806;background:#FAEEDA;border-color:#EF9F27;}
-.isa .ival-input{color:#444441;background:#F1EFE8;border-color:#B4B2A9;}
-.exp .ival-input{color:#712B13;background:#FAECE7;border-color:#F0997B;}
-.base-s .ival-input{color:#5F5E5A;background:#F5F4F2;border-color:#D3D1C7;}
+.nh  input[type=range]{accent-color:#10B981;}
+.mf  input[type=range]{accent-color:#14B8A6;}
+.irp input[type=range]{accent-color:#0EA5E9;}
+.dc  input[type=range]{accent-color:#8B5CF6;}
+.np  input[type=range]{accent-color:#F97316;}
+.isa input[type=range]{accent-color:#F43F5E;}
+.exp input[type=range]{accent-color:#F04438;}
+.base-s input[type=range]{accent-color:#64748B;}
+.nh  .ival-input{color:#047857;background:#E4F9EE;border-color:#34D399;}
+.mf  .ival-input{color:#0F766E;background:#DFF7F3;border-color:#2DD4BF;}
+.irp .ival-input{color:#075985;background:#E0F2FE;border-color:#38BDF8;}
+.dc  .ival-input{color:#6D28D9;background:#F1EAFE;border-color:#B69CFB;}
+.np  .ival-input{color:#9A3412;background:#FFF1DC;border-color:#FBAE55;}
+.isa .ival-input{color:#9D174D;background:#FFE7EE;border-color:#FB7EA0;}
+.exp .ival-input{color:#B42318;background:#FFE8E3;border-color:#FB9080;}
+.base-s .ival-input{color:#334155;background:#EEF2F7;border-color:#A7B4C6;}
 
 /* ── 한도 게이지 ── */
-.limit-gauge-wrap{background:#F0FBF6;border:1px solid #C8EFE0;
+.limit-gauge-wrap{background:#E4F9EE;border:1px solid #B7ECD3;
   border-radius:6px;padding:5px 8px;margin:2px 0 6px;}
 .limit-gauge-info{display:flex;flex-direction:column;gap:2px;
-  font-size:9px;color:#085041;margin-bottom:3px;}
+  font-size:10px;color:#047857;margin-bottom:3px;}
 .limit-gauge-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  color:#085041;opacity:.75;}
-.limit-gauge-val{font-weight:700;font-size:9px;color:#085041;
+  color:#047857;opacity:.75;}
+.limit-gauge-val{font-weight:700;font-size:10px;color:#047857;
   white-space:normal;line-height:1.4;}
 .limit-gauge{height:5px;border-radius:3px;background:#E8EAF0;overflow:hidden;}
 .limit-gauge-fill{height:100%;border-radius:3px;transition:width .3s,background .3s;}
 
 /* ── 구분선 ── */
 hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
-.sec-label{font-size:9px;font-weight:700;color:#AAB0BB;margin:8px 0 4px;letter-spacing:.3px;}
+.sec-label{font-size:10px;font-weight:700;color:#AAB0BB;margin:8px 0 4px;letter-spacing:.3px;}
 
 /* 수익률·물가상승률: 기존처럼 항목을 세로로 한 줄씩 배열하되, 라벨(왼쪽) 폭을
    내용에 맞게 자동으로 잡고 입력칸(오른쪽)을 바로 옆에 세로 정렬시켜
@@ -221,32 +223,53 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 .rates-fields{display:grid;grid-template-columns:max-content max-content;gap:9px 14px;align-items:center;}
 .rates-fields .irow{display:contents;}
 .rates-fields .irow-top{display:contents;}
-.rates-fields .ilabel{font-size:12px;font-weight:600;color:#555;white-space:nowrap;}
+.rates-fields .ilabel{font-size:13px;font-weight:600;color:#555;white-space:nowrap;}
 .rates-fields .irow-ctrl{justify-content:flex-start;}
-.rates-fields .ival-input{width:64px;}
+.rates-fields .ival-input{width:68px;}
 
 /* ── 오른쪽 차트 영역 ── */
 .chart-wrap{background:#fff;border:1px solid #E8EAF0;border-radius:10px;
   padding:11px 13px;margin-bottom:8px;}
+
+/* 차트 본문: 캔버스 + (자산 잔액 탭 전용) 상세 정보 패널을 나란히 배치
+   — 펼침 상태의 넓은 여백을 활용하고, 좁은 화면에서는 자동으로 아래로 쌓임 */
+.chart-body{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;}
+.chart-canvas-wrap{position:relative;flex:2 1 300px;min-width:0;height:255px;}
+.asset-detail{flex:1 1 220px;min-width:200px;max-width:340px;background:#F9FAFB;
+  border:1px solid #E8EAF0;border-radius:9px;padding:10px 12px;overflow-y:auto;max-height:255px;}
+.asset-detail .ad-empty{font-size:10.5px;color:#AAB0BB;}
+.asset-detail .ad-title{font-size:11.5px;font-weight:700;color:#333;margin-bottom:6px;}
+.asset-detail .ad-total{font-size:14px;font-weight:700;color:#7C3AED;margin-bottom:6px;}
+.asset-detail .ad-row{display:flex;align-items:center;gap:5px;font-size:10.5px;color:#555;margin-bottom:3px;}
+.asset-detail .ad-row.sub{padding-left:11px;color:#8A90A0;}
+.asset-detail .ad-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+.asset-detail .ad-why{margin-top:8px;padding-top:7px;border-top:1px dashed #E0E2E8;}
+.asset-detail .ad-why-item{font-size:9.5px;color:#8A90A0;line-height:1.6;margin-bottom:5px;}
+.asset-detail .ad-why-item b{color:#666;}
+@media (max-width:410px){
+  .chart-canvas-wrap{flex-basis:100%;}
+  .asset-detail{flex-basis:100%;max-width:none;max-height:none;}
+}
+
 .legend{display:flex;flex-wrap:wrap;gap:6px;}
-.leg-item{display:flex;align-items:center;gap:3px;font-size:9px;color:#555;}
+.leg-item{display:flex;align-items:center;gap:3px;font-size:10px;color:#555;}
 .leg-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
 .tabs{display:flex;gap:4px;}
-.tab-btn{padding:3px 9px;font-size:10px;border-radius:5px;cursor:pointer;
+.tab-btn{padding:3px 9px;font-size:11px;border-radius:5px;cursor:pointer;
   border:1px solid #ddd;background:#fff;color:#888;font-family:inherit;}
-.tab-btn.on{background:#111;color:#fff;border-color:#111;font-weight:700;}
-.phase-seg{border-radius:4px;padding:5px 6px;font-size:9px;font-weight:700;
+.tab-btn.on{background:#0F766E;color:#fff;border-color:#0F766E;font-weight:700;}
+.phase-seg{border-radius:4px;padding:5px 6px;font-size:10px;font-weight:700;
   line-height:1.5;white-space:pre-line;}
 .phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
 .phase-card{border-radius:7px;padding:8px 9px;min-width:0;} /* min-width:0 → 글자잘림 방지 */
-.phase-card-title{font-size:10px;font-weight:700;margin-bottom:4px;
+.phase-card-title{font-size:11px;font-weight:700;margin-bottom:4px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.phase-card-item{font-size:9px;color:#555;margin-bottom:2px;
+.phase-card-item{font-size:10px;color:#555;margin-bottom:2px;
   display:flex;gap:3px;align-items:flex-start;
   word-break:keep-all;line-height:1.4;} /* 줄바꿈 허용 */
 /* 테이블: 좁은 화면 overflow 방지 */
 .chart-wrap{overflow-x:hidden;}
-table{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed;}
 th{padding:5px 4px;text-align:right;font-weight:600;color:#AAB0BB;
   border-bottom:1.5px solid #eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 th:first-child{text-align:left;}
@@ -254,26 +277,26 @@ td{padding:5px 4px;text-align:right;border-bottom:1px solid #f5f5f5;color:#444;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 td:first-child{text-align:left;}
 tr.cur-row{background:#FAFFFE;}
-.note{font-size:9px;color:#AAB0BB;line-height:1.7;margin-top:6px;word-break:keep-all;}
+.note{font-size:10px;color:#AAB0BB;line-height:1.7;margin-top:6px;word-break:keep-all;}
 button{font-family:inherit;cursor:pointer;}
 
-/* ── 커스텀 툴팁 ── */
+/* ── 커스텀 툴팁: 밝고 화사한 카드형 팝업 ── */
 .chart-tooltip{position:absolute;pointer-events:none;
-  background:rgba(17,17,17,0.9);backdrop-filter:blur(4px);
-  border-radius:9px;padding:9px 12px;font-size:11px;color:#fff;
-  line-height:1.7;box-shadow:0 4px 20px rgba(0,0,0,0.18);
-  min-width:175px;z-index:100;transition:opacity .15s;}
-.chart-tooltip .tt-total{font-size:12px;font-weight:700;margin-bottom:4px;
-  padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.2);}
-.chart-tooltip .tt-exp{font-size:10px;margin-bottom:2px;}
-.chart-tooltip .tt-net{font-size:10px;font-weight:700;margin-bottom:5px;
-  padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.15);}
+  background:#fff;border:1px solid #EEF0F4;
+  border-radius:10px;padding:9px 12px;font-size:12px;color:#334155;
+  line-height:1.7;box-shadow:0 8px 26px rgba(15,23,42,0.14);
+  min-width:180px;z-index:100;transition:opacity .15s;}
+.chart-tooltip .tt-total{font-size:13px;font-weight:700;margin-bottom:4px;
+  padding-bottom:4px;border-bottom:1px solid #F0F2F5;color:#111;}
+.chart-tooltip .tt-exp{font-size:11px;margin-bottom:2px;color:#64748B;}
+.chart-tooltip .tt-net{font-size:11px;font-weight:700;margin-bottom:5px;
+  padding-bottom:4px;border-bottom:1px solid #F0F2F5;}
 .chart-tooltip .tt-row{display:flex;align-items:center;gap:4px;
-  font-size:10px;color:rgba(255,255,255,0.85);}
+  font-size:11px;color:#475569;}
 .chart-tooltip .tt-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
 
 /* ── 기본 정보: 가로 배치 ── */
-.basic-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 16px;}
+.basic-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;}
 .basic-row .irow{margin-bottom:0;}
 .basic-row .irow-top{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:0;}
 .basic-row .ilabel{white-space:nowrap;}
@@ -285,16 +308,16 @@ button{font-family:inherit;cursor:pointer;}
 .acct-grid{display:grid;gap:8px;grid-template-columns:repeat(5,1fr);margin-top:4px;}
 .acct-card{border:1px solid #E8EAF0;border-radius:10px;overflow:hidden;background:#fff;min-width:0;
   display:flex;flex-direction:column;}
-.acct-head{display:flex;align-items:flex-start;gap:5px;font-size:10px;font-weight:700;padding:7px 8px;
+.acct-head{display:flex;align-items:flex-start;gap:5px;font-size:11px;font-weight:700;padding:7px 8px;
   line-height:1.3;word-break:keep-all;}
 .acct-head .dot{width:6px;height:6px;border-radius:2px;flex-shrink:0;margin-top:3px;}
 .acct-head .name{flex:1;min-width:0;}
 .acct-body{padding:6px 7px 7px;display:flex;flex-direction:column;gap:4px;flex:1;}
 .acct-body .irow{margin-bottom:0;padding-right:0;}
 .acct-body .irow-top{display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0;}
-.acct-body .ilabel{font-size:8.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.acct-body .ilabel{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .acct-body .irow-ctrl{justify-content:flex-start;}
-.acct-body .ival-input{width:100%;font-size:11.5px;padding:3px 5px;}
+.acct-body .ival-input{width:100%;font-size:12.5px;padding:3px 5px;}
 .acct-body .unit-tag{width:auto;}
 
 /* 짝을 이루는 필드 2개(수령 시작/월 수령액 등)를 한 줄에 나란히 배치 */
@@ -302,13 +325,13 @@ button{font-family:inherit;cursor:pointer;}
 .fv-row .irow{min-width:0;}
 
 /* 카드 하단 고정 안내 한 줄 — 카드가 늘어난 만큼 생기는 빈 공간을 정보로 채움 */
-.mini-note{margin-top:auto;font-size:8px;color:#8A90A0;line-height:1.5;
+.mini-note{margin-top:auto;font-size:9px;color:#8A90A0;line-height:1.5;
   background:#F0F2F5;border-radius:7px;padding:6px 7px;}
 
 /* ── 사적연금 그룹(농협·미래에셋·IRP) — 1,500만원 한도를 공유하는 3계좌를 하나로 묶음 ── */
 .priv-group{grid-column:span 3;background:transparent;border:1px solid #E8EAF0;border-radius:11px;
   padding:7px;display:flex;flex-direction:column;gap:6px;min-width:0;}
-.priv-group-label{font-size:8.5px;font-weight:700;color:#085041;opacity:.85;padding:0 1px;white-space:nowrap;}
+.priv-group-label{font-size:9.5px;font-weight:700;color:#047857;opacity:.85;padding:0 1px;white-space:nowrap;}
 .priv-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-width:0;}
 
 /* ── 퇴직연금+국민연금 묶음: 내용이 짧은 두 계좌를 한 슬롯에 위/아래로 쌓음 ── */
@@ -321,7 +344,7 @@ button{font-family:inherit;cursor:pointer;}
 .irow-hidden{display:none !important;}
 
 /* ── "세금 상식" 가이드 모달 ── */
-.tax-guide-btn{padding:4px 10px;font-size:10px;border-radius:5px;border:1px solid #E8EAF0;
+.tax-guide-btn{padding:4px 10px;font-size:11px;border-radius:5px;border:1px solid #E8EAF0;
   background:#fff;color:#555;font-weight:700;font-family:inherit;display:inline-flex;align-items:center;gap:4px;}
 .tax-guide-btn:hover{background:#F0F2F5;}
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.55);
@@ -331,11 +354,11 @@ button{font-family:inherit;cursor:pointer;}
   overflow-y:auto;padding:16px 18px 18px;box-shadow:0 20px 60px rgba(0,0,0,0.25);box-sizing:border-box;}
 .modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;
   padding-bottom:8px;border-bottom:2px solid #F0F2F5;}
-.modal-title{font-size:13px;font-weight:700;color:#111;}
-.modal-close{background:transparent;border:none;font-size:16px;color:#AAB0BB;padding:2px 4px;flex-shrink:0;}
+.modal-title{font-size:14px;font-weight:700;color:#111;}
+.modal-close{background:transparent;border:none;font-size:17px;color:#AAB0BB;padding:2px 4px;flex-shrink:0;}
 .guide-sec{margin-bottom:12px;}
-.guide-sec h4{font-size:11px;font-weight:700;color:#1D9E75;margin-bottom:5px;}
-.guide-sec p{font-size:10.5px;color:#555;line-height:1.7;margin-bottom:6px;}
+.guide-sec h4{font-size:12px;font-weight:700;color:#059669;margin-bottom:5px;}
+.guide-sec p{font-size:11.5px;color:#555;line-height:1.7;margin-bottom:6px;}
 .guide-sec p b{color:#222;}
 
 /* ═══ Z Fold 7 반응형 ═══ */
@@ -389,12 +412,12 @@ button{font-family:inherit;cursor:pointer;}
   </div>
 </div>
 
-<!-- 메트릭 바 -->
+<!-- 메트릭 바: 라벨 1줄 + 값(부연설명 인라인) 1줄 = 카드당 2줄로 압축 -->
 <div class="metrics-bar">
-  <div class="mcard"><div class="mlabel">공백기 월 평균수령</div><div class="mval" id="m1" style="color:#1D9E75">-</div><div class="msub" id="m1s">-</div></div>
-  <div class="mcard"><div class="mlabel">완성기 월 평균수령</div><div class="mval" id="m2" style="color:#378ADD">-</div><div class="msub" id="m2s">-</div></div>
-  <div class="mcard"><div class="mlabel">사적연금 연수령(공백기)</div><div class="mval" id="m3">-</div><div id="m3b"></div></div>
-  <div class="mcard"><div class="mlabel">자산 소진 예상</div><div class="mval" id="m4">-</div><div class="msub" id="m4s">-</div></div>
+  <div class="mcard"><div class="mlabel">공백기 월평균</div><div class="mval-row"><span class="mval" id="m1" style="color:#10B981">-</span><span class="msub" id="m1s">-</span></div></div>
+  <div class="mcard"><div class="mlabel">완성기 월평균</div><div class="mval-row"><span class="mval" id="m2" style="color:#0EA5E9">-</span><span class="msub" id="m2s">-</span></div></div>
+  <div class="mcard"><div class="mlabel">사적연금 연수령</div><div class="mval-row"><span class="mval" id="m3">-</span><span id="m3b"></span></div></div>
+  <div class="mcard"><div class="mlabel">자산 소진 예상</div><div class="mval-row"><span class="mval" id="m4">-</span><span class="msub" id="m4s">-</span></div></div>
 </div>
 
 <!-- 플랜 요약 배너 -->
@@ -404,14 +427,14 @@ button{font-family:inherit;cursor:pointer;}
     <button class="pb-close" onclick="document.getElementById('planBanner').classList.remove('show')">✕</button>
   </div>
   <div class="pb-grid">
-    <div class="pb-card"><div class="pb-label">공백기 월 수령 합계</div><div class="pb-val" id="pb-gap-total" style="color:#4ADE80">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">완성기 월 수령 합계</div><div class="pb-val" id="pb-full-total" style="color:#60A5FA">-</div><div class="pb-sub" id="pb-full-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">사적연금 연간 수령</div><div class="pb-val" id="pb-priv-annual" style="color:#FBBF24">-</div><div class="pb-sub" id="pb-priv-tax">-</div></div>
-    <div class="pb-card"><div class="pb-label">은퇴 시점 총 자산</div><div class="pb-val" id="pb-total-fv" style="color:#C084FC">-</div><div class="pb-sub" id="pb-runway">-</div></div>
+    <div class="pb-card"><div class="pb-label">공백기 월 수령 합계</div><div class="pb-val" id="pb-gap-total" style="color:#34D399">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
+    <div class="pb-card"><div class="pb-label">완성기 월 수령 합계</div><div class="pb-val" id="pb-full-total" style="color:#38BDF8">-</div><div class="pb-sub" id="pb-full-vs">-</div></div>
+    <div class="pb-card"><div class="pb-label">사적연금 연간 수령</div><div class="pb-val" id="pb-priv-annual" style="color:#FBAE55">-</div><div class="pb-sub" id="pb-priv-tax">-</div></div>
+    <div class="pb-card"><div class="pb-label">은퇴 시점 총 자산</div><div class="pb-val" id="pb-total-fv" style="color:#A78BFA">-</div><div class="pb-sub" id="pb-runway">-</div></div>
   </div>
   <div class="pb-phases">
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-gap-title" style="color:#FCD34D;">🔶 공백기 인출 순서</div><div id="pb-gap-rows"></div></div>
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-full-title" style="color:#6EE7B7;">🔷 완성기 수입원</div><div id="pb-full-rows"></div></div>
+    <div class="pb-phase"><div class="pb-phase-title" id="pb-gap-title" style="color:#FBAE55;">🔶 공백기 인출 순서</div><div id="pb-gap-rows"></div></div>
+    <div class="pb-phase"><div class="pb-phase-title" id="pb-full-title" style="color:#5EEAD4;">🔷 완성기 수입원</div><div id="pb-full-rows"></div></div>
   </div>
   <div class="pb-insight" id="pb-insight"></div>
 </div>
@@ -464,9 +487,9 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500"  oninput="syncInput('plimit');scheduleUpd()">
-</div><button class="suggest-btn" style="background:linear-gradient(135deg,#1D9E75,#D85A30);" onclick="autoSuggest()">
+</div><button class="suggest-btn" style="background:linear-gradient(135deg,#10B981,#FB923C);" onclick="autoSuggest()">
   <span style="font-size:13px;">🎯 자동설계</span>
-  <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
+  <span style="font-size:9px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
 </button>
 </div>
 <!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. 아래는 상세 계산 근거(선택) -->
@@ -482,8 +505,8 @@ button{font-family:inherit;cursor:pointer;}
 <div id="pfSyncStatus"></div>
 <div class="acct-grid">
 
-<div class="acct-card">
-<div class="acct-head" style="background:#F1EFE8;color:#444441;"><span class="dot" style="background:#888780;"></span><span class="name">① ISA</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('isa')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-card" style="border-color:#FB7EA0;">
+<div class="acct-head" style="background:#FFE7EE;color:#9D174D;"><span class="dot" style="background:#F43F5E;"></span><span class="name">① ISA</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('isa')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow isa">
   <div class="irow-top">
@@ -546,8 +569,8 @@ button{font-family:inherit;cursor:pointer;}
 <div class="priv-group-label">② 사적연금 (연금저축/개인 IRP, 한도 공유 3계좌)</div>
 <div class="priv-cards">
 
-<div class="acct-card" style="border-color:#5DCAA5;">
-<div class="acct-head" style="background:#E1F5EE;color:#085041;"><span class="dot" style="background:#1D9E75;"></span><span class="name">농협</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-card" style="border-color:#34D399;">
+<div class="acct-head" style="background:#E4F9EE;color:#047857;"><span class="dot" style="background:#10B981;"></span><span class="name">농협</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow nh">
   <div class="irow-top">
@@ -613,8 +636,8 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 </div>
 
-<div class="acct-card" style="border-color:#1D9E75;">
-<div class="acct-head" style="background:#C8EDE1;color:#085041;"><span class="dot" style="background:#0F6E56;"></span><span class="name">미래에셋</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-card" style="border-color:#2DD4BF;">
+<div class="acct-head" style="background:#DFF7F3;color:#0F766E;"><span class="dot" style="background:#14B8A6;"></span><span class="name">미래에셋</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow mf">
   <div class="irow-top">
@@ -680,8 +703,8 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 </div>
 
-<div class="acct-card" style="border-color:#85B7EB;">
-<div class="acct-head" style="background:#E6F1FB;color:#0C447C;"><span class="dot" style="background:#378ADD;"></span><span class="name">IRP</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-card" style="border-color:#38BDF8;">
+<div class="acct-head" style="background:#E0F2FE;color:#075985;"><span class="dot" style="background:#0EA5E9;"></span><span class="name">IRP</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow irp">
   <div class="irow-top">
@@ -743,18 +766,18 @@ button{font-family:inherit;cursor:pointer;}
 
 <div class="limit-gauge-wrap">
   <div class="limit-gauge-info">
-    <span class="limit-gauge-label">사적연금 합계 (농협+미래에셋+IRP)</span>
+    <span class="limit-gauge-label">사적연금 합계 (농협 연금저축+미래에셋 연금저축+개인 IRP)</span>
     <span class="limit-gauge-val" id="gauge-text">-</span>
   </div>
-  <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#1D9E75;"></div></div>
+  <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#10B981;"></div></div>
 </div>
 
 </div><!-- priv-group -->
 
 <div class="stack-group">
 
-<div class="acct-card" style="border-color:#AFA9EC;">
-<div class="acct-head" style="background:#EEEDFE;color:#3C3489;"><span class="dot" style="background:#7F77DD;"></span><span class="name">③ 퇴직연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-card" style="border-color:#B69CFB;">
+<div class="acct-head" style="background:#F1EAFE;color:#6D28D9;"><span class="dot" style="background:#8B5CF6;"></span><span class="name">③ 퇴직연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow dc">
   <div class="irow-top">
@@ -803,8 +826,8 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 </div>
 
-<div class="acct-card" style="border-color:#EF9F27;">
-<div class="acct-head" style="background:#FAEEDA;color:#633806;"><span class="dot" style="background:#EF9F27;"></span><span class="name">④ 국민연금</span></div>
+<div class="acct-card" style="border-color:#FBAE55;">
+<div class="acct-head" style="background:#FFF1DC;color:#9A3412;"><span class="dot" style="background:#F97316;"></span><span class="name">④ 국민연금</span></div>
 <div class="acct-body">
 <div class="fv-row">
 <div class="irow np">
@@ -895,7 +918,6 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 </details>
 </div>
-<div style="height:16px;"></div>
 
 </div><!-- left-panel -->
 
@@ -908,9 +930,12 @@ button{font-family:inherit;cursor:pointer;}
       </div>
       <div class="legend" id="chart-legend"></div>
     </div>
-    <div style="position:relative;width:100%;height:255px;">
-      <canvas id="mainChart"></canvas>
-      <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
+    <div class="chart-body">
+      <div class="chart-canvas-wrap">
+        <canvas id="mainChart"></canvas>
+        <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
+      </div>
+      <div class="asset-detail" id="assetDetail" style="display:none;"></div>
     </div>
   </div>
   <div class="chart-wrap">
@@ -944,7 +969,7 @@ button{font-family:inherit;cursor:pointer;}
     </div>
     <div class="guide-sec">
       <h4>① 연금 세금 적게 내는 법</h4>
-      <p><b>사적연금(연금저축+IRP) 저율분리과세</b> — 연 1,500만원까지는 나이에 따라 5.5%(55~70세) → 4.4%(70~80세) → 3.3%(80세 이상)의 낮은 세율만 적용됩니다. 한도를 넘으면 16.5% 분리과세이거나 다른 소득과 합쳐 종합과세될 수 있어, 여러 계좌를 합쳐 한도 안에서 받는 게 유리합니다.</p>
+      <p><b>사적연금(연금저축+IRP) 저율분리과세</b> — 연 1,500만원까지는 나이에 따라 5.5%(70세 미만) → 4.4%(70~80세) → 3.3%(80세 이상)의 낮은 세율만 적용됩니다(소득세+지방소득세 포함 실제 원천징수율 기준). 한도를 넘으면 16.5% 분리과세이거나 다른 소득과 합쳐 종합과세될 수 있어, 여러 계좌를 합쳐 한도 안에서 받는 게 유리합니다.</p>
       <p><b>ISA 비과세</b> — 만기 수익 200만원(서민형 400만원)까지 세금이 없고, 초과분만 9.9%로 낮게 과세됩니다. 3년마다 새 계좌를 시작하면 비과세 한도를 반복해서 쓸 수 있습니다.</p>
       <p><b>퇴직소득세 감면</b> — 퇴직금을 일시금 대신 연금으로 나눠 받으면, 실제로 받은 햇수(수령연차)가 쌓일수록 세금이 더 깎입니다(1~10년차 30%, 11~20년차 40%, 21년차 이상 50% 감면). 그래서 이 대시보드는 무조건 늦게 시작하는 대신, 기대수명까지 받는 햇수를 최대한 늘려 세금이 최소가 되는 시점을 자동으로 계산합니다.</p>
     </div>
@@ -963,15 +988,50 @@ button{font-family:inherit;cursor:pointer;}
 
 <script>
 const C={
-  nh:  {fill:'rgba(29,158,117,0.88)', line:'#1D9E75'},
-  mf:  {fill:'rgba(15,110,86,0.75)',  line:'#0F6E56'},
-  irp: {fill:'rgba(55,138,221,0.85)', line:'#378ADD'},
-  dc:  {fill:'rgba(127,119,221,0.85)',line:'#7F77DD'},
-  np:  {fill:'rgba(239,159,39,0.88)', line:'#EF9F27'},
-  isa: {fill:'rgba(136,135,128,0.75)',line:'#888780'},
-  prin:{fill:'rgba(244,194,75,0.85)', line:'#D4A017'},
-  exp: {line:'#D85A30'},
+  nh:  {fill:'rgba(16,185,129,0.85)', line:'#10B981'},
+  mf:  {fill:'rgba(20,184,166,0.80)', line:'#14B8A6'},
+  irp: {fill:'rgba(14,165,233,0.85)', line:'#0EA5E9'},
+  dc:  {fill:'rgba(139,92,246,0.85)', line:'#8B5CF6'},
+  np:  {fill:'rgba(249,115,22,0.88)', line:'#F97316'},
+  isa: {fill:'rgba(244,63,94,0.78)',  line:'#F43F5E'},
+  prin:{fill:'rgba(234,179,8,0.85)',  line:'#EAB308'},
+  exp: {line:'#F04438'},
 };
+
+/* ── 차트에서 툴팁이 뜬 항목(년도)을 시각적으로 강조 ──
+   막대(월 현금흐름): 해당 년도 열 전체에 옅은 음영 + 상단 강조선
+   선(자산 잔액): 해당 지점에 세로 기준선(크로스헤어) */
+let _activeIdx = null;
+const activeIndexHighlightPlugin = {
+  id: 'activeIndexHighlight',
+  afterDatasetsDraw(chart){
+    if(_activeIdx === null || _activeIdx === undefined) return;
+    const meta = chart.getDatasetMeta(0);
+    const el = meta && meta.data && meta.data[_activeIdx];
+    const area = chart.chartArea;
+    if(!el || !area) return;
+    const ctx = chart.ctx;
+    ctx.save();
+    if(chart.config.type === 'bar'){
+      const w = (el.width || 30) + 4;
+      const left = el.x - w/2;
+      ctx.fillStyle = 'rgba(17,17,17,0.07)';
+      ctx.fillRect(left, area.top, w, area.bottom - area.top);
+      ctx.fillStyle = 'rgba(17,17,17,0.35)';
+      ctx.fillRect(left, area.top, w, 2);
+    } else {
+      ctx.strokeStyle = 'rgba(17,17,17,0.28)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      ctx.moveTo(el.x, area.top);
+      ctx.lineTo(el.x, area.bottom);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+};
+Chart.register(activeIndexHighlightPlugin);
 
 /* ── 초기 잠금 상태 UI 적용 (납입종료 나이 4개 필드만 은퇴나이 자동추종 대상) ── */
 function _initLockStates(){
@@ -1519,17 +1579,17 @@ function autoSuggest(){
   // 퇴직IRP 설명(상세 본문) — <li> 없이 내용만 만들어두고, 실제 시작 시점(공백기/완성기)에
   // 맞는 목록에서 각자 다른 <li> 래퍼로 감싸 재사용한다
   const tirpDetailBody = `퇴직IRP <b>${tage}세~ 월 ${tirpMonSug}만</b>(오늘 기준) → ${p.life}세 정확히 소진(물가증액 반영) · 한도 무관·퇴직소득세 분류과세
-    <div style="font-size:8px;color:#888;margin-top:1px;">추정 퇴직소득세 총액 약 ${Math.round(tirpOpt.totalTax).toLocaleString()}만원 — 수령연차가 쌓일수록 감면이 커져(1~10년차 30%·11~20년차 40%·21년차+ 50%), ${p.ret}~${Math.min(80,p.life-1)}세 사이에서 세금이 최소가 되는 시점으로 자동 계산됨</div>`;
+    <div style="font-size:9px;color:#888;margin-top:1px;">추정 퇴직소득세 총액 약 ${Math.round(tirpOpt.totalTax).toLocaleString()}만원 — 수령연차가 쌓일수록 감면이 커져(1~10년차 30%·11~20년차 40%·21년차+ 50%), ${p.ret}~${Math.min(80,p.life-1)}세 사이에서 세금이 최소가 되는 시점으로 자동 계산됨</div>`;
   const tirpDetailLi = `<li>${tirpDetailBody}</li>`;
 
   const box = document.getElementById('suggest-box');
   box.className = 'suggest-result show';
   box.innerHTML = `<strong>🎯 세금·건보료 최소화 + ${p.life}세(기대수명) 맞춤 자동설계</strong>
-<div style="font-size:8px;color:#888;margin:2px 0 4px;">※ 아래 금액은 모두 "오늘(${p.age}세) 기준 실질 가치"이며, 실제로는 매년 물가상승률(${infR}%)만큼 명목 인출액이 증가합니다. 생활비 목표선과 동일 기준으로 비교 가능합니다.</div>
-<div style="margin:5px 0 3px;font-size:9px;font-weight:700;">▸ 공백기 (${p.ret}~${p.npage-1}세) — 인출 우선순위 ① ISA ② 안세공 ③ 미래에셋 ④ 농협</div>
+<div style="font-size:9px;color:#888;margin:2px 0 4px;">※ 아래 금액은 모두 "오늘(${p.age}세) 기준 실질 가치"이며, 실제로는 매년 물가상승률(${infR}%)만큼 명목 인출액이 증가합니다. 생활비 목표선과 동일 기준으로 비교 가능합니다.</div>
+<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 공백기 (${p.ret}~${p.npage-1}세) — 인출 우선순위 ① ISA ② 안세공 ③ 미래에셋 ④ 농협</div>
 <ul>
   <li>① ISA <b>${p.ret}세~ 월 ${isaFinal}만</b>(오늘 기준) → 비과세·건보료 없음, ${p.npage-1}세까지 물가증액 소진
-    <div style="font-size:8px;color:#888;margin-top:1px;">
+    <div style="font-size:9px;color:#888;margin-top:1px;">
       3년 만기 ${isaC.cycles}회 반복 · 총 비과세 수익 ${isaExempt}만원
       ${isaTaxableGain > 0
         ? '· 과세 수익 '+Math.round(isaTaxableGain)+'만원 × 9.9% = 세금 '+isaC.totalTax+'만원'
@@ -1540,12 +1600,12 @@ function autoSuggest(){
   <li>③ 미래에셋 <b>${p.ret}세~ 월 ${mfMon}만</b>(오늘 기준) → ${p.npage-1}세까지 물가증액 소진</li>
   <li>④ 농협 <b>${p.ret}세~ 월 ${nhMon}만</b>(오늘 기준) → ${p.life}세까지 물가증액 분산</li>
   ${tirpInGap ? `<li>(별도 트랙, 한도 무관) ${tirpDetailBody}</li>` : ''}
-  <li>공백기 첫해 월 합계 <b>${gapTotalWithPrin}만원</b>${prinMon>0?' <span style="opacity:.7;font-size:8px;">(연금자산 ${gapTotal}만 + 안세공 ${prinMon}만)</span>':''}
-    <div style="font-size:8px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${gapVsExp>=0?'+'+gapVsExp+'만 여유':gapVsExp+'만 부족'} (오늘 기준, 참고)</div>
+  <li>공백기 첫해 월 합계 <b>${gapTotalWithPrin}만원</b>${prinMon>0?' <span style="opacity:.7;font-size:9px;">(연금자산 ${gapTotal}만 + 안세공 ${prinMon}만)</span>':''}
+    <div style="font-size:9px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${gapVsExp>=0?'+'+gapVsExp+'만 여유':gapVsExp+'만 부족'} (오늘 기준, 참고)</div>
   </li>
   <li>공백기 사적연금 연 <b>${(privGap*12).toLocaleString()}만</b> ${privGap*12 <= p.plimit ? '→ '+pensionTaxRate(p.ret)+'% 분리과세 ✓' : '⚠️ 한도 초과 → 16.5% 분리과세 또는 종합과세'}</li>
 </ul>
-<div style="margin:5px 0 3px;font-size:9px;font-weight:700;">▸ 완성기 (${p.npage}~${p.life}세)</div>
+<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 완성기 (${p.npage}~${p.life}세)</div>
 <ul>
   <li>국민연금 <b>${p.npage}세 정상 수령</b> → 조기수령 시 영구 감액 (국민연금은 별도로 매년 자동 물가 연동)</li>
   ${tirpInGap
@@ -1554,13 +1614,13 @@ function autoSuggest(){
   <li>IRP개인납입 <b>${irpStartAge}세~ 월 ${irpMon}만</b>(오늘 기준) → 미래에셋 소진 후 개시, ${p.life}세까지 물가증액 분산${irpMon === 0 ? ' (잔액 없거나 한도 소진)' : ''}</li>
   <li>농협 <b>${p.ret}세~ 월 ${nhMon}만</b>(오늘 기준, 공백기와 동일율 계속) → ${p.life}세까지 물가증액 분산</li>
   <li>완성기 첫해 월 합계 <b>약 ${fullTotal}만원</b>
-    <div style="font-size:8px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${fullVsExp>=0?'+'+fullVsExp+'만 여유':fullVsExp+'만 부족'} (오늘 기준, 참고)</div>
+    <div style="font-size:9px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${fullVsExp>=0?'+'+fullVsExp+'만 여유':fullVsExp+'만 부족'} (오늘 기준, 참고)</div>
   </li>
   <li>완성기 사적연금 연 <b>${(privFull*12).toLocaleString()}만</b> ${privFull*12 <= p.plimit ? '→ '+pensionTaxRate(p.npage)+'% 분리과세 ✓' : '⚠️ 한도 초과 → 16.5% 분리과세 또는 종합과세'}</li>
 </ul>
-${healthWarn ? `<div style="background:#FEF3C7;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:9px;color:#92400E;">⚠️ 국민연금 연 <b>${Math.round(annualPension).toLocaleString()}만원</b> → 2,000만 초과 시 건보료 피부양자 탈락<br><span style="opacity:.8;">※ 퇴직IRP·연금저축·IRP개인납입·ISA는 사적연금으로 합산 제외</span></div>` : ''}
-${nhLimited ? `<div style="background:#FFF3E0;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:9px;color:#E65100;">⚠️ 미래에셋(이론상 월 ${mfMaxMon}만)과 농협(이론상 월 ${nhMaxMon}만)의 합이 사적연금 한도(연 ${p.plimit.toLocaleString()}만 = 월 ${monLimit}만)를 초과하여, 두 계좌 모두 ${Math.round(mfNhScale*100)}% 비율로 축소해 미래에셋 월 ${mfMon}만 · 농협 월 ${nhMon}만으로 인출합니다. 그 결과 두 계좌 모두 ${p.life}세보다 더 늦게 소진되며, ${p.life}세 시점 잔여자산이 약 <b>${leftoverAsset}억원</b> 남을 것으로 예상됩니다. (한도 초과 인출 시 16.5%/종합과세 적용 가능)</div>` : ''}
-<div style="margin-top:5px;padding-top:4px;border-top:1px dashed #C8EFE0;font-size:9px;color:#5F5E5A;">
+${healthWarn ? `<div style="background:#FFF1DC;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#9A3412;">⚠️ 국민연금 연 <b>${Math.round(annualPension).toLocaleString()}만원</b> → 2,000만 초과 시 건보료 피부양자 탈락<br><span style="opacity:.8;">※ 퇴직IRP·연금저축·IRP개인납입·ISA는 사적연금으로 합산 제외</span></div>` : ''}
+${nhLimited ? `<div style="background:#FFF1DC;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#9A3412;">⚠️ 미래에셋(이론상 월 ${mfMaxMon}만)과 농협(이론상 월 ${nhMaxMon}만)의 합이 사적연금 한도(연 ${p.plimit.toLocaleString()}만 = 월 ${monLimit}만)를 초과하여, 두 계좌 모두 ${Math.round(mfNhScale*100)}% 비율로 축소해 미래에셋 월 ${mfMon}만 · 농협 월 ${nhMon}만으로 인출합니다. 그 결과 두 계좌 모두 ${p.life}세보다 더 늦게 소진되며, ${p.life}세 시점 잔여자산이 약 <b>${leftoverAsset}억원</b> 남을 것으로 예상됩니다. (한도 초과 인출 시 16.5%/종합과세 적용 가능)</div>` : ''}
+<div style="margin-top:5px;padding-top:4px;border-top:1px dashed #B7ECD3;font-size:10px;color:#64748B;">
   💡 사적연금(퇴직IRP·연금저축·IRP개인납입·ISA)은 건보료 피부양자 소득 합산 제외 → 국민연금만 2,000만원 기준 적용<br>
   🎯 모든 계좌는 ${p.life}세(기대수명) 시점 0원에 맞춰 매년 물가상승률만큼 인출액을 증액합니다.${nhLimited ? ' 단, 미래에셋·농협은 사적연금 한도 제약으로 비례 축소되어 일부 잔여자산이 남습니다.' : ''}
 </div>`;
@@ -1591,47 +1651,47 @@ function showPlanBanner(d){
   const gapNet  = d.gapTotalWithPrin - d.target;
   document.getElementById('pb-gap-vs').textContent     =
     (gapNet>=0 ? '✅ 생활비 대비 +'+gapNet+'만 여유' : '⚠️ 생활비 대비 '+gapNet+'만 부족');
-  document.getElementById('pb-gap-vs').style.color     = gapNet>=0?'#4ADE80':'#FC8181';
+  document.getElementById('pb-gap-vs').style.color     = gapNet>=0?'#34D399':'#F87171';
 
   const fullNet = d.fullTotal - d.target;
 
   document.getElementById('pb-full-total').textContent = d.fullTotal+'만원/월';
   document.getElementById('pb-full-vs').textContent    =
     (fullNet>=0 ? '✅ 생활비 대비 +'+fullNet+'만 여유' : '⚠️ 생활비 대비 '+fullNet+'만 부족');
-  document.getElementById('pb-full-vs').style.color    = fullNet>=0?'#60A5FA':'#FC8181';
+  document.getElementById('pb-full-vs').style.color    = fullNet>=0?'#38BDF8':'#F87171';
 
   const pct = Math.round(d.annualPriv/p.plimit*100);
   document.getElementById('pb-priv-annual').textContent = d.annualPriv.toLocaleString()+'만원/년';
   document.getElementById('pb-priv-tax').textContent    =
     (d.limitOk ? '✅ 한도 '+pct+'% → '+pensionTaxRate(d.ret)+'% 분리과세' : '⚠️ 한도 '+pct+'% 초과 확인 필요');
-  document.getElementById('pb-priv-tax').style.color   = d.limitOk?'#FBBF24':'#FC8181';
+  document.getElementById('pb-priv-tax').style.color   = d.limitOk?'#FBAE55':'#F87171';
 
   document.getElementById('pb-total-fv').textContent   = fmtW(res.totalFV)+'원';
   const rwOk = res.runway === p.life;
   document.getElementById('pb-runway').textContent     =
     rwOk ? '✅ '+p.life+'세까지 자산 유지' : '⚠️ '+res.runway+'세 자산 소진';
-  document.getElementById('pb-runway').style.color     = rwOk?'#C084FC':'#FC8181';
+  document.getElementById('pb-runway').style.color     = rwOk?'#A78BFA':'#F87171';
 
   // 퇴직IRP는 세금 최적화 결과에 따라 공백기부터 시작할 수도 있어, 실제 시작 시점에
   // 맞는 목록(공백기/완성기)에만 넣는다(d.tage < d.npage 면 공백기 목록에)
   const tirpInGapBanner = d.tage < d.npage;
-  const tirpItem = {dot:'#7F77DD', label:'퇴직IRP', val:d.tirpMonSug+'만', note:d.tage+'세~ · 한도무관·퇴직소득세 분류과세'};
+  const tirpItem = {dot:'#A78BFA', label:'퇴직IRP', val:d.tirpMonSug+'만', note:d.tage+'세~ · 한도무관·퇴직소득세 분류과세'};
 
   // 공백기 인출 순서
   document.getElementById('pb-gap-title').textContent =
     '🔶 공백기 ('+d.ret+'~'+d.npage+'세) 인출 순서';
   const gapItems = [
-    {dot:'#888780', label:'🥇 ISA', val:d.isaFinal+'만', note:'비과세·건보료 없음'},
-    {dot:'#0F6E56', label:'🥈 미래에셋', val:d.mfMon+'만', note:'잔액 작은 것 먼저'},
-    {dot:'#1D9E75', label:'🥉 농협', val:d.nhMon+'만', note:'큰 잔액 장기 분산'},
-    {dot:'#378ADD', label:'IRP개인납입', val:d.irpMon > 0 ? d.irpMon+'만' : '준비 중', note:d.irpStartAge+'세~'},
+    {dot:'#FB7185', label:'🥇 ISA', val:d.isaFinal+'만', note:'비과세·건보료 없음'},
+    {dot:'#5EEAD4', label:'🥈 미래에셋', val:d.mfMon+'만', note:'잔액 작은 것 먼저'},
+    {dot:'#34D399', label:'🥉 농협', val:d.nhMon+'만', note:'큰 잔액 장기 분산'},
+    {dot:'#38BDF8', label:'IRP개인납입', val:d.irpMon > 0 ? d.irpMon+'만' : '준비 중', note:d.irpStartAge+'세~'},
   ];
   if(tirpInGapBanner) gapItems.push(tirpItem);
   document.getElementById('pb-gap-rows').innerHTML = gapItems.map(it=>
     `<div class="pb-phase-row">
       <span class="pb-dot" style="background:${it.dot}"></span>
       <span><b>${it.label}</b> ${it.val}/월</span>
-      <span style="font-size:9px;color:rgba(255,255,255,0.5);margin-left:3px;">${it.note}</span>
+      <span style="font-size:10px;color:rgba(255,255,255,0.5);margin-left:3px;">${it.note}</span>
     </div>`
   ).join('');
 
@@ -1639,9 +1699,9 @@ function showPlanBanner(d){
   document.getElementById('pb-full-title').textContent =
     '🔷 완성기 ('+d.npage+'세~) 수입원';
   const fullItems = [
-    {dot:'#EF9F27', label:'국민연금', val:p.np+'만', note:d.npage+'세 정상수령'},
-    {dot:'#1D9E75', label:'농협연금저축', val:d.nhMon+'만', note:'전 구간 동일율·물가증액'},
-    {dot:'#378ADD', label:'IRP개인납입', val:d.irpMon+'만', note:d.irpStartAge+'세~ 미래에셋소진후'},
+    {dot:'#FBAE55', label:'국민연금', val:p.np+'만', note:d.npage+'세 정상수령'},
+    {dot:'#34D399', label:'농협연금저축', val:d.nhMon+'만', note:'전 구간 동일율·물가증액'},
+    {dot:'#38BDF8', label:'IRP개인납입', val:d.irpMon+'만', note:d.irpStartAge+'세~ 미래에셋소진후'},
   ];
   // 완성기에도 계속 이어지는 소득이므로 시작 시점과 무관하게 항상 표시(공백기부터 시작했다면 문구만 보완)
   fullItems.splice(1, 0, tirpInGapBanner ? {...tirpItem, note:tirpItem.note+' (공백기부터 계속)'} : tirpItem);
@@ -1649,7 +1709,7 @@ function showPlanBanner(d){
     `<div class="pb-phase-row">
       <span class="pb-dot" style="background:${it.dot}"></span>
       <span><b>${it.label}</b> ${it.val}/월</span>
-      <span style="font-size:9px;color:rgba(255,255,255,0.5);margin-left:3px;">${it.note}</span>
+      <span style="font-size:10px;color:rgba(255,255,255,0.5);margin-left:3px;">${it.note}</span>
     </div>`
   ).join('');
 
@@ -1949,30 +2009,30 @@ function renderAssetTooltip(idx){
   const total = Math.round((privTotal + tirp + isa) * 10) / 10;
 
   tip.innerHTML = `
-    <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 총 자산 <b style="color:#C084FC">${total}억원</b></div>
-    <div style="height:1px;background:rgba(255,255,255,0.15);margin:5px 0;"></div>
+    <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 총 자산 <b style="color:#7C3AED">${total}억원</b></div>
+    <div style="height:1px;background:#F0F2F5;margin:5px 0;"></div>
     <div class="tt-row" style="margin-bottom:4px;">
-      <span class="tt-dot" style="background:#1D9E75"></span>
+      <span class="tt-dot" style="background:#10B981"></span>
       <span style="font-weight:700;">연금저축 합계 ${privTotal}억</span>
     </div>
     <div class="tt-row" style="padding-left:11px;">
-      <span class="tt-dot" style="background:#1D9E75;opacity:.6"></span>
+      <span class="tt-dot" style="background:#10B981;opacity:.6"></span>
       <span>농협: ${nhB}억</span>
     </div>
     <div class="tt-row" style="padding-left:11px;">
-      <span class="tt-dot" style="background:#0F6E56;opacity:.8"></span>
+      <span class="tt-dot" style="background:#14B8A6;opacity:.8"></span>
       <span>미래에셋: ${mfB}억</span>
     </div>
     <div class="tt-row" style="padding-left:11px;margin-bottom:4px;">
-      <span class="tt-dot" style="background:#378ADD;opacity:.8"></span>
+      <span class="tt-dot" style="background:#0EA5E9;opacity:.8"></span>
       <span>IRP개인납입: ${irpB2}억</span>
     </div>
     <div class="tt-row" style="margin-bottom:2px;">
-      <span class="tt-dot" style="background:#7F77DD"></span>
+      <span class="tt-dot" style="background:#8B5CF6"></span>
       <span style="font-weight:700;">퇴직연금: ${tirp}억</span>
     </div>
     <div class="tt-row">
-      <span class="tt-dot" style="background:#888780"></span>
+      <span class="tt-dot" style="background:#F43F5E"></span>
       <span style="font-weight:700;">ISA: ${isa}억</span>
     </div>
   `;
@@ -1991,6 +2051,45 @@ function renderAssetTooltip(idx){
   tip.style.display   = 'block';
   tip.style.opacity   = '0.95';
   tip.style.transition= 'left 0.12s ease';
+
+  _activeIdx = idx;
+  chart.draw();
+  renderAssetDetail(idx);
+}
+
+/* ── 자산 잔액 탭: 선택한 년도의 상세 정보 + "왜 이렇게 움직이나요" 설명을
+   화면 옆 빈 공간에 고정 패널로 표시(호버가 끝나도 마지막 선택 내용이 남아있음 —
+   터치 기기에서 손을 떼도 정보를 계속 볼 수 있게 하기 위함) ── */
+function renderAssetDetail(idx){
+  const panel = document.getElementById('assetDetail');
+  if(!panel || idx < 0 || idx >= _chartRows.length) return;
+  const row = _chartRows[idx];
+  if(!row) return;
+  const p = getP();
+
+  const privTotal = row.privB || 0;
+  const nhB   = row.nhB_억  || 0;
+  const mfB   = row.mfB_억  || 0;
+  const irpB2 = row.irpB_억 || 0;
+  const tirp  = row.tirpB   || 0;
+  const isa   = row.isaB    || 0;
+  const total = Math.round((privTotal + tirp + isa) * 10) / 10;
+
+  panel.innerHTML = `
+    <div class="ad-title">📅 ${row.label} 자산 잔액</div>
+    <div class="ad-total">총 ${total}억원</div>
+    <div class="ad-row"><span class="ad-dot" style="background:#10B981"></span><b>연금저축 합계</b>&nbsp;${privTotal}억</div>
+    <div class="ad-row sub"><span class="ad-dot" style="background:#10B981;opacity:.6"></span>농협 ${nhB}억</div>
+    <div class="ad-row sub"><span class="ad-dot" style="background:#14B8A6;opacity:.8"></span>미래에셋 ${mfB}억</div>
+    <div class="ad-row sub"><span class="ad-dot" style="background:#0EA5E9;opacity:.8"></span>개인IRP ${irpB2}억</div>
+    <div class="ad-row"><span class="ad-dot" style="background:#8B5CF6"></span><b>퇴직연금</b>&nbsp;${tirp}억</div>
+    <div class="ad-row"><span class="ad-dot" style="background:#F43F5E"></span><b>ISA</b>&nbsp;${isa}억</div>
+    <div class="ad-why">
+      <div class="ad-why-item">💡 <b>연금저축(농협·미래에셋·개인IRP)</b>: 은퇴 전엔 납입액+수익률로 계속 불어나다가, 은퇴 후 계좌별로 순서대로(미래에셋→농협·개인IRP) 인출이 시작돼요. 인출액 자체가 "${p.life}세에 정확히 0원"이 되도록 미리 역산된 값이라 완만하게 줄어듭니다.</div>
+      <div class="ad-why-item">💡 <b>퇴직연금</b>: ${p.tage}세부터 매달 정해진 금액을 빼서 쓰기 시작해요. 이 금액도 "${p.life}세에 정확히 소진"되도록 계산돼 있어서, 그 시점부터 잔액이 꾸준히 내려갑니다.</div>
+      <div class="ad-why-item">💡 <b>ISA</b>: ${p.ret}세부터 국민연금 받기 전(공백기)에 집중적으로 인출해서 ${p.npage}세 무렵이면 대부분 소진돼요. 그 이후엔 거의 남지 않는 게 정상입니다.</div>
+    </div>
+  `;
 }
 
 // onHover 콜백 (Chart.js) — 여전히 사용하지만 가장 가까운 포인트 fallback 처리
@@ -2001,36 +2100,40 @@ function showAssetTooltip(evt, activeEls, chart){
 
 /* ── 커스텀 차트 툴팁 ── */
 const C_MAP = {
-  '농협연금저축': '#1D9E75', '미래에셋연금저축': '#0F6E56',
-  'IRP(개인납입)': '#378ADD', '국민연금': '#EF9F27',
-  '퇴직IRP': '#7F77DD', 'ISA인출': '#888780', '안세공 비과세인출': '#D4A017',
+  '농협연금저축': '#10B981', '미래에셋연금저축': '#14B8A6',
+  'IRP(개인납입)': '#0EA5E9', '국민연금': '#F97316',
+  '퇴직IRP': '#8B5CF6', 'ISA인출': '#F43F5E', '안세공 비과세인출': '#EAB308',
 };
 
 function showCustomTooltip(evt, activeEls, chart){
   const tip = document.getElementById('chartTooltip');
   if(!tip) return;
   if(!activeEls || activeEls.length === 0){
-    tip.style.display='none'; return;
+    tip.style.display='none';
+    if(_activeIdx !== null){ _activeIdx = null; if(chart) chart.draw(); }
+    return;
   }
   const idx = activeEls[0].index;
   const row = _chartRows[idx] || null;
   if(!row){ tip.style.display='none'; return; }
+  _activeIdx = idx;
+  if(chart) chart.draw();
 
   const totalInc = row.totalInc || 0;
   const curExp   = row.curExp   || 0;
   const net      = totalInc - curExp;
-  const netColor = net >= 0 ? '#4ADE80' : '#FC8181';
+  const netColor = net >= 0 ? '#059669' : '#DC2626';
   const netLabel = net >= 0 ? `+${net}만 여유` : `${net}만 부족`;
 
   let rows_html = '';
   const items = [
-    {label:'농협연금저축', val:row.nhInc, dot:'#1D9E75'},
-    {label:'미래에셋연금저축', val:row.mfInc, dot:'#0F6E56'},
-    {label:'IRP(개인납입)', val:row.irpInc, dot:'#378ADD'},
-    {label:'국민연금', val:row.npInc, dot:'#EF9F27'},
-    {label:'퇴직IRP', val:row.tirpInc, dot:'#7F77DD'},
-    {label:'ISA인출', val:row.isaInc, dot:'#888780'},
-    {label:'안세공 비과세인출', val:row.prinInc, dot:'#D4A017'},
+    {label:'농협연금저축', val:row.nhInc, dot:'#10B981'},
+    {label:'미래에셋연금저축', val:row.mfInc, dot:'#14B8A6'},
+    {label:'IRP(개인납입)', val:row.irpInc, dot:'#0EA5E9'},
+    {label:'국민연금', val:row.npInc, dot:'#F97316'},
+    {label:'퇴직IRP', val:row.tirpInc, dot:'#8B5CF6'},
+    {label:'ISA인출', val:row.isaInc, dot:'#F43F5E'},
+    {label:'안세공 비과세인출', val:row.prinInc, dot:'#EAB308'},
   ];
   items.forEach(it=>{
     if((it.val||0)>0){
@@ -2039,8 +2142,8 @@ function showCustomTooltip(evt, activeEls, chart){
   });
 
   tip.innerHTML = `
-    <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 월 수령 합계 <b style="color:#4ADE80">${totalInc}만원</b></div>
-    <div class="tt-exp">📉 월 생활비 예측: <b style="color:#FC8181">${curExp}만원</b></div>
+    <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 월 수령 합계 <b style="color:#059669">${totalInc}만원</b></div>
+    <div class="tt-exp">📉 월 생활비 예측: <b style="color:#DC2626">${curExp}만원</b></div>
     <div class="tt-net" style="color:${netColor};">${net>=0?'✅':'⚠️'} ${netLabel}</div>
     ${rows_html}
   `;
@@ -2071,6 +2174,7 @@ document.addEventListener('mousemove', function(e){
   if(e.clientX < rect.left || e.clientX > rect.right ||
      e.clientY < rect.top  || e.clientY > rect.bottom){
     tip.style.display='none';
+    if(_activeIdx !== null){ _activeIdx = null; const c=_assetChartRef||mainChart; if(c) c.draw(); }
     return;
   }
 
@@ -2097,7 +2201,9 @@ document.addEventListener('mousemove', function(e){
     const firstX = meta.data[0]?.x || 0;
     const lastX  = meta.data[meta.data.length-1]?.x || 0;
     if(mouseX < firstX - 20 || mouseX > lastX + 20){
-      tip.style.display='none'; return;
+      tip.style.display='none';
+      if(_activeIdx !== null){ _activeIdx = null; chart.draw(); }
+      return;
     }
     renderAssetTooltip(closestIdx);
   } catch(err){ /* 차트 초기화 중 에러 무시 */ }
@@ -2107,6 +2213,7 @@ let _chartRows = []; // 툴팁용 전역 rows 캐시
 
 function drawChart(rows){
   _chartRows = rows; // 툴팁에서 접근
+  _activeIdx = null; // 재렌더링 시 이전 선택 강조 초기화(인덱스가 더 이상 유효하지 않을 수 있음)
   if(mainChart){ mainChart.destroy(); mainChart=null; }
   const ctx=document.getElementById('mainChart').getContext('2d');
 
@@ -2169,13 +2276,34 @@ function drawChart(rows){
       ]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{enabled:false}},
-        // mousemove 이벤트에서 가장 가까운 포인트 감지
+        // 데스크탑은 mousemove 이벤트로 가장 가까운 포인트 감지(아래),
+        // 터치 기기는 Chart.js 자체 인터랙션이 tap을 정상 인식하도록 onHover도 함께 사용
+        interaction:{mode:'index',intersect:false},
+        onHover:(evt,els)=>{
+          if(els && els.length) renderAssetTooltip(els[0].index);
+          else {
+            const tip=document.getElementById('chartTooltip');
+            if(tip) tip.style.display='none';
+            if(_activeIdx!==null){ _activeIdx=null; if(mainChart) mainChart.draw(); }
+          }
+        },
         scales:{
           x:{ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true},grid:{display:false}},
           y:{ticks:{font:{size:9},callback:v=>v+'억'},grid:{color:'rgba(0,0,0,0.04)'}}
         }}
     });
     _assetChartRef = mainChart; // mousemove 툴팁용 참조 저장
+  }
+
+  // 자산 잔액 탭 전용 상세 패널: 탭에 따라 표시/숨김, 처음 열 때는 은퇴 시점(첫 행)을 기본 선택
+  const detailPanel = document.getElementById('assetDetail');
+  if(detailPanel){
+    if(chartTab==='asset' && rows.length){
+      detailPanel.style.display='block';
+      renderAssetDetail(0);
+    } else {
+      detailPanel.style.display='none';
+    }
   }
 }
 
@@ -2251,7 +2379,7 @@ function upd(){
   const pct2=Math.min(100, Math.round(totalPrivMon/monLimit*100));
   const fill=document.getElementById('gauge-fill');
   fill.style.width=pct2+'%';
-  fill.style.background=pct2>=100?'#D85A30':pct2>=85?'#EF9F27':'#1D9E75';
+  fill.style.background=pct2>=100?'#F04438':pct2>=85?'#F97316':'#10B981';
   document.getElementById('gauge-text').textContent=
     '공백기 월 '+totalPrivMon+'만 · 완성기 월 '+fullPrivMon+'만 / 한도 '+monLimit+'만원 ('+pct2+'%)';
 
@@ -2261,19 +2389,19 @@ function upd(){
 
   // 메트릭 카드
   document.getElementById('m1').textContent=Math.round(res.gapMonthly)+'만';
-  document.getElementById('m1s').textContent=p.ret+'~'+p.npage+'세 평균';
+  document.getElementById('m1s').textContent='('+p.ret+'~'+p.npage+'세)';
   document.getElementById('m2').textContent=Math.round(res.fullMonthly)+'만';
-  document.getElementById('m2s').textContent=p.npage+'세~ 평균';
+  document.getElementById('m2s').textContent='('+p.npage+'세~)';
   document.getElementById('m3').textContent=res.privAnnual.toLocaleString()+'만';
   const p3=Math.round(res.privAnnual/p.plimit*100), ok=p3<=100;
   document.getElementById('m3b').innerHTML='<span class="badge '+(ok?'badge-ok':'badge-warn')+'">'+p3+'% '+(ok?'✓ 안전':'⚠ 초과')+'</span>';
   const m4=document.getElementById('m4');
   if(res.runway===p.life){
-    m4.textContent=p.life+'세+'; m4.style.color='#1D9E75';
-    document.getElementById('m4s').textContent='소진 없음';
+    m4.textContent=p.life+'세+'; m4.style.color='#10B981';
+    document.getElementById('m4s').textContent='(소진 없음)';
   } else {
-    m4.textContent=res.runway+'세'; m4.style.color='#D85A30';
-    document.getElementById('m4s').textContent='자산 소진 시점';
+    m4.textContent=res.runway+'세'; m4.style.color='#F04438';
+    document.getElementById('m4s').textContent='(조기 소진)';
   }
 
   // 차트
@@ -2283,23 +2411,23 @@ function upd(){
   const ts=Math.max(1,p.life-p.age);
   document.getElementById('phase-bar').innerHTML=
     '<div style="display:flex;gap:3px;">'+ [
-      {l:'적립기\n'+p.age+'~'+p.ret+'세',   w:(p.ret-p.age)/ts,    bg:'#EAF3FF',c:'#1565C0'},
-      {l:'공백기\n'+p.ret+'~'+p.npage+'세', w:(p.npage-p.ret)/ts,  bg:'#FFF8E1',c:'#E65100'},
-      {l:'완성기\n'+p.npage+'~'+p.life+'세',w:(p.life-p.npage)/ts, bg:'#E8F5EE',c:'#1D7A50'},
+      {l:'적립기\n'+p.age+'~'+p.ret+'세',   w:(p.ret-p.age)/ts,    bg:'#E0F2FE',c:'#075985'},
+      {l:'공백기\n'+p.ret+'~'+p.npage+'세', w:(p.npage-p.ret)/ts,  bg:'#FFF1DC',c:'#9A3412'},
+      {l:'완성기\n'+p.npage+'~'+p.life+'세',w:(p.life-p.npage)/ts, bg:'#E4F9EE',c:'#047857'},
     ].map(ph=>'<div class="phase-seg" style="width:'+Math.max(ph.w*100,8)+'%;background:'+ph.bg+';color:'+ph.c+';">'+ph.l+'</div>').join('')+'</div>';
 
   // 시기별 카드 (실제 시뮬 결과 반영)
   const gR=res.rows.find(r=>r.age===p.ret)||res.rows[0]||{};
   const fR=res.rows.find(r=>r.age===p.npage)||{};
   document.getElementById('phase-cards').innerHTML=[
-    {ph:'적립기',c:'#1565C0',bg:'#EAF3FF',items:[
+    {ph:'적립기',c:'#075985',bg:'#E0F2FE',items:[
       {dot:C.nh.line, t:'농협 연금저축 월 '+p.nhm+'만 납입'},
       {dot:C.mf.line, t:'미래에셋 연금저축 월 '+p.mfm+'만 납입'},
       {dot:C.irp.line,t:'IRP 개인납입 연 '+p.irpy+'만 (일시납)'},
       {dot:C.isa.line,t:'ISA 연 '+p.isay.toLocaleString()+'만 일시납'},
       {dot:C.dc.line, t:'퇴직IRP DC 운용중 (은퇴 후 이전)'},
     ]},
-    {ph:'공백기',c:'#E65100',bg:'#FFF3E0',items:[
+    {ph:'공백기',c:'#9A3412',bg:'#FFF1DC',items:[
       {dot:C.isa.line,t:'ISA 월 '+Math.round(gR.isaInc||0)+'만 ('+p.isaage+'세~) 🥇비과세'},
       {dot:C.mf.line, t:'미래에셋(세공) 월 '+Math.round(gR.mfInc||0)+'만 ('+p.mfage+'세~) 🥈'},
       {dot:C.nh.line, t:'농협(세공) 월 '+Math.round(gR.nhInc||0)+'만 ('+p.nhage+'세~) 🥉'},
@@ -2307,7 +2435,7 @@ function upd(){
       {dot:C.irp.line,t:'IRP 월 '+Math.round(gR.irpInc||0)+'만 ('+p.irpage+'세~)'},
       {dot:C.dc.line, t:'퇴직IRP 계속 운용 → '+p.tage+'세 개시'},
     ]},
-    {ph:'완성기',c:'#1D7A50',bg:'#E8F5EE',items:[
+    {ph:'완성기',c:'#047857',bg:'#E4F9EE',items:[
       {dot:C.np.line, t:'국민연금 월 '+p.np+'만 ('+p.npage+'세~)'},
       {dot:C.nh.line, t:'농협+미래에셋+IRP 연금저축 유지'},
       {dot:C.dc.line, t:'퇴직IRP 월 '+p.tm+'만 ('+p.tage+'세~, 한도무관)'},
@@ -2323,13 +2451,13 @@ function upd(){
   document.getElementById('sc-body').innerHTML=scList.map(s=>{
     const r=scenarioResults[s], a=SA[s], isCur=s==='base', ok=r.runway===p.life;
     return '<tr class="'+(isCur?'cur-row':'')+'">'
-      +'<td style="font-weight:'+(isCur?700:400)+';color:'+(s==='opt'?'#1D7A50':s==='pes'?'#E65100':'#1565C0')+'">'+scL[s]+'</td>'
+      +'<td style="font-weight:'+(isCur?700:400)+';color:'+(s==='opt'?'#047857':s==='pes'?'#9A3412':'#075985')+'">'+scL[s]+'</td>'
       +'<td>'+(p.rnh+a.r)+'%</td>'
       +'<td>'+(p.inf+a.inf)+'%</td>'
       +'<td>'+Math.round(r.gapMonthly)+'만원</td>'
       +'<td>'+Math.round(r.fullMonthly)+'만원</td>'
       +'<td>'+fmtW(r.totalFV)+'원</td>'   /* totalFV는 만원 단위, fmtW가 알아서 변환 */
-      +'<td style="font-weight:700;color:'+(ok?'#1D9E75':'#D85A30')+'">'+(ok?p.life+'세+':r.runway+'세')+'</td>'
+      +'<td style="font-weight:700;color:'+(ok?'#10B981':'#F04438')+'">'+(ok?p.life+'세+':r.runway+'세')+'</td>'
       +'</tr>';
   }).join('');
 }
