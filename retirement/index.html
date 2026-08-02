@@ -1709,8 +1709,15 @@ function autoSuggest(){
   const rNh=p.rnh+adj.r, rMf=p.rmf+adj.r, rIrp=p.rirp+adj.r, rTirp=p.rtirp+adj.r, rIsa=p.risa+adj.r;
   const infR = p.inf+adj.inf; // 물가상승률(연%, 시나리오 반영)
 
-  const nhFV = calcMonthlyDepositFV(p.nh, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
-  const mfFV = calcMonthlyDepositFV(p.mf, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
+  // 안세공(비공제 납입원금)은 "현재 잔액"과 별도로 존재하는 돈이 아니라 그 안에 포함된 금액이므로,
+  // 일반 연금소득 성장분(nhFV/mfFV)을 계산할 땐 미리 빼둬야 같은 돈을 두 번 인출 계획에 잡는 걸 막는다.
+  // (안세공 원금 자체도 계좌 안에서 같이 굴러가므로 은퇴 시점까지는 별도로 불려서 nhPrinFV로 추적)
+  const nhPrinEff = Math.min(p.nhprin||0, p.nh||0);
+  const mfPrinEff = Math.min(p.mfprin||0, p.mf||0);
+  const nhFV = calcMonthlyDepositFV(p.nh - nhPrinEff, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
+  const mfFV = calcMonthlyDepositFV(p.mf - mfPrinEff, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
+  const nhPrinFV = nhPrinEff > 0 ? calcMonthlyDepositFV(nhPrinEff, 0, p.age, p.age, p.age, p.ret, rNh) : 0;
+  const mfPrinFV = mfPrinEff > 0 ? calcMonthlyDepositFV(mfPrinEff, 0, p.age, p.age, p.age, p.ret, rMf) : 0;
   // IRP FV (autoSuggest)
   const irpFV = calcISA_FV(p.irp, p.irpy, p.age, Math.max(p.age,p.irpstart), Math.min(p.ret-1,p.irpend), p.ret, rIrp);
   // 퇴직연금(DC) FV: 현재 잔액 + 은퇴 전까지 매년 회사가 적립하는 DC 적립액(연납입 방식과 동일 패턴)
@@ -1748,9 +1755,9 @@ function autoSuggest(){
   // ① ISA 3년 만기 구조 반영 — 공백기(p.ret~p.npage) 동안 물가증액 소진 (최대치)
   const isaFinal = isaFV > 0 ? Math.round(pmtTodayValue(isaFV, rIsa, p.ret, p.npage-1)) : 0;
 
-  // ② 안세공(비공제 납입원금) — 1,500만원 한도 미포함, 공백기 균등 소진 (명목 고정, 한도 자체가 명목값)
-  const nhPrinMon = p.nhprin > 0 ? Math.round(p.nhprin / (gapYrs*12)) : 0;
-  const mfPrinMon = p.mfprin > 0 ? Math.round(p.mfprin / (gapYrs*12)) : 0;
+  // ② 안세공(비공제 납입원금) — 1,500만원 한도 미포함, 은퇴 시점까지 불어난 금액(nhPrinFV)을 공백기 균등 소진
+  const nhPrinMon = nhPrinFV > 0 ? Math.round(nhPrinFV / (gapYrs*12)) : 0;
+  const mfPrinMon = mfPrinFV > 0 ? Math.round(mfPrinFV / (gapYrs*12)) : 0;
   const prinMon   = nhPrinMon + mfPrinMon;
 
   // ③ 미래에셋 연금저축 — 공백기(p.ret~p.npage-1) 동안 물가증액 소진 시 필요한 PMT 이론치
@@ -2065,8 +2072,14 @@ function simulate(p, adj){
   const rTirp = p.rtirp+adj.r, rIsa = p.risa+adj.r, infR = p.inf+adj.inf;
 
   // ── 은퇴 시점 각 계좌 미래가치 ──
-  const nhFV = calcMonthlyDepositFV(p.nh, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
-  const mfFV = calcMonthlyDepositFV(p.mf, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
+  // 안세공(비공제 원금)은 "현재 잔액"에 이미 포함된 돈이라 일반 연금소득 성장분 계산 전에 빼야
+  // 같은 돈이 연금소득(nhFV)과 안세공 비과세(nhPrinFV) 두 곳에 중복으로 잡히지 않는다.
+  const nhPrinEff = Math.min(p.nhprin||0, p.nh||0);
+  const mfPrinEff = Math.min(p.mfprin||0, p.mf||0);
+  const nhFV = calcMonthlyDepositFV(p.nh - nhPrinEff, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
+  const mfFV = calcMonthlyDepositFV(p.mf - mfPrinEff, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
+  const nhPrinFV = nhPrinEff > 0 ? calcMonthlyDepositFV(nhPrinEff, 0, p.age, p.age, p.age, p.ret, rNh) : 0;
+  const mfPrinFV = mfPrinEff > 0 ? calcMonthlyDepositFV(mfPrinEff, 0, p.age, p.age, p.age, p.ret, rMf) : 0;
   // IRP FV: 매년 1월 일시납, 납입 시작~종료 기간 반영 (은퇴나이 초과 방지)
   const irpFV = calcISA_FV(p.irp, p.irpy, p.age,
     Math.max(p.age, p.irpstart),
@@ -2084,17 +2097,17 @@ function simulate(p, adj){
     p.ret,
     rIsa, 'isa'
   );
-  // 총자산 (은퇴 시점, 만원)
-  const totalFV = nhFV+mfFV+irpFV+tirpFV+isaFV;
+  // 총자산 (은퇴 시점, 만원) — 안세공 몫(nhPrinFV/mfPrinFV)도 실제 보유 자산이므로 합산에 포함
+  const totalFV = nhFV+mfFV+irpFV+tirpFV+isaFV+nhPrinFV+mfPrinFV;
 
   const privLimMon = Math.round(p.plimit/12);
 
-  // 안세공(비공제) 비과세 인출: 공백기(은퇴~국민연금 수령전) 균등 소진
+  // 안세공(비공제) 비과세 인출: 공백기(은퇴~국민연금 수령전) 균등 소진 — 은퇴 시점까지 불어난 nhPrinFV 기준
   const gapYrsSim = Math.max(1, p.npage - p.ret);
   const gapMonSim = gapYrsSim * 12;
-  const nhPrinMonSim = (p.nhprin||0) > 0 ? Math.round(p.nhprin / gapMonSim) : 0;
-  const mfPrinMonSim = (p.mfprin||0) > 0 ? Math.round(p.mfprin / gapMonSim) : 0;
-  let nhPrinB = p.nhprin||0, mfPrinB = p.mfprin||0;
+  const nhPrinMonSim = nhPrinFV > 0 ? Math.round(nhPrinFV / gapMonSim) : 0;
+  const mfPrinMonSim = mfPrinFV > 0 ? Math.round(mfPrinFV / gapMonSim) : 0;
+  let nhPrinB = nhPrinFV, mfPrinB = mfPrinFV;
 
   // 생활비: 현재 나이 기준 → 은퇴 시점까지 물가 반영한 값을 기준으로 이후 추가 적용
   // (p.exp는 현재 기준 생활비이므로, 은퇴까지 yrs년치 물가 먼저 반영)
