@@ -374,12 +374,16 @@ button{font-family:inherit;cursor:pointer;}
 .health-panel{display:none;background:#fff;border:1px solid #E8EAF0;border-radius:10px;
   margin:0 14px 8px;padding:10px 14px 12px;}
 .health-panel.show{display:block;}
-.health-input-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px;margin:6px 0 8px;}
-.health-field{background:#F8F9FB;border:1px solid #E8EAF0;border-radius:7px;padding:6px 8px;}
-.health-field label{display:block;font-size:10px;color:#888;margin-bottom:3px;}
-.health-field input{width:100%;font-size:13px;font-weight:700;padding:4px 5px;border-radius:5px;
-  border:1.5px solid #DDE1E6;outline:none;text-align:right;}
-.health-hint{font-size:9px;color:#AAB0BB;margin-top:3px;line-height:1.4;word-break:keep-all;}
+.health-ref-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0;padding:5px 8px;background:#F8F9FB;border-radius:6px;}
+.health-ref-chip{font-size:10.5px;color:#666;}
+.health-ref-chip b{color:#333;font-size:11.5px;}
+.health-input-list{display:flex;flex-direction:column;margin:2px 0 8px;}
+.health-input-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px dashed #F0F2F5;flex-wrap:wrap;}
+.hir-label{font-size:10.5px;color:#666;width:112px;flex-shrink:0;}
+.hir-input{font-size:13px;font-weight:700;padding:3px 5px;border-radius:5px;width:76px;
+  text-align:right;border:1.5px solid #DDE1E6;outline:none;-moz-appearance:textfield;}
+.hir-input::-webkit-inner-spin-button,.hir-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.hir-hint{font-size:9px;color:#AAB0BB;flex:1;min-width:150px;word-break:keep-all;}
 .health-badge-ok{background:#EAF3EE;color:#3F7A5E;padding:3px 9px;border-radius:5px;font-size:11.5px;font-weight:700;display:inline-block;}
 .health-badge-warn{background:#F5EEE3;color:#9C6B2E;padding:3px 9px;border-radius:5px;font-size:11.5px;font-weight:700;display:inline-block;}
 .health-detail{font-size:11px;color:#444;line-height:1.8;margin-top:6px;background:#F8F9FB;border-radius:7px;padding:8px 10px;}
@@ -412,7 +416,8 @@ button{font-family:inherit;cursor:pointer;}
   .acct-grid{grid-template-columns:1fr;}
   .priv-group{grid-column:1;} /* span:3는 1열 그리드에서 폭 넘침을 유발하므로 강제로 1칸 */
   .modal-box{max-height:90vh;padding:12px 14px 14px;}
-  .health-input-grid{grid-template-columns:1fr;}
+  .health-input-row{flex-direction:column;align-items:flex-start;gap:2px;}
+  .hir-hint{min-width:0;}
 }
 
 /* 태블릿: 411~900px */
@@ -422,7 +427,6 @@ button{font-family:inherit;cursor:pointer;}
   table{font-size:9px;}
   th,td{padding:4px 3px;}
   .acct-grid{grid-template-columns:repeat(5,1fr);}
-  .health-input-grid{grid-template-columns:repeat(2,1fr);}
 }
 
 /* 데스크탑: 901px+ */
@@ -455,38 +459,44 @@ button{font-family:inherit;cursor:pointer;}
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
     <span style="font-size:12px;font-weight:700;color:#333;">🏥 건보료 설계 — 지역가입자 전환 시 예상 보험료</span>
   </div>
-  <div class="note" style="margin-top:0;">건강보험 피부양자 자격을 잃으면(위 "재산세 과표"·국민연금 기준으로 판정) 소득+재산 모두에 보험료가 부과되는 지역가입자로 전환됩니다. 아래에 소득 항목을 추가로 입력할수록 예상 금액의 정확도가 올라갑니다. 자세한 개념 설명은 상단 "세금 상식" 참고.</div>
+  <div class="note" style="margin-top:0;">건강보험 피부양자 자격을 잃으면 소득+재산 모두에 보험료가 부과되는 지역가입자로 전환됩니다. 계산에 필요한 항목은 아래 8개 전부이며, 채울수록 정확도가 올라갑니다. 자세한 개념 설명은 상단 "세금 상식" 참고.</div>
 
-  <div class="health-input-grid">
-    <div class="health-field">
-      <label for="hi_business">사업소득(연)</label>
-      <input type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">수입−필요경비 순소득(세전). 매출액 그대로 아님. 종합소득세 신고서의 "사업소득금액"<br>예: 연매출 8,000만원 − 필요경비 3,000만원 = <b>5000</b> 입력</div>
+  <div class="health-ref-row">
+    <span class="health-ref-chip">국민연금(공적연금) <b id="hrefNp">-</b>만원/월</span>
+    <span class="health-ref-chip">재산세 과표 <b id="hrefRe">-</b>만원</span>
+    <span style="font-size:9px;color:#AAB0BB;">↑ 위 "기본 정보"에서 수정</span>
+  </div>
+
+  <div class="health-input-list">
+    <div class="health-input-row">
+      <span class="hir-label">사업소득(연)</span>
+      <input class="hir-input" type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">매출−경비, 세전 · 예 5000</span>
     </div>
-    <div class="health-field">
-      <label for="hi_labor">근로소득(연)</label>
-      <input type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">근로소득공제 전 총급여. 세후 실수령액 아님. 원천징수영수증의 "급여"<br>예: 재취업 후 세전 연봉 3,600만원이면 <b>3600</b> 입력</div>
+    <div class="health-input-row">
+      <span class="hir-label">근로소득(연)</span>
+      <input class="hir-input" type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">세전 총급여 · 예 3600</span>
     </div>
-    <div class="health-field">
-      <label for="hi_interest">이자소득(연)</label>
-      <input type="number" id="hi_interest" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">세전 수령액(비과세·분리과세 전용 상품 제외). 배당소득과 합산 1,000만원 초과 시에만 반영<br>예: 예·적금 이자 합계 연 300만원이면 <b>300</b> 입력</div>
+    <div class="health-input-row">
+      <span class="hir-label">이자소득(연)</span>
+      <input class="hir-input" type="number" id="hi_interest" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">세전, 배당과 합산 1,000만↑만 반영 · 예 300</span>
     </div>
-    <div class="health-field">
-      <label for="hi_dividend">배당소득(연)</label>
-      <input type="number" id="hi_dividend" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">세전 수령액. 이자소득과 합산 1,000만원 초과 시에만 반영(초과분만이 아니라 전액)<br>예: 이자 300+배당 400=700만원이면 1,000만원 이하라 반영 안 됨</div>
+    <div class="health-input-row">
+      <span class="hir-label">배당소득(연)</span>
+      <input class="hir-input" type="number" id="hi_dividend" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">세전, 이자와 합산 1,000만↑만 반영 · 예 400</span>
     </div>
-    <div class="health-field">
-      <label for="hi_other">기타소득(연)</label>
-      <input type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">필요경비 차감 후 순소득. 종합소득세 신고서의 "기타소득금액"<br>예: 강연료·원고료 등 필요경비 차감 후 순소득 200만원이면 <b>200</b> 입력</div>
+    <div class="health-input-row">
+      <span class="hir-label">기타소득(연)</span>
+      <input class="hir-input" type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">경비 차감 후 순소득 · 예 200</span>
     </div>
-    <div class="health-field">
-      <label for="hi_rentprop">전월세 재산 인정액(만원)</label>
-      <input type="number" id="hi_rentprop" value="0" min="0" step="100" oninput="scheduleUpd()">
-      <div class="health-hint">무주택자만 해당. 보증금 그대로가 아니라 (보증금+월세 환산액)의 약 30% 수준(정확한 계수는 공단 문의)<br>예: 전세보증금 3억원이면 대략 30%인 <b>9000</b> 근처로 추정 입력</div>
+    <div class="health-input-row">
+      <span class="hir-label">전월세 재산 인정액</span>
+      <input class="hir-input" type="number" id="hi_rentprop" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">무주택자만, (보증금+월세환산)×30%대략 · 예 9000</span>
     </div>
   </div>
 
@@ -2355,16 +2365,21 @@ function renderHealthPanel(){
   const propBase = totalPropertyBase(p);
   const check = dependentStatusCheck(totalIncome, propBase);
 
+  const refNp = document.getElementById('hrefNp');
+  const refRe = document.getElementById('hrefRe');
+  if(refNp) refNp.textContent = p.np.toLocaleString();
+  if(refRe) refRe.textContent = p.realestate.toLocaleString();
+
   if(!check.fail){
     badgeEl.innerHTML = '<span class="health-badge-ok">✓ 피부양자 유지 가능</span>';
     const threshold = propBase > 54000 ? 1000 : 2000;
     const margin = Math.round((threshold - totalIncome)*10)/10;
     detailEl.innerHTML =
       '<table class="health-calc-table">'
-      +'<tr><td>재산 과표(전월세 인정액 포함)</td><td></td><td>'+Math.round(propBase).toLocaleString()+'만원</td></tr>'
-      +'<tr><td>→ 허용 소득 상한(연)</td><td></td><td>'+threshold.toLocaleString()+'만원</td></tr>'
-      +'<tr><td>현재 합산 소득(연)</td><td></td><td>'+Math.round(totalIncome).toLocaleString()+'만원</td></tr>'
-      +'<tr class="hc-total"><td>남은 여유(연)</td><td></td><td>'+margin.toLocaleString()+'만원</td></tr>'
+      +'<tr><td>재산 과표</td><td>전월세 인정액 포함</td><td>'+Math.round(propBase).toLocaleString()+'만원</td></tr>'
+      +'<tr><td>허용 소득 상한</td><td>연 기준</td><td>'+threshold.toLocaleString()+'만원</td></tr>'
+      +'<tr><td>현재 합산 소득</td><td>연 기준</td><td>'+Math.round(totalIncome).toLocaleString()+'만원</td></tr>'
+      +'<tr class="hc-total"><td>남은 여유</td><td></td><td>'+margin.toLocaleString()+'만원</td></tr>'
       +'</table>'
       +'<div style="margin-top:6px;font-size:10px;color:#888;">국민연금 등 공적연금이 연기수령 등으로 늘면 이 여유가 줄어듭니다. 사적연금(연금저축·IRP·ISA)은 이 판정에서 제외되니 먼저/많이 활용하는 게 유리합니다.</div>';
   } else {
@@ -2374,12 +2389,12 @@ function renderHealthPanel(){
     detailEl.innerHTML =
       '<div style="font-size:10.5px;color:#9C6B2E;margin-bottom:4px;">탈락 사유: '+check.reason+'</div>'
       +'<table class="health-calc-table">'
-      +'<tr><td>소득분</td><td>소득월액 '+prem.incomeMonthly.toLocaleString()+'만 × '+(HEALTH_RATE_INCOME*100).toFixed(2)+'%</td><td>'+prem.incomePremium.toLocaleString()+'만원</td></tr>'
-      +'<tr><td>재산분</td><td>재산점수 '+prem.score.toLocaleString()+'점 × '+HEALTH_RATE_PROPERTY_WON+'원</td><td>'+prem.propertyPremium.toLocaleString()+'만원</td></tr>'
+      +'<tr><td>소득분</td><td>소득월액 '+prem.incomeMonthly.toLocaleString()+'만×'+(HEALTH_RATE_INCOME*100).toFixed(2)+'%</td><td>'+prem.incomePremium.toLocaleString()+'만원</td></tr>'
+      +'<tr><td>재산분</td><td>'+prem.score.toLocaleString()+'점×'+HEALTH_RATE_PROPERTY_WON+'원</td><td>'+prem.propertyPremium.toLocaleString()+'만원</td></tr>'
       +'<tr class="hc-sum"><td>건강보험료</td><td>소득분+재산분'+(prem.capped?' (월 상/하한 적용)':'')+'</td><td>'+prem.healthPremium.toLocaleString()+'만원</td></tr>'
-      +'<tr><td>장기요양보험료</td><td>건강보험료 × '+(HEALTH_RATE_LTC*100).toFixed(2)+'%</td><td>'+prem.ltcPremium.toLocaleString()+'만원</td></tr>'
+      +'<tr><td>장기요양보험료</td><td>×'+(HEALTH_RATE_LTC*100).toFixed(2)+'%</td><td>'+prem.ltcPremium.toLocaleString()+'만원</td></tr>'
       +'<tr class="hc-total"><td>월 합계</td><td></td><td>'+prem.total.toLocaleString()+'만원</td></tr>'
-      +'<tr><td>연 환산</td><td>월 합계 × 12</td><td>약 '+Math.round(prem.total*12).toLocaleString()+'만원</td></tr>'
+      +'<tr><td>연 환산</td><td>×12</td><td>약 '+Math.round(prem.total*12).toLocaleString()+'만원</td></tr>'
       +'</table>'
       +'<div style="margin-top:6px;font-size:10px;color:#888;">퇴직 전 18개월 중 1년 이상 직장가입자였다면 "임의계속가입"으로 최대 36개월간 퇴직 전 수준 보험료를 유지할 수 있습니다(첫 지역가입자 고지서 납부기한 2개월 이내 신청). 위 요율·항목별 반영률은 2026년 기준 조사 결과이며 실제 고지서와 다를 수 있습니다.</div>';
   }
