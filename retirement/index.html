@@ -370,6 +370,21 @@ button{font-family:inherit;cursor:pointer;}
 .guide-sec p{font-size:11.5px;color:#555;line-height:1.7;margin-bottom:6px;}
 .guide-sec p b{color:#222;}
 
+/* ── "건보료 설계" 인라인 패널 (모달이 아니라 대시보드 흐름 안에서 펼침/접힘) ── */
+.health-panel{display:none;background:#fff;border:1px solid #E8EAF0;border-radius:10px;
+  margin:0 14px 8px;padding:10px 14px 12px;}
+.health-panel.show{display:block;}
+.health-input-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px;margin:6px 0 8px;}
+.health-field{background:#F8F9FB;border:1px solid #E8EAF0;border-radius:7px;padding:6px 8px;}
+.health-field label{display:block;font-size:10px;color:#888;margin-bottom:3px;}
+.health-field input{width:100%;font-size:13px;font-weight:700;padding:4px 5px;border-radius:5px;
+  border:1.5px solid #DDE1E6;outline:none;text-align:right;}
+.health-hint{font-size:9px;color:#AAB0BB;margin-top:3px;line-height:1.4;word-break:keep-all;}
+.health-badge-ok{background:#EAF3EE;color:#3F7A5E;padding:3px 9px;border-radius:5px;font-size:11.5px;font-weight:700;display:inline-block;}
+.health-badge-warn{background:#F5EEE3;color:#9C6B2E;padding:3px 9px;border-radius:5px;font-size:11.5px;font-weight:700;display:inline-block;}
+.health-detail{font-size:11px;color:#444;line-height:1.8;margin-top:6px;background:#F8F9FB;border-radius:7px;padding:8px 10px;}
+.health-detail b{color:#111;}
+
 /* ═══ Z Fold 7 반응형 ═══ */
 
 /* ═══ 반응형 ═══ */
@@ -386,6 +401,7 @@ button{font-family:inherit;cursor:pointer;}
   .acct-grid{grid-template-columns:1fr;}
   .priv-group{grid-column:1;} /* span:3는 1열 그리드에서 폭 넘침을 유발하므로 강제로 1칸 */
   .modal-box{max-height:90vh;padding:12px 14px 14px;}
+  .health-input-grid{grid-template-columns:1fr;}
 }
 
 /* 태블릿: 411~900px */
@@ -395,6 +411,7 @@ button{font-family:inherit;cursor:pointer;}
   table{font-size:9px;}
   th,td{padding:4px 3px;}
   .acct-grid{grid-template-columns:repeat(5,1fr);}
+  .health-input-grid{grid-template-columns:repeat(2,1fr);}
 }
 
 /* 데스크탑: 901px+ */
@@ -414,11 +431,56 @@ button{font-family:inherit;cursor:pointer;}
   </div>
   <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
     <button type="button" class="tax-guide-btn" onclick="openTaxGuide()">📖 세금 상식</button>
+    <button type="button" class="tax-guide-btn" onclick="toggleHealthPanel()">🏥 건보료 설계</button>
     <button onclick="if(confirm('모든 설정값을 초기화할까요?'))resetState();"
       style="padding:3px 9px;font-size:10px;border-radius:5px;border:1px solid #E8EAF0;background:#fff;color:#AAB0BB;">
       ↺ 초기화
     </button>
   </div>
+</div>
+
+<!-- 건보료 설계 인라인 패널 (버튼 클릭 시 펼침/접힘, 모달 아님) -->
+<div class="health-panel" id="healthPanel">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+    <span style="font-size:12px;font-weight:700;color:#333;">🏥 건보료 설계 — 지역가입자 전환 시 예상 보험료</span>
+  </div>
+  <div class="note" style="margin-top:0;">건강보험 피부양자 자격을 잃으면(위 "재산세 과표"·국민연금 기준으로 판정) 소득+재산 모두에 보험료가 부과되는 지역가입자로 전환됩니다. 아래에 소득 항목을 추가로 입력할수록 예상 금액의 정확도가 올라갑니다. 자세한 개념 설명은 상단 "세금 상식" 참고.</div>
+
+  <div class="health-input-grid">
+    <div class="health-field">
+      <label for="hi_business">사업소득(연)</label>
+      <input type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()">
+      <div class="health-hint">수입−필요경비 순소득(세전). 매출액 그대로 아님. 종합소득세 신고서의 "사업소득금액"</div>
+    </div>
+    <div class="health-field">
+      <label for="hi_labor">근로소득(연)</label>
+      <input type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()">
+      <div class="health-hint">근로소득공제 전 총급여. 세후 실수령액 아님. 원천징수영수증의 "급여"</div>
+    </div>
+    <div class="health-field">
+      <label for="hi_interest">이자소득(연)</label>
+      <input type="number" id="hi_interest" value="0" min="0" step="10" oninput="scheduleUpd()">
+      <div class="health-hint">세전 수령액(비과세·분리과세 전용 상품 제외). 배당소득과 합산 1,000만원 초과 시에만 반영</div>
+    </div>
+    <div class="health-field">
+      <label for="hi_dividend">배당소득(연)</label>
+      <input type="number" id="hi_dividend" value="0" min="0" step="10" oninput="scheduleUpd()">
+      <div class="health-hint">세전 수령액. 이자소득과 합산 1,000만원 초과 시에만 반영(초과분만이 아니라 전액)</div>
+    </div>
+    <div class="health-field">
+      <label for="hi_other">기타소득(연)</label>
+      <input type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()">
+      <div class="health-hint">필요경비 차감 후 순소득. 종합소득세 신고서의 "기타소득금액"</div>
+    </div>
+    <div class="health-field">
+      <label for="hi_rentprop">전월세 재산 인정액(만원)</label>
+      <input type="number" id="hi_rentprop" value="0" min="0" step="100" oninput="scheduleUpd()">
+      <div class="health-hint">무주택자만 해당. 보증금 그대로가 아니라 (보증금+월세 환산액)의 약 30% 수준(정확한 계수는 공단 문의)</div>
+    </div>
+  </div>
+
+  <div id="healthStatusBadge"></div>
+  <div class="health-detail" id="healthDetail"></div>
 </div>
 
 <!-- 메트릭 바: 라벨 1줄 + 값(부연설명 인라인) 1줄 = 카드당 2줄로 압축 -->
@@ -498,7 +560,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500"  oninput="syncInput('plimit');scheduleUpd()">
 </div><div class="irow base-s">
   <div class="irow-top">
-    <span class="ilabel" title="재산세 과세표준 (건보료 피부양자 판정용, 위택스에서 확인)">재산세 과표</span>
+    <span class="ilabel" title="실거래가·공시가격이 아닌 &quot;과세표준액&quot;(공시가격×공정시장가액비율, 1주택 43~45%/다주택 60%). 건보료 피부양자 판정용, 위택스(wetax.go.kr)의 과세표준액을 확인">재산세 과표</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="realestate" value="0" min="0" max="200000" step="1000" onblur="onBlurFix('realestate')" oninput="syncSlider('realestate');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
@@ -1012,10 +1074,22 @@ button{font-family:inherit;cursor:pointer;}
       <p><b>퇴직연금 카드의 "근속연수"</b> — 퇴직소득세는 근속연수가 길수록 공제가 커져 세금이 크게 줄어드는 구조입니다. 근속연수를 넣으면 국세청 공식(근속연수공제→환산급여→환산급여공제→누진세율)대로 퇴직소득세 추정치를 자동 계산합니다. 회사에서 안내받은 정확한 금액이 있다면 "퇴직소득세 추정치" 값을 직접 수정해도 됩니다.</p>
     </div>
     <div class="guide-sec">
-      <h4>② 건강보험료 최소화 (피부양자 유지)</h4>
-      <p>건강보험 피부양자 자격은 <b>소득</b>과 <b>재산</b> 두 가지 기준으로 판정됩니다. 소득 기준으로 합산되는 건 <b>국민연금 등 공적연금뿐</b>이고, 퇴직IRP·연금저축·IRP개인납입·ISA 같은 사적연금은 전부 제외됩니다. 그래서 이 대시보드는 국민연금 외의 재원을 먼저, 더 많이 활용하도록 인출 순서를 짭니다.</p>
-      <p><b>재산 기준</b> — 재산세 과세표준이 5.4억원 이하면 공적연금 연 2,000만원까지, 5.4억~9억원이면 연 1,000만원까지 허용되고, 9억원을 넘으면 소득과 무관하게 탈락합니다. 보유 부동산이 있다면 위 "재산세 과세표준" 항목에 입력해 두세요.</p>
-      <p><b>"재산세 과세표준"이란?</b> — 실제 시세가 아니라 재산세 산정 기준이 되는 과세표준 금액입니다(공시가격에 공정시장가액비율을 곱한 값으로, 보통 시세보다 낮습니다). 매년 보내는 재산세 고지서나 위택스(wetax.go.kr)에서 확인할 수 있습니다. 은퇴 후 지출에서 세금보다 건강보험료가 더 크게 작용하는 경우가 많고, 특히 재산 기준으로 피부양자 자격이 갈리는 경우가 흔해서 이 대시보드에 이 항목을 추가했습니다.</p>
+      <h4>② 건강보험료, 제대로 알고 관리하기</h4>
+      <p><b>왜 은퇴 후 갑자기 부담되는지</b> — 직장 다닐 때는 회사가 보험료 절반을 부담하고 소득에만 보험료가 붙지만, 퇴직 후 피부양자 조건을 못 채우면 "지역가입자"로 전환되어 소득뿐 아니라 <b>재산(집·땅)에도 별도로</b> 보험료가 붙습니다. 그래서 소득이 적어도 집 한 채만 있으면 보험료가 꽤 나올 수 있습니다.</p>
+      <p><b>가입자 3종류</b> — 직장가입자(재직 중, 회사와 반반 부담, 재산엔 안 물림) / 피부양자(요건 충족 시 보험료 0원, 가장 유리) / 지역가입자(둘 다 아니면 자동 전환, 소득+재산 모두 부과, 가장 불리)입니다.</p>
+      <p>건강보험 피부양자 자격은 <b>소득</b>과 <b>재산</b> 두 가지 기준으로 판정됩니다. 소득 기준으로 합산되는 건 국민연금 등 공적연금 및 사업·근로·이자·배당·기타소득이고, 퇴직IRP·연금저축·IRP개인납입·ISA 같은 사적연금은 전부 제외됩니다. 그래서 이 대시보드는 사적연금을 먼저·더 많이 활용하도록 인출 순서를 짭니다.</p>
+      <p><b>재산 기준</b> — 재산세 과세표준이 5.4억원 이하면 소득 연 2,000만원까지, 5.4억~9억원이면 연 1,000만원까지 허용되고, 9억원을 넘으면 소득과 무관하게 탈락합니다.</p>
+      <p><b>"재산세 과세표준"은 실거래가가 아닙니다</b> — 과세표준 = 공시가격 × 공정시장가액비율이며, 시세보다 낮게 나오는 게 보통입니다. 1세대 1주택은 공시가격 3억 이하 43% / 3억~6억 44% / 6억 초과 45%, <b>다주택자(2주택 이상)·법인은 60%</b>가 적용됩니다. 정확한 숫자는 재산세 고지서나 위택스(wetax.go.kr)의 "과세표준액"을 확인하세요 — 시세로 짐작한 값을 그대로 넣으면 실제보다 과대평가될 수 있습니다.</p>
+      <p style="margin-bottom:2px;"><b>판정 예시</b></p>
+      <table>
+        <tr><th>재산세 과세표준</th><th>소득(연)</th><th>결과</th></tr>
+        <tr><td>20억원(다주택, 부부 지분 절반씩이어도 1인당 약 10억)</td><td>얼마든 상관없음</td><td style="color:#9C6B2E;font-weight:700;">재산만으로 자동 탈락</td></tr>
+        <tr><td>5억원</td><td>2,500만원</td><td style="color:#9C6B2E;font-weight:700;">소득 기준 초과로 탈락</td></tr>
+        <tr><td>5억원</td><td>1,800만원</td><td style="color:#3F7A5E;font-weight:700;">피부양자 유지 가능</td></tr>
+      </table>
+      <p style="margin-top:6px;"><b>놓치기 쉬운 부분: 장기요양보험료</b> — 건강보험료 고지서에는 항상 장기요양보험료(건보료의 약 13%)가 자동으로 같이 붙습니다. "건보료 얼마"를 따질 땐 이 둘의 합을 봐야 실제 고지서 금액과 맞습니다.</p>
+      <p><b>임의계속가입 제도</b> — 퇴직 전 18개월 중 통산 1년 이상 직장가입자였다면, 지역가입자로 전환돼도 최대 36개월간 퇴직 전 수준의 보험료(재산 미반영)를 유지할 수 있는 "임의계속가입"을 신청할 수 있습니다. 단 최초 지역가입자 보험료 고지서 납부기한으로부터 2개월 이내에 신청해야 합니다. 은퇴 초반 보험료 충격을 완화하는 실질적인 수단이니 알아두세요.</p>
+      <p>정확한 예상 보험료 계산과 각 입력값을 어디서 확인해야 하는지는 상단 <b>"🏥 건보료 설계"</b> 패널에서 확인하세요.</p>
     </div>
     <div class="guide-sec">
       <h4>③ 국민연금 더 많이 받는 법</h4>
@@ -1023,7 +1097,7 @@ button{font-family:inherit;cursor:pointer;}
       <p><b>조기수령</b> — 반대로 앞당기면 1년마다 6%씩 영구 감액됩니다(최대 5년, -30%). 급하게 소득이 필요한 경우가 아니라면 권장하지 않습니다.</p>
       <p><b>국민연금 카드의 "예상액(65세 기준)"</b> — 국민연금공단 홈페이지·앱의 "내 연금 알아보기"에서 조회한 65세 기준 예상 수령액을 넣으세요. "수령 시작" 나이를 조정하면 위 조기·연기수령 가산율이 자동으로 반영되어 "실제 월 수령액"이 계산됩니다.</p>
     </div>
-    <div class="note" style="margin-top:2px;">※ 국세청 소득세법(연금소득 원천징수세율·퇴직소득세 연금수령공제), 국민건강보험법(피부양자 소득기준), 국민연금공단(조기·연기수령) 등 공개 기준을 참고해 정리했습니다. 개인 상황에 따라 실제 세액은 달라질 수 있어 참고용으로만 활용하세요.</div>
+    <div class="note" style="margin-top:2px;">※ 국세청 소득세법(연금소득 원천징수세율·퇴직소득세 연금수령공제), 국민건강보험법 시행령·법제처 생활법령정보·보건복지부 고시(피부양자 소득·재산 기준, 지역가입자 보험료율, 장기요양보험료율), 국민연금공단(조기·연기수령) 등 공개 기준을 참고해 정리했습니다(2026년 기준). 개인 상황에 따라 실제 세액·보험료는 달라질 수 있어 참고용으로만 활용하세요.</div>
   </div>
 </div>
 
@@ -1317,16 +1391,99 @@ function tirpTaxDiscount(withdrawalYear){
 
 /* ── 건강보험 피부양자 자격 판정(소득+재산 기준) ──
    - 재산 과세표준 9억원 초과: 소득 무관 무조건 탈락
-   - 재산 과세표준 5.4억 초과 9억 이하: 연소득(공적연금) 1,000만원 초과 시 탈락
-   - 그 외(5.4억 이하): 연소득(공적연금) 2,000만원 초과 시 탈락
-   ※ "연소득"에는 원래 이자·배당·사업·기타소득도 합산되지만 이 대시보드는 연금 계좌만
-     추적하므로 국민연금(공적연금)만 반영 — 다른 소득이 있다면 별도로 감안해야 함 */
-function dependentStatusCheck(annualPension, realEstateBase){
+   - 재산 과세표준 5.4억 초과 9억 이하: 연소득 1,000만원 초과 시 탈락
+   - 그 외(5.4억 이하): 연소득 2,000만원 초과 시 탈락
+   ※ 피부양자 판정용 "연소득"은 반영률 감면 없이 전액 합산(국민건강보험법상 판정 기준) —
+     아래 지역가입자 보험료 산정(regionalIncomeMonthly)과는 반영률 방식이 다르므로 혼동 주의 */
+function dependentStatusCheck(totalAnnualIncome, realEstateBase){
   const re = realEstateBase || 0;
   if(re > 90000) return {fail:true, reason:'재산 과세표준 9억원 초과 → 소득과 무관하게 자동 탈락'};
-  if(re > 54000 && annualPension > 1000) return {fail:true, reason:'재산 과세표준 5.4억원 초과 + 공적연금 연 1,000만원 초과'};
-  if(re <= 54000 && annualPension > 2000) return {fail:true, reason:'공적연금(국민연금) 연 2,000만원 초과'};
+  if(re > 54000 && totalAnnualIncome > 1000) return {fail:true, reason:'재산 과세표준 5.4억원 초과 + 소득 연 1,000만원 초과'};
+  if(re <= 54000 && totalAnnualIncome > 2000) return {fail:true, reason:'소득 연 2,000만원 초과'};
   return {fail:false, reason:''};
+}
+
+/* ── 건보료 산정용 소득 항목 취합 ── (건보료 설계 패널 전용 입력 hi_* 필드 사용)
+   피부양자 판정(전액 100% 합산)과 지역가입자 보험료 산정(항목별 반영률)이 소득 계산 방식이
+   서로 다르므로, 공통 원재료(healthIncomeItems)만 공유하고 합산 로직은 각 함수에서 따로 처리 */
+function healthIncomeItems(p){
+  const pensionAnnual = p.np * 12; // 국민연금 등 공적연금(만원, 세전 총지급액)
+  const laborAnnual = p.hi_labor || 0;
+  const businessAnnual = p.hi_business || 0;
+  const otherAnnual = p.hi_other || 0;
+  const financeAnnual = (p.hi_interest||0) + (p.hi_dividend||0);
+  const financeIncluded = financeAnnual > 1000 ? financeAnnual : 0; // 이자+배당 합산 1,000만원 초과 시 전액, 이하면 0(문턱 효과)
+  return {pensionAnnual, laborAnnual, businessAnnual, otherAnnual, financeIncluded};
+}
+
+// 피부양자 판정용 총소득(연, 만원) — 전 항목 반영률 없이 100% 합산
+function dependentTotalIncome(p){
+  const it = healthIncomeItems(p);
+  return it.pensionAnnual + it.laborAnnual + it.businessAnnual + it.otherAnnual + it.financeIncluded;
+}
+
+// 재산세 과세표준 + 전월세 재산 인정액 합산(지역가입자 재산보험료부과점수 산정용, 만원)
+function totalPropertyBase(p){
+  return (p.realestate||0) + (p.hi_rentprop||0);
+}
+
+/* ── 재산보험료부과점수 60등급표 (국민건강보험법 시행령 별표4, 2024.5.7 개정) ──
+   재산금액(만원) 상한 기준 "이하" 구간, 60등급 마지막 행은 초과분(Infinity) */
+const PROPERTY_SCORE_TABLE = [
+  {max:450,score:22},{max:900,score:44},{max:1350,score:66},{max:1800,score:97},
+  {max:2250,score:122},{max:2700,score:146},{max:3150,score:171},{max:3600,score:195},
+  {max:4050,score:219},{max:4500,score:244},{max:5020,score:268},{max:5590,score:294},
+  {max:6220,score:320},{max:6930,score:344},{max:7710,score:365},{max:8590,score:386},
+  {max:9570,score:412},{max:10700,score:439},{max:11900,score:465},{max:13300,score:490},
+  {max:14800,score:516},{max:16400,score:535},{max:18300,score:559},{max:20400,score:586},
+  {max:22700,score:611},{max:25300,score:637},{max:28100,score:659},{max:31300,score:681},
+  {max:34900,score:706},{max:38800,score:731},{max:43200,score:757},{max:48100,score:785},
+  {max:53600,score:812},{max:59700,score:841},{max:66500,score:881},{max:74000,score:921},
+  {max:82400,score:961},{max:91800,score:1001},{max:103000,score:1041},{max:114000,score:1091},
+  {max:127000,score:1141},{max:142000,score:1191},{max:158000,score:1241},{max:176000,score:1291},
+  {max:196000,score:1341},{max:218000,score:1391},{max:242000,score:1451},{max:270000,score:1511},
+  {max:300000,score:1571},{max:330000,score:1641},{max:363000,score:1711},{max:399300,score:1781},
+  {max:439230,score:1851},{max:483153,score:1921},{max:531468,score:1991},{max:584615,score:2061},
+  {max:643077,score:2131},{max:707385,score:2201},{max:778124,score:2271},{max:Infinity,score:2341}
+];
+
+// 재산세 과세표준+전월세 재산 인정액 합계(만원)에서 1억원 공제 후 60등급표 조회
+function propertyInsuranceScore(totalPropertyMan){
+  const base = Math.max(0, (totalPropertyMan||0) - 10000);
+  for(const row of PROPERTY_SCORE_TABLE){ if(base <= row.max) return row.score; }
+  return PROPERTY_SCORE_TABLE[PROPERTY_SCORE_TABLE.length-1].score;
+}
+
+// 지역가입자 보험료 산정용 소득월액(만원/월) — 항목별 반영률 적용(2차 출처 교차검증 수준)
+// 공적연금·근로소득 50%, 사업·기타소득 100%, 금융소득(1,000만원 초과분) 100%
+function regionalIncomeMonthly(p){
+  const it = healthIncomeItems(p);
+  const weightedAnnual = it.pensionAnnual*0.5 + it.laborAnnual*0.5 + it.businessAnnual + it.otherAnnual + it.financeIncluded;
+  return weightedAnnual / 12;
+}
+
+// 지역가입자 예상 건보료(2026년 기준, 1차 출처: 법제처 생활법령정보·보건복지부 고시)
+// 건강보험료 = 소득월액×7.19% + 재산보험료부과점수×211.5원, 상한 4,591,740원/하한 20,160원
+// 장기요양보험료 = 건강보험료×13.14%
+function regionalHealthPremium(incomeMonthly, propertyMan){
+  const RATE_INCOME = 0.0719, RATE_PROPERTY_WON = 211.5, RATE_LTC = 0.1314;
+  const CAP_MAX = 4591740, CAP_MIN = 20160;
+  const score = propertyInsuranceScore(propertyMan);
+  const incomePremiumWon = (incomeMonthly||0) * 10000 * RATE_INCOME;
+  const propertyPremiumWon = score * RATE_PROPERTY_WON;
+  const rawHealthWon = incomePremiumWon + propertyPremiumWon;
+  const healthPremiumWon = Math.min(CAP_MAX, Math.max(CAP_MIN, rawHealthWon));
+  const ltcPremiumWon = healthPremiumWon * RATE_LTC;
+  const toMan = won => Math.round(won/1000)/10; // 만원, 소수 1자리
+  return {
+    score,
+    incomePremium: toMan(incomePremiumWon),
+    propertyPremium: toMan(propertyPremiumWon),
+    healthPremium: toMan(healthPremiumWon),
+    ltcPremium: toMan(ltcPremiumWon),
+    total: toMan(healthPremiumWon + ltcPremiumWon),
+    capped: rawHealthWon !== healthPremiumWon
+  };
 }
 
 /* ── 국민연금 조기·연기수령 가산율 ── 정상수급나이(65세) 대비 1년당 조기 -6%, 연기 +7.2%
@@ -1681,12 +1838,15 @@ function autoSuggest(){
   const leftoverAsset = lastRow ? Math.round((lastRow.privB + lastRow.tirpB + lastRow.isaB)*10)/10 : 0; // 억원
 
   // 건보료 피부양자 경고
-  // 합산 대상: 국민연금(공적연금)만 (+ 재산 과세표준 5.4억/9억 기준)
+  // 합산 대상: 국민연금 등 공적연금 + 건보료 설계 패널에 입력한 사업/근로/이자/배당/기타소득
+  //           (+ 재산 과세표준·전월세 재산 인정액 합산 5.4억/9억 기준)
   // 합산 제외: 퇴직IRP·연금저축·IRP개인납입(사적연금), ISA(비과세)
-  // 출처: 국민건강보험법, 미래에셋투자와연금센터 2025.1
-  const annualPension = p.np * 12;
-  const dependentCheck = dependentStatusCheck(annualPension, p.realestate);
+  // 출처: 국민건강보험법 시행령, 법제처 생활법령정보, 보건복지부 고시(2026년 기준)
+  const totalAnnualIncome = dependentTotalIncome(p);
+  const healthPropBase = totalPropertyBase(p);
+  const dependentCheck = dependentStatusCheck(totalAnnualIncome, healthPropBase);
   const healthWarn = dependentCheck.fail;
+  const healthPremiumEst = healthWarn ? regionalHealthPremium(regionalIncomeMonthly(p), healthPropBase) : null;
 
   // 퇴직IRP 설명(상세 본문) — <li> 없이 내용만 만들어두고, 실제 시작 시점(공백기/완성기)에
   // 맞는 목록에서 각자 다른 <li> 래퍼로 감싸 재사용한다
@@ -1730,10 +1890,10 @@ function autoSuggest(){
   </li>
   <li>완성기 사적연금 연 <b>${(privFull*12).toLocaleString()}만</b> ${privFull*12 <= p.plimit ? '→ '+pensionTaxRate(p.npage)+'% 분리과세 ✓' : '⚠️ 한도 초과 → 16.5% 분리과세 또는 종합과세'}</li>
 </ul>
-${healthWarn ? `<div style="background:#F5EEE3;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#71501F;">⚠️ 건보료 피부양자 탈락 예상 — ${dependentCheck.reason} (국민연금 연 ${Math.round(annualPension).toLocaleString()}만원${p.realestate>0?', 재산 과세표준 '+p.realestate.toLocaleString()+'만원':''})<br><span style="opacity:.8;">※ 퇴직IRP·연금저축·IRP개인납입·ISA는 사적연금으로 합산 제외, 이자·배당·사업소득은 이 계산에 포함되지 않음</span></div>` : ''}
+${healthWarn ? `<div style="background:#F5EEE3;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#71501F;">⚠️ 건보료 피부양자 탈락 예상 — ${dependentCheck.reason} (합산소득 연 ${Math.round(totalAnnualIncome).toLocaleString()}만원${healthPropBase>0?', 재산 과표 '+healthPropBase.toLocaleString()+'만원':''})<br>예상 월 건보료 약 <b>${healthPremiumEst.total.toLocaleString()}만원</b>(건강보험 ${healthPremiumEst.healthPremium}만 + 장기요양 ${healthPremiumEst.ltcPremium}만) — 상세 내역은 상단 "🏥 건보료 설계" 참고<br><span style="opacity:.8;">※ 퇴직IRP·연금저축·IRP개인납입·ISA는 사적연금으로 합산 제외</span></div>` : ''}
 ${nhLimited ? `<div style="background:#F5EEE3;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#71501F;">⚠️ 미래에셋(이론상 월 ${mfMaxMon}만)과 농협(이론상 월 ${nhMaxMon}만)의 합이 사적연금 한도(연 ${p.plimit.toLocaleString()}만 = 월 ${monLimit}만)를 초과하여, 두 계좌 모두 ${Math.round(mfNhScale*100)}% 비율로 축소해 미래에셋 월 ${mfMon}만 · 농협 월 ${nhMon}만으로 인출합니다. 그 결과 두 계좌 모두 ${p.life}세보다 더 늦게 소진되며, ${p.life}세 시점 잔여자산이 약 <b>${leftoverAsset}억원</b> 남을 것으로 예상됩니다. (한도 초과 인출 시 16.5%/종합과세 적용 가능)</div>` : ''}
 <div style="margin-top:5px;padding-top:4px;border-top:1px dashed #C3DBCB;font-size:10px;color:#64748B;">
-  💡 사적연금(퇴직IRP·연금저축·IRP개인납입·ISA)은 건보료 피부양자 소득 합산 제외 → 국민연금만 기준 적용(재산 5.4억↓ 2,000만원 / 5.4~9억 1,000만원 / 9억↑ 소득무관 탈락)<br>
+  💡 사적연금(퇴직IRP·연금저축·IRP개인납입·ISA)은 건보료 피부양자 소득 합산 제외 → 국민연금 등 공적연금+사업·근로·이자·배당·기타소득 기준 적용(재산 5.4억↓ 2,000만원 / 5.4~9억 1,000만원 / 9억↑ 소득무관 탈락)<br>
   🎯 모든 계좌는 ${p.life}세(기대수명) 시점 0원에 맞춰 매년 물가상승률만큼 인출액을 증액합니다.${nhLimited ? ' 단, 미래에셋·농협은 사적연금 한도 제약으로 비례 축소되어 일부 잔여자산이 남습니다.' : ''}
 </div>`;
   // 배너 업데이트
@@ -2031,7 +2191,8 @@ const ALL_FIELDS = [
   'tirp','tdc','tservice','tage','tm','tirptax',
   'np','npbase','npage',
   'isa','isay','isastart','isaend','isaage','isam',
-  'rnh','rmf','rirp','rtirp','risa','inf'
+  'rnh','rmf','rirp','rtirp','risa','inf',
+  'hi_business','hi_labor','hi_interest','hi_dividend','hi_other','hi_rentprop'
 ];
 
 function saveState(){
@@ -2101,7 +2262,9 @@ function getP(){
     np:gv('np'),npbase:gv('npbase'),npage:gv('npage'),
     isa:gv('isa'),isay:gv('isay'),isastart:gv('isastart'),isaend:gv('isaend'),isaage:gv('isaage'),isam:gv('isam'),
     plimit:gv('plimit'),
-    rnh:gv('rnh'),rmf:gv('rmf'),rirp:gv('rirp'),rtirp:gv('rtirp'),risa:gv('risa'),inf:gv('inf')
+    rnh:gv('rnh'),rmf:gv('rmf'),rirp:gv('rirp'),rtirp:gv('rtirp'),risa:gv('risa'),inf:gv('inf'),
+    hi_business:gv('hi_business'),hi_labor:gv('hi_labor'),hi_interest:gv('hi_interest'),
+    hi_dividend:gv('hi_dividend'),hi_other:gv('hi_other'),hi_rentprop:gv('hi_rentprop')
   };
 }
 
@@ -2115,6 +2278,48 @@ function openTaxGuide(){
 function closeTaxGuide(){
   const m = document.getElementById('taxGuideModal');
   if(m) m.classList.remove('show');
+}
+
+/* ── "건보료 설계" 인라인 패널 (모달 아님 — 버튼으로 펼침/접힘 토글) ── */
+function toggleHealthPanel(){
+  const el = document.getElementById('healthPanel');
+  if(!el) return;
+  el.classList.toggle('show');
+  if(el.classList.contains('show')) renderHealthPanel();
+}
+
+// upd()가 돌 때마다(슬라이더 조작 등) 패널이 열려 있으면 같이 갱신됨
+function renderHealthPanel(){
+  const el = document.getElementById('healthPanel');
+  if(!el || !el.classList.contains('show')) return;
+  const badgeEl = document.getElementById('healthStatusBadge');
+  const detailEl = document.getElementById('healthDetail');
+  if(!badgeEl || !detailEl) return;
+
+  const p = getP();
+  const totalIncome = dependentTotalIncome(p);
+  const propBase = totalPropertyBase(p);
+  const check = dependentStatusCheck(totalIncome, propBase);
+
+  if(!check.fail){
+    badgeEl.innerHTML = '<span class="health-badge-ok">✓ 피부양자 유지 가능</span>';
+    const threshold = propBase > 54000 ? 1000 : 2000;
+    const margin = Math.round((threshold - totalIncome)*10)/10;
+    detailEl.innerHTML =
+      '현재 재산 과표(전월세 재산 인정액 포함) <b>'+Math.round(propBase).toLocaleString()+'만원</b> 기준 허용 소득 상한은 연 <b>'+threshold.toLocaleString()+'만원</b>, '
+      +'현재 합산 소득은 연 <b>'+Math.round(totalIncome).toLocaleString()+'만원</b> → 연 <b>'+margin.toLocaleString()+'만원</b> 더 여유가 있습니다.'
+      +'<div style="margin-top:6px;font-size:10px;color:#888;">국민연금 등 공적연금이 연기수령 등으로 늘면 이 여유가 줄어듭니다. 사적연금(연금저축·IRP·ISA)은 이 판정에서 제외되니 먼저/많이 활용하는 게 유리합니다.</div>';
+  } else {
+    const incomeMonthly = regionalIncomeMonthly(p);
+    const prem = regionalHealthPremium(incomeMonthly, propBase);
+    badgeEl.innerHTML = '<span class="health-badge-warn">⚠ 지역가입자 전환 예상</span>';
+    detailEl.innerHTML =
+      '탈락 사유: '+check.reason+'<br>'
+      +'예상 월 건강보험료 <b>'+prem.healthPremium.toLocaleString()+'만원</b>(소득분 '+prem.incomePremium+'만 + 재산분 '+prem.propertyPremium+'만) '
+      +'+ 장기요양보험료 <b>'+prem.ltcPremium+'만원</b> = 월 합계 <b>'+prem.total.toLocaleString()+'만원</b> (연 약 '+Math.round(prem.total*12).toLocaleString()+'만원)'
+      +(prem.capped ? '<div style="margin-top:4px;font-size:10px;color:#888;">계산값이 법정 상한/하한에 걸려 조정되었습니다.</div>' : '')
+      +'<div style="margin-top:6px;font-size:10px;color:#888;">퇴직 전 18개월 중 1년 이상 직장가입자였다면 "임의계속가입"으로 최대 36개월간 퇴직 전 수준 보험료를 유지할 수 있습니다(첫 지역가입자 고지서 납부기한 2개월 이내 신청). 위 요율·항목별 반영률은 2026년 기준 조사 결과이며 실제 고지서와 다를 수 있습니다.</div>';
+  }
 }
 
 
@@ -2636,6 +2841,9 @@ function upd(){
       +'<td style="font-weight:700;color:'+(ok?'#4E9B78':'#B56B5C')+'">'+(ok?p.life+'세+':r.runway+'세')+'</td>'
       +'</tr>';
   }).join('');
+
+  // 건보료 설계 패널이 열려 있으면 슬라이더 조작 시에도 실시간 갱신
+  renderHealthPanel();
 }
 
 if(!loadState()) upd(); else upd();
