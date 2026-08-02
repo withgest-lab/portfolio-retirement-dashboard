@@ -2032,7 +2032,12 @@ function showPlanBanner(d){
   if(d.limitOk) insights.push('✅ 사적연금 연 '+d.annualPriv.toLocaleString()+'만원 → 1,500만원 한도 이하, '+pensionTaxRate(d.ret)+'% 저율 분리과세 적용됩니다.');
   if(!rwOk)    insights.push('⚠️ '+res.runway+'세에 자산 소진 예상 — 인출액이 자동 축소되었습니다.');
   else         insights.push('🎯 '+p.life+'세(기대수명) 시점 자산이 0에 근접하도록 인출액이 최대화되었습니다.');
-  insights.push('💡 ISA·안세공 비과세 인출로 건보료 산정 소득을 낮춰 피부양자 유지(국민연금 연 2,000만원 이하)를 우선 검토하세요.');
+  // 피부양자 소득 기준은 재산 구간에 따라 2,000/1,000/무조건 탈락으로 달라지므로, 항상 2,000만원으로
+  // 고정 안내하면 재산이 큰 사용자에게는 틀린 정보가 됨 — 현재 재산 과표 기준으로 실제 적용 기준을 표시
+  const depThreshold = p.realestate > 90000 ? null : (p.realestate > 54000 ? 1000 : 2000);
+  insights.push(depThreshold === null
+    ? '💡 재산 과세표준이 9억원을 넘어 소득과 무관하게 피부양자 자동 탈락 구간입니다 — 상단 "🏥 건보료 설계"에서 예상 보험료를 확인하세요.'
+    : '💡 ISA·안세공 비과세 인출로 건보료 산정 소득을 낮춰 피부양자 유지(공적연금 등 소득 연 '+depThreshold.toLocaleString()+'만원 이하, 현재 재산 과표 기준)를 우선 검토하세요.');
 
   document.getElementById('pb-insight').innerHTML = insights.join('<br>');
 }
