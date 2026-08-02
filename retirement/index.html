@@ -450,34 +450,36 @@ button{font-family:inherit;cursor:pointer;}
     <div class="health-field">
       <label for="hi_business">사업소득(연)</label>
       <input type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">수입−필요경비 순소득(세전). 매출액 그대로 아님. 종합소득세 신고서의 "사업소득금액"</div>
+      <div class="health-hint">수입−필요경비 순소득(세전). 매출액 그대로 아님. 종합소득세 신고서의 "사업소득금액"<br>예: 연매출 8,000만원 − 필요경비 3,000만원 = <b>5000</b> 입력</div>
     </div>
     <div class="health-field">
       <label for="hi_labor">근로소득(연)</label>
       <input type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">근로소득공제 전 총급여. 세후 실수령액 아님. 원천징수영수증의 "급여"</div>
+      <div class="health-hint">근로소득공제 전 총급여. 세후 실수령액 아님. 원천징수영수증의 "급여"<br>예: 재취업 후 세전 연봉 3,600만원이면 <b>3600</b> 입력</div>
     </div>
     <div class="health-field">
       <label for="hi_interest">이자소득(연)</label>
       <input type="number" id="hi_interest" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">세전 수령액(비과세·분리과세 전용 상품 제외). 배당소득과 합산 1,000만원 초과 시에만 반영</div>
+      <div class="health-hint">세전 수령액(비과세·분리과세 전용 상품 제외). 배당소득과 합산 1,000만원 초과 시에만 반영<br>예: 예·적금 이자 합계 연 300만원이면 <b>300</b> 입력</div>
     </div>
     <div class="health-field">
       <label for="hi_dividend">배당소득(연)</label>
       <input type="number" id="hi_dividend" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">세전 수령액. 이자소득과 합산 1,000만원 초과 시에만 반영(초과분만이 아니라 전액)</div>
+      <div class="health-hint">세전 수령액. 이자소득과 합산 1,000만원 초과 시에만 반영(초과분만이 아니라 전액)<br>예: 이자 300+배당 400=700만원이면 1,000만원 이하라 반영 안 됨</div>
     </div>
     <div class="health-field">
       <label for="hi_other">기타소득(연)</label>
       <input type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()">
-      <div class="health-hint">필요경비 차감 후 순소득. 종합소득세 신고서의 "기타소득금액"</div>
+      <div class="health-hint">필요경비 차감 후 순소득. 종합소득세 신고서의 "기타소득금액"<br>예: 강연료·원고료 등 필요경비 차감 후 순소득 200만원이면 <b>200</b> 입력</div>
     </div>
     <div class="health-field">
       <label for="hi_rentprop">전월세 재산 인정액(만원)</label>
       <input type="number" id="hi_rentprop" value="0" min="0" step="100" oninput="scheduleUpd()">
-      <div class="health-hint">무주택자만 해당. 보증금 그대로가 아니라 (보증금+월세 환산액)의 약 30% 수준(정확한 계수는 공단 문의)</div>
+      <div class="health-hint">무주택자만 해당. 보증금 그대로가 아니라 (보증금+월세 환산액)의 약 30% 수준(정확한 계수는 공단 문의)<br>예: 전세보증금 3억원이면 대략 30%인 <b>9000</b> 근처로 추정 입력</div>
     </div>
   </div>
+
+  <button type="button" class="suggest-btn" style="margin:2px 0 8px;" onclick="renderHealthPanel()">📊 예상 건보료 계산하기</button>
 
   <div id="healthStatusBadge"></div>
   <div class="health-detail" id="healthDetail"></div>
