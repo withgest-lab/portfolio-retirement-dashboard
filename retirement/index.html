@@ -29,8 +29,8 @@ h1{font-size:16px;font-weight:700;color:#111;}
 
 /* ── 메트릭 바(요약 카드): 세로 높이 최소화 — 라벨 1줄 + 값·부연설명을 한 줄에 같이 표시 ── */
 .metrics-bar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
-  gap:6px;padding:6px 14px;background:#F4F6F9;}
-.mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:5px 8px;}
+  gap:5px;padding:5px 14px;background:#F4F6F9;}
+.mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:4px 7px;}
 .mlabel{font-size:9.5px;color:#AAB0BB;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .mval-row{display:flex;align-items:baseline;gap:4px;min-width:0;}
 .mval{font-size:16px;font-weight:700;line-height:1.15;white-space:nowrap;}
@@ -77,9 +77,11 @@ h1{font-size:16px;font-weight:700;color:#111;}
 
 /* ── 카드 패널 ── */
 .panel{background:#fff;border:1px solid #E8EAF0;border-radius:10px;
-  padding:8px 16px 10px 14px;margin-bottom:6px;}
+  padding:7px 14px 8px 12px;margin-bottom:5px;}
 .panel-title{font-size:12px;font-weight:700;color:#333;
-  margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #F0F2F5;}
+  margin-bottom:5px;padding-bottom:4px;border-bottom:2px solid #F0F2F5;
+  display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.panel-title .req-tag{font-size:9px;font-weight:400;color:#9AA1AC;white-space:nowrap;flex-shrink:0;}
 
 /* ── 자동 제안 버튼 ── */
 .suggest-btn{width:100%;padding:8px;font-size:12px;font-weight:700;
@@ -298,7 +300,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ── 기본 정보: 가로 배치 — 항목이 6개+버튼이라 폴드 펼침(~900px)에서 한 줄에
    다 들어가도록 입력칸·간격·라벨을 좁게 잡음(줄바꿈 방지가 최우선) ── */
-.basic-row{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;}
+.basic-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;}
 .basic-row .irow{margin-bottom:0;min-width:0;}
 .basic-row .irow-top{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:0;}
 .basic-row .ilabel{font-size:9px;white-space:nowrap;}
@@ -309,19 +311,19 @@ button{font-family:inherit;cursor:pointer;}
   line-height:1.25;}
 
 /* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ── */
-.acct-grid{display:grid;gap:8px;grid-template-columns:repeat(5,1fr);margin-top:4px;}
+.acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;}
 .acct-card{border:1px solid #E8EAF0;border-radius:10px;overflow:hidden;background:#fff;min-width:0;
   display:flex;flex-direction:column;}
-.acct-head{display:flex;align-items:flex-start;gap:5px;font-size:11px;font-weight:700;padding:7px 8px;
+.acct-head{display:flex;align-items:flex-start;gap:5px;font-size:11px;font-weight:700;padding:6px 7px;
   line-height:1.3;word-break:keep-all;}
 .acct-head .dot{width:6px;height:6px;border-radius:2px;flex-shrink:0;margin-top:3px;}
 .acct-head .name{flex:1;min-width:0;}
-.acct-body{padding:6px 7px 7px;display:flex;flex-direction:column;gap:4px;flex:1;}
+.acct-body{padding:5px 6px 6px;display:flex;flex-direction:column;gap:3px;flex:1;justify-content:center;}
 .acct-body .irow{margin-bottom:0;padding-right:0;}
 .acct-body .irow-top{display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0;}
 .acct-body .ilabel{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .acct-body .irow-ctrl{justify-content:flex-start;}
-.acct-body .ival-input{width:100%;font-size:12.5px;padding:3px 5px;}
+.acct-body .ival-input{width:52px;font-size:12.5px;padding:3px 5px;}
 .acct-body .unit-tag{width:auto;}
 
 /* 짝을 이루는 필드 2개(수령 시작/월 수령액 등)를 한 줄에 나란히 배치 */
@@ -449,7 +451,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="left-panel">
 
 <div class="panel">
-<div class="panel-title">① 기본 정보</div>
+<div class="panel-title"><span>기본 정보</span><span class="req-tag">(필수 기입 항목)</span></div>
 <div class="basic-row">
 <div class="irow base-s">
   <div class="irow-top">
@@ -513,7 +515,7 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 
 <div class="panel">
-<div class="panel-title">현금 흐름 운영 플랜 (인출/수령 순서 가이드 : ISA → 사적연금 → 퇴직연금 → 국민연금)</div>
+<div class="panel-title"><span>현금 흐름 운영 플랜 (인출/수령 순서 가이드 : ISA → 사적연금 → 퇴직연금 → 국민연금)</span><span class="req-tag">(필수 기입 항목)</span></div>
 <div id="pfSyncStatus"></div>
 <div class="acct-grid">
 
@@ -619,7 +621,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('nhend');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
-    <span class="ilabel">안세공(비공제)<br>납입원금</span>
+    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금">안세공 원금</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="nhprin" value="0" min="0" max="20000" step="100" onblur="onBlurFix('nhprin')" oninput="syncSlider('nhprin');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
@@ -686,7 +688,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('mfend');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
-    <span class="ilabel">안세공(비공제)<br>납입원금</span>
+    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금">안세공 원금</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="mfprin" value="0" min="0" max="20000" step="100" onblur="onBlurFix('mfprin')" oninput="syncSlider('mfprin');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
@@ -736,7 +738,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="irpy-r" min="0" max="1200" step="50" value="300"  oninput="syncInput('irpy');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">납입 시작<br>나이</span>
+    <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="irpstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
@@ -783,6 +785,7 @@ button{font-family:inherit;cursor:pointer;}
   </div>
   <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#4E9B78;"></div></div>
 </div>
+<div class="mini-note">💡 한도 초과분은 16.5% 세금 — 3계좌 합쳐 1,500만원 안에서 받는 게 유리해요</div>
 
 </div><!-- priv-group -->
 
@@ -807,7 +810,9 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="tdc-r" min="0" max="3000" step="50" value="0" oninput="syncInput('tdc');scheduleUpd()">
-</div><div class="irow dc">
+</div>
+<div class="fv-row">
+<div class="irow dc">
   <div class="irow-top">
     <span class="ilabel">근속연수</span>
     <div class="irow-ctrl">
@@ -817,12 +822,13 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="tservice-r" min="1" max="45" step="1" value="10" oninput="syncInput('tservice');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
-    <span class="ilabel">퇴직소득세 추정치<br>(일시금 기준, 자동계산)</span>
+    <span class="ilabel" title="퇴직소득세 추정치(일시금 기준, 자동계산)">퇴직소득세</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="tirptax" value="3200" min="0" max="30000" step="100" onblur="onBlurFix('tirptax')" oninput="syncSlider('tirptax');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
   </div>
   <input type="range" id="tirptax-r" min="0" max="30000" step="100" value="3200" oninput="syncInput('tirptax');scheduleUpd()">
+</div>
 </div>
 <div class="fv-row">
 <div class="irow dc">
