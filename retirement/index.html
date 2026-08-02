@@ -323,12 +323,16 @@ button{font-family:inherit;cursor:pointer;}
 .acct-body .irow-top{display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0;}
 .acct-body .ilabel{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .acct-body .irow-ctrl{justify-content:flex-start;}
-.acct-body .ival-input{width:52px;font-size:12.5px;padding:3px 5px;}
+.acct-body .ival-input{width:64px;font-size:12.5px;padding:3px 5px;}
 .acct-body .unit-tag{width:auto;}
 
-/* 짝을 이루는 필드 2개(수령 시작/월 수령액 등)를 한 줄에 나란히 배치 */
-.fv-row{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-width:0;}
+/* 짝을 이루는 필드 2개(수령 시작/월 수령액 등)를 한 줄에 나란히 배치 —
+   카드 폭이 좁아 입력칸+단위 텍스트가 옆 칸 라벨과 겹치지 않도록 fv-row 안쪽만 더 좁게 잡음 */
+.fv-row{display:grid;grid-template-columns:1fr 1fr;gap:3px;min-width:0;}
 .fv-row .irow{min-width:0;}
+.acct-body .fv-row .irow-ctrl{gap:2px;}
+.acct-body .fv-row .ival-input{width:44px;font-size:11.5px;padding:3px 3px;}
+.acct-body .fv-row .unit-tag{font-size:8.5px;}
 
 /* 카드 하단 고정 안내 한 줄 — 카드가 늘어난 만큼 생기는 빈 공간을 정보로 채움 */
 .mini-note{margin-top:auto;font-size:9px;color:#8A90A0;line-height:1.5;
@@ -337,7 +341,6 @@ button{font-family:inherit;cursor:pointer;}
 /* ── 사적연금 그룹(농협·미래에셋·IRP) — 1,500만원 한도를 공유하는 3계좌를 하나로 묶음 ── */
 .priv-group{grid-column:span 3;background:transparent;border:1px solid #E8EAF0;border-radius:11px;
   padding:7px;display:flex;flex-direction:column;gap:6px;min-width:0;}
-.priv-group-label{font-size:9.5px;font-weight:700;color:#2E5E47;opacity:.85;padding:0 1px;white-space:nowrap;}
 .priv-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-width:0;}
 
 /* ── 퇴직연금+국민연금 묶음: 내용이 짧은 두 계좌를 한 슬롯에 위/아래로 쌓음 ── */
@@ -520,7 +523,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="acct-grid">
 
 <div class="acct-card" style="border-color:#D6ACB6;">
-<div class="acct-head" style="background:#F5EBEE;color:#713F4C;"><span class="dot" style="background:#BC7B8B;"></span><span class="name">① ISA</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('isa')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head" style="background:#F5EBEE;color:#713F4C;"><span class="dot" style="background:#BC7B8B;"></span><span class="name">ISA</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('isa')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow isa">
   <div class="irow-top">
@@ -580,7 +583,6 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 
 <div class="priv-group">
-<div class="priv-group-label">② 사적연금 (연금저축/개인 IRP, 한도 공유 3계좌)</div>
 <div class="priv-cards">
 
 <div class="acct-card" style="border-color:#8FB89D;">
@@ -792,7 +794,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="stack-group">
 
 <div class="acct-card" style="border-color:#ABA1D4;">
-<div class="acct-head" style="background:#EFEDF6;color:#4F457F;"><span class="dot" style="background:#8478B8;"></span><span class="name">③ 퇴직연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head" style="background:#EFEDF6;color:#4F457F;"><span class="dot" style="background:#8478B8;"></span><span class="name">퇴직연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow dc">
   <div class="irow-top">
@@ -853,7 +855,7 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 
 <div class="acct-card" style="border-color:#D8B78C;">
-<div class="acct-head" style="background:#F5EEE3;color:#71501F;"><span class="dot" style="background:#C08A55;"></span><span class="name">④ 국민연금</span></div>
+<div class="acct-head" style="background:#F5EEE3;color:#71501F;"><span class="dot" style="background:#C08A55;"></span><span class="name">국민연금</span></div>
 <div class="acct-body">
 <div class="fv-row">
 <div class="irow np">
@@ -866,7 +868,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="npage-r" min="60" max="70" step="1" value="65"  oninput="syncInput('npage');scheduleUpd()">
 </div><div class="irow np">
   <div class="irow-top">
-    <span class="ilabel">예상액(65세 기준)</span>
+    <span class="ilabel" title="국민연금공단 '내 연금 알아보기'에서 조회한 65세 기준 예상 수령액">예상액</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="npbase" value="170" min="50" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
