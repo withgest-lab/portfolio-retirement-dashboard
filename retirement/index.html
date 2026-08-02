@@ -2300,17 +2300,32 @@ function setTab(t){ chartTab=t; ['flow','asset'].forEach(x=>document.getElementB
 
 /* ── 세금 상식 가이드 모달 ── */
 /* ── "세금 상식" 인라인 패널 (모달 아님 — 버튼으로 펼침/접힘 토글) ── */
+// 두 인라인 패널(세금 상식/건보료 설계)의 공통 토글 로직.
+// 문제: 한 패널이 펼쳐진 채로 다른 패널 버튼을 누르면, 새로 펼쳐진 패널이 이미 펼쳐진
+// 패널 아래(화면 밖)에 나타나 "눌렀는데 아무 일도 안 일어난 것처럼" 보이는 문제가 있었음.
+// 해결: ① 한 번에 하나만 펼쳐지도록(다른 패널은 자동으로 접음) ② 펼쳐진 패널로 자동 스크롤.
+function toggleInlinePanel(id, otherIds, onOpen){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const willOpen = !el.classList.contains('show');
+  (otherIds||[]).forEach(oid => {
+    const other = document.getElementById(oid);
+    if(other) other.classList.remove('show');
+  });
+  el.classList.toggle('show', willOpen);
+  if(willOpen){
+    if(onOpen) onOpen();
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
 function toggleTaxGuide(){
-  const el = document.getElementById('taxGuidePanel');
-  if(el) el.classList.toggle('show');
+  toggleInlinePanel('taxGuidePanel', ['healthPanel']);
 }
 
 /* ── "건보료 설계" 인라인 패널 (모달 아님 — 버튼으로 펼침/접힘 토글) ── */
 function toggleHealthPanel(){
-  const el = document.getElementById('healthPanel');
-  if(!el) return;
-  el.classList.toggle('show');
-  if(el.classList.contains('show')) renderHealthPanel();
+  toggleInlinePanel('healthPanel', ['taxGuidePanel'], renderHealthPanel);
 }
 
 // "예상 건보료 계산하기" 버튼 클릭 시 — 이미 실시간으로도 갱신되지만, 버튼을 눌렀을 때
