@@ -487,6 +487,14 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500"  oninput="syncInput('plimit');scheduleUpd()">
+</div><div class="irow base-s">
+  <div class="irow-top">
+    <span class="ilabel">재산세<br>과세표준</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="realestate" value="0" min="0" max="200000" step="1000" onblur="onBlurFix('realestate')" oninput="syncSlider('realestate');scheduleUpd()"><span class="unit-tag">만원</span>
+      </div>
+  </div>
+  <input type="range" id="realestate-r" min="0" max="200000" step="1000" value="0"  oninput="syncInput('realestate');scheduleUpd()">
 </div><button class="suggest-btn" style="background:linear-gradient(135deg,#10B981,#FB923C);" onclick="autoSuggest()">
   <span style="font-size:13px;">🎯 자동설계</span>
   <span style="font-size:9px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
@@ -797,13 +805,22 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="tdc-r" min="0" max="3000" step="50" value="0" oninput="syncInput('tdc');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
-    <span class="ilabel">퇴직소득세 추정치<br>(일시금 기준)</span>
+    <span class="ilabel">근속연수</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tservice" value="10" min="1" max="45" step="1" onblur="onBlurFix('tservice')" oninput="syncSlider('tservice');scheduleUpd()"><span class="unit-tag">년</span>
+      </div>
+  </div>
+  <input type="range" id="tservice-r" min="1" max="45" step="1" value="10" oninput="syncInput('tservice');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">퇴직소득세 추정치<br>(일시금 기준, 자동계산)</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="tirptax" value="3200" min="0" max="30000" step="100" onblur="onBlurFix('tirptax')" oninput="syncSlider('tirptax');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
   </div>
   <input type="range" id="tirptax-r" min="0" max="30000" step="100" value="3200" oninput="syncInput('tirptax');scheduleUpd()">
 </div>
+<div class="mini-note">💡 근속연수만 넣으면 국세청 공식(근속연수공제·환산급여공제·누진세율)으로 세금을 자동 추정합니다. 회사에서 안내받은 정확한 금액이 있다면 위 값을 직접 수정하세요.</div>
 <div class="fv-row">
 <div class="irow dc">
   <div class="irow-top">
@@ -840,14 +857,24 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="npage-r" min="60" max="70" step="1" value="65"  oninput="syncInput('npage');scheduleUpd()">
 </div><div class="irow np">
   <div class="irow-top">
-    <span class="ilabel">월 수령액</span>
+    <span class="ilabel">예상액(65세 기준)</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="np" value="170" min="50" max="300" step="5" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="npbase" value="170" min="50" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만원</span>
       </div>
   </div>
-  <input type="range" id="np-r" min="50" max="300" step="5" value="170"  oninput="syncInput('np');scheduleUpd()">
+  <input type="range" id="npbase-r" min="50" max="300" step="5" value="170"  oninput="syncInput('npbase');scheduleUpd()">
 </div>
 </div>
+<div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel">실제 월 수령액(조기·연기 반영)</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="np" value="170" min="0" max="500" step="1" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만원</span>
+      </div>
+  </div>
+  <input type="range" id="np-r" min="0" max="500" step="1" value="170"  oninput="syncInput('np');scheduleUpd()">
+</div>
+<div class="mini-note">💡 "예상액"은 국민연금공단에서 조회한 65세 기준 수령액을 넣으세요 — 수령 시작 나이를 앞당기면 1년당 6%씩, 늦추면 1년당 7.2%씩 자동으로 반영돼 "실제 월 수령액"이 계산됩니다.</div>
 </div>
 </div>
 
@@ -975,7 +1002,8 @@ button{font-family:inherit;cursor:pointer;}
     </div>
     <div class="guide-sec">
       <h4>② 건강보험료 최소화 (피부양자 유지)</h4>
-      <p>건강보험 피부양자 자격은 연간 소득이 2,000만원을 넘으면 사라집니다. 이때 합산되는 건 <b>국민연금 등 공적연금뿐</b>이고, 퇴직IRP·연금저축·IRP개인납입·ISA 같은 사적연금은 전부 합산에서 빠집니다. 그래서 이 대시보드는 국민연금 외의 재원을 먼저, 더 많이 활용하도록 인출 순서를 짭니다.</p>
+      <p>건강보험 피부양자 자격은 <b>소득</b>과 <b>재산</b> 두 가지 기준으로 판정됩니다. 소득 기준으로 합산되는 건 <b>국민연금 등 공적연금뿐</b>이고, 퇴직IRP·연금저축·IRP개인납입·ISA 같은 사적연금은 전부 제외됩니다. 그래서 이 대시보드는 국민연금 외의 재원을 먼저, 더 많이 활용하도록 인출 순서를 짭니다.</p>
+      <p><b>재산 기준</b> — 재산세 과세표준이 5.4억원 이하면 공적연금 연 2,000만원까지, 5.4억~9억원이면 연 1,000만원까지 허용되고, 9억원을 넘으면 소득과 무관하게 탈락합니다. 보유 부동산이 있다면 위 "재산세 과세표준" 항목에 입력해 두세요.</p>
     </div>
     <div class="guide-sec">
       <h4>③ 국민연금 더 많이 받는 법</h4>
@@ -1274,6 +1302,67 @@ function tirpTaxDiscount(withdrawalYear){
   return 0.3;
 }
 
+/* ── 건강보험 피부양자 자격 판정(소득+재산 기준) ──
+   - 재산 과세표준 9억원 초과: 소득 무관 무조건 탈락
+   - 재산 과세표준 5.4억 초과 9억 이하: 연소득(공적연금) 1,000만원 초과 시 탈락
+   - 그 외(5.4억 이하): 연소득(공적연금) 2,000만원 초과 시 탈락
+   ※ "연소득"에는 원래 이자·배당·사업·기타소득도 합산되지만 이 대시보드는 연금 계좌만
+     추적하므로 국민연금(공적연금)만 반영 — 다른 소득이 있다면 별도로 감안해야 함 */
+function dependentStatusCheck(annualPension, realEstateBase){
+  const re = realEstateBase || 0;
+  if(re > 90000) return {fail:true, reason:'재산 과세표준 9억원 초과 → 소득과 무관하게 자동 탈락'};
+  if(re > 54000 && annualPension > 1000) return {fail:true, reason:'재산 과세표준 5.4억원 초과 + 공적연금 연 1,000만원 초과'};
+  if(re <= 54000 && annualPension > 2000) return {fail:true, reason:'공적연금(국민연금) 연 2,000만원 초과'};
+  return {fail:false, reason:''};
+}
+
+/* ── 국민연금 조기·연기수령 가산율 ── 정상수급나이(65세) 대비 1년당 조기 -6%, 연기 +7.2%
+   (실제 정상수급나이는 출생연도별로 다르지만 이 대시보드는 65세를 기준으로 단순화) */
+function npsAdjustFactor(npage){
+  const NORMAL_AGE = 65;
+  if(npage < NORMAL_AGE) return -(NORMAL_AGE - npage) * 0.06;
+  if(npage > NORMAL_AGE) return (npage - NORMAL_AGE) * 0.072;
+  return 0;
+}
+
+/* ── 퇴직소득세 실제 계산(국세청 공식): 근속연수공제 → 환산급여 → 환산급여공제
+   → 과세표준 → 종합소득세 누진세율(2026) → 근속연수만큼 환산산출세액을 되돌림
+   retirementIncome: 퇴직소득금액(원금, 만원), serviceYears: 근속연수(년) */
+function calcRetirementIncomeTax(retirementIncome, serviceYears){
+  const yrs = Math.max(1, Math.round(serviceYears));
+  const income = Math.max(0, retirementIncome);
+
+  let serviceDeduction;
+  if(yrs <= 5)       serviceDeduction = yrs * 100;
+  else if(yrs <= 10)  serviceDeduction = 500 + (yrs - 5) * 200;
+  else if(yrs <= 20)  serviceDeduction = 1500 + (yrs - 10) * 250;
+  else                serviceDeduction = 4000 + (yrs - 20) * 300;
+
+  const convertedIncome = Math.max(0, income - serviceDeduction) * 12 / yrs;
+
+  let convertedDeduction;
+  if(convertedIncome <= 800)         convertedDeduction = convertedIncome;
+  else if(convertedIncome <= 7000)   convertedDeduction = 800 + (convertedIncome - 800) * 0.6;
+  else if(convertedIncome <= 10000)  convertedDeduction = 4520 + (convertedIncome - 7000) * 0.55;
+  else if(convertedIncome <= 30000)  convertedDeduction = 6170 + (convertedIncome - 10000) * 0.45;
+  else                                convertedDeduction = 15170 + (convertedIncome - 30000) * 0.35;
+
+  const taxBase = Math.max(0, convertedIncome - convertedDeduction);
+
+  let incomeTax;
+  if(taxBase <= 1400)        incomeTax = taxBase * 0.06;
+  else if(taxBase <= 5000)   incomeTax = taxBase * 0.15 - 126;
+  else if(taxBase <= 8800)   incomeTax = taxBase * 0.24 - 576;
+  else if(taxBase <= 15000)  incomeTax = taxBase * 0.35 - 1544;
+  else if(taxBase <= 30000)  incomeTax = taxBase * 0.38 - 1994;
+  else if(taxBase <= 50000)  incomeTax = taxBase * 0.40 - 2594;
+  else if(taxBase <= 100000) incomeTax = taxBase * 0.42 - 3594;
+  else                        incomeTax = taxBase * 0.45 - 6594;
+  incomeTax = Math.max(0, incomeTax);
+
+  return Math.round(incomeTax * yrs / 12);
+}
+
 /* ── 물가상승 반영 연금(Growing Annuity) PMT — 연단위 인출 구조 ──
    simulate()의 stepBalance()는 인출액을 "해당 나이의 1년 동안 12회 동일액"으로 적용하고,
    매년(나이가 바뀔 때) infMul=(1+물가)^(연차)만큼 한 번에 점프 증액한다.
@@ -1531,6 +1620,15 @@ function autoSuggest(){
   // IRP 개시 시점 한도: 농협(nhMon, 전 구간 동일)만 수령 중 → monLimit - nhMon
   const irpMon = Math.min(irpMaxMon, Math.max(0, monLimit - nhMon));
 
+  // STEP 5.5: 퇴직소득세 추정치 자동 계산 (국세청 공식) — 은퇴 시점까지 쌓일 원금
+  // (현재 잔액 + 남은 기간 DC 적립액)과 근속연수를 실제 퇴직소득세 계산 공식에 넣어
+  // 자동으로 채운다. 회사에서 실제 안내받은 금액이 있으면 이 값을 직접 덮어써도 됨.
+  const tirpPrincipalAtRet = p.tirp + p.tdc * Math.max(0, p.ret - p.age);
+  const tservAtRet = p.tservice + Math.max(0, p.ret - p.age);
+  const tirptaxAuto = calcRetirementIncomeTax(tirpPrincipalAtRet, tservAtRet);
+  sv('tirptax', tirptaxAuto);
+  p.tirptax = tirptaxAuto; // optimizeTage가 이번 계산에서 바로 최신값을 쓰도록 로컬 객체도 갱신
+
   // STEP 6: 퇴직IRP 수령 시작 나이 자동 최적화
   // 하드코딩된 65세 대신, 생활비 목표를 기대수명까지 충족하면서 추정 퇴직소득세 총액이
   // 최소가 되는 시작 나이를 탐색(optimizeTage) — 수령연차가 쌓일수록 세금 감면율이
@@ -1570,11 +1668,12 @@ function autoSuggest(){
   const leftoverAsset = lastRow ? Math.round((lastRow.privB + lastRow.tirpB + lastRow.isaB)*10)/10 : 0; // 억원
 
   // 건보료 피부양자 경고
-  // 합산 대상: 국민연금(공적연금)만
+  // 합산 대상: 국민연금(공적연금)만 (+ 재산 과세표준 5.4억/9억 기준)
   // 합산 제외: 퇴직IRP·연금저축·IRP개인납입(사적연금), ISA(비과세)
   // 출처: 국민건강보험법, 미래에셋투자와연금센터 2025.1
   const annualPension = p.np * 12;
-  const healthWarn = annualPension > 2000;
+  const dependentCheck = dependentStatusCheck(annualPension, p.realestate);
+  const healthWarn = dependentCheck.fail;
 
   // 퇴직IRP 설명(상세 본문) — <li> 없이 내용만 만들어두고, 실제 시작 시점(공백기/완성기)에
   // 맞는 목록에서 각자 다른 <li> 래퍼로 감싸 재사용한다
@@ -1601,7 +1700,7 @@ function autoSuggest(){
   <li>④ 농협 <b>${p.ret}세~ 월 ${nhMon}만</b>(오늘 기준) → ${p.life}세까지 물가증액 분산</li>
   ${tirpInGap ? `<li>(별도 트랙, 한도 무관) ${tirpDetailBody}</li>` : ''}
   <li>공백기 첫해 월 합계 <b>${gapTotalWithPrin}만원</b>${prinMon>0?' <span style="opacity:.7;font-size:9px;">(연금자산 ${gapTotal}만 + 안세공 ${prinMon}만)</span>':''}
-    <div style="font-size:9px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${gapVsExp>=0?'+'+gapVsExp+'만 여유':gapVsExp+'만 부족'} (오늘 기준, 참고)</div>
+    <div style="font-size:9px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${gapVsExp>=0?'+'+gapVsExp+'만 여유':gapVsExp+'만 부족'} (오늘 기준, 참고) · 세후 약 ${simRes.netGapMonthly}만원</div>
   </li>
   <li>공백기 사적연금 연 <b>${(privGap*12).toLocaleString()}만</b> ${privGap*12 <= p.plimit ? '→ '+pensionTaxRate(p.ret)+'% 분리과세 ✓' : '⚠️ 한도 초과 → 16.5% 분리과세 또는 종합과세'}</li>
 </ul>
@@ -1614,14 +1713,14 @@ function autoSuggest(){
   <li>IRP개인납입 <b>${irpStartAge}세~ 월 ${irpMon}만</b>(오늘 기준) → 미래에셋 소진 후 개시, ${p.life}세까지 물가증액 분산${irpMon === 0 ? ' (잔액 없거나 한도 소진)' : ''}</li>
   <li>농협 <b>${p.ret}세~ 월 ${nhMon}만</b>(오늘 기준, 공백기와 동일율 계속) → ${p.life}세까지 물가증액 분산</li>
   <li>완성기 첫해 월 합계 <b>약 ${fullTotal}만원</b>
-    <div style="font-size:9px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${fullVsExp>=0?'+'+fullVsExp+'만 여유':fullVsExp+'만 부족'} (오늘 기준, 참고)</div>
+    <div style="font-size:9px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${fullVsExp>=0?'+'+fullVsExp+'만 여유':fullVsExp+'만 부족'} (오늘 기준, 참고) · 세후 약 ${simRes.netFullMonthly}만원</div>
   </li>
   <li>완성기 사적연금 연 <b>${(privFull*12).toLocaleString()}만</b> ${privFull*12 <= p.plimit ? '→ '+pensionTaxRate(p.npage)+'% 분리과세 ✓' : '⚠️ 한도 초과 → 16.5% 분리과세 또는 종합과세'}</li>
 </ul>
-${healthWarn ? `<div style="background:#FFF1DC;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#9A3412;">⚠️ 국민연금 연 <b>${Math.round(annualPension).toLocaleString()}만원</b> → 2,000만 초과 시 건보료 피부양자 탈락<br><span style="opacity:.8;">※ 퇴직IRP·연금저축·IRP개인납입·ISA는 사적연금으로 합산 제외</span></div>` : ''}
+${healthWarn ? `<div style="background:#FFF1DC;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#9A3412;">⚠️ 건보료 피부양자 탈락 예상 — ${dependentCheck.reason} (국민연금 연 ${Math.round(annualPension).toLocaleString()}만원${p.realestate>0?', 재산 과세표준 '+p.realestate.toLocaleString()+'만원':''})<br><span style="opacity:.8;">※ 퇴직IRP·연금저축·IRP개인납입·ISA는 사적연금으로 합산 제외, 이자·배당·사업소득은 이 계산에 포함되지 않음</span></div>` : ''}
 ${nhLimited ? `<div style="background:#FFF1DC;border-radius:5px;padding:5px 8px;margin-top:4px;font-size:10px;color:#9A3412;">⚠️ 미래에셋(이론상 월 ${mfMaxMon}만)과 농협(이론상 월 ${nhMaxMon}만)의 합이 사적연금 한도(연 ${p.plimit.toLocaleString()}만 = 월 ${monLimit}만)를 초과하여, 두 계좌 모두 ${Math.round(mfNhScale*100)}% 비율로 축소해 미래에셋 월 ${mfMon}만 · 농협 월 ${nhMon}만으로 인출합니다. 그 결과 두 계좌 모두 ${p.life}세보다 더 늦게 소진되며, ${p.life}세 시점 잔여자산이 약 <b>${leftoverAsset}억원</b> 남을 것으로 예상됩니다. (한도 초과 인출 시 16.5%/종합과세 적용 가능)</div>` : ''}
 <div style="margin-top:5px;padding-top:4px;border-top:1px dashed #B7ECD3;font-size:10px;color:#64748B;">
-  💡 사적연금(퇴직IRP·연금저축·IRP개인납입·ISA)은 건보료 피부양자 소득 합산 제외 → 국민연금만 2,000만원 기준 적용<br>
+  💡 사적연금(퇴직IRP·연금저축·IRP개인납입·ISA)은 건보료 피부양자 소득 합산 제외 → 국민연금만 기준 적용(재산 5.4억↓ 2,000만원 / 5.4~9억 1,000만원 / 9억↑ 소득무관 탈락)<br>
   🎯 모든 계좌는 ${p.life}세(기대수명) 시점 0원에 맞춰 매년 물가상승률만큼 인출액을 증액합니다.${nhLimited ? ' 단, 미래에셋·농협은 사적연금 한도 제약으로 비례 축소되어 일부 잔여자산이 남습니다.' : ''}
 </div>`;
   // 배너 업데이트
@@ -1650,14 +1749,14 @@ function showPlanBanner(d){
     + (d.prinMon>0 ? ' (+안세공 '+d.prinMon+'만)' : '');
   const gapNet  = d.gapTotalWithPrin - d.target;
   document.getElementById('pb-gap-vs').textContent     =
-    (gapNet>=0 ? '✅ 생활비 대비 +'+gapNet+'만 여유' : '⚠️ 생활비 대비 '+gapNet+'만 부족');
+    (gapNet>=0 ? '✅ 생활비 대비 +'+gapNet+'만 여유' : '⚠️ 생활비 대비 '+gapNet+'만 부족') + ' (세후 약 '+res.netGapMonthly+'만)';
   document.getElementById('pb-gap-vs').style.color     = gapNet>=0?'#34D399':'#F87171';
 
   const fullNet = d.fullTotal - d.target;
 
   document.getElementById('pb-full-total').textContent = d.fullTotal+'만원/월';
   document.getElementById('pb-full-vs').textContent    =
-    (fullNet>=0 ? '✅ 생활비 대비 +'+fullNet+'만 여유' : '⚠️ 생활비 대비 '+fullNet+'만 부족');
+    (fullNet>=0 ? '✅ 생활비 대비 +'+fullNet+'만 여유' : '⚠️ 생활비 대비 '+fullNet+'만 부족') + ' (세후 약 '+res.netFullMonthly+'만)';
   document.getElementById('pb-full-vs').style.color    = fullNet>=0?'#38BDF8':'#F87171';
 
   const pct = Math.round(d.annualPriv/p.plimit*100);
@@ -1802,6 +1901,11 @@ function simulate(p, adj){
   let runway=p.life;
   const rows=[];
   let gapSum=0, gapCount=0, fullSum=0, fullCount=0;
+  let netGapSum=0, netFullSum=0;
+  // 세후(net) 계산용: 퇴직소득세는 은퇴 시점까지 쌓일 원금 대비 그해 인출 비율로 안분
+  // (optimizeTage의 세금 안분 로직과 동일 기준 사용 — ISA는 이미 인출 전 회차별 과세가
+  //  끝난 세후 잔액이라 별도 차감이 필요 없고, 안세공/국민연금은 각각 비과세·별도세목이라 제외)
+  const tirpBaseForTax = p.tirp + p.tdc * Math.max(0, p.ret - p.age);
 
   for(let age=p.ret; age<=p.life; age++){
     const el = age-p.ret; // 은퇴 후 경과 연수
@@ -1846,6 +1950,16 @@ function simulate(p, adj){
 
     const totalInc= privInc+npInc+tirpInc+isaInc+prinInc;
 
+    // 세후(net) 참고치: 사적연금은 연령별 저율세(pensionTaxRate), 퇴직IRP는 그해 인출
+    // 비율×감면율을 반영한 추정 세금을 각각 차감(ISA·안세공·국민연금은 위 주석 이유로 제외)
+    const privTaxInc = Math.round(privInc * pensionTaxRate(age) / 100);
+    let tirpTaxInc = 0;
+    if(tirpInc>0 && age>=p.tage && p.tirptax>0 && tirpBaseForTax>0){
+      const withdrawalYear = age - p.tage + 1;
+      tirpTaxInc = Math.round(p.tirptax * (tirpInc*12/tirpBaseForTax) * (1-tirpTaxDiscount(withdrawalYear)) / 12);
+    }
+    const netInc = Math.max(0, totalInc - privTaxInc - tirpTaxInc);
+
     // ── 잔액 업데이트 (인출 계획 고정) ──
     // 생활비는 그래프 목표선(점선)으로만 표시
     // 실제 자산 시뮬레이션은 설정된 인출 계획 기준으로 고정
@@ -1859,13 +1973,14 @@ function simulate(p, adj){
     if(totalAsset<=0 && runway===p.life) runway=age;
 
     // 공백기/완성기 평균 계산용
-    if(age<p.npage){ gapSum+=totalInc; gapCount++; }
-    else           { fullSum+=totalInc; fullCount++; }
+    if(age<p.npage){ gapSum+=totalInc; gapCount++; netGapSum+=netInc; }
+    else           { fullSum+=totalInc; fullCount++; netFullSum+=netInc; }
 
     rows.push({
       age, label:age+'세',
       nhInc, mfInc, irpInc, privInc,
       npInc, tirpInc, isaInc, prinInc, totalInc, curExp,
+      privTaxInc, tirpTaxInc, netInc,
       // 자산 잔액: 만원→억 변환 (소수 1자리)
       privB: Math.round((nhB+mfB+irpB)/10000*10)/10,
       nhB_억: Math.round(nhB/10000*10)/10,
@@ -1878,12 +1993,14 @@ function simulate(p, adj){
 
   const gapMonthly  = gapCount>0  ? Math.round(gapSum/gapCount)  : 0;
   const fullMonthly = fullCount>0 ? Math.round(fullSum/fullCount) : 0;
+  const netGapMonthly  = gapCount>0  ? Math.round(netGapSum/gapCount)  : 0;
+  const netFullMonthly = fullCount>0 ? Math.round(netFullSum/fullCount) : 0;
   // 공백기 첫해 사적연금 연수령
   const firstGapRow = rows.find(r=>r.age===p.ret)||rows[0];
   const privAnnual  = firstGapRow ? firstGapRow.privInc*12 : 0;
 
   return { nhFV,mfFV,irpFV,tirpFV,isaFV, totalFV,
-           gapMonthly, fullMonthly, privAnnual, runway, rows };
+           gapMonthly, fullMonthly, netGapMonthly, netFullMonthly, privAnnual, runway, rows };
 }
 
 
@@ -1894,12 +2011,12 @@ const STORAGE_KEY = 'retirement_dashboard_v1';
 
 // 저장할 모든 필드 ID 목록
 const ALL_FIELDS = [
-  'age','ret','life','exp','plimit',
+  'age','ret','life','exp','plimit','realestate',
   'nh','nhm','nhstart','nhend','nhage','nhpay','nhprin',
   'mf','mfm','mfstart','mfend','mfage','mfpay','mfprin',
   'irp','irpy','irpstart','irpend','irpage','irppay',
-  'tirp','tdc','tage','tm','tirptax',
-  'np','npage',
+  'tirp','tdc','tservice','tage','tm','tirptax',
+  'np','npbase','npage',
   'isa','isay','isastart','isaend','isaage','isam',
   'rnh','rmf','rirp','rtirp','risa','inf'
 ];
@@ -1963,12 +2080,12 @@ function resetState(){
 
 function getP(){
   return{
-    age:gv('age'),ret:gv('ret'),life:gv('life'),exp:gv('exp'),
+    age:gv('age'),ret:gv('ret'),life:gv('life'),exp:gv('exp'),realestate:gv('realestate'),
     nh:gv('nh'),nhm:gv('nhm'),nhstart:gv('nhstart'),nhend:gv('nhend'),nhage:gv('nhage'),nhpay:gv('nhpay'),nhprin:gv('nhprin'),
     mf:gv('mf'),mfm:gv('mfm'),mfstart:gv('mfstart'),mfend:gv('mfend'),mfage:gv('mfage'),mfpay:gv('mfpay'),mfprin:gv('mfprin'),
     irp:gv('irp'),irpy:gv('irpy'),irpstart:gv('irpstart'),irpend:gv('irpend'),irpage:gv('irpage'),irppay:gv('irppay'),
-    tirp:gv('tirp'),tdc:gv('tdc'),tage:gv('tage'),tm:gv('tm'),tirptax:gv('tirptax'),
-    np:gv('np'),npage:gv('npage'),
+    tirp:gv('tirp'),tdc:gv('tdc'),tservice:gv('tservice'),tage:gv('tage'),tm:gv('tm'),tirptax:gv('tirptax'),
+    np:gv('np'),npbase:gv('npbase'),npage:gv('npage'),
     isa:gv('isa'),isay:gv('isay'),isastart:gv('isastart'),isaend:gv('isaend'),isaage:gv('isaage'),isam:gv('isam'),
     plimit:gv('plimit'),
     rnh:gv('rnh'),rmf:gv('rmf'),rirp:gv('rirp'),rtirp:gv('rtirp'),risa:gv('risa'),inf:gv('inf')
@@ -2143,6 +2260,7 @@ function showCustomTooltip(evt, activeEls, chart){
 
   tip.innerHTML = `
     <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 월 수령 합계 <b style="color:#059669">${totalInc}만원</b></div>
+    <div class="tt-exp" style="color:#7C3AED;">💸 세후(세금 차감) 약 <b>${row.netInc}만원</b></div>
     <div class="tt-exp">📉 월 생활비 예측: <b style="color:#DC2626">${curExp}만원</b></div>
     <div class="tt-net" style="color:${netColor};">${net>=0?'✅':'⚠️'} ${netLabel}</div>
     ${rows_html}
@@ -2333,6 +2451,15 @@ function upd(){
     inp.value = p.age; rng.value = p.age;
   });
 
+  // 국민연금 "실제 월 수령액"(np)은 "65세 기준 예상액"(npbase)에 조기·연기수령
+  // 가산율을 자동 반영해 매번 다시 계산 — 수령 시작 나이만 바꾸면 자동으로 맞춰짐
+  (function(){
+    const factor = npsAdjustFactor(p.npage);
+    const npAuto = Math.round(p.npbase * (1 + factor));
+    sv('np', npAuto);
+    p.np = npAuto; // 이번 렌더링에도 바로 반영되도록 로컬 값도 함께 갱신(한 박자 늦게 반영되는 것 방지)
+  })();
+
   // 자막
   document.getElementById('subtitle').textContent=
     p.age+'세 → '+p.ret+'세 은퇴 · 사적연금 한도 '+p.plimit.toLocaleString()+'만원/년';
@@ -2475,7 +2602,7 @@ function applyInputTags(){
   // 자동설계가 채워주는 필드만 표시(회색 배경·글자색)로 구분 — REQ/OPT 배지·색띠·범례는
   // "복잡해 보인다"는 피드백으로 제거하고, 수동 입력값과 확실히 구분되어야 하는
   // 자동계산 필드 표시만 남김
-  const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','tage','tm'];
+  const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','tage','tm','np','tirptax'];
 
   function tag(id, cls){
     const el = document.getElementById(id);
