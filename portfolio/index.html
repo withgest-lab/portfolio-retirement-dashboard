@@ -2017,8 +2017,10 @@ function executeTrade(){
   if(mode==='form_buy'){
     const {name, ticker, cat, qty:fQty, price:fPrice, cur, attr, subacct} = trade;
     const tickerVal = ticker||'—';
+    // 같은 티커라도 구분(카테고리)이 다르면 별도 계좌(예: 개인연금 vs IRP)에 보유 중인 것이므로
+    // 별도 자산 항목으로 취급 — 카테고리까지 일치해야 같은 보유자산으로 합산
     const existing = tickerVal!=='—'
-      ? assets.find(a=>a.ticker.toUpperCase()===tickerVal)
+      ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.category===cat)
       : assets.find(a=>a.name===name && a.currency===cur && a.category===cat);
     let cashName = null;
     if(existing){
@@ -2292,7 +2294,7 @@ function searchSell(query){
   box.innerHTML=results.map(a=>`
     <div class="suggest-item" onclick="selectSell('${a.id}')">
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;">${a.name}</div>
+        <div style="font-size:13px;font-weight:600;">${a.name} ${a.category?`<span style="font-size:9px;font-weight:700;color:${CAT_COLS[a.category]||'#8e8e93'};background:${CAT_COLS[a.category]||'#8e8e93'}20;border-radius:5px;padding:1px 5px;margin-left:3px;">${CAT_LABELS[a.category]||a.category}</span>`:''}</div>
         <div style="font-size:11px;color:var(--color-tertiary)">${a.ticker} · 보유 ${a.quantity.toLocaleString()}주 · 평균 ${CUR_SYM[a.currency]}${a.avgPrice.toLocaleString()}</div>
       </div>
     </div>`).join('');
@@ -2356,7 +2358,8 @@ function addAsset(){
   if(isNaN(price)||price<=0)  { st.textContent='❌ 단가를 입력해 주세요.'; return; }
   const sym = CUR_SYM[cur];
   const tickerVal = ticker||'—';
-  const existing  = tickerVal!=='—' ? assets.find(a=>a.ticker.toUpperCase()===tickerVal) : null;
+  // 같은 티커라도 구분(카테고리)이 다르면 별도 계좌 보유분이므로 카테고리까지 일치해야 합산 대상
+  const existing  = tickerVal!=='—' ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.category===cat) : null;
   const newAvg    = existing ? Math.round(((existing.avgPrice*existing.quantity)+(price*qty))/(existing.quantity+qty)) : price;
   const totalQty  = existing ? existing.quantity+qty : qty;
 
