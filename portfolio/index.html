@@ -64,7 +64,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
   border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;font-family:inherit;}
 
 /* ── 접이식 상세 섹션 ── */
-.collapsible summary{cursor:pointer;color:var(--color-tertiary);font-weight:600;font-size:11px;
+.collapsible summary{cursor:pointer;color:var(--color-secondary);font-weight:600;font-size:11px;
   padding:4px 0;list-style:none;}
 .collapsible summary::-webkit-details-marker{display:none;}
 .collapsible summary::before{content:'▸ ';}
@@ -467,25 +467,25 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
           </select>
         </label>
       </div>
-      <!-- 3가지 모드 선택 -->
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <!-- 4가지 모드 선택 -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex:1 1 100%;flex-wrap:wrap;">
         <button id="cf_mode_set" onclick="setCashMode('set')"
-          style="flex:1;padding:7px 4px;font-size:12px;border-radius:8px;border:1.5px solid #34c759;
+          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid #34c759;
                  background:#34c75920;color:#34c759;font-weight:700;cursor:pointer;">
           잔액 설정
         </button>
         <button id="cf_mode_in" onclick="setCashMode('in')"
-          style="flex:1;padding:7px 4px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
+          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
                  background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
           + 입금
         </button>
         <button id="cf_mode_out" onclick="setCashMode('out')"
-          style="flex:1;padding:7px 4px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
+          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
                  background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
           - 출금
         </button>
         <button id="cf_mode_div" onclick="setCashMode('div')"
-          style="flex:1;padding:7px 4px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
+          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
                  background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
           💰 배당
         </button>
@@ -790,9 +790,11 @@ async function yahooFetch(url){
 function getUSMarketStateByTime(){ return 'REGULAR'; }
 function getKRMarketState(){ return 'REGULAR'; }
 function getUSMarketLabel(ms){ return {label:'', color:'#007aff'}; }
-// ticker가 .KS/.KQ/.KN 이거나 순수 6자리 숫자인 경우 사용
+// ticker가 .KS/.KQ/.KN 이거나 국내 상장 6자리 코드(숫자만 또는 영숫자 혼합)인 경우 사용
+// ※ 채권혼합형 등 최신 ETF는 0177N0처럼 문자가 섞인 6자리 코드를 쓰므로 숫자만 매칭하면 놓침
+const KR_TICKER_RE = /^[0-9A-Za-z]{6}$/;
 function isKoreanTicker(ticker){
-  return /\.(KS|KQ|KN)$/i.test(ticker) || /^\d{6}$/.test(ticker.trim());
+  return /\.(KS|KQ|KN)$/i.test(ticker) || KR_TICKER_RE.test(ticker.trim());
 }
 
 async function fetchNaver(ticker){
@@ -881,7 +883,7 @@ async function fetchPrice(ticker){
   if(isKoreanTicker(ticker)){
     const r = await fetchNaver(ticker);
     if(r.ok) return r;
-    const yahooTicker = /^\d{6}$/.test(ticker.trim()) ? ticker.trim()+'.KS' : ticker;
+    const yahooTicker = KR_TICKER_RE.test(ticker.trim()) ? ticker.trim()+'.KS' : ticker;
     return fetchYahoo(yahooTicker);
   }
   return fetchYahoo(ticker);
