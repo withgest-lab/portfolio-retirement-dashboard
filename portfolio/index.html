@@ -1195,6 +1195,8 @@ function saveTradeLogEdit(id){
   const dateV = document.getElementById(`tle_date_${id}`).value;
   const name  = document.getElementById(`tle_name_${id}`).value.trim();
   const type  = document.getElementById(`tle_type_${id}`).value;
+  const subacct = readSelectOrCustom(`tle_subacct_${id}`, `tle_subacct_custom_${id}`, false);
+  if(subacct===null) return;
   const cat   = document.getElementById(`tle_cat_${id}`)?.value || '';
   const attr  = document.getElementById(`tle_attr_${id}`)?.value || '';
   const price = parseFloat(document.getElementById(`tle_price_${id}`).value);
@@ -1208,6 +1210,7 @@ function saveTradeLogEdit(id){
   if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
   r.name = name;
   r.type = type;
+  r.subAccount = subacct || null;
   r.category = cat || null;
   r.attribute = attr || null;
   r.price = price;
@@ -1479,12 +1482,13 @@ function renderSoldHistory(){
 
     if(editingTradeLogId===r.id){
       const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      const tleSubacctCustom = r.subAccount && !['nh','mf'].includes(r.subAccount);
       rowHtml += `<tr style="background:#f0fff4;">
         <td colspan="6" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
             ✏️ 매매 이력 수정
             <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-              ${r.name} · 날짜/종목/구분/체결단가/수량/사유를 수정합니다
+              ${r.name} · 날짜/종목/계좌/구분/체결단가/수량/사유를 수정합니다
             </span>
           </div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
@@ -1497,6 +1501,19 @@ function renderSoldHistory(){
               종목명
               <input id="tle_name_${r.id}" value="${r.name.replace(/"/g,'&quot;')}"
                 style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+            </label>
+            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+              계좌
+              <select id="tle_subacct_${r.id}" onchange="toggleCustomInput('tle_subacct_${r.id}','tle_subacct_custom_${r.id}')"
+                style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+                <option value=""   ${!r.subAccount?'selected':''}>-- 없음 --</option>
+                <option value="nh" ${r.subAccount==='nh'?'selected':''}>농협</option>
+                <option value="mf" ${r.subAccount==='mf'?'selected':''}>미래에셋</option>
+                <option value="__custom__" ${tleSubacctCustom?'selected':''}>+ 직접입력</option>
+              </select>
+              <input id="tle_subacct_custom_${r.id}" placeholder="계좌명 입력" value="${tleSubacctCustom?r.subAccount.replace(/"/g,'&quot;'):''}"
+                style="width:85px;display:${tleSubacctCustom?'inline-block':'none'};margin-top:3px;
+                       border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
             </label>
             <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
               유형
@@ -1812,13 +1829,14 @@ function renderTable(){
           </td>
         </tr>`;
       } else {
-        // ── 일반 종목: 수량 / 평균단가 / 구분 ──
+        // ── 일반 종목: 수량 / 평균단가 / 계좌 / 구분 / 속성 ──
+        const tpSubacctCustom = a.subAccount && !['nh','mf'].includes(a.subAccount);
         rows+=`<tr style="background:#f0fff4;">
           <td colspan="8" style="padding:14px 16px;" onclick="event.stopPropagation()">
             <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
               ✏️ 종목 수정
               <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-                ${a.name} · 수량, 평균단가, 구분을 수정합니다
+                ${a.name} · 수량, 평균단가, 계좌, 구분, 속성을 수정합니다
               </span>
             </div>
             <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
@@ -1835,8 +1853,22 @@ function renderTable(){
                          padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                계좌
+                <select id="tp_subacct_${a.id}" onchange="toggleCustomInput('tp_subacct_${a.id}','tp_subacct_custom_${a.id}')"
+                  style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
+                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+                  <option value=""   ${!a.subAccount?'selected':''}>-- 없음 --</option>
+                  <option value="nh" ${a.subAccount==='nh'?'selected':''}>농협</option>
+                  <option value="mf" ${a.subAccount==='mf'?'selected':''}>미래에셋</option>
+                  <option value="__custom__" ${tpSubacctCustom?'selected':''}>+ 직접입력</option>
+                </select>
+                <input id="tp_subacct_custom_${a.id}" placeholder="계좌명 입력" value="${tpSubacctCustom?a.subAccount.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${tpSubacctCustom?'inline-block':'none'};margin-top:3px;
+                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
                 구분
-                <select id="tp_cat_${a.id}" onchange="toggleSubacctField('tp_cat_${a.id}','tp_subacct_wrap_${a.id}')"
+                <select id="tp_cat_${a.id}"
                   style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
                          font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
                   <option value="stock_kr"  ${a.category==='stock_kr' ?'selected':''}>국내주식</option>
@@ -1848,16 +1880,6 @@ function renderTable(){
                   <option value="isa"       ${a.category==='isa'      ?'selected':''}>ISA</option>
                   <option value="crypto"    ${a.category==='crypto'   ?'selected':''}>가상자산</option>
                   <option value="cash"      ${a.category==='cash'     ?'selected':''}>현금</option>
-                </select>
-              </label>
-              <label id="tp_subacct_wrap_${a.id}" style="font-size:10px;color:var(--color-tertiary);display:${a.category==='pension_personal'?'flex':'none'};flex-direction:column;gap:3px;">
-                세부계좌
-                <select id="tp_subacct_${a.id}"
-                  style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value=""   ${!a.subAccount?'selected':''}>-- 선택 --</option>
-                  <option value="nh" ${a.subAccount==='nh'?'selected':''}>농협</option>
-                  <option value="mf" ${a.subAccount==='mf'?'selected':''}>미래에셋</option>
                 </select>
               </label>
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
@@ -2050,8 +2072,7 @@ function executeTrade(){
     if(!isNaN(price)&&price>0) a.avgPrice = price;
     if(trade.cat)              a.category = trade.cat;
     if(trade.attr !== undefined) a.attribute = trade.attr || null;
-    // 세부계좌: 개인연금일 때만 값 유지, 다른 구분으로 바뀌면 초기화
-    a.subAccount = (a.category==='pension_personal') ? (trade.subacct || null) : null;
+    if(trade.subacct !== undefined) a.subAccount = trade.subacct || null;
     editingId=null; quickTradeId=null;
     saveAssets();renderAll();
     return;
@@ -2196,11 +2217,13 @@ function confirmSaveEdit(id){
   const price = parseFloat(document.getElementById(`tp_price_${id}`)?.value);
   const cat   = document.getElementById(`tp_cat_${id}`)?.value || a.category;
   const attr  = document.getElementById(`tp_attr_${id}`)?.value ?? a.attribute ?? '';
-  const subacct = cat==='pension_personal' ? (document.getElementById(`tp_subacct_${id}`)?.value ?? a.subAccount ?? '') : '';
+  const subacct = readSelectOrCustom(`tp_subacct_${id}`, `tp_subacct_custom_${id}`, false);
+  if(subacct===null) return;
   pendingTrade = {id, mode:'edit', qty, price, cat, attr, subacct};
   const sym = CUR_SYM[a.currency];
   const catChanged = cat !== a.category;
   const attrChanged = attr !== (a.attribute||'');
+  const subacctChanged = subacct !== (a.subAccount||'');
   const titleEl   = document.getElementById('tc_title');
   const detailEl  = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
@@ -2209,6 +2232,7 @@ function confirmSaveEdit(id){
     <b>${a.name}</b><br>
     수량: ${!isNaN(qty)?qty.toLocaleString():'변경없음'}<br>
     평균단가: ${!isNaN(price)?sym+price.toLocaleString():'변경없음'}<br>
+    계좌: ${subacctChanged?`${SUBACCT_LABELS[a.subAccount]||a.subAccount||'없음'} → <b>${SUBACCT_LABELS[subacct]||subacct||'없음'}</b>`:'변경없음'}<br>
     구분: ${catChanged?`${CAT_LABELS[a.category]||a.category} → <b>${CAT_LABELS[cat]||cat}</b>`:'변경없음'}<br>
     속성: ${attrChanged?`${a.attribute||'없음'} → <b>${attr||'없음'}</b>`:'변경없음'}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">위 내용으로 저장하시겠습니까?</span>`;
@@ -2386,11 +2410,6 @@ function resetBuyForm(){
   document.getElementById('af_subacct').value='';
   ['af_cat_custom','af_attr_custom','af_subacct_custom'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('af_suggestions').style.display='none';
-}
-// 구분(category)이 개인연금일 때만 세부계좌(농협/미래에셋) 선택 항목 노출
-function toggleSubacctField(catSelId, wrapId){
-  const cat = document.getElementById(catSelId).value;
-  document.getElementById(wrapId).style.display = (cat==='pension_personal') ? 'flex' : 'none';
 }
 // 예약된 구분(카테고리) 키와 충돌하는 커스텀 값 입력 방지
 const RESERVED_CAT_KEYS = ['stock_kr','stock_us','stock_jp','pension_personal','pension_retirement','irp','isa','crypto','cash'];
