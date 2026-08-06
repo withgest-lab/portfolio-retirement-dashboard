@@ -3575,33 +3575,44 @@ function drawLineChart(){
   // LINE_H는 위에서 이미 선언됨 (동적 높이 계산에 사용)
   const labeled = lines.filter(l=>l._ly!=null).sort((a,b)=>a._ly-b._ly);
   if(labeled.length){
-    // 1단계: 원래 위치 설정
-    labeled.forEach(l=>{ l._aly = l._ly; });
-
-    // 2단계: 위→아래 겹침 해소 (아래로 밀기)
-    for(let i=1;i<labeled.length;i++){
-      if(labeled[i]._aly - labeled[i-1]._aly < LINE_H)
-        labeled[i]._aly = labeled[i-1]._aly + LINE_H;
-    }
-    // 3단계: 아래→위 겹침 해소 (위로 밀기, 그래프 영역 초과 방지)
-    for(let i=labeled.length-2;i>=0;i--){
-      if(labeled[i+1]._aly - labeled[i]._aly < LINE_H)
-        labeled[i]._aly = labeled[i+1]._aly - LINE_H;
-    }
-
+    const maxW = RLABEL - 6;
     ctx.font = `bold ${LBL_FONT}px Pretendard,sans-serif`;
     ctx.textAlign = 'left';
+
+    // 0단계: 겹침 계산 전에 라벨 텍스트와 한 줄/두 줄 여부를 먼저 확정
+    // (긴 종목명은 두 줄로 그려지므로, 한 줄 기준 간격만으로 밀어내면 옆 라벨과 겹친다)
     labeled.forEach(l=>{
-      const aly = Math.max(gT+6, Math.min(gT+gH-4, l._aly));
-      const pctStr = (l._lp>=0?'+':'') + l._lp.toFixed(2) + '%';
+      l._pctStr = (l._lp>=0?'+':'') + l._lp.toFixed(2) + '%';
       // 애프터장 % (USD 종목에 한해, 계좌 병합 없이 단독 종목인 경우만)
       const asset = (l.assetIds && l.assetIds.length===1) ? assets.find(a=>a.id===l.assetIds[0]) : null;
       const afterPct = asset?.postMarketPct;
-      const afterStr = (afterPct != null)
+      l._afterStr = (afterPct != null)
         ? ` (A ${afterPct>=0?'+':''}${afterPct.toFixed(2)}%)`
         : '';
-      const txt = l.label + ' ' + pctStr + afterStr;
-      const maxW = RLABEL - 6;
+      l._twoLine = ctx.measureText(l.label + ' ' + l._pctStr + l._afterStr).width > maxW;
+    });
+
+    // 1단계: 원래 위치 설정
+    labeled.forEach(l=>{ l._aly = l._ly; });
+
+    // 두 줄 라벨은 더 넓은 슬롯이 필요 — 인접한 두 라벨 중 더 큰 요구 간격을 사용
+    const need = l => l._twoLine ? LINE_H*1.7 : LINE_H;
+
+    // 2단계: 위→아래 겹침 해소 (아래로 밀기)
+    for(let i=1;i<labeled.length;i++){
+      const gap = Math.max(need(labeled[i-1]), need(labeled[i]));
+      if(labeled[i]._aly - labeled[i-1]._aly < gap)
+        labeled[i]._aly = labeled[i-1]._aly + gap;
+    }
+    // 3단계: 아래→위 겹침 해소 (위로 밀기, 그래프 영역 초과 방지)
+    for(let i=labeled.length-2;i>=0;i--){
+      const gap = Math.max(need(labeled[i]), need(labeled[i+1]));
+      if(labeled[i+1]._aly - labeled[i]._aly < gap)
+        labeled[i]._aly = labeled[i+1]._aly - gap;
+    }
+
+    labeled.forEach(l=>{
+      const aly = Math.max(gT+6, Math.min(gT+gH-4, l._aly));
 
       // 연결선 (위치 이동된 경우)
       if(Math.abs(aly - l._ly) > 3){
@@ -3611,12 +3622,12 @@ function drawLineChart(){
       }
 
       ctx.fillStyle = l.color;
-      if(ctx.measureText(txt).width <= maxW){
-        ctx.fillText(txt, LBL_X, aly+3);
+      if(!l._twoLine){
+        ctx.fillText(l.label + ' ' + l._pctStr + l._afterStr, LBL_X, aly+3);
       } else {
-        // 종목명과 % 두 줄로
-        ctx.fillText(l.label, LBL_X, aly-2);
-        ctx.fillText(pctStr + afterStr, LBL_X, aly+8);
+        // 종목명과 % 두 줄로 (줄 간격을 폰트 크기에 맞춰 넉넉히)
+        ctx.fillText(l.label, LBL_X, aly-4);
+        ctx.fillText(l._pctStr + l._afterStr, LBL_X, aly+10);
       }
     });
   }
