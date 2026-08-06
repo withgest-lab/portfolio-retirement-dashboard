@@ -3306,7 +3306,7 @@ function drawLineChart(){
   const LINE_H = 18; // 레전드 줄 간격
   const visibleGroupCount = groupAssetsByName().filter(g=>g.ids.some(id=>selectedAssets.has(id))).length;
   const visibleCount = visibleGroupCount + (showSum?1:0);
-  const minH = Math.max(400, visibleCount * LINE_H + 160);
+  const minH = Math.max(400, visibleCount * LINE_H + 120);
   const H = Math.min(minH, 700); // 최대 700px
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
   cv.style.width=W+'px'; cv.style.height=H+'px';
@@ -3315,7 +3315,7 @@ function drawLineChart(){
   // ── 레이아웃 ──
   const LNUM=52;
   const RNUM=12; // 오른쪽 Y축 없음, 최소 여백
-  const TOP=64;
+  const TOP=24;
   const BOT=54;
   const PAD_IN=16;
   const RLABEL=Math.round(Math.min(160, W*0.38));
