@@ -3374,6 +3374,34 @@ function drawLineChart(){
     line._useY=useY;
   });
 
+  // ── 기간별 포인트 마커 — 실제 데이터 지점을 일정 간격(달력 기준)으로 표시 ──
+  // 기간 이름이 아니라 "이 기간엔 보통 이 정도 간격이 자연스럽다"는 달력 단위로 앵커를 잡고,
+  // 그 앵커에 가장 가까운 실제 스냅샷 인덱스에만 마커를 찍는다(과도한 촘촘함 방지).
+  const MARKER_STEP_DAYS = {
+    '1D':0.5, '5D':1, '1M':7, '3M':7,
+    '6M':30, 'YTD':30, '1Y':30, '3Y':90, '5Y':180, 'ALL':180
+  };
+  if(chartHistory.length>1){
+    const stepMs = (MARKER_STEP_DAYS[currentPeriod]||30) * 86400000;
+    const usedIdx = new Set();
+    for(let ts=t0; ts<=t1; ts+=stepMs){
+      let nearIdx=0, minDiff=Infinity;
+      chartHistory.forEach((h,i)=>{ const d=Math.abs(h.ts-ts); if(d<minDiff){ minDiff=d; nearIdx=i; } });
+      if(usedIdx.has(nearIdx)) continue; // 같은 지점 중복 마커 방지
+      usedIdx.add(nearIdx);
+      const mx = toX(nearIdx);
+      lines.forEach(line=>{
+        const v = line.vals[nearIdx];
+        if(v==null) return;
+        const my = toYL(v);
+        if(my<gT||my>gT+gH) return; // 박스 안에만
+        ctx.beginPath(); ctx.arc(mx,my,2.5,0,2*Math.PI);
+        ctx.fillStyle=line.color; ctx.fill();
+        ctx.lineWidth=1; ctx.strokeStyle='#fff'; ctx.stroke();
+      });
+    }
+  }
+
   // ── 종목명+% (박스 오른쪽 여백, 겹침 방지) ──
   const LBL_X = gL + gW + 10;
   // LINE_H는 위에서 이미 선언됨 (동적 높이 계산에 사용)
