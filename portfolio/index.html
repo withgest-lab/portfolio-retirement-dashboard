@@ -249,90 +249,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <div class="stat-bar" id="statBar"></div>
 </div>
 
-<!-- 7. 매매 이력 -->
-<div class="card">
-  <div class="snap-header">
-    <div class="section-label" style="margin:0">매매 이력</div>
-    <button class="btn btn-ghost" onclick="clearTradeLog()">이력 초기화</button>
-  </div>
-  <div id="soldTotal" style="display:none;padding:8px 0 4px;font-size:13px;color:var(--color-secondary);"></div>
-  <div class="tbl-wrap">
-    <table class="table-auto">
-      <thead><tr>
-        <th style="text-align:left">날짜</th>
-        <th style="text-align:left">종목</th>
-        <th>유형<br><span style="font-weight:400;text-transform:none;">구분·속성</span></th>
-        <th>체결단가 × 수량<br><span style="font-weight:400;text-transform:none;">총금액</span></th>
-        <th>실현손익</th>
-        <th>관리</th>
-      </tr></thead>
-      <tbody id="soldTbody"></tbody>
-    </table>
-  </div>
-  <details class="collapsible" style="margin-top:14px;border-top:1px solid var(--color-section-bg);padding-top:10px;">
-    <summary>이력 수동 기록 추가 (자산/현금에는 반영되지 않음)</summary>
-  <div class="add-form" style="padding-top:14px;">
-    <label>날짜<input id="tl_date" type="date" style="width:110px"></label>
-    <label>종목명
-      <input id="tl_name" placeholder="" style="width:95px" autocomplete="off"
-        oninput="tlAutoTicker(this.value)">
-    </label>
-    <label>티커<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-      <input id="tl_ticker" placeholder="예:005930" style="width:70px" autocomplete="off">
-    </label>
-    <label>유형<select id="tl_type" style="width:65px">
-      <option value="buy">매수</option>
-      <option value="sell">매도</option>
-    </select></label>
-    <label>구분<select id="tl_cat" style="width:85px">
-      <option value="">-- 선택 --</option>
-      <option value="stock_kr">국내주식</option>
-      <option value="stock_us">미국주식</option>
-      <option value="stock_jp">일본주식</option>
-      <option value="pension_personal">개인연금</option>
-      <option value="pension_retirement">퇴직연금</option>
-      <option value="irp">IRP 개인</option>
-      <option value="isa">ISA</option>
-      <option value="crypto">가상자산</option>
-      <option value="cash">현금</option>
-    </select></label>
-    <label>속성<select id="tl_attr" style="width:75px">
-      <option value="">— 없음 —</option>
-      <option value="Core">Core</option>
-      <option value="주도주">주도주</option>
-      <option value="유망주">유망주</option>
-      <option value="원자재">원자재</option>
-    </select></label>
-    <label>체결단가<input id="tl_price" type="number" placeholder="0" style="width:78px"></label>
-    <label>수량<input id="tl_qty" type="number" placeholder="0" style="width:62px"></label>
-    <div style="flex:1 1 100%;display:flex;gap:10px;align-items:flex-end;">
-      <label>통화<select id="tl_cur" style="width:65px">
-        <option value="KRW">KRW ₩</option>
-        <option value="USD">USD $</option>
-        <option value="JPY">JPY ¥</option>
-      </select></label>
-      <label style="flex:1;min-width:160px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-        <input id="tl_reason" placeholder="매수·매도 사유" style="width:100%">
-      </label>
-      <button class="btn btn-primary" onclick="addTradeLog_manual()">기록 추가</button>
-    </div>
-  </div>
-  </details>
-  <div id="tradeLogStatus" style="font-size:12px;color:var(--color-secondary);min-height:16px;padding:4px 0;"></div>
-</div>
-
-<!-- 7-1. 해외주식 양도소득세 (올해 예상) -->
-<div class="card">
-  <div class="section-label">해외주식 양도소득세 (<span id="cgtYear"></span>년 예상)</div>
-  <div id="capGainsTax"></div>
-</div>
-
-<!-- 7-2. 금융소득종합과세 임계값 (올해) -->
-<div class="card">
-  <div class="section-label">금융소득종합과세 임계값 (<span id="fitYear"></span>년)</div>
-  <div id="finIncomeThreshold"></div>
-</div>
-
 <!-- 1-1. 자산 현황 요약 (그래프 바로 아래) -->
 <div class="summary-grid" id="summaryGrid"></div>
 
@@ -346,7 +262,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <table class="table-fit">
       <thead><tr>
         <th>종목</th>
-        <th class="fold-hide">구분</th><th class="fold-hide">속성</th>
+        <th class="fold-hide">구분</th><th class="fold-hide">계좌</th><th class="fold-hide">속성</th>
         <th class="fold-hide">현재가<br><span style="font-weight:400;text-transform:none;">전일比</span></th>
         <th class="fold-hide">평단<br><span style="font-weight:400;text-transform:none;">수량</span></th>
         <th>평가금액</th>
@@ -359,7 +275,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
   <!-- 매수/매도 탭 -->
   <details class="collapsible" style="margin-top:16px;">
-    <summary>매수/매도/현금 기록 추가</summary>
+    <summary style="color:#2C5B8A;">매수/매도/현금 기록 추가</summary>
   <div style="margin-top:10px;">
     <div class="trade-tabs">
       <button class="trade-tab" id="tab_buy" onclick="switchTab('buy')"
@@ -379,7 +295,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <label>티커<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
         <input id="af_ticker" placeholder="" style="width:100px">
       </label>
-      <label>구분<select id="af_cat" onchange="toggleSubacctField('af_cat','af_subacct_wrap')">
+      <label>계좌<select id="af_subacct" onchange="toggleCustomInput('af_subacct','af_subacct_custom')" style="width:100px;">
+        <option value="">-- 없음 --</option>
+        <option value="nh">농협</option>
+        <option value="mf">미래에셋</option>
+        <option value="__custom__">+ 직접입력</option>
+      </select>
+      <input id="af_subacct_custom" placeholder="계좌명 입력" style="width:100px;display:none;margin-top:3px;">
+      </label>
+      <label>구분<select id="af_cat" onchange="toggleCustomInput('af_cat','af_cat_custom')">
         <option value="">-- 선택 --</option>
         <option value="stock_kr">국내주식</option>
         <option value="stock_us">미국주식</option>
@@ -390,19 +314,20 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <option value="isa">ISA</option>
         <option value="crypto">가상자산</option>
         <option value="cash">현금</option>
-      </select></label>
-      <label id="af_subacct_wrap" style="display:none;">세부계좌<select id="af_subacct">
-        <option value="">-- 선택 --</option>
-        <option value="nh">농협</option>
-        <option value="mf">미래에셋</option>
-      </select></label>
-      <label>속성<select id="af_attr">
+        <option value="__custom__">+ 직접입력</option>
+      </select>
+      <input id="af_cat_custom" placeholder="구분명 입력" style="display:none;margin-top:3px;">
+      </label>
+      <label>속성<select id="af_attr" onchange="toggleCustomInput('af_attr','af_attr_custom')">
         <option value="">— 없음 —</option>
         <option value="Core">Core</option>
         <option value="주도주">주도주</option>
         <option value="유망주">유망주</option>
         <option value="원자재">원자재</option>
-      </select></label>
+        <option value="__custom__">+ 직접입력</option>
+      </select>
+      <input id="af_attr_custom" placeholder="속성명 입력" style="display:none;margin-top:3px;">
+      </label>
       <label>수량<input id="af_qty" type="number" placeholder="" style="width:80px"></label>
       <label>단가<input id="af_price" type="number" placeholder="" style="width:100px"></label>
       <label>통화<select id="af_cur">
@@ -422,7 +347,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <input id="sf_name" placeholder="" style="width:130px" oninput="searchSell(this.value)" autocomplete="off">
         <div class="suggest-box" id="sf_suggestions"></div>
       </label>
-      <label>구분<select id="sf_cat">
+      <label>계좌<select id="sf_subacct" onchange="toggleCustomInput('sf_subacct','sf_subacct_custom')" style="width:100px;">
+        <option value="">-- 없음 --</option>
+        <option value="nh">농협</option>
+        <option value="mf">미래에셋</option>
+        <option value="__custom__">+ 직접입력</option>
+      </select>
+      <input id="sf_subacct_custom" placeholder="계좌명 입력" style="width:100px;display:none;margin-top:3px;">
+      </label>
+      <label>구분<select id="sf_cat" onchange="toggleCustomInput('sf_cat','sf_cat_custom')">
         <option value="">-- 선택 --</option>
         <option value="stock_kr">국내주식</option>
         <option value="stock_us">미국주식</option>
@@ -433,14 +366,20 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <option value="isa">ISA</option>
         <option value="crypto">가상자산</option>
         <option value="cash">현금</option>
-      </select></label>
-      <label>속성<select id="sf_attr">
+        <option value="__custom__">+ 직접입력</option>
+      </select>
+      <input id="sf_cat_custom" placeholder="구분명 입력" style="display:none;margin-top:3px;">
+      </label>
+      <label>속성<select id="sf_attr" onchange="toggleCustomInput('sf_attr','sf_attr_custom')">
         <option value="">— 없음 —</option>
         <option value="Core">Core</option>
         <option value="주도주">주도주</option>
         <option value="유망주">유망주</option>
         <option value="원자재">원자재</option>
-      </select></label>
+        <option value="__custom__">+ 직접입력</option>
+      </select>
+      <input id="sf_attr_custom" placeholder="속성명 입력" style="display:none;margin-top:3px;">
+      </label>
       <label>보유수량<input id="sf_held" style="width:80px;background:var(--color-section-bg);" readonly></label>
       <label>매도수량<input id="sf_qty" type="number" placeholder="" style="width:80px"></label>
       <label>매도단가<input id="sf_price" type="number" placeholder="" style="width:100px"></label>
@@ -557,11 +496,110 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
 </div>
 
+<!-- 3-1. 해외주식 양도소득세 (올해 예상) -->
+<div class="card">
+  <div class="section-label">해외주식 양도소득세 (<span id="cgtYear"></span>년 예상)</div>
+  <div id="capGainsTax"></div>
+</div>
+
+<!-- 3-2. 금융소득종합과세 임계값 (올해) -->
+<div class="card">
+  <div class="section-label">금융소득종합과세 임계값 (<span id="fitYear"></span>년)</div>
+  <div id="finIncomeThreshold"></div>
+</div>
+
 <!-- 4. 글로벌 시장 -->
 <div class="card">
   <div class="section-label">글로벌 시장</div>
-  <div class="index-grid" id="indexGrid"></div>
+  <div class="index-grid" id="indexGridUS"></div>
+  <div class="index-grid" id="indexGridKR" style="margin-top:8px;"></div>
   <div class="notice">※ 야후 파이낸스 기준 (15~20분 지연). 5분마다 자동 갱신됩니다.</div>
+</div>
+
+<!-- 5. 매매 이력 -->
+<div class="card">
+  <div class="snap-header">
+    <div class="section-label" style="margin:0">매매 이력</div>
+    <button class="btn btn-ghost" onclick="clearTradeLog()">이력 초기화</button>
+  </div>
+  <div id="soldTotal" style="display:none;padding:8px 0 4px;font-size:13px;color:var(--color-secondary);"></div>
+  <div class="tbl-wrap">
+    <table class="table-auto">
+      <thead><tr>
+        <th style="text-align:left">날짜</th>
+        <th style="text-align:left">종목</th>
+        <th>유형<br><span style="font-weight:400;text-transform:none;">구분·속성</span></th>
+        <th>체결단가 × 수량<br><span style="font-weight:400;text-transform:none;">총금액</span></th>
+        <th>실현손익</th>
+        <th>관리</th>
+      </tr></thead>
+      <tbody id="soldTbody"></tbody>
+    </table>
+  </div>
+  <details class="collapsible" style="margin-top:14px;border-top:1px solid var(--color-section-bg);padding-top:10px;">
+    <summary style="color:#A8433C;">이력 수동 기록 추가 <b>(자산/현금에는 반영되지 않음)</b></summary>
+  <div class="add-form" style="padding-top:14px;">
+    <label>날짜<input id="tl_date" type="date" style="width:110px"></label>
+    <label>종목명
+      <input id="tl_name" placeholder="" style="width:95px" autocomplete="off"
+        oninput="tlAutoTicker(this.value)">
+    </label>
+    <label>티커<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
+      <input id="tl_ticker" placeholder="예:005930" style="width:70px" autocomplete="off">
+    </label>
+    <label>계좌<select id="tl_subacct" onchange="toggleCustomInput('tl_subacct','tl_subacct_custom')" style="width:85px;">
+      <option value="">-- 없음 --</option>
+      <option value="nh">농협</option>
+      <option value="mf">미래에셋</option>
+      <option value="__custom__">+ 직접입력</option>
+    </select>
+    <input id="tl_subacct_custom" placeholder="계좌명" style="width:85px;display:none;margin-top:3px;">
+    </label>
+    <label>유형<select id="tl_type" style="width:65px">
+      <option value="buy">매수</option>
+      <option value="sell">매도</option>
+    </select></label>
+    <label>구분<select id="tl_cat" style="width:85px" onchange="toggleCustomInput('tl_cat','tl_cat_custom')">
+      <option value="">-- 선택 --</option>
+      <option value="stock_kr">국내주식</option>
+      <option value="stock_us">미국주식</option>
+      <option value="stock_jp">일본주식</option>
+      <option value="pension_personal">개인연금</option>
+      <option value="pension_retirement">퇴직연금</option>
+      <option value="irp">IRP 개인</option>
+      <option value="isa">ISA</option>
+      <option value="crypto">가상자산</option>
+      <option value="cash">현금</option>
+      <option value="__custom__">+ 직접입력</option>
+    </select>
+    <input id="tl_cat_custom" placeholder="구분명" style="width:85px;display:none;margin-top:3px;">
+    </label>
+    <label>속성<select id="tl_attr" style="width:75px" onchange="toggleCustomInput('tl_attr','tl_attr_custom')">
+      <option value="">— 없음 —</option>
+      <option value="Core">Core</option>
+      <option value="주도주">주도주</option>
+      <option value="유망주">유망주</option>
+      <option value="원자재">원자재</option>
+      <option value="__custom__">+ 직접입력</option>
+    </select>
+    <input id="tl_attr_custom" placeholder="속성명" style="width:75px;display:none;margin-top:3px;">
+    </label>
+    <label>체결단가<input id="tl_price" type="number" placeholder="0" style="width:78px"></label>
+    <label>수량<input id="tl_qty" type="number" placeholder="0" style="width:62px"></label>
+    <div style="flex:1 1 100%;display:flex;gap:10px;align-items:flex-end;">
+      <label>통화<select id="tl_cur" style="width:65px">
+        <option value="KRW">KRW ₩</option>
+        <option value="USD">USD $</option>
+        <option value="JPY">JPY ¥</option>
+      </select></label>
+      <label style="flex:1;min-width:160px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
+        <input id="tl_reason" placeholder="매수·매도 사유" style="width:100%">
+      </label>
+      <button class="btn btn-primary" onclick="addTradeLog_manual()">기록 추가</button>
+    </div>
+  </div>
+  </details>
+  <div id="tradeLogStatus" style="font-size:12px;color:var(--color-secondary);min-height:16px;padding:4px 0;"></div>
 </div>
 
 <!-- 6. 스냅샷 이력 -->
@@ -714,11 +752,11 @@ function donutCatKey(a){
   if(a.category==='stock_kr') return 'domestic';
   return a.category;
 }
+// 구분 배지는 순수하게 카테고리만 표시 — 계좌(세부계좌)는 별도 "계좌" 컬럼에서 표시
 function tableBadge(a){
   if(a.category==='stock_us') return '미';
   if(a.category==='stock_jp') return '일';
   if(a.category==='stock_kr') return '한';
-  if(a.category==='pension_personal') return SUBACCT_LABELS[a.subAccount] ? `개인연금·${SUBACCT_LABELS[a.subAccount]}` : '개인연금';
   return CAT_LABELS[a.category]||a.category;
 }
 
@@ -1245,23 +1283,26 @@ function addTradeLog_manual(){
   const dateV = document.getElementById('tl_date').value;
   const type  = document.getElementById('tl_type').value;
   const tickerInput = document.getElementById('tl_ticker').value.trim().toUpperCase();
-  const catSel = document.getElementById('tl_cat').value;
-  const attrSel = document.getElementById('tl_attr').value;
+  const catSel = readSelectOrCustom('tl_cat','tl_cat_custom', true);
+  const attrSel = readSelectOrCustom('tl_attr','tl_attr_custom', false);
+  const subacctSel = readSelectOrCustom('tl_subacct','tl_subacct_custom', false);
   const price = parseFloat(document.getElementById('tl_price').value);
   const qty   = parseFloat(document.getElementById('tl_qty').value);
   const cur   = document.getElementById('tl_cur').value || 'KRW';
   const reason = document.getElementById('tl_reason').value.trim();
   const st = document.getElementById('tradeLogStatus');
 
+  if(catSel===null || attrSel===null || subacctSel===null) return; // 예약어 충돌 등
   if(!name){ st.textContent='❌ 종목명을 입력해 주세요.'; return; }
   if(isNaN(price)||price<=0){ st.textContent='❌ 체결단가를 입력해 주세요.'; return; }
   if(isNaN(qty)||qty<=0){ st.textContent='❌ 수량을 입력해 주세요.'; return; }
 
   const at = dateV ? new Date(dateV+'T00:00:00').getTime() : Date.now();
   const existing = assets.find(a=>a.name===name);
-  // 입력값 우선, 없으면 기존 자산값 (카테고리/속성 참고용)
+  // 입력값 우선, 없으면 기존 자산값 (카테고리/속성/계좌 참고용)
   const catVal  = catSel  || (existing?existing.category:null) || null;
   const attrVal = attrSel || (existing?existing.attribute:null) || null;
+  const subacctVal = subacctSel || (existing?existing.subAccount:null) || null;
   const currency = existing ? existing.currency : cur;
   const fxRate = currency==='USD'?FX.USD:currency==='JPY'?FX.JPY:1;
   const totalKRW = Math.round(price*qty*fxRate);
@@ -1275,7 +1316,7 @@ function addTradeLog_manual(){
   addTradeLog({
     name: existing?existing.name:name,
     ticker: existing?existing.ticker:(tickerInput||'—'),
-    type, at, category:catVal, attribute:attrVal,
+    type, at, category:catVal, attribute:attrVal, subAccount:subacctVal,
     price, quantity:qty, currency, totalKRW,
     pnl, pnlPct, reason, cashAdjusted:null
   });
@@ -1285,6 +1326,8 @@ function addTradeLog_manual(){
   document.getElementById('tl_ticker').value='';
   document.getElementById('tl_cat').value='';
   document.getElementById('tl_attr').value='';
+  document.getElementById('tl_subacct').value='';
+  ['tl_cat_custom','tl_attr_custom','tl_subacct_custom'].forEach(id=>{document.getElementById(id).value='';document.getElementById(id).style.display='none';});
   document.getElementById('tl_price').value='';
   document.getElementById('tl_qty').value='';
   document.getElementById('tl_cur').value='KRW';
@@ -1657,6 +1700,7 @@ function renderTable(){
         <div class="name-sub">${a.ticker==='—'?'현금':a.ticker}</div>
       </td>
       <td class="fold-hide"><span class="cat-badge" style="background:${cc}20;color:${cc}">${tableBadge(a)}</span></td>
+      <td class="fold-hide">${a.subAccount?`<span class="cat-badge" style="background:#8e8e9320;color:#8e8e93">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:na}</td>
       <td class="fold-hide">${isCash ? na : (a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na)}</td>
       <td class="fold-hide" style="font-size:11px;">
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
@@ -2017,11 +2061,13 @@ function executeTrade(){
   if(mode==='form_buy'){
     const {name, ticker, cat, qty:fQty, price:fPrice, cur, attr, subacct} = trade;
     const tickerVal = ticker||'—';
-    // 같은 티커라도 구분(카테고리)이 다르면 별도 계좌(예: 개인연금 vs IRP)에 보유 중인 것이므로
-    // 별도 자산 항목으로 취급 — 카테고리까지 일치해야 같은 보유자산으로 합산
+    // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
+    // → 계좌가 다르면(예: 개인연금 vs IRP) 별도 자산 항목으로 분리됨
+    const attrOk = a => !attr || a.attribute === attr;
+    const acctOk = a => !subacct || a.subAccount === subacct;
     const existing = tickerVal!=='—'
-      ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.category===cat)
-      : assets.find(a=>a.name===name && a.currency===cur && a.category===cat);
+      ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat && attrOk(a) && acctOk(a))
+      : assets.find(a=>a.name===name && a.currency===cur && a.category===cat && attrOk(a) && acctOk(a));
     let cashName = null;
     if(existing){
       const prevQty  = existing.quantity;
@@ -2029,11 +2075,11 @@ function executeTrade(){
       existing.avgPrice = Math.round(((existing.avgPrice*prevQty)+(fPrice*fQty))/totalQty*100)/100;
       existing.quantity = totalQty;
       if(attr) existing.attribute = attr; // 속성 입력 시 갱신
-      if(cat==='pension_personal' && subacct) existing.subAccount = subacct; // 세부계좌 입력 시 갱신
+      if(subacct) existing.subAccount = subacct; // 계좌 입력 시 갱신
       cashName = existing.category!=='cash' ? adjustCashBalance(existing.currency, fPrice*fQty, -1) : null;
       if(st){ st.textContent=`✅ ${existing.name} ${fQty.toLocaleString()}주 매수 → 총 ${totalQty.toLocaleString()}주${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
-      assets.push({id:uid(),ticker:tickerVal,name,category:cat,quantity:fQty,avgPrice:fPrice,currentPrice:fPrice,prevPrice:fPrice,currency:cur,attribute:attr||null,subAccount:(cat==='pension_personal'&&subacct)?subacct:null});
+      assets.push({id:uid(),ticker:tickerVal,name,category:cat,quantity:fQty,avgPrice:fPrice,currentPrice:fPrice,prevPrice:fPrice,currency:cur,attribute:attr||null,subAccount:subacct||null});
       cashName = cat!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1) : null;
       if(st){ st.textContent=`✅ ${name} 추가 완료 — 🔄 시세 갱신으로 현재가를 불러오세요.${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     }
@@ -2046,11 +2092,12 @@ function executeTrade(){
 
   // 매도 폼
   if(mode==='form_sell'){
-    const {assetId, sellQty, sellPrice, attr, scat} = trade;
+    const {assetId, sellQty, sellPrice, attr, scat, sacct} = trade;
     const a = assets.find(x=>x.id===assetId); if(!a) return;
-    // 매도 폼에서 지정한 구분/속성을 먼저 반영 (매매이력에도 기록되도록)
+    // 매도 폼에서 지정한 구분/속성/계좌를 먼저 반영 (매매이력에도 기록되도록)
     if(scat) a.category = scat;
     if(attr) a.attribute = attr;
+    if(sacct) a.subAccount = sacct;
     const pnl = Math.round((sellPrice - a.avgPrice) * sellQty);
     const sym = CUR_SYM[a.currency];
     saveSnap(true); // 매도 직전 스냅샷 먼저 (종목 제거 전)
@@ -2162,7 +2209,7 @@ function confirmSaveEdit(id){
     <b>${a.name}</b><br>
     수량: ${!isNaN(qty)?qty.toLocaleString():'변경없음'}<br>
     평균단가: ${!isNaN(price)?sym+price.toLocaleString():'변경없음'}<br>
-    구분: ${catChanged?`${CAT_LABELS[a.category]} → <b>${CAT_LABELS[cat]}</b>`:'변경없음'}<br>
+    구분: ${catChanged?`${CAT_LABELS[a.category]||a.category} → <b>${CAT_LABELS[cat]||cat}</b>`:'변경없음'}<br>
     속성: ${attrChanged?`${a.attribute||'없음'} → <b>${attr||'없음'}</b>`:'변경없음'}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">위 내용으로 저장하시겠습니까?</span>`;
   confirmBtn.style.background = '#34c759';
@@ -2294,19 +2341,32 @@ function searchSell(query){
   box.innerHTML=results.map(a=>`
     <div class="suggest-item" onclick="selectSell('${a.id}')">
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;">${a.name} ${a.category?`<span style="font-size:9px;font-weight:700;color:${CAT_COLS[a.category]||'#8e8e93'};background:${CAT_COLS[a.category]||'#8e8e93'}20;border-radius:5px;padding:1px 5px;margin-left:3px;">${CAT_LABELS[a.category]||a.category}</span>`:''}</div>
+        <div style="font-size:13px;font-weight:600;">${a.name} ${a.category?`<span style="font-size:9px;font-weight:700;color:${CAT_COLS[a.category]||'#8e8e93'};background:${CAT_COLS[a.category]||'#8e8e93'}20;border-radius:5px;padding:1px 5px;margin-left:3px;">${CAT_LABELS[a.category]||a.category}</span>`:''}${a.subAccount?`<span style="font-size:9px;font-weight:700;color:#8e8e93;background:#8e8e9320;border-radius:5px;padding:1px 5px;margin-left:3px;">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:''}</div>
         <div style="font-size:11px;color:var(--color-tertiary)">${a.ticker} · 보유 ${a.quantity.toLocaleString()}주 · 평균 ${CUR_SYM[a.currency]}${a.avgPrice.toLocaleString()}</div>
       </div>
     </div>`).join('');
   box.style.display='block';
+}
+// select+커스텀 입력 쌍에 기존 값을 되돌려 채움(값이 프리셋 옵션에 없으면 직접입력으로 전환)
+function fillSelectOrCustom(selectId, customInputId, value){
+  const sel = document.getElementById(selectId);
+  const inp = document.getElementById(customInputId);
+  if(!sel||!inp) return;
+  const hasOption = [...sel.options].some(o=>o.value===value);
+  if(value && !hasOption){
+    sel.value='__custom__'; inp.value=value; inp.style.display='inline-block';
+  } else {
+    sel.value=value||''; inp.value=''; inp.style.display='none';
+  }
 }
 function selectSell(id){
   const a=assets.find(x=>x.id===id);if(!a)return;
   document.getElementById('sf_name').value=a.name;
   document.getElementById('sf_name').dataset.assetId=id;
   document.getElementById('sf_held').value=a.quantity.toLocaleString()+'주';
-  document.getElementById('sf_cat').value=a.category||''; // 기존 구분 표시
-  document.getElementById('sf_attr').value=a.attribute||''; // 기존 속성 표시
+  fillSelectOrCustom('sf_cat','sf_cat_custom', a.category||''); // 기존 구분 표시
+  fillSelectOrCustom('sf_attr','sf_attr_custom', a.attribute||''); // 기존 속성 표시
+  fillSelectOrCustom('sf_subacct','sf_subacct_custom', a.subAccount||''); // 기존 계좌 표시
   document.getElementById('sf_suggestions').style.display='none';
   document.getElementById('sf_qty').focus();
 }
@@ -2319,12 +2379,12 @@ document.addEventListener('click',e=>{
 });
 
 function resetBuyForm(){
-  ['af_name','af_ticker','af_qty','af_price','af_reason'].forEach(id=>document.getElementById(id).value='');
+  ['af_name','af_ticker','af_qty','af_price','af_reason','af_cat_custom','af_attr_custom','af_subacct_custom'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('af_cat').value='';
   document.getElementById('af_cur').value='KRW';
   document.getElementById('af_attr').value='';
   document.getElementById('af_subacct').value='';
-  document.getElementById('af_subacct_wrap').style.display='none';
+  ['af_cat_custom','af_attr_custom','af_subacct_custom'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('af_suggestions').style.display='none';
 }
 // 구분(category)이 개인연금일 때만 세부계좌(농협/미래에셋) 선택 항목 노출
@@ -2332,34 +2392,66 @@ function toggleSubacctField(catSelId, wrapId){
   const cat = document.getElementById(catSelId).value;
   document.getElementById(wrapId).style.display = (cat==='pension_personal') ? 'flex' : 'none';
 }
+// 예약된 구분(카테고리) 키와 충돌하는 커스텀 값 입력 방지
+const RESERVED_CAT_KEYS = ['stock_kr','stock_us','stock_jp','pension_personal','pension_retirement','irp','isa','crypto','cash'];
+// selectId의 값이 '__custom__'이면 customInputId를 보여주고, 아니면 숨김 (계좌/구분/속성 공용)
+function toggleCustomInput(selectId, customInputId){
+  const sel = document.getElementById(selectId);
+  const inp = document.getElementById(customInputId);
+  if(!sel||!inp) return;
+  const isCustom = sel.value === '__custom__';
+  inp.style.display = isCustom ? 'inline-block' : 'none';
+  if(isCustom) inp.focus();
+}
+// select+커스텀 입력 쌍에서 실제 값을 읽어옴. isCategory면 예약어 충돌 검사(문제 있으면 null 반환 + 경고)
+function readSelectOrCustom(selectId, customInputId, isCategory){
+  const sel = document.getElementById(selectId);
+  if(!sel) return '';
+  if(sel.value === '__custom__'){
+    const v = (document.getElementById(customInputId)?.value||'').trim();
+    if(isCategory && v && RESERVED_CAT_KEYS.includes(v.toLowerCase())){
+      alert(`"${v}"는 시스템 예약어와 겹쳐 구분명으로 쓸 수 없습니다. 다른 이름을 입력해 주세요.`);
+      return null;
+    }
+    return v;
+  }
+  return sel.value;
+}
 function resetSellForm(){
-  ['sf_name','sf_held','sf_qty','sf_price','sf_reason'].forEach(id=>{
+  ['sf_name','sf_held','sf_qty','sf_price','sf_reason','sf_cat_custom','sf_attr_custom','sf_subacct_custom'].forEach(id=>{
     const el=document.getElementById(id);
     if(el){el.value='';if(el.dataset)delete el.dataset.assetId;}
   });
   document.getElementById('sf_cat').value='';
   document.getElementById('sf_attr').value='';
+  document.getElementById('sf_subacct').value='';
+  ['sf_cat_custom','sf_attr_custom','sf_subacct_custom'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('sf_suggestions').style.display='none';
 }
 
 function addAsset(){
   const name   = document.getElementById('af_name').value.trim();
   const ticker = document.getElementById('af_ticker').value.trim().toUpperCase();
-  const cat    = document.getElementById('af_cat').value;
+  const cat    = readSelectOrCustom('af_cat','af_cat_custom', true);
   const qty    = parseFloat(document.getElementById('af_qty').value);
   const price  = parseFloat(document.getElementById('af_price').value);
   const cur    = document.getElementById('af_cur').value;
-  const attr   = document.getElementById('af_attr').value;
-  const subacct= cat==='pension_personal' ? document.getElementById('af_subacct').value : '';
+  const attr   = readSelectOrCustom('af_attr','af_attr_custom', false);
+  const subacct= readSelectOrCustom('af_subacct','af_subacct_custom', false);
   const st     = document.getElementById('formStatus');
+  if(cat===null || attr===null || subacct===null) return; // 예약어 충돌 등으로 readSelectOrCustom이 이미 경고함
   if(!name)                   { st.textContent='❌ 종목명을 입력해 주세요.'; return; }
   if(!cat)                    { st.textContent='❌ 구분을 선택해 주세요.'; return; }
   if(isNaN(qty)||qty<=0)      { st.textContent='❌ 수량을 입력해 주세요.'; return; }
   if(isNaN(price)||price<=0)  { st.textContent='❌ 단가를 입력해 주세요.'; return; }
   const sym = CUR_SYM[cur];
   const tickerVal = ticker||'—';
-  // 같은 티커라도 구분(카테고리)이 다르면 별도 계좌 보유분이므로 카테고리까지 일치해야 합산 대상
-  const existing  = tickerVal!=='—' ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.category===cat) : null;
+  // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
+  const attrOk = a => !attr || a.attribute === attr;
+  const acctOk = a => !subacct || a.subAccount === subacct;
+  const existing  = tickerVal!=='—'
+    ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat && attrOk(a) && acctOk(a))
+    : assets.find(a=>a.name===name && a.currency===cur && a.category===cat && attrOk(a) && acctOk(a));
   const newAvg    = existing ? Math.round(((existing.avgPrice*existing.quantity)+(price*qty))/(existing.quantity+qty)) : price;
   const totalQty  = existing ? existing.quantity+qty : qty;
 
@@ -2398,9 +2490,11 @@ function sellAsset(){
   const sym = CUR_SYM[a.currency];
 
   // 확인 팝업
-  const attr = document.getElementById('sf_attr').value;
-  const scat = document.getElementById('sf_cat').value;
-  pendingTrade = {mode:'form_sell', assetId, sellQty, sellPrice, attr, scat};
+  const attr = readSelectOrCustom('sf_attr','sf_attr_custom', false);
+  const scat = readSelectOrCustom('sf_cat','sf_cat_custom', true);
+  const sacct = readSelectOrCustom('sf_subacct','sf_subacct_custom', false);
+  if(attr===null || scat===null || sacct===null) return;
+  pendingTrade = {mode:'form_sell', assetId, sellQty, sellPrice, attr, scat, sacct};
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
@@ -2791,7 +2885,12 @@ function renderDonuts(){
   }).join('');
 
   // 막대 그래프: 총자산 대비 % (음수면 막대 없이 텍스트만 표시)
-  const assetData=assets.map((a,i)=>({label:a.name,value:evKRW(a),color:ASSET_COLS[i%ASSET_COLS.length]})).sort((a,b)=>b.value-a.value);
+  // 계좌별로 나뉜 같은 종목명 자산도 종목 비중에서는 하나로 합쳐서 표시
+  const byName = {};
+  assets.forEach(a=>{ byName[a.name] = (byName[a.name]||0) + evKRW(a); });
+  const assetData = Object.entries(byName)
+    .map(([name,value],i)=>({label:name, value, color:ASSET_COLS[i%ASSET_COLS.length]}))
+    .sort((a,b)=>b.value-a.value);
   document.getElementById('barChart').innerHTML=assetData.map(d=>{
     const pct = total>0 ? (d.value/total)*100 : 0;
     const barW = Math.max(0, pct); // 음수면 막대 없음
@@ -2832,8 +2931,8 @@ const GROUP_BG = {
 };
 let indices=INDEX_LIST.map(i=>({...i,val:null,chg:null}));
 
-function renderIndices(){
-  document.getElementById('indexGrid').innerHTML=indices.map(idx=>`
+function renderIndexCard(idx){
+  return `
     <div class="index-card" style="${GROUP_BG[idx.group]||''}">
       <div class="index-name" style="color:${idx.group==='us'?'#007aff':idx.group==='kr'?'#34c759':'#ff9500'};opacity:.7;">${idx.label}</div>
       <div class="index-val ${idx.val!=null?updn(idx.chg):''}" style="${idx.val==null?'color:var(--color-tertiary)':''}">
@@ -2842,7 +2941,12 @@ function renderIndices(){
       <div class="index-chg ${idx.chg!=null?updn(idx.chg):''}">
         ${idx.chg!=null?(idx.chg>=0?'▲':'▼')+' '+Math.abs(idx.chg).toFixed(2)+'%':'조회 중...'}
       </div>
-    </div>`).join('');
+    </div>`;
+}
+// 1행 = 미국 지수, 2행 = KOSPI·KOSDAQ·환율 — 화면 너비와 무관하게 항상 이 순서로 고정
+function renderIndices(){
+  document.getElementById('indexGridUS').innerHTML = indices.filter(i=>i.group==='us').map(renderIndexCard).join('');
+  document.getElementById('indexGridKR').innerHTML = indices.filter(i=>i.group==='kr'||i.group==='fx').map(renderIndexCard).join('');
 }
 
 async function fetchIndices(){
