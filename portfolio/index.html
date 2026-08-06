@@ -3611,6 +3611,17 @@ function drawLineChart(){
         labeled[i]._aly = labeled[i+1]._aly - gap;
     }
 
+    // 4단계: 라벨들이 몰려있던 원래 위치 때문에 묶음 전체가 그래프 아래(또는 위) 경계를
+    // 벗어나면, 개별 라벨을 경계에 각각 밀어붙이는 대신(그러면 서로 겹침) 상대 간격을
+    // 유지한 채 묶음 전체를 위/아래로 이동시켜 경계 안에 들어오게 한다.
+    const boundTop = gT+6, boundBottom = gT+gH-4;
+    let shift = 0;
+    if(labeled[labeled.length-1]._aly + shift > boundBottom)
+      shift = boundBottom - labeled[labeled.length-1]._aly;
+    if(labeled[0]._aly + shift < boundTop)
+      shift = boundTop - labeled[0]._aly;
+    if(shift !== 0) labeled.forEach(l=>{ l._aly += shift; });
+
     labeled.forEach(l=>{
       const aly = Math.max(gT+6, Math.min(gT+gH-4, l._aly));
 
