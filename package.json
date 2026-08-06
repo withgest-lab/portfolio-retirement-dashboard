@@ -1,0 +1,7 @@
+{
+  "name": "portfolio-retirement",
+  "private": true,
+  "scripts": {
+    "test": "node --test retirement/*.test.js"
+  }
+}
