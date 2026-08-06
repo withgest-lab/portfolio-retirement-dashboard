@@ -321,6 +321,18 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <div id="tradeLogStatus" style="font-size:12px;color:var(--color-secondary);min-height:16px;padding:4px 0;"></div>
 </div>
 
+<!-- 7-1. 해외주식 양도소득세 (올해 예상) -->
+<div class="card">
+  <div class="section-label">해외주식 양도소득세 (<span id="cgtYear"></span>년 예상)</div>
+  <div id="capGainsTax"></div>
+</div>
+
+<!-- 7-2. 금융소득종합과세 임계값 (올해) -->
+<div class="card">
+  <div class="section-label">금융소득종합과세 임계값 (<span id="fitYear"></span>년)</div>
+  <div id="finIncomeThreshold"></div>
+</div>
+
 <!-- 1-1. 자산 현황 요약 (그래프 바로 아래) -->
 <div class="summary-grid" id="summaryGrid"></div>
 
@@ -472,6 +484,18 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
                  background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
           - 출금
         </button>
+        <button id="cf_mode_div" onclick="setCashMode('div')"
+          style="flex:1;padding:7px 4px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
+                 background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
+          💰 배당
+        </button>
+      </div>
+      <!-- 배당 모드 전용: 배당 지급 종목명(선택) -->
+      <div id="cf_div_row" style="display:none;margin-bottom:10px;">
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          배당 지급 종목<span style="font-size:9px;">(선택, 나중에 배당 내역 구분용)</span>
+          <input id="cf_div_source" placeholder="예: SCHD" style="width:200px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
       </div>
       <!-- 금액 입력 -->
       <div style="display:flex;gap:8px;align-items:flex-end;">
@@ -1357,11 +1381,16 @@ function renderSoldHistory(){
     const dtStr = `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
     const sym = r.currency==='USD'?'$':r.currency==='JPY'?'¥':'₩';
     const isBuy = r.type==='buy';
+    const isDiv = r.type==='dividend';
     const typeBadge = isBuy
       ? `<span style="color:#007aff;font-weight:700;">매수</span>`
+      : isDiv
+      ? `<span style="color:#ff9500;font-weight:700;">배당</span>`
       : `<span style="color:var(--color-up);font-weight:700;">매도</span>`;
     let pnlCell = '—';
-    if(!isBuy && r.pnl!==null && r.pnl!==undefined){
+    if(isDiv && r.pnl!==null && r.pnl!==undefined){
+      pnlCell = `<span class="up" style="font-weight:600;">+${fmt(r.pnl)}</span>`;
+    } else if(!isBuy && r.pnl!==null && r.pnl!==undefined){
       const pctStr = (r.pnlPct===null||r.pnlPct===undefined) ? '' : ` (${r.pnlPct>=0?'+':''}${r.pnlPct.toFixed(2)}%)`;
       pnlCell = `<span class="${r.pnl>=0?'color-up':'color-dn'}" style="font-weight:600;">${r.pnl>=0?'+':''}${fmt(r.pnl)}${pctStr}</span>`;
     }
@@ -1385,7 +1414,7 @@ function renderSoldHistory(){
         ${catAttrLine}
       </td>
       <td style="font-size:12px;line-height:1.4;text-align:right;">
-        ${sym}${(r.price||0).toLocaleString()} × ${(r.quantity||0).toLocaleString()}
+        ${isDiv ? '' : sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString()}
         <div style="font-size:10px;color:var(--color-tertiary);margin-top:1px;">${fmt(r.totalKRW||0)}</div>
       </td>
       <td style="font-size:12px;line-height:1.4;text-align:right;">${pnlCell}</td>
@@ -2037,7 +2066,7 @@ function executeTrade(){
 
   // 현금 폼
   if(mode==='form_cash'){
-    const {name:cName, amount, cur} = trade;
+    const {name:cName, amount, cur, isDividend, divAmount, divSource} = trade;
     const existing = assets.find(a=>a.category==='cash'&&a.name===cName&&a.currency===cur);
     if(existing){
       existing.avgPrice=amount; existing.currentPrice=amount; existing.prevPrice=amount; existing.quantity=1;
@@ -2046,9 +2075,20 @@ function executeTrade(){
       assets.push({id:uid(),ticker:'—',name:cName,category:'cash',quantity:1,avgPrice:amount,currentPrice:amount,prevPrice:amount,currency:cur});
       if(st){ st.textContent=`✅ ${cName} ${CUR_SYM[cur]}${amount.toLocaleString()} 추가 완료`; setTimeout(()=>{st.textContent='';},3000); }
     }
+    if(isDividend){
+      const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
+      addTradeLog({
+        name: divSource, ticker:'—', type:'dividend', at: Date.now(),
+        category: 'cash', attribute: null,
+        price: null, quantity: null, currency: cur,
+        totalKRW: Math.round(divAmount*fxRate), pnl: Math.round(divAmount*fxRate), pnlPct: null,
+        reason: '', cashAdjusted: null
+      });
+    }
     document.getElementById('cf_name').value='';
     document.getElementById('cf_amount').value='';
     document.getElementById('cf_cur').value='KRW';
+    if(document.getElementById('cf_div_source')) document.getElementById('cf_div_source').value='';
     saveAssets();renderAll();
     return;
   }
@@ -2431,9 +2471,10 @@ function setCashMode(mode){
     set: document.getElementById('cf_mode_set'),
     in:  document.getElementById('cf_mode_in'),
     out: document.getElementById('cf_mode_out'),
+    div: document.getElementById('cf_mode_div'),
   };
-  const colors = {set:'#34c759', in:'#007aff', out:'#ff3b30'};
-  const labels = {set:'잔액', in:'입금 금액', out:'출금 금액'};
+  const colors = {set:'#34c759', in:'#007aff', out:'#ff3b30', div:'#ff9500'};
+  const labels = {set:'잔액', in:'입금 금액', out:'출금 금액', div:'배당 수령액(실제 입금액)'};
   Object.entries(btns).forEach(([k,btn])=>{
     if(!btn) return;
     const active = k===mode;
@@ -2444,6 +2485,8 @@ function setCashMode(mode){
   });
   const lbl = document.getElementById('cf_amount_label');
   if(lbl) lbl.childNodes[0].textContent = labels[mode];
+  const divRow = document.getElementById('cf_div_row');
+  if(divRow) divRow.style.display = mode==='div' ? 'block' : 'none';
 }
 
 function addCash(){
@@ -2474,13 +2517,19 @@ function addCash(){
     newAmount  = Math.max(0, cur_amt - amount);
     modeLabel  = '출금';
     changeStr  = `${sym}${cur_amt.toLocaleString()} - ${sym}${amount.toLocaleString()} = ${sym}${newAmount.toLocaleString()}`;
+  } else if(cashMode==='div'){
+    const cur_amt = existing ? existing.avgPrice : 0;
+    newAmount  = cur_amt + amount;
+    modeLabel  = '배당';
+    changeStr  = `${sym}${cur_amt.toLocaleString()} + ${sym}${amount.toLocaleString()}(배당) = ${sym}${newAmount.toLocaleString()}`;
   }
 
-  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur};
+  const divSource = cashMode==='div' ? (document.getElementById('cf_div_source').value.trim() || name) : null;
+  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur, isDividend: cashMode==='div', divAmount: amount, divSource};
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
-  const modeColors = {set:'#34c759', in:'#007aff', out:'#ff3b30'};
+  const modeColors = {set:'#34c759', in:'#007aff', out:'#ff3b30', div:'#ff9500'};
   titleEl.innerHTML = `<span style="color:${modeColors[cashMode]}">💵 현금 ${modeLabel} 확인</span>`;
   detailEl.innerHTML = `
     <b>${name}</b> (${cur})<br>
@@ -2495,6 +2544,108 @@ function addCash(){
 /* ════════════════════════════════════════
    요약 카드
 ════════════════════════════════════════ */
+// 해외주식 양도소득세(연간 예상) — 국내 상장(KRW 통화) 종목은 개인투자자 원칙 비과세,
+// 해외 거래소 직접 상장 종목(USD/JPY 통화)은 매매차익 전액 양도소득세 대상(22%, 기본공제 250만원)
+// ※ 종합소득세와는 별도 세목 — 매년 5/1~5/31 양도소득세 확정신고 대상
+function renderCapitalGainsTax(){
+  const el = document.getElementById('capGainsTax');
+  if(!el) return;
+  const year = new Date().getFullYear();
+  document.getElementById('cgtYear').textContent = year;
+
+  const sells = loadTradeLog().filter(r =>
+    r.type === 'sell' && r.currency !== 'KRW' && r.category !== 'cash' &&
+    new Date(r.at).getFullYear() === year
+  );
+
+  if(!sells.length){
+    el.innerHTML = '<div class="mini-note" style="margin:0;">올해 실현된 해외주식 매도 이력이 없습니다.</div>';
+    return;
+  }
+
+  const gain = sells.reduce((s,r)=>s+(r.pnl||0), 0);
+  const CGT_EXEMPT = 250; // 기본공제(만원 단위로 통일 표시하되, pnl은 원 단위이므로 아래서 환산)
+  const gainMan = Math.round(gain/10000);
+  const taxableMan = Math.max(0, gainMan - CGT_EXEMPT);
+  const taxMan = Math.round(taxableMan * 0.22);
+
+  const rowsHtml = sells.map(r=>
+    `<tr><td style="text-align:left">${r.name}</td><td>${new Date(r.at).toLocaleDateString('ko-KR')}</td>
+     <td class="${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</td></tr>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
+      <div class="sum-card" style="flex:1;min-width:140px;">
+        <div class="sum-lbl">실현손익 합계</div>
+        <div class="sum-val ${updn(gainMan)}">${gainMan>=0?'+':''}${gainMan.toLocaleString()}만원</div>
+      </div>
+      <div class="sum-card" style="flex:1;min-width:140px;">
+        <div class="sum-lbl">기본공제 250만원 후 과세대상</div>
+        <div class="sum-val">${taxableMan.toLocaleString()}만원</div>
+      </div>
+      <div class="sum-card" style="flex:1;min-width:140px;">
+        <div class="sum-lbl">예상 양도소득세(22%)</div>
+        <div class="sum-val ${taxMan>0?'dn':''}">${taxMan.toLocaleString()}만원</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="table-auto">
+        <thead><tr><th style="text-align:left">종목</th><th>매도일</th><th>실현손익</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+    <div class="mini-note">💡 종합소득세와는 별도 세목 — 매년 5/1~5/31 양도소득세 확정신고 대상(다른 소득과 합산 안 됨). 올해 남은 손실 종목을 추가로 매도해 손익을 통산하면 세금을 줄일 수 있습니다.</div>
+  `;
+}
+
+// 금융소득종합과세 임계값(연 2,000만원) 대시보드 — 배당 로그 합계 + 수동 입력한
+// 기타 이자·배당 소득(이 앱이 추적하지 않는 예금이자 등)을 합쳐 기준 초과 여부를 안내
+const OTHER_FIN_INCOME_KEY = 'pf_other_fin_income_v1';
+function loadOtherFinIncome(){ return parseFloat(localStorage.getItem(OTHER_FIN_INCOME_KEY))||0; }
+function saveOtherFinIncome(v){
+  localStorage.setItem(OTHER_FIN_INCOME_KEY, parseFloat(v)||0);
+  renderFinIncomeThreshold();
+}
+function renderFinIncomeThreshold(){
+  const el = document.getElementById('finIncomeThreshold');
+  if(!el) return;
+  const year = new Date().getFullYear();
+  document.getElementById('fitYear').textContent = year;
+
+  const divs = loadTradeLog().filter(r => r.type==='dividend' && new Date(r.at).getFullYear()===year);
+  const divSumMan = Math.round(divs.reduce((s,r)=>s+(r.totalKRW||0), 0)/10000);
+  const otherMan = loadOtherFinIncome();
+  const totalMan = divSumMan + otherMan;
+  const THRESHOLD = 2000;
+  const overMan = totalMan - THRESHOLD;
+
+  const statusHtml = overMan > 0
+    ? `<span class="dn" style="font-weight:700;">⚠️ 기준 초과 +${overMan.toLocaleString()}만원 — 종합과세 대상(다른 소득과 합산해 누진세율 적용)</span>`
+    : `<span class="up" style="font-weight:700;">✅ 기준 이내 (${Math.abs(overMan).toLocaleString()}만원 여유) — 15.4% 원천징수로 과세 종결</span>`;
+
+  el.innerHTML = `
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
+      <div class="sum-card" style="flex:1;min-width:140px;">
+        <div class="sum-lbl">배당 로그 합계</div>
+        <div class="sum-val">${divSumMan.toLocaleString()}만원</div>
+      </div>
+      <div class="sum-card" style="flex:1;min-width:180px;">
+        <div class="sum-lbl">기타 이자·배당 소득(연, 수동입력)</div>
+        <input type="number" id="otherFinIncomeInput" value="${otherMan}" min="0" step="1"
+          style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:5px 8px;
+                 font-size:14px;font-weight:800;font-family:inherit;background:var(--color-card);color:var(--color-text);"
+          onchange="saveOtherFinIncome(this.value)">
+      </div>
+      <div class="sum-card" style="flex:1;min-width:140px;">
+        <div class="sum-lbl">금융소득 합계 / 기준</div>
+        <div class="sum-val">${totalMan.toLocaleString()} / 2,000만원</div>
+      </div>
+    </div>
+    <div class="mini-note" style="margin:0;">${statusHtml}<br>💡 이 앱의 배당 로그와 수동 입력값만 반영합니다 — 예금 이자, 다른 계좌 배당 등 여기 기록되지 않은 금액이 있으면 "기타 이자·배당 소득"에 직접 더해 넣으세요.</div>
+  `;
+}
+
 function renderSummary(){
   // 오늘 손익 기준: 1D 그래프와 동일한 "1D 시작 직전 스냅샷"
   setBase1DSnap();
@@ -3687,7 +3838,7 @@ setInterval(async()=>{
    전체 렌더
 ════════════════════════════════════════ */
 function renderAll(){
-  renderTable();renderSummary();renderDonuts();
+  renderTable();renderSummary();renderCapitalGainsTax();renderFinIncomeThreshold();renderDonuts();
   buildChartHistory();renderToggles();
   // 환율 표시 갱신
   const fx = document.getElementById('fxDisplay');
