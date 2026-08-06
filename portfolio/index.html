@@ -3284,6 +3284,18 @@ async function buildChartHistory(){
 }
 
 
+// 계좌별로 나뉜 동일 종목명 자산을 그래프/레전드에서 하나로 묶기 위한 그룹핑 (현금 제외, assets 등장 순서 유지)
+function groupAssetsByName(){
+  const order = [];
+  const map = {};
+  assets.forEach(a=>{
+    if(a.category==='cash') return;
+    if(!map[a.name]){ map[a.name] = {name:a.name, ids:[]}; order.push(map[a.name]); }
+    map[a.name].ids.push(a.id);
+  });
+  return order;
+}
+
 function drawLineChart(){
   const cv=document.getElementById('lineChart');
   if(!cv) return;
@@ -3292,7 +3304,8 @@ function drawLineChart(){
 
   // 종목 수에 따라 그래프 높이 동적 결정
   const LINE_H = 18; // 레전드 줄 간격
-  const visibleCount = [...selectedAssets].filter(id=>assets.find(a=>a.id===id&&a.category!=='cash')).length + (showSum?1:0);
+  const visibleGroupCount = groupAssetsByName().filter(g=>g.ids.some(id=>selectedAssets.has(id))).length;
+  const visibleCount = visibleGroupCount + (showSum?1:0);
   const minH = Math.max(400, visibleCount * LINE_H + 160);
   const H = Math.min(minH, 700); // 최대 700px
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
@@ -3331,7 +3344,7 @@ function drawLineChart(){
   // 각 자산의 pct 배열을 모아둘 맵
   const assetPctMap = {}; // {assetId: pct배열}
 
-  assets.forEach((a,i)=>{
+  assets.forEach(a=>{
     if(a.category==='cash') return;
 
     const raw = chartHistory.map(h=> h.byAsset[a.id] ?? null);
@@ -3357,26 +3370,50 @@ function drawLineChart(){
       return ((p - fvPrice) / fvPrice) * 100;
     });
 
+    // 합계 가중평균용으로 모든 자산의 pct 저장 (선택 여부 무관)
+    assetPctMap[a.id] = pct;
+  });
+
+  // 화면 라인: 계좌별로 나뉜 동일 종목명은 하나로 병합(현재평가금액 가중평균), 그룹 중 하나라도 선택되어 있으면 표시
+  const lineGroups = groupAssetsByName();
+  lineGroups.forEach((g,gi)=>{
+    if(!g.ids.some(id=>selectedAssets.has(id))) return;
+    if(!g.ids.some(id=>assetPctMap[id])) return; // 데이터 없음
+
+    const weights={}; let totalW=0;
+    g.ids.forEach(id=>{
+      const asset = assets.find(x=>x.id===id);
+      if(!asset) return;
+      const w = evKRW(asset);
+      weights[id]=w; totalW+=w;
+    });
+    if(totalW<=0) totalW=1;
+
+    const vals = chartHistory.map((h,idx)=>{
+      let acc=0, wsum=0;
+      g.ids.forEach(id=>{
+        const pv = assetPctMap[id] ? assetPctMap[id][idx] : null;
+        if(pv==null) return;
+        acc += pv*(weights[id]||0); wsum += (weights[id]||0);
+      });
+      return wsum>0 ? acc/wsum : null;
+    });
+    const absVals = chartHistory.map(h=> g.ids.reduce((s,id)=> s+(h.byAsset[id]||0), 0));
+
     const events=[];
-    for(let j=1;j<pct.length;j++){
-      const p=pct[j-1], c2=pct[j];
+    for(let j=1;j<vals.length;j++){
+      const p=vals[j-1], c2=vals[j];
       if(p==null||c2==null) continue;
       const jump=c2-p;
       if(Math.abs(jump)>=2){
-        const diff=Math.abs((raw[j]||0)-(raw[j-1]||0));
+        const diff=Math.abs((absVals[j]||0)-(absVals[j-1]||0));
         events.push({idx:j, type:jump>0?'buy':'sell', jump, qty:null, amt:diff||null});
       }
     }
-    // 합계 가중평균용으로 모든 자산의 pct 저장 (선택 여부 무관)
-    assetPctMap[a.id] = pct;
-    // 화면 라인은 선택된 자산만 추가
-    if(selectedAssets.has(a.id)){
-      const col = LINE_COLS[i%LINE_COLS.length];
-      // 1D: 마지막 정규장 유효값 인덱스 (장외 null 구간 이후 점 표시용)
-      const lastValidIdx = pct.reduce((acc,v,i)=>v!=null?i:acc, -1);
-      lines.push({label:a.name, vals:pct, absVals:raw,
-        color:col, lw:1.2, assetId:a.id, events, lastValidIdx});
-    }
+    const col = LINE_COLS[gi%LINE_COLS.length];
+    const lastValidIdx = vals.reduce((acc,v,i)=>v!=null?i:acc, -1);
+    lines.push({label:g.name, vals, absVals,
+      color:col, lw:1.2, assetIds:g.ids, events, lastValidIdx});
   });
 
   // ── 합계: 자산별 pct의 현재평가금액 가중평균 ──
@@ -3557,8 +3594,8 @@ function drawLineChart(){
     labeled.forEach(l=>{
       const aly = Math.max(gT+6, Math.min(gT+gH-4, l._aly));
       const pctStr = (l._lp>=0?'+':'') + l._lp.toFixed(2) + '%';
-      // 애프터장 % (USD 종목에 한해)
-      const asset = l.assetId ? assets.find(a=>a.id===l.assetId) : null;
+      // 애프터장 % (USD 종목에 한해, 계좌 병합 없이 단독 종목인 경우만)
+      const asset = (l.assetIds && l.assetIds.length===1) ? assets.find(a=>a.id===l.assetIds[0]) : null;
       const afterPct = asset?.postMarketPct;
       const afterStr = (afterPct != null)
         ? ` (A ${afterPct>=0?'+':''}${afterPct.toFixed(2)}%)`
@@ -3621,15 +3658,20 @@ function renderStatBar(){
   // drawLineChart와 완전히 동일한 스냅샷 기반 공식
   // pct = (raw[i] - fv) / fv × 100  (fv = 첫 스냅샷값)
   const bar=document.getElementById('statBar');
+  // 계좌별로 나뉜 동일 종목명은 그룹으로 병합 (drawLineChart와 동일한 그룹/순서 사용 — 색상 일치)
+  const allGroups = groupAssetsByName();
+  const selGroups = allGroups.filter(g=>g.ids.some(id=>selectedAssets.has(id)));
+  const cashItems = [...selectedAssets].map(id=>assets.find(x=>x.id===id)).filter(a=>a&&a.category==='cash');
   const items=[
     ...(showSum?[null]:[]),
-    ...[...selectedAssets].map(id=>assets.find(x=>x.id===id)).filter(Boolean)
+    ...selGroups,
+    ...cashItems
   ];
   if(!items.length){bar.innerHTML='';return;}
 
   bar.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:4px;">'+
-  items.map(a=>{
-    if(!a){
+  items.map(item=>{
+    if(!item){
       // 합계: drawLineChart와 동일 — 자산별 pct의 현재평가금액 가중평균
       const sumAssets = assets.filter(x=>x.category!=='cash');
       // 각 자산의 pct 배열 계산 (단가 기준)
@@ -3686,7 +3728,8 @@ function renderStatBar(){
       '</div>';
     }
 
-    if(a.category==='cash'){
+    if(item.category==='cash'){
+      const a = item;
       const ev = evKRW(a);
       return '<div class="stat-item">'+
         '<div class="stat-lbl" style="font-weight:700;"><span class="dot" style="background:#8e8e93"></span>'+a.name+'</div>'+
@@ -3695,37 +3738,54 @@ function renderStatBar(){
       '</div>';
     }
 
-    // 일반 종목: drawLineChart와 동일 (단가 기준)
-    const curQty2 = a.quantity || 1;
-    const rawVals = chartHistory.map(h=>h.byAsset[a.id]??null);
-    const fi = rawVals.findIndex(v=>v!=null);
-    if(fi===-1) return '';
+    // 일반 종목: 계좌별로 나뉜 동일 종목명은 현재평가금액 가중평균으로 병합 (drawLineChart와 동일 방식)
+    const g = item;
+    const weights = {}; let totalWg = 0;
+    const members = g.ids.map(id=>{
+      const x = assets.find(v=>v.id===id);
+      if(!x) return null;
+      const curQtyX = x.quantity || 1;
+      const rawX = chartHistory.map(h=>h.byAsset[id]??null);
+      const fiX = rawX.findIndex(v=>v!=null);
+      if(fiX===-1) return null;
+      const pricesX = chartHistory.map(h=>{
+        const ev = h.byAsset[id];
+        if(ev==null) return null;
+        const q = (h.byQty && h.byQty[id]) ? h.byQty[id] : curQtyX;
+        return ev / q;
+      });
+      const fvpX = calcBaseUnit(x, pricesX, fiX);
+      const pctX = pricesX.map((p,idx)=> (idx<fiX||p==null)?null:((p-fvpX)/fvpX)*100);
+      const w = evKRW(x);
+      weights[id]=w; totalWg+=w;
+      return {id, x, pctX, pricesX, fvpX, curQtyX};
+    }).filter(Boolean);
+    if(!members.length) return '';
+    if(totalWg<=0) totalWg=1;
 
-    const pricesS = chartHistory.map(h=>{
-      const ev = h.byAsset[a.id];
-      if(ev==null) return null;
-      const q = (h.byQty && h.byQty[a.id]) ? h.byQty[a.id] : curQty2;
-      return ev / q;
-    });
-    // fi=0: 기준점 단가 / fi>0: avgPrice (매수가 기준)
-    // 1D는 그래프와 동일하게 prevPrice 우선 폴백
-    const fvPrice2 = calcBaseUnit(a, pricesS, fi);
-
-    const pctVals = pricesS.map((p,idx)=>{
-      if(idx<fi||p==null) return null;
-      return ((p - fvPrice2) / fvPrice2) * 100;
+    const pctVals = chartHistory.map((h,idx)=>{
+      let acc=0, wsum=0;
+      members.forEach(m=>{
+        const pv=m.pctX[idx]; if(pv==null) return;
+        acc+=pv*(weights[m.id]||0); wsum+=(weights[m.id]||0);
+      });
+      return wsum>0?acc/wsum:null;
     }).filter(v=>v!=null);
     if(!pctVals.length) return '';
 
-    const lastPrice = pricesS[pricesS.length-1] ?? pricesS.filter(v=>v!=null).slice(-1)[0];
-    const lastPct = lastPrice!=null ? ((lastPrice - fvPrice2)/fvPrice2)*100 : 0;
+    const lastPct = pctVals[pctVals.length-1];
     const hi = Math.max(...pctVals), lo = Math.min(...pctVals);
-    // 방식 2: 현재 보유수량 × (현재단가 − 기준단가) → %와 부호 일치
-    const diff = lastPrice!=null ? Math.round((lastPrice - fvPrice2) * curQty2) : 0;
-    const itemColor = LINE_COLS[assets.indexOf(a)%LINE_COLS.length];
+    // 방식 2: 계좌별 (현재단가 − 기준단가) × 수량의 합 → %와 부호 일치
+    let diff = 0;
+    members.forEach(m=>{
+      const lastPriceM = m.pricesX[m.pricesX.length-1] ?? m.pricesX.filter(v=>v!=null).slice(-1)[0];
+      if(lastPriceM!=null) diff += (lastPriceM - m.fvpX) * m.curQtyX;
+    });
+    diff = Math.round(diff);
+    const itemColor = LINE_COLS[allGroups.indexOf(g)%LINE_COLS.length];
 
     return '<div class="stat-item">'+
-      '<div class="stat-lbl" style="font-weight:700;"><span class="dot" style="background:'+itemColor+'"></span>'+a.name+'</div>'+
+      '<div class="stat-lbl" style="font-weight:700;"><span class="dot" style="background:'+itemColor+'"></span>'+g.name+'</div>'+
       '<div class="stat-val '+updn(diff)+'">'+(diff>=0?'+':'')+fmt(diff)+' ('+fmtPct(lastPct)+')</div>'+
       '<div class="stat-sub">고: '+fmtPct(hi)+' · 저: '+fmtPct(lo)+'</div>'+
     '</div>';
@@ -3740,16 +3800,31 @@ function renderToggles(){
     `<button class="toggle-ctrl" onclick="deselectAll()" style="background:${noneSelected&&!showSum?'#ff3b30':'var(--color-section-bg)'};color:${noneSelected&&!showSum?'#fff':'var(--color-text)'}">전체 해제</button>`+
     `<button class="toggle-ctrl" onclick="toggleSum()" style="background:${showSum?'var(--color-accent)':'var(--color-section-bg)'};color:${showSum?'#fff':'var(--color-text)'}">합계</button>`;
   // 종목별 개별 토글은 접이식 안에 — 선택 시 배경을 실색으로 채워 가독성 개선(연한 틴트+같은색 글자 조합 방지)
-  document.getElementById('assetTogglesDetail').innerHTML = assets.map((a,i)=>{
-      const col=a.category==='cash'?'#8e8e93':LINE_COLS[i%LINE_COLS.length];
+  // 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시하고, 이름 오른쪽에 계좌 합산 평가금액을 표시
+  const groupPills = groupAssetsByName().map((g,i)=>{
+      const col = LINE_COLS[i%LINE_COLS.length];
+      const on = g.ids.some(id=>selectedAssets.has(id));
+      const total = g.ids.reduce((s,id)=>{ const x=assets.find(v=>v.id===id); return s+(x?evKRW(x):0); },0);
+      return`<button class="toggle-pill ${on?'on':''}" onclick="toggleAssetGroup('${g.ids.join(',')}')">
+        <span class="dot" style="background:${col}"></span>${g.name} · ${fmt(total)}</button>`;
+    }).join('');
+  const cashPills = assets.filter(a=>a.category==='cash').map(a=>{
       const on = selectedAssets.has(a.id);
       return`<button class="toggle-pill ${on?'on':''}" onclick="toggleAsset('${a.id}')">
-        <span class="dot" style="background:${col}"></span>${a.name}</button>`;
+        <span class="dot" style="background:#8e8e93"></span>${a.name}</button>`;
     }).join('');
+  document.getElementById('assetTogglesDetail').innerHTML = groupPills + cashPills;
 }
 
 function toggleAsset(id){
   selectedAssets.has(id)?selectedAssets.delete(id):selectedAssets.add(id);
+  saveChartSel();
+  renderToggles();drawLineChart();renderStatBar();
+}
+function toggleAssetGroup(idsCsv){
+  const ids = idsCsv.split(',');
+  const anySelected = ids.some(id=>selectedAssets.has(id));
+  ids.forEach(id=> anySelected ? selectedAssets.delete(id) : selectedAssets.add(id));
   saveChartSel();
   renderToggles();drawLineChart();renderStatBar();
 }
