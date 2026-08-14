@@ -2384,12 +2384,27 @@ async function loadStocksCSV(){
 }
 loadStocksCSV();
 
+// stocks.csv 마스터 목록 + 이미 보유 중인 자산에서 마스터에 없는(직접 입력한 이름 등) 종목도
+// 합쳐서 검색 대상으로 삼는다 — 예: "알파벳 A"처럼 사용자가 자기 대시보드에만 등록해둔
+// 종목명은 stocks.csv엔 없어서 원래는 자동완성에 안 뜨던 것을 뜨게 함
+function getSearchableStockDB(){
+  const known = new Set(STOCK_DB.map(s=>s.n));
+  const custom = [];
+  const seen = new Set();
+  assets.forEach(a=>{
+    if(a.category==='cash' || known.has(a.name) || seen.has(a.name)) return;
+    seen.add(a.name);
+    custom.push({n:a.name, t:a.ticker||'', c:a.category, cur:a.currency});
+  });
+  return STOCK_DB.concat(custom);
+}
+
 // 종목명/티커 검색 순위 매기기 — "포함"만으로 정렬 없이 자르면 파일 순서상 먼저 나오는
 // 종목(예: 국내 ETF)이 앞줄을 채워서, "A"처럼 짧은 검색어일 때 정작 찾는 종목(Apple 등)이
 // 상위 10개 밖으로 밀려 보이지 않는 문제가 있었다. "시작 일치"를 "포함 일치"보다 우선하고,
 // 동일 순위 내에서는 이름 가나다/알파벳 순으로 정렬한다.
 function rankStockMatches(q, limit=10){
-  const scored = STOCK_DB.map(s=>{
+  const scored = getSearchableStockDB().map(s=>{
     const n=s.n.toLowerCase(), t=s.t.toLowerCase();
     let score;
     if(n.startsWith(q)) score=0;
