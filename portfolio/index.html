@@ -2379,6 +2379,25 @@ async function loadStocksCSV(){
 }
 loadStocksCSV();
 
+// 종목명/티커 검색 순위 매기기 — "포함"만으로 정렬 없이 자르면 파일 순서상 먼저 나오는
+// 종목(예: 국내 ETF)이 앞줄을 채워서, "A"처럼 짧은 검색어일 때 정작 찾는 종목(Apple 등)이
+// 상위 10개 밖으로 밀려 보이지 않는 문제가 있었다. "시작 일치"를 "포함 일치"보다 우선하고,
+// 동일 순위 내에서는 이름 가나다/알파벳 순으로 정렬한다.
+function rankStockMatches(q, limit=10){
+  const scored = STOCK_DB.map(s=>{
+    const n=s.n.toLowerCase(), t=s.t.toLowerCase();
+    let score;
+    if(n.startsWith(q)) score=0;
+    else if(t.startsWith(q)) score=1;
+    else if(n.includes(q)) score=2;
+    else if(t.includes(q)) score=3;
+    else score=-1;
+    return {s,score};
+  }).filter(x=>x.score>=0);
+  scored.sort((a,b)=> a.score-b.score || a.s.n.localeCompare(b.s.n));
+  return scored.slice(0,limit).map(x=>x.s);
+}
+
 let searchTimer=null;
 function searchTicker(query){
   const box=document.getElementById('af_suggestions');
@@ -2386,7 +2405,7 @@ function searchTicker(query){
   if(!q){box.style.display='none';return;}
   clearTimeout(searchTimer);
   searchTimer=setTimeout(()=>{
-    const results=STOCK_DB.filter(s=>s.n.toLowerCase().includes(q)||s.t.toLowerCase().includes(q)).slice(0,10);
+    const results=rankStockMatches(q);
     if(!results.length){box.style.display='none';return;}
     const catColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30'};
     const catLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인'};
@@ -2421,7 +2440,7 @@ function searchTickerTL(query){
   if(!q){box.style.display='none';return;}
   clearTimeout(searchTimerTL);
   searchTimerTL=setTimeout(()=>{
-    const results=STOCK_DB.filter(s=>s.n.toLowerCase().includes(q)||s.t.toLowerCase().includes(q)).slice(0,10);
+    const results=rankStockMatches(q);
     if(!results.length){box.style.display='none';return;}
     const catColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30'};
     const catLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인'};
