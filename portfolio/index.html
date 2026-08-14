@@ -3564,9 +3564,22 @@ function drawLineChart(){
   // LINE_H는 위에서 이미 선언됨 (동적 높이 계산에 사용)
   const labeled = lines.filter(l=>l._ly!=null).sort((a,b)=>a._ly-b._ly);
   if(labeled.length){
-    const maxW = RLABEL - 6;
+    // 실제로 안전하게 그릴 수 있는 폭: 라벨 시작점(LBL_X, 박스 오른쪽에서 RLABEL만큼 안쪽 + 10px)부터
+    // 클리핑 경계(박스 오른쪽 테두리에서 RMARGIN만큼 안쪽)까지 — 기존엔 이 여백들을 빼지 않아
+    // 종목명이 테두리에서 잘려 보이는 경우가 있었다.
+    const maxW = RLABEL - 10 - RMARGIN;
     ctx.font = `bold ${LBL_FONT}px Pretendard,sans-serif`;
     ctx.textAlign = 'left';
+    // 종목명이 maxW보다 넓으면(글자 수가 많은 종목명 등) 잘리지 않도록 폰트를 줄여서 맞춘다
+    const fitFontSize = text => {
+      let size = LBL_FONT;
+      ctx.font = `bold ${size}px Pretendard,sans-serif`;
+      while(size > 6 && ctx.measureText(text).width > maxW){
+        size -= 0.5;
+        ctx.font = `bold ${size}px Pretendard,sans-serif`;
+      }
+      return size;
+    };
 
     // 0단계: 겹침 계산 전에 라벨 텍스트와 한 줄/두 줄 여부를 먼저 확정
     // (긴 종목명은 두 줄로 그려지므로, 한 줄 기준 간격만으로 밀어내면 옆 라벨과 겹친다)
@@ -3623,12 +3636,17 @@ function drawLineChart(){
 
       ctx.fillStyle = l.color;
       if(!l._twoLine){
-        ctx.fillText(l.label + ' ' + l._pctStr + l._afterStr, LBL_X, aly+3);
+        const oneLineText = l.label + ' ' + l._pctStr + l._afterStr;
+        fitFontSize(oneLineText);
+        ctx.fillText(oneLineText, LBL_X, aly+3);
       } else {
         // 종목명과 % 두 줄로 (줄 간격을 폰트 크기에 맞춰 넉넉히)
+        fitFontSize(l.label);
         ctx.fillText(l.label, LBL_X, aly-4);
+        fitFontSize(l._pctStr + l._afterStr);
         ctx.fillText(l._pctStr + l._afterStr, LBL_X, aly+10);
       }
+      ctx.font = `bold ${LBL_FONT}px Pretendard,sans-serif`; // 다음 라벨 측정을 위해 기본 폰트로 복원
     });
   }
 
