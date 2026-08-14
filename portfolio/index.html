@@ -2364,7 +2364,7 @@ async function loadStocksCSV(){
   const paths=['./stocks.csv','stocks.csv',location.pathname.replace(/\/[^/]*$/,'/')+('stocks.csv')];
   for(const path of paths){
     try{
-      const res=await fetch(path,{cache:'force-cache'});
+      const res=await fetch(path,{cache:'no-cache'});
       if(!res.ok) continue;
       const text=await res.text();
       STOCK_DB=text.trim().split('\n').slice(1).map(line=>{
