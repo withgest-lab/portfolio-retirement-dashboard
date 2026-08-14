@@ -109,8 +109,11 @@ tr:hover td:first-child{background:#f7f7f9!important;}
 .ticker-badge{font-size:10px;color:var(--color-tertiary);margin-left:3px;}
 .cat-badge{display:inline-flex;align-items:center;justify-content:center;
   border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700;}
-.up{color:var(--color-up);} .dn{color:var(--color-down);}
+.up{color:var(--color-up);} .dn{color:var(--color-down);} .dim{color:var(--color-tertiary);}
 .edit-btn,.del-btn{border:none;cursor:pointer;background:transparent;font-size:13px;padding:1px 2px;border-radius:5px;}
+.btn-icon{border:none;cursor:pointer;background:transparent;font-size:13px;padding:4px 6px;border-radius:6px;transition:.15s;}
+.btn-icon:hover{background:var(--color-section-bg);}
+.btn-icon+.btn-icon{margin-left:4px;}
 .inline-edit td{background:#f2f7ff!important;}
 tr[style*="background:#f0f7ff"] td:first-child{background:#f0f7ff!important;}
 tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
@@ -129,6 +132,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .add-form input,.add-form select{border:1px solid var(--color-border);border-radius:7px;padding:5px 8px;
   font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);}
 .form-status{font-size:12px;color:var(--color-secondary);padding-top:8px;min-height:18px;}
+
+/* ── 자산 목록 필터 ── */
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.filter-bar input,.filter-bar select{border:1px solid var(--color-border);border-radius:7px;padding:5px 8px;
+  font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);}
+.filter-bar input{flex:1;min-width:120px;}
 
 /* ── 자동완성 ── */
 .suggest-box{display:none;position:absolute;top:100%;left:0;z-index:200;
@@ -258,6 +267,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="section-label" style="margin:0">자산 목록</div>
     <span style="font-size:10px;color:var(--color-tertiary)">※ 야후 파이낸스 (15~20분 지연)</span>
   </div>
+  <div class="filter-bar">
+    <input id="assetFilterSearch" placeholder="종목명·티커 검색" oninput="setAssetFilter('search', this.value)">
+    <select id="assetFilterCat" onchange="setAssetFilter('cat', this.value)"><option value="">구분 전체</option></select>
+    <select id="assetFilterSubacct" onchange="setAssetFilter('subacct', this.value)"><option value="">계좌 전체</option></select>
+    <select id="assetFilterAttr" onchange="setAssetFilter('attr', this.value)"><option value="">속성 전체</option></select>
+  </div>
   <div class="tbl-wrap">
     <table class="table-fit">
       <thead><tr>
@@ -265,8 +280,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <th class="fold-hide">구분</th><th class="fold-hide">계좌</th><th class="fold-hide">속성</th>
         <th class="fold-hide">현재가<br><span style="font-weight:400;text-transform:none;">전일比</span></th>
         <th class="fold-hide">평단<br><span style="font-weight:400;text-transform:none;">수량</span></th>
-        <th>평가금액</th>
-        <th>평가손익<br><span style="font-weight:400;text-transform:none;">수익률</span></th>
+        <th onclick="setAssetSort('ev')" style="cursor:pointer;">평가금액<span id="sortArrow_ev"></span></th>
+        <th onclick="setAssetSort('pnl')" style="cursor:pointer;">평가손익<span id="sortArrow_pnl"></span><br><span style="font-weight:400;text-transform:none;">수익률</span></th>
         <th>편집</th>
       </tr></thead>
       <tbody id="assetTbody"></tbody>
@@ -496,18 +511,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
 </div>
 
-<!-- 3-1. 해외주식 양도소득세 (올해 예상) -->
-<div class="card">
-  <div class="section-label">해외주식 양도소득세 (<span id="cgtYear"></span>년 예상)</div>
-  <div id="capGainsTax"></div>
-</div>
-
-<!-- 3-2. 금융소득종합과세 임계값 (올해) -->
-<div class="card">
-  <div class="section-label">금융소득종합과세 임계값 (<span id="fitYear"></span>년)</div>
-  <div id="finIncomeThreshold"></div>
-</div>
-
 <!-- 4. 글로벌 시장 -->
 <div class="card">
   <div class="section-label">글로벌 시장</div>
@@ -528,7 +531,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <thead><tr>
         <th style="text-align:left">날짜</th>
         <th style="text-align:left">종목</th>
-        <th>유형<br><span style="font-weight:400;text-transform:none;">구분·속성</span></th>
+        <th style="text-align:center">유형<br><span style="font-weight:400;text-transform:none;">구분·속성</span></th>
         <th>체결단가 × 수량<br><span style="font-weight:400;text-transform:none;">총금액</span></th>
         <th>실현손익</th>
         <th>관리</th>
@@ -540,26 +543,27 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <summary style="color:#A8433C;">이력 수동 기록 추가 <b>(자산/현금에는 반영되지 않음)</b></summary>
   <div class="add-form" style="padding-top:14px;">
     <label>날짜<input id="tl_date" type="date" style="width:110px"></label>
-    <label>종목명
-      <input id="tl_name" placeholder="" style="width:95px" autocomplete="off"
-        oninput="tlAutoTicker(this.value)">
+    <label style="position:relative;">종목명
+      <input id="tl_name" placeholder="" style="width:130px" autocomplete="off"
+        oninput="searchTickerTL(this.value)">
+      <div class="suggest-box" id="tl_suggestions"></div>
     </label>
     <label>티커<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-      <input id="tl_ticker" placeholder="예:005930" style="width:70px" autocomplete="off">
+      <input id="tl_ticker" placeholder="예:005930" style="width:100px" autocomplete="off">
     </label>
-    <label>계좌<select id="tl_subacct" onchange="toggleCustomInput('tl_subacct','tl_subacct_custom')" style="width:85px;">
+    <label>계좌<select id="tl_subacct" onchange="toggleCustomInput('tl_subacct','tl_subacct_custom')" style="width:100px;">
       <option value="">-- 없음 --</option>
       <option value="nh">농협</option>
       <option value="mf">미래에셋</option>
       <option value="__custom__">+ 직접입력</option>
     </select>
-    <input id="tl_subacct_custom" placeholder="계좌명" style="width:85px;display:none;margin-top:3px;">
+    <input id="tl_subacct_custom" placeholder="계좌명" style="width:100px;display:none;margin-top:3px;">
     </label>
     <label>유형<select id="tl_type" style="width:65px">
       <option value="buy">매수</option>
       <option value="sell">매도</option>
     </select></label>
-    <label>구분<select id="tl_cat" style="width:85px" onchange="toggleCustomInput('tl_cat','tl_cat_custom')">
+    <label>구분<select id="tl_cat" onchange="toggleCustomInput('tl_cat','tl_cat_custom')">
       <option value="">-- 선택 --</option>
       <option value="stock_kr">국내주식</option>
       <option value="stock_us">미국주식</option>
@@ -572,9 +576,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <option value="cash">현금</option>
       <option value="__custom__">+ 직접입력</option>
     </select>
-    <input id="tl_cat_custom" placeholder="구분명" style="width:85px;display:none;margin-top:3px;">
+    <input id="tl_cat_custom" placeholder="구분명" style="display:none;margin-top:3px;">
     </label>
-    <label>속성<select id="tl_attr" style="width:75px" onchange="toggleCustomInput('tl_attr','tl_attr_custom')">
+    <label>속성<select id="tl_attr" onchange="toggleCustomInput('tl_attr','tl_attr_custom')">
       <option value="">— 없음 —</option>
       <option value="Core">Core</option>
       <option value="주도주">주도주</option>
@@ -582,21 +586,19 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <option value="원자재">원자재</option>
       <option value="__custom__">+ 직접입력</option>
     </select>
-    <input id="tl_attr_custom" placeholder="속성명" style="width:75px;display:none;margin-top:3px;">
+    <input id="tl_attr_custom" placeholder="속성명" style="display:none;margin-top:3px;">
     </label>
-    <label>체결단가<input id="tl_price" type="number" placeholder="0" style="width:78px"></label>
-    <label>수량<input id="tl_qty" type="number" placeholder="0" style="width:62px"></label>
-    <div style="flex:1 1 100%;display:flex;gap:10px;align-items:flex-end;">
-      <label>통화<select id="tl_cur" style="width:65px">
-        <option value="KRW">KRW ₩</option>
-        <option value="USD">USD $</option>
-        <option value="JPY">JPY ¥</option>
-      </select></label>
-      <label style="flex:1;min-width:160px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-        <input id="tl_reason" placeholder="매수·매도 사유" style="width:100%">
-      </label>
-      <button class="btn btn-primary" onclick="addTradeLog_manual()">기록 추가</button>
-    </div>
+    <label>수량<input id="tl_qty" type="number" placeholder="0" style="width:80px"></label>
+    <label>체결단가<input id="tl_price" type="number" placeholder="0" style="width:100px"></label>
+    <label>통화<select id="tl_cur">
+      <option value="KRW">KRW ₩</option>
+      <option value="USD">USD $</option>
+      <option value="JPY">JPY ¥</option>
+    </select></label>
+    <label style="flex:1;min-width:140px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
+      <input id="tl_reason" placeholder="매수·매도 사유" style="width:100%">
+    </label>
+    <button class="btn btn-primary" onclick="addTradeLog_manual()">기록 추가</button>
   </div>
   </details>
   <div id="tradeLogStatus" style="font-size:12px;color:var(--color-secondary);min-height:16px;padding:4px 0;"></div>
@@ -1063,12 +1065,12 @@ function totalEv(){return assets.reduce((s,a)=>s+evKRW(a),0);}
 function fmt(n){
   const abs=Math.abs(n);
   if(abs>=1e8) return (n/1e8).toFixed(2)+'억';
-  if(abs>=1e4) return (n/1e4).toFixed(1)+'만';
+  if(abs>=1e4) return Math.trunc(n/1e4)+'만';
   return Math.round(n).toLocaleString('ko-KR')+'원';
 }
 function fmtEval(n){
   const abs=Math.abs(n);
-  if(abs>=1e8) return (n/1e8).toFixed(4)+'억';
+  if(abs>=1e8) return (n/1e8).toFixed(3)+'억';
   if(abs>=1e4) return (n/1e4).toFixed(1)+'만';
   return Math.round(n).toLocaleString('ko-KR')+'원';
 }
@@ -1270,17 +1272,6 @@ function logBuyTrade(a, qty, buyPrice, reason){
   });
 }
 
-// 매매이력 폼 종목명 입력 시 자산 목록에서 티커 자동 매칭 (수동 수정 가능)
-function tlAutoTicker(name){
-  const trimmed = name.trim();
-  if(!trimmed) return;
-  const matched = assets.find(a=>a.name===trimmed);
-  if(matched && matched.ticker && matched.ticker!=='—'){
-    document.getElementById('tl_ticker').value = matched.ticker;
-  }
-}
-
-
 function addTradeLog_manual(){
   const name  = document.getElementById('tl_name').value.trim();
   const dateV = document.getElementById('tl_date').value;
@@ -1455,8 +1446,8 @@ function renderSoldHistory(){
       ? `<span class="cat-badge" style="background:#8e8e9320;color:#8e8e93;font-size:9px;">${SUBACCT_LABELS[r.subAccount]||r.subAccount}</span>`
       : '';
     const catAttrLine = (catBadge||subacctBadge||attrBadge)
-      ? `<div style="margin-top:2px;display:flex;gap:3px;justify-content:center;flex-wrap:wrap;">${subacctBadge}${catBadge}${attrBadge}</div>`
-      : `<div style="margin-top:2px;color:var(--color-tertiary);font-size:10px;">—</div>`;
+      ? `<div style="margin-top:1px;display:flex;gap:3px;justify-content:center;flex-wrap:wrap;">${subacctBadge}${catBadge}${attrBadge}</div>`
+      : `<div style="margin-top:1px;color:var(--color-tertiary);font-size:10px;">—</div>`;
     let rowHtml = `<tr>
       <td style="font-size:12px;line-height:1.4;text-align:left;color:var(--color-tertiary);">${dtStr}</td>
       <td style="font-size:12px;line-height:1.4;text-align:left;font-weight:600;white-space:nowrap;">${r.name}</td>
@@ -1654,13 +1645,76 @@ function renderSnaps(){
 let editingId=null, quickTradeId=null;
 let editingTradeLogId=null;
 
+// ── 자산 목록 필터/정렬 ──
+let assetFilter = {search:'', cat:'', subacct:'', attr:''};
+let assetSort = {field:null, dir:1}; // field: 'ev'|'pnl', dir: 1=오름차순 -1=내림차순
+function setAssetFilter(key, val){ assetFilter[key]=val; renderTable(); }
+function setAssetSort(field){
+  if(assetSort.field===field) assetSort.dir*=-1;
+  else { assetSort.field=field; assetSort.dir=1; }
+  renderTable();
+}
+// 구분/속성은 고정 목록이라 최초 1회만 채우고, 계좌는 사용자가 직접입력할 수 있어 매번 자산 목록 기준으로 다시 채운다
+function renderAssetFilterOptions(){
+  const catSel=document.getElementById('assetFilterCat');
+  if(catSel && !catSel.dataset.built){
+    catSel.innerHTML='<option value="">구분 전체</option>'+
+      Object.keys(CAT_LABELS).map(k=>`<option value="${k}">${CAT_LABELS[k]}</option>`).join('');
+    catSel.dataset.built='1';
+  }
+  const attrSel=document.getElementById('assetFilterAttr');
+  if(attrSel && !attrSel.dataset.built){
+    attrSel.innerHTML='<option value="">속성 전체</option>'+
+      ATTR_OPTIONS.map(a=>`<option value="${a}">${a}</option>`).join('');
+    attrSel.dataset.built='1';
+  }
+  const subSel=document.getElementById('assetFilterSubacct');
+  if(subSel){
+    const names=[...new Set(assets.filter(a=>a.subAccount).map(a=>a.subAccount))];
+    subSel.innerHTML='<option value="">계좌 전체</option>'+
+      names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${SUBACCT_LABELS[n]||n}</option>`).join('');
+    subSel.value=assetFilter.subacct;
+  }
+}
+
 function renderTable(){
   const tb=document.getElementById('assetTbody');
-  tb.innerHTML=assets.map(a=>{
+  renderAssetFilterOptions();
+  // 계좌별 색상: 등장 순서대로 LINE_COLS를 순환 할당(그래프 라인 색과 동일 팔레트, 일관성 유지) — 필터로 줄어든 목록이 아니라 전체 자산 기준으로 고정해야 색이 안 바뀜
+  const subAcctNames=[...new Set(assets.filter(a=>a.subAccount).map(a=>a.subAccount))];
+
+  let list = assets.filter(a=>{
+    if(assetFilter.search){
+      const q=assetFilter.search.trim().toLowerCase();
+      if(q && !(a.name.toLowerCase().includes(q) || (a.ticker&&a.ticker.toLowerCase().includes(q)))) return false;
+    }
+    if(assetFilter.cat && a.category!==assetFilter.cat) return false;
+    if(assetFilter.subacct && a.subAccount!==assetFilter.subacct) return false;
+    if(assetFilter.attr && a.attribute!==assetFilter.attr) return false;
+    return true;
+  });
+  if(assetSort.field){
+    list = list.slice().sort((a,b)=>{
+      const va = assetSort.field==='ev' ? evKRW(a) : (evKRW(a)-costKRW(a));
+      const vb = assetSort.field==='ev' ? evKRW(b) : (evKRW(b)-costKRW(b));
+      return (va-vb)*assetSort.dir;
+    });
+  }
+  ['ev','pnl'].forEach(f=>{
+    const el=document.getElementById('sortArrow_'+f);
+    if(el) el.textContent = assetSort.field===f ? (assetSort.dir>0?' ▲':' ▼') : '';
+  });
+  if(!list.length){
+    tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--color-tertiary)">조건에 맞는 자산이 없습니다</td></tr>';
+    return;
+  }
+
+  tb.innerHTML=list.map(a=>{
     const ev=evKRW(a),cost=costKRW(a),pnl=ev-cost,rtn=cost>0?(pnl/cost)*100:0;
     const dayChg=a.category==='cash'?0:(a.prevPrice>0?((a.currentPrice-a.prevPrice)/a.prevPrice)*100:0);
     const sym=CUR_SYM[a.currency];
     const cc=CAT_COLS[a.category]||'#8e8e93';
+    const sac=a.subAccount?LINE_COLS[subAcctNames.indexOf(a.subAccount)%LINE_COLS.length]:null;
     const priceStr=p=>{
       if(a.currency==='USD') return '$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
       if(a.currency==='JPY') return '¥'+Math.round(p).toLocaleString('ja-JP');
@@ -1720,7 +1774,7 @@ function renderTable(){
         <div class="name-sub">${a.ticker==='—'?'현금':a.ticker}</div>
       </td>
       <td class="fold-hide"><span class="cat-badge" style="background:${cc}20;color:${cc}">${tableBadge(a)}</span></td>
-      <td class="fold-hide">${a.subAccount?`<span class="cat-badge" style="background:#8e8e9320;color:#8e8e93">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:na}</td>
+      <td class="fold-hide">${a.subAccount?`<span class="cat-badge" style="background:${sac}20;color:${sac}">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:na}</td>
       <td class="fold-hide">${isCash ? na : (a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na)}</td>
       <td class="fold-hide" style="font-size:11px;">
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
@@ -2359,6 +2413,41 @@ function selectTicker(sym,name,cat,cur){
   document.getElementById('af_qty').focus();
 }
 
+// 이력 수동 기록 추가 폼의 종목명 자동완성 — 매수 폼(af_name)과 동일하게 stocks.csv 기준으로 검색
+let searchTimerTL=null;
+function searchTickerTL(query){
+  const box=document.getElementById('tl_suggestions');
+  const q=query.trim().toLowerCase();
+  if(!q){box.style.display='none';return;}
+  clearTimeout(searchTimerTL);
+  searchTimerTL=setTimeout(()=>{
+    const results=STOCK_DB.filter(s=>s.n.toLowerCase().includes(q)||s.t.toLowerCase().includes(q)).slice(0,10);
+    if(!results.length){box.style.display='none';return;}
+    const catColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30'};
+    const catLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인'};
+    const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    box.innerHTML=results.map(s=>{
+      const cc=catColor[s.c]||'#8e8e93';
+      const cl=catLabel[s.c]||s.c;
+      const hl=s.n.replace(re,'<b style="color:var(--color-accent)">$1</b>');
+      return`<div class="suggest-item" onclick="selectTickerTL('${s.t}','${s.n.replace(/'/g,"\\'")}','${s.c}','${s.cur}')">
+        <span style="background:${cc}20;color:${cc};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;flex-shrink:0;">${cl}</span>
+        <span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hl}</span>
+        <span style="font-size:11px;color:var(--color-tertiary);flex-shrink:0;">${s.t}</span>
+      </div>`;
+    }).join('');
+    box.style.display='block';
+  },150);
+}
+function selectTickerTL(sym,name,cat,cur){
+  document.getElementById('tl_name').value=name;
+  document.getElementById('tl_ticker').value=sym;
+  document.getElementById('tl_cat').value=cat;
+  document.getElementById('tl_cur').value=cur;
+  document.getElementById('tl_suggestions').style.display='none';
+  document.getElementById('tl_qty').focus();
+}
+
 function searchSell(query){
   const box=document.getElementById('sf_suggestions');
   const q=query.trim().toLowerCase();
@@ -2398,10 +2487,10 @@ function selectSell(id){
   document.getElementById('sf_qty').focus();
 }
 document.addEventListener('click',e=>{
-  ['af_suggestions','sf_suggestions'].forEach(id=>{
+  const boxToInput={af_suggestions:'af_name', sf_suggestions:'sf_name', tl_suggestions:'tl_name'};
+  Object.keys(boxToInput).forEach(id=>{
     const box=document.getElementById(id);
-    const inputId=id==='af_suggestions'?'af_name':'sf_name';
-    if(box&&!box.contains(e.target)&&e.target.id!==inputId) box.style.display='none';
+    if(box&&!box.contains(e.target)&&e.target.id!==boxToInput[id]) box.style.display='none';
   });
 });
 
@@ -2665,107 +2754,6 @@ function addCash(){
 /* ════════════════════════════════════════
    요약 카드
 ════════════════════════════════════════ */
-// 해외주식 양도소득세(연간 예상) — 국내 상장(KRW 통화) 종목은 개인투자자 원칙 비과세,
-// 해외 거래소 직접 상장 종목(USD/JPY 통화)은 매매차익 전액 양도소득세 대상(22%, 기본공제 250만원)
-// ※ 종합소득세와는 별도 세목 — 매년 5/1~5/31 양도소득세 확정신고 대상
-function renderCapitalGainsTax(){
-  const el = document.getElementById('capGainsTax');
-  if(!el) return;
-  const year = new Date().getFullYear();
-  document.getElementById('cgtYear').textContent = year;
-
-  const sells = loadTradeLog().filter(r =>
-    r.type === 'sell' && r.currency !== 'KRW' && r.category !== 'cash' &&
-    new Date(r.at).getFullYear() === year
-  );
-
-  if(!sells.length){
-    el.innerHTML = '<div class="mini-note" style="margin:0;">올해 실현된 해외주식 매도 이력이 없습니다.</div>';
-    return;
-  }
-
-  const gain = sells.reduce((s,r)=>s+(r.pnl||0), 0);
-  const CGT_EXEMPT = 250; // 기본공제(만원 단위로 통일 표시하되, pnl은 원 단위이므로 아래서 환산)
-  const gainMan = Math.round(gain/10000);
-  const taxableMan = Math.max(0, gainMan - CGT_EXEMPT);
-  const taxMan = Math.round(taxableMan * 0.22);
-
-  const rowsHtml = sells.map(r=>
-    `<tr><td style="text-align:left">${r.name}</td><td>${new Date(r.at).toLocaleDateString('ko-KR')}</td>
-     <td class="${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</td></tr>`
-  ).join('');
-
-  el.innerHTML = `
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
-      <div class="sum-card" style="flex:1;min-width:140px;">
-        <div class="sum-lbl">실현손익 합계</div>
-        <div class="sum-val ${updn(gainMan)}">${gainMan>=0?'+':''}${gainMan.toLocaleString()}만원</div>
-      </div>
-      <div class="sum-card" style="flex:1;min-width:140px;">
-        <div class="sum-lbl">기본공제 250만원 후 과세대상</div>
-        <div class="sum-val">${taxableMan.toLocaleString()}만원</div>
-      </div>
-      <div class="sum-card" style="flex:1;min-width:140px;">
-        <div class="sum-lbl">예상 양도소득세(22%)</div>
-        <div class="sum-val ${taxMan>0?'dn':''}">${taxMan.toLocaleString()}만원</div>
-      </div>
-    </div>
-    <div class="tbl-wrap">
-      <table class="table-auto">
-        <thead><tr><th style="text-align:left">종목</th><th>매도일</th><th>실현손익</th></tr></thead>
-        <tbody>${rowsHtml}</tbody>
-      </table>
-    </div>
-    <div class="mini-note">💡 종합소득세와는 별도 세목 — 매년 5/1~5/31 양도소득세 확정신고 대상(다른 소득과 합산 안 됨). 올해 남은 손실 종목을 추가로 매도해 손익을 통산하면 세금을 줄일 수 있습니다.</div>
-  `;
-}
-
-// 금융소득종합과세 임계값(연 2,000만원) 대시보드 — 배당 로그 합계 + 수동 입력한
-// 기타 이자·배당 소득(이 앱이 추적하지 않는 예금이자 등)을 합쳐 기준 초과 여부를 안내
-const OTHER_FIN_INCOME_KEY = 'pf_other_fin_income_v1';
-function loadOtherFinIncome(){ return parseFloat(localStorage.getItem(OTHER_FIN_INCOME_KEY))||0; }
-function saveOtherFinIncome(v){
-  localStorage.setItem(OTHER_FIN_INCOME_KEY, parseFloat(v)||0);
-  renderFinIncomeThreshold();
-}
-function renderFinIncomeThreshold(){
-  const el = document.getElementById('finIncomeThreshold');
-  if(!el) return;
-  const year = new Date().getFullYear();
-  document.getElementById('fitYear').textContent = year;
-
-  const divs = loadTradeLog().filter(r => r.type==='dividend' && new Date(r.at).getFullYear()===year);
-  const divSumMan = Math.round(divs.reduce((s,r)=>s+(r.totalKRW||0), 0)/10000);
-  const otherMan = loadOtherFinIncome();
-  const totalMan = divSumMan + otherMan;
-  const THRESHOLD = 2000;
-  const overMan = totalMan - THRESHOLD;
-
-  const statusHtml = overMan > 0
-    ? `<span class="dn" style="font-weight:700;">⚠️ 기준 초과 +${overMan.toLocaleString()}만원 — 종합과세 대상(다른 소득과 합산해 누진세율 적용)</span>`
-    : `<span class="up" style="font-weight:700;">✅ 기준 이내 (${Math.abs(overMan).toLocaleString()}만원 여유) — 15.4% 원천징수로 과세 종결</span>`;
-
-  el.innerHTML = `
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
-      <div class="sum-card" style="flex:1;min-width:140px;">
-        <div class="sum-lbl">배당 로그 합계</div>
-        <div class="sum-val">${divSumMan.toLocaleString()}만원</div>
-      </div>
-      <div class="sum-card" style="flex:1;min-width:180px;">
-        <div class="sum-lbl">기타 이자·배당 소득(연, 수동입력)</div>
-        <input type="number" id="otherFinIncomeInput" value="${otherMan}" min="0" step="1"
-          style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:5px 8px;
-                 font-size:14px;font-weight:800;font-family:inherit;background:var(--color-card);color:var(--color-text);"
-          onchange="saveOtherFinIncome(this.value)">
-      </div>
-      <div class="sum-card" style="flex:1;min-width:140px;">
-        <div class="sum-lbl">금융소득 합계 / 기준</div>
-        <div class="sum-val">${totalMan.toLocaleString()} / 2,000만원</div>
-      </div>
-    </div>
-    <div class="mini-note" style="margin:0;">${statusHtml}<br>💡 이 앱의 배당 로그와 수동 입력값만 반영합니다 — 예금 이자, 다른 계좌 배당 등 여기 기록되지 않은 금액이 있으면 "기타 이자·배당 소득"에 직접 더해 넣으세요.</div>
-  `;
-}
 
 function renderSummary(){
   // 오늘 손익 기준: 1D 그래프와 동일한 "1D 시작 직전 스냅샷"
@@ -3320,6 +3308,7 @@ function drawLineChart(){
   const PAD_IN=16;
   const RLABEL=Math.round(Math.min(160, W*0.38));
   const LBL_FONT=W<450?8:9;
+  const RMARGIN=8; // 종목 라벨 끝~박스 오른쪽 테두리 사이 여백
 
   const BL=LNUM, BT=TOP;
   const BW=W-LNUM-RNUM, BH=H-TOP-BOT;
@@ -3498,7 +3487,7 @@ function drawLineChart(){
 
   // ── 박스 안 (클리핑) ──
   ctx.save();
-  ctx.beginPath(); ctx.rect(BL+0.5,BT+0.5,BW-1,BH-1); ctx.clip();
+  ctx.beginPath(); ctx.rect(BL+0.5,BT+0.5,BW-1-RMARGIN,BH-1); ctx.clip();
 
   // 그리드
   ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
@@ -3805,10 +3794,12 @@ function renderStatBar(){
     });
     diff = Math.round(diff);
     const itemColor = LINE_COLS[allGroups.indexOf(g)%LINE_COLS.length];
+    // 휴장/개장 전(1D 기준, 그룹 내 모든 자산이 해당)이면 0%가 실제 등락이 아니므로 회색 처리
+    const isClosed = currentPeriod === '1D' && members.every(m=>isMarketPreOpen(m.x));
 
     return '<div class="stat-item">'+
       '<div class="stat-lbl" style="font-weight:700;"><span class="dot" style="background:'+itemColor+'"></span>'+g.name+'</div>'+
-      '<div class="stat-val '+updn(diff)+'">'+(diff>=0?'+':'')+fmt(diff)+' ('+fmtPct(lastPct)+')</div>'+
+      '<div class="stat-val '+(isClosed?'dim':updn(diff))+'">'+(diff>=0?'+':'')+fmt(diff)+' ('+fmtPct(lastPct)+')</div>'+
       '<div class="stat-sub">고: '+fmtPct(hi)+' · 저: '+fmtPct(lo)+'</div>'+
     '</div>';
   }).join('')+'</div>';
@@ -3822,13 +3813,12 @@ function renderToggles(){
     `<button class="toggle-ctrl" onclick="deselectAll()" style="background:${noneSelected&&!showSum?'#ff3b30':'var(--color-section-bg)'};color:${noneSelected&&!showSum?'#fff':'var(--color-text)'}">전체 해제</button>`+
     `<button class="toggle-ctrl" onclick="toggleSum()" style="background:${showSum?'var(--color-accent)':'var(--color-section-bg)'};color:${showSum?'#fff':'var(--color-text)'}">합계</button>`;
   // 종목별 개별 토글은 접이식 안에 — 선택 시 배경을 실색으로 채워 가독성 개선(연한 틴트+같은색 글자 조합 방지)
-  // 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시하고, 이름 오른쪽에 계좌 합산 평가금액을 표시
+  // 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시
   const groupPills = groupAssetsByName().map((g,i)=>{
       const col = LINE_COLS[i%LINE_COLS.length];
       const on = g.ids.some(id=>selectedAssets.has(id));
-      const total = g.ids.reduce((s,id)=>{ const x=assets.find(v=>v.id===id); return s+(x?evKRW(x):0); },0);
       return`<button class="toggle-pill ${on?'on':''}" onclick="toggleAssetGroup('${g.ids.join(',')}')">
-        <span class="dot" style="background:${col}"></span>${g.name} · ${fmt(total)}</button>`;
+        <span class="dot" style="background:${col}"></span>${g.name}</button>`;
     }).join('');
   const cashPills = assets.filter(a=>a.category==='cash').map(a=>{
       const on = selectedAssets.has(a.id);
@@ -4094,7 +4084,7 @@ setInterval(async()=>{
    전체 렌더
 ════════════════════════════════════════ */
 function renderAll(){
-  renderTable();renderSummary();renderCapitalGainsTax();renderFinIncomeThreshold();renderDonuts();
+  renderTable();renderSummary();renderDonuts();
   buildChartHistory();renderToggles();
   // 환율 표시 갱신
   const fx = document.getElementById('fxDisplay');
