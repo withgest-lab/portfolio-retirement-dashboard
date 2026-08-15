@@ -131,6 +131,12 @@ canvas#lineChart{width:100%!important;display:block;}
 .summary-grid.compact .sum-lbl{font-size:8px;margin-bottom:2px;}
 .summary-grid.compact .sum-val{font-size:13px;}
 .summary-grid.compact .sum-sub{font-size:9px;margin-top:0;}
+/* 자산 Quick View: 요약~트리맵 카드 간격, 트리맵 카드 자체 패딩을 줄여 세로 공간 절약 */
+#qvSubpage{gap:8px;}
+#qvSubpage .card{padding:12px;}
+/* 자산변화추이: 그래프가 스크롤 없이 한 화면에 보이도록 카드 안쪽 여백/행간 축소 */
+#chartSubpage{gap:8px;}
+#chartSubpage > .card{padding:12px;}
 
 /* ── 테이블 ── */
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
@@ -296,7 +302,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 </nav>
 
 <!-- 자산 Quick View: 축소 요약 + 트리맵이 메인 -->
-<div class="subpage active" data-sub="summary">
+<div class="subpage active" data-sub="summary" id="qvSubpage">
   <div class="summary-grid compact" id="summaryGrid"></div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
@@ -321,7 +327,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 </div>
 
 <!-- 자산변화추이 -->
-<div class="subpage" data-sub="chart">
+<div class="subpage" data-sub="chart" id="chartSubpage">
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
     <div class="section-label" style="margin:0">자산변화추이</div>
@@ -339,15 +345,17 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <button onclick="setPeriod('ALL')">ALL</button>
     </div>
   </div>
-  <div class="toggles" id="assetToggles"></div>
-  <details class="collapsible" style="margin:4px 0 2px;">
-    <summary>종목별 보기</summary>
-    <div class="toggles" id="assetTogglesDetail" style="margin-top:6px;"></div>
-  </details>
-  <div class="chart-wrap"><canvas id="lineChart" height="320"></canvas></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-top:6px;">
+    <div class="toggles" id="assetToggles" style="margin-top:0;"></div>
+    <details class="collapsible" style="margin:0;">
+      <summary>종목별 보기</summary>
+      <div class="toggles" id="assetTogglesDetail" style="margin-top:6px;"></div>
+    </details>
+  </div>
+  <div class="chart-wrap" style="margin-top:6px;"><canvas id="lineChart" height="320"></canvas></div>
   <div class="stat-bar" id="statBar"></div>
 </div>
-<details class="collapsible" style="margin-top:14px;">
+<details class="collapsible" style="margin-top:10px;">
   <summary>스냅샷 이력 보기</summary>
   <div class="card" style="margin-top:10px;">
     <div class="snap-header">
@@ -1332,11 +1340,6 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
     }
     ctx.closePath();
     ctx.fillStyle=color; ctx.fill();
-    ctx.lineWidth=1.5; ctx.strokeStyle='#fff'; ctx.stroke();
-    if(c.items.length>1){
-      ctx.font='8px Pretendard'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText('+'+c.items.length, c.x, my);
-    }
   });
 
   const tipEl = document.getElementById(tipElId);
@@ -4002,8 +4005,10 @@ function renderSummary(){
     {lbl:'수익률',       val:fmtPct(rtn),                                sub:'',             cls:updn(rtn)},
   ].map(c=>`<div class="sum-card">
     <div class="sum-lbl">${c.lbl}</div>
-    <div class="sum-val ${c.cls||''}">${c.val}</div>
-    ${c.sub?`<div class="sum-sub ${c.cls||''}">${c.sub}</div>`:''}
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
+      <div class="sum-val ${c.cls||''}">${c.val}</div>
+      ${c.sub?`<div class="sum-sub ${c.cls||''}" style="white-space:nowrap;">${c.sub}</div>`:''}
+    </div>
   </div>`).join('');
 }
 
@@ -4218,7 +4223,6 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg){
     return;
   }
 
-  const total = items.reduce((s,i)=>s+i.value,0);
   const layout = computeTreemapLayout(items, 0, 0, cssW, cssH);
   const GAP=3;
 
@@ -4237,7 +4241,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg){
     ctx.fill();
 
     if(cw>44 && ch>28){ // 너무 작은 셀은 라벨 생략(겹침 방지, drawDonut()의 소형 섹터 라벨 생략과 동일한 원칙)
-      const pctStr = (cell.value/total*100).toFixed(1)+'%';
+      const pctStr = (cell.rtn>=0?'+':'')+cell.rtn.toFixed(1)+'%'; // 비중이 아니라 손익률 표시
       ctx.save();
       ctx.beginPath(); ctx.rect(cx+4,cy+4,cw-8,ch-8); ctx.clip();
       ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.textBaseline='top';
