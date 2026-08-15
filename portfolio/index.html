@@ -164,7 +164,11 @@ tr:hover td:first-child{background:#f7f7f9!important;}
 .cat-badge{display:inline-flex;align-items:center;justify-content:center;
   border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700;}
 .up{color:var(--color-up);} .dn{color:var(--color-down);} .dim{color:var(--color-tertiary);}
-.edit-btn,.del-btn{border:none;cursor:pointer;background:transparent;font-size:13px;padding:1px 2px;border-radius:5px;}
+.edit-btn,.del-btn{border:none;cursor:pointer;background:transparent;font-size:13px;padding:1px 2px;border-radius:5px;transition:.15s;}
+.edit-btn:active,.del-btn:active{transform:scale(.9);}
+.btn-chart:active{background:#2a78d620;}
+.btn-editicon:active{background:#007aff20;}
+.del-btn:active{background:#ff3b3020;}
 .btn-icon{border:none;cursor:pointer;background:transparent;font-size:13px;padding:4px 6px;border-radius:6px;transition:.15s;}
 .btn-icon:hover{background:var(--color-section-bg);}
 .btn-icon+.btn-icon{margin-left:4px;}
@@ -856,7 +860,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <tbody id="monthlyPerfBody"></tbody>
       </table>
     </div>
-    <div class="notice">💡 순입출금은 원금 기록장 도입 이후(오늘부터)의 입출금만 반영됩니다. 그 이전 달은 "—"로 표시됩니다.</div>
+    <div class="notice">💡 순입출금은 '원금기록장' 탭에 기록된 입출금만 반영됩니다. 과거 월은 원금기록장에서 해당 월 입출금을 직접 추가하면 반영됩니다.</div>
   </div>
 </div>
 <div class="subpage" data-sub="monthly_chart">
@@ -864,25 +868,58 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <div class="section-label" style="margin:0">자산가치 vs 투입원금 추이</div>
       <div class="period-tabs" id="monthlyChartPeriodTabs">
-        <button onclick="setMonthlyChartPeriod('1M')">1M</button>
-        <button onclick="setMonthlyChartPeriod('3M')">3M</button>
-        <button onclick="setMonthlyChartPeriod('6M')">6M</button>
-        <button onclick="setMonthlyChartPeriod('1Y')">1Y</button>
-        <button onclick="setMonthlyChartPeriod('ALL')" class="active">ALL</button>
+        <button data-p="1D" onclick="setMonthlyChartPeriod('1D')">1D</button>
+        <button data-p="5D" onclick="setMonthlyChartPeriod('5D')">5D</button>
+        <button data-p="1M" onclick="setMonthlyChartPeriod('1M')">1M</button>
+        <button data-p="3M" onclick="setMonthlyChartPeriod('3M')">3M</button>
+        <button data-p="6M" onclick="setMonthlyChartPeriod('6M')">6M</button>
+        <button data-p="YTD" onclick="setMonthlyChartPeriod('YTD')">YTD</button>
+        <button data-p="1Y" onclick="setMonthlyChartPeriod('1Y')">1Y</button>
+        <button data-p="3Y" onclick="setMonthlyChartPeriod('3Y')">3Y</button>
+        <button data-p="5Y" onclick="setMonthlyChartPeriod('5Y')">5Y</button>
+        <button data-p="10Y" onclick="setMonthlyChartPeriod('10Y')">10Y</button>
+        <button data-p="ALL" class="active" onclick="setMonthlyChartPeriod('ALL')">ALL</button>
       </div>
     </div>
     <div class="chart-wrap"><canvas id="pvChart" height="280"></canvas></div>
     <div id="pvTooltip" class="notice" style="display:none;margin-top:10px;line-height:1.6;"></div>
-    <div class="notice">💡 실선=자산가치, 점선=투입원금(원금 기록장 시작 이후만 반영). 두 선 사이 채움은 현재 손익 구간을 나타냅니다.</div>
+    <div class="notice">💡 실선=자산가치, 점선=투입원금(원금기록장에 기록된 입출금 기준). 두 선 사이 채움은 현재 손익 구간을 나타냅니다.</div>
   </div>
 </div>
 <div class="subpage" data-sub="principal">
   <div class="card">
     <div class="section-label" style="margin:0">원금 기록장</div>
-    <div class="notice" style="margin:0 0 12px;">⚠️ 오늘부터의 입금·출금만 기록됩니다 — 이 기능 도입 이전의 입출금 내역은 로그가 없어 소급 반영할 수 없습니다.</div>
+    <div class="notice" style="margin:0 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다. (기록 전용 — 자산/현금 잔액에는 영향 없음)</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        날짜
+        <input id="pl_date" type="date" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        구분
+        <select id="pl_type" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+          <option value="deposit">입금</option>
+          <option value="withdrawal">출금</option>
+        </select>
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        금액
+        <input id="pl_amount" type="number" placeholder="0" min="0" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        통화
+        <select id="pl_cur" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+          <option value="KRW">KRW ₩</option>
+          <option value="USD">USD $</option>
+          <option value="JPY">JPY ¥</option>
+        </select>
+      </label>
+      <button class="btn" style="background:#34c75920;color:#34c759;padding:7px 14px;" onclick="addPrincipalLedgerEntry()">추가</button>
+    </div>
+    <div class="form-status" id="principalLedgerStatus"></div>
     <div class="summary-grid" style="grid-template-columns:1fr;margin-bottom:14px;">
       <div class="sum-card">
-        <div class="sum-lbl">누적 순입금액(기록 시작 이후)</div>
+        <div class="sum-lbl">누적 순입금액(기록된 입출금 기준)</div>
         <div class="sum-val" id="principalLedgerTotal">0원</div>
       </div>
     </div>
@@ -894,6 +931,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
           <th>구분</th>
           <th>금액</th>
           <th>누적 잔액</th>
+          <th>관리</th>
         </tr></thead>
         <tbody id="principalLedgerBody"></tbody>
       </table>
@@ -2337,23 +2375,14 @@ function renderTable(){
         ${isCash ? na : `${pnl>=0?'+':''}${fmt(pnl)}<div style="font-size:10px;font-weight:700;margin-top:1px;">${fmtPct(rtn)}</div>`}
       </td>
       <td style="white-space:nowrap;" onclick="event.stopPropagation()">
-        ${!isCash ? `<button class="edit-btn"
-          style="transition:.15s;border-radius:6px;padding:3px 5px;"
-          onmousedown="this.style.background='#2a78d620';this.style.transform='scale(.9)'"
-          onmouseup="this.style.transform='scale(1)'"
-          onmouseleave="this.style.background='transparent';this.style.transform='scale(1)'"
+        ${!isCash ? `<button class="edit-btn btn-chart"
+          style="border-radius:6px;padding:3px 5px;"
           onclick="toggleStockChart('${a.id}')" title="종목별 가격 차트">📈</button>` : ''}
-        <button class="edit-btn"
-          style="transition:.15s;border-radius:6px;padding:3px 5px;"
-          onmousedown="this.style.background='#007aff20';this.style.transform='scale(.9)'"
-          onmouseup="this.style.transform='scale(1)'"
-          onmouseleave="this.style.background='transparent';this.style.transform='scale(1)'"
+        <button class="edit-btn btn-editicon"
+          style="border-radius:6px;padding:3px 5px;"
           onclick="toggleEdit('${a.id}')">✏️</button>
         <button class="del-btn"
-          style="transition:.15s;border-radius:6px;padding:3px 5px;"
-          onmousedown="this.style.background='#ff3b3020';this.style.transform='scale(.9)'"
-          onmouseup="this.style.transform='scale(1)'"
-          onmouseleave="this.style.background='transparent';this.style.transform='scale(1)'"
+          style="border-radius:6px;padding:3px 5px;"
           onclick="confirmDelete('${a.id}','${a.name.replace(/'/g,'')}')">🗑</button>
       </td>
     </tr>`;
@@ -3618,8 +3647,9 @@ PAGE_RENDER_HOOKS['tax'] = function(){ renderCapitalGainsTax(); renderFinIncomeT
 
 /* ════════════════════════════════════════
    원금 기록장 — 입금/출금 누적 로그
-   (executeTrade()의 form_cash 분기에서 type:'deposit'|'withdrawal'로 로깅된 이력만 대상.
-    "잔액 설정" 모드는 실입출금이 아니므로 제외 — 오늘 이 기능이 배포된 시점 이후 데이터만 존재)
+   (executeTrade()의 form_cash 분기 또는 addPrincipalLedgerEntry()의 수동 입력에서
+    type:'deposit'|'withdrawal'로 로깅된 이력만 대상. "잔액 설정" 모드는 실입출금이
+    아니므로 제외. 수동 입력은 기록 전용이며 자산/현금 잔액에는 영향을 주지 않는다.)
 ════════════════════════════════════════ */
 function renderPrincipalLedger(){
   const el = document.getElementById('principalLedgerBody');
@@ -3627,7 +3657,7 @@ function renderPrincipalLedger(){
   const arr = loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal').slice().sort((a,b)=>a.at-b.at);
   const totalEl = document.getElementById('principalLedgerTotal');
   if(!arr.length){
-    el.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--color-tertiary);">기록된 입출금이 없습니다.</td></tr>`;
+    el.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--color-tertiary);">기록된 입출금이 없습니다.</td></tr>`;
     if(totalEl) totalEl.textContent = '0원';
     return;
   }
@@ -3646,12 +3676,49 @@ function renderPrincipalLedger(){
       <td style="text-align:center;">${badge}</td>
       <td class="${isIn?'up':'dn'}" style="font-weight:600;">${isIn?'+':'-'}${fmt(r.totalKRW||0)}</td>
       <td style="font-weight:700;">${fmt(running)}</td>
+      <td><button class="del-btn" style="border-radius:6px;padding:3px 5px;" onclick="deletePrincipalLedgerEntry('${r.id}')" title="삭제">🗑</button></td>
     </tr>`;
   });
   el.innerHTML = rows.slice().reverse().join(''); // 최신순으로 표시(누적 잔액은 시간순으로 미리 계산해둔 값 그대로 사용)
   if(totalEl) totalEl.textContent = fmt(running);
 }
 SUBPAGE_RENDER_HOOKS['returns_principal'] = renderPrincipalLedger;
+
+// 원금 기록장 수동 입력 — 과거 월별 입출금을 날짜 지정으로 소급 기록 (기록 전용, 자산/현금 잔액 미반영)
+function addPrincipalLedgerEntry(){
+  const dateV  = document.getElementById('pl_date').value;
+  const type   = document.getElementById('pl_type').value; // deposit | withdrawal
+  const amount = parseFloat(document.getElementById('pl_amount').value);
+  const cur    = document.getElementById('pl_cur').value || 'KRW';
+  const st = document.getElementById('principalLedgerStatus');
+
+  if(!dateV){ st.textContent = '❌ 날짜를 입력해 주세요.'; return; }
+  if(isNaN(amount) || amount<=0){ st.textContent = '❌ 금액을 입력해 주세요.'; return; }
+
+  const at = new Date(dateV+'T00:00:00').getTime();
+  const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
+  addTradeLog({
+    name:'현금', ticker:'—', type, at,
+    category:'cash', attribute:null, subAccount:null,
+    price:null, quantity:null, currency:cur,
+    totalKRW: Math.round(amount*fxRate), pnl:null, pnlPct:null,
+    reason:'', cashAdjusted:null
+  });
+  st.textContent = `✅ ${dateV} ${type==='deposit'?'입금':'출금'} 기록 추가 (자산/현금 잔액 미반영)`;
+  setTimeout(()=>{ if(st.textContent.startsWith('✅')) st.textContent=''; }, 3000);
+  document.getElementById('pl_amount').value='';
+  renderPrincipalLedger();
+  renderMonthlyTable();
+  drawPrincipalVsValueChart();
+}
+
+function deletePrincipalLedgerEntry(id){
+  if(!confirm('이 원금 기록을 삭제할까요?')) return;
+  saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
+  renderPrincipalLedger();
+  renderMonthlyTable();
+  drawPrincipalVsValueChart();
+}
 
 /* ════════════════════════════════════════
    월별 성과 — 월별 테이블 + 기능(B) 원금 vs 자산가치 추이
@@ -3741,10 +3808,9 @@ function buildPrincipalVsValueSeries(){
 }
 
 let monthlyChartPeriod = 'ALL';
-const MONTHLY_PERIOD_MS = {'1M':30*86400000,'3M':90*86400000,'6M':182*86400000,'1Y':365*86400000,'ALL':Infinity};
 function setMonthlyChartPeriod(p){
   monthlyChartPeriod = p;
-  document.querySelectorAll('#monthlyChartPeriodTabs button').forEach(b=>b.classList.toggle('active', b.textContent===p));
+  document.querySelectorAll('#monthlyChartPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===p));
   drawPrincipalVsValueChart();
 }
 
@@ -3763,8 +3829,10 @@ function drawPrincipalVsValueChart(){
   ctx.clearRect(0,0,cssW,cssH);
 
   let series = buildPrincipalVsValueSeries();
-  const cutoff = Date.now() - (MONTHLY_PERIOD_MS[monthlyChartPeriod]||Infinity);
-  series = series.filter(p=>p.ts>=cutoff);
+  if(monthlyChartPeriod !== 'ALL'){
+    const cutoff = getPeriodStart(monthlyChartPeriod).getTime();
+    series = series.filter(p=>p.ts>=cutoff);
+  }
 
   if(series.length < 2){
     ctx.fillStyle = '#8e8e93';
@@ -4663,11 +4731,12 @@ function getPeriodStart(period){
   const usH = dst ? 22 : 23; // 미국장 시작 시간
 
   if(period==='1D'){
-    // 어제 미국장 시작 시각 (22:30 or 23:30) — 주말이면 실제로 미국장이 열렸던
-    // 가장 최근 평일(보통 금요일)까지 거슬러 올라간다. 그래야 토·일요일에 1D를 봐도
-    // "금요일 미장 시작" 시점을 기준으로 삼아 금요일 마감 결과가 그대로 유지된다.
+    // 오늘 국내장 개장 시각(09:00) — 아직 개장 전이면 전날, 주말이면 실제로 국내장이
+    // 열렸던 가장 최근 평일(보통 금요일)의 09:00까지 거슬러 올라간다. 그래야 국내장이
+    // 열려 있는 동안은 리셋되지 않고 그대로 누적되며, 토·일요일에는 금요일 국장+미장
+    // 결과가 그대로 유지되다가 월요일 09:00 국장이 열리는 순간 1D가 리셋된다.
     const t = new Date(now);
-    t.setHours(usH, 30, 0, 0);
+    t.setHours(9, 0, 0, 0);
     if(now < t) t.setDate(t.getDate()-1);
     while(t.getDay()===0 || t.getDay()===6) t.setDate(t.getDate()-1);
     return t;
@@ -4720,11 +4789,11 @@ function _getExistingIds(){
 }
 // 1D 기준 스냅샷 설정: 1D 시작 시각(어제 미국장) 직전의 마지막 스냅샷
 function setBase1DSnap(){
-  const startTs = getPeriodStart('1D').getTime(); // 미국장 개장(22:30/23:30)
+  const startTs = getPeriodStart('1D').getTime(); // 국내장 개장(09:00, 주말이면 최근 평일 09:00)
   const snaps = loadSnaps().sort((a,b)=>a.timestamp-b.timestamp);
   if(!snaps.length){ _base1DSnap = null; return; }
-  // startTs(미국장 개장) 직전 스냅샷을 기준으로
-  // → 어제 미국장+오늘 한국장+일본장 전체 포함한 하루 기준
+  // startTs(오늘 국내장 개장 09:00, 주말이면 최근 평일 09:00) 직전 마지막 스냅샷을 기준으로
+  // → 그 날의 국장+미장 전체를 포함한 하루 기준
   const before = snaps.filter(s=>s.timestamp <= startTs);
   if(before.length){
     _base1DSnap = before[before.length-1];
