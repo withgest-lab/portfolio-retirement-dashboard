@@ -5546,12 +5546,10 @@ function renderStatBar(){
     });
     diff = Math.round(diff);
     const itemColor = LINE_COLS[allGroups.indexOf(g)%LINE_COLS.length];
-    // 휴장/개장 전(1D 기준, 그룹 내 모든 자산이 해당)이면 0%가 실제 등락이 아니므로 회색 처리
-    const isClosed = currentPeriod === '1D' && members.every(m=>isMarketPreOpen(m.x));
 
     return '<div class="stat-item">'+
       '<div class="stat-lbl" style="font-weight:700;"><span class="dot" style="background:'+itemColor+'"></span>'+g.name+'</div>'+
-      '<div class="stat-val '+(isClosed?'dim':updn(diff))+'">'+(diff>=0?'+':'')+fmt(diff)+' ('+fmtPct(lastPct)+')</div>'+
+      '<div class="stat-val '+updn(diff)+'">'+(diff>=0?'+':'')+fmt(diff)+' ('+fmtPct(lastPct)+')</div>'+
       '<div class="stat-sub">고: '+fmtPct(hi)+' · 저: '+fmtPct(lo)+'</div>'+
     '</div>';
   }).join('')+'</div>';
