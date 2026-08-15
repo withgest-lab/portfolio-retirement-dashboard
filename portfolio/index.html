@@ -1441,7 +1441,9 @@ let stockChartRangeMap = {};
 function toggleStockChart(id){
   quickTradeId = null; editingId = null;
   chartDetailId = chartDetailId===id ? null : id;
-  renderTable();
+  // 클릭한 버튼 자신을 즉시 재생성하면 터치 기기에서 탭 하이라이트가 해제될 대상을
+  // 잃어버려 회색 잔상이 남는다 — 한 틱 늦춰 터치 제스처가 먼저 끝나게 한다.
+  setTimeout(renderTable, 0);
 }
 const STOCK_CHART_PERIOD_TO_YAHOO_RANGE = {
   '1D':'1d','5D':'5d','1M':'1mo','3M':'3mo','6M':'6mo','YTD':'ytd',
@@ -2973,7 +2975,8 @@ function toggleEdit(id){
   // 편집 클릭 시 빠른 매수/매도 패널 닫고 편집 패널 열기
   quickTradeId = null; chartDetailId = null;
   editingId = editingId===id ? null : id;
-  renderTable();
+  // toggleStockChart와 동일한 이유로 렌더를 한 틱 늦춰 터치 하이라이트 잔상을 방지
+  setTimeout(renderTable, 0);
 }
 function cancelEdit(){
   editingId=null;
@@ -4919,8 +4922,15 @@ function buildSnapshotHistory(period){
     currentAssets.forEach(a=>{
       // 신규 종목이면 가상 기준점에서 제외
       if(_existIds1D && !_existIds1D.has(a.id)) return;
-      // 기준점 단가: _base1DSnap에 있으면 그 당시 단가 그대로, 없으면 폴백
-      if(_base1DSnap && _base1DSnap.byAsset && _base1DSnap.byAsset[a.id]!=null){
+      // 기준점 단가: 포트폴리오 표의 당일 등락률과 동일하게 prevPrice(전일종가)를 우선한다.
+      // 스냅샷은 정해진 시각에만 찍히므로 09:00 근처 스냅샷이 시세갱신으로 최신화된
+      // prevPrice보다 미묘하게 어긋난 시점의 값을 담고 있을 수 있어, 그대로 쓰면
+      // 표(전일종가 기준)와 1D 그래프(스냅샷 기준)의 등락률이 서로 달라 보이는 문제가 있었다.
+      // prevPrice가 없는 경우에만 스냅샷 → getBaseEvKRW1D 순으로 폴백한다.
+      if(a.prevPrice>0){
+        base1D[a.id] = Math.round(toKRW(a, a.prevPrice) * (a.quantity||1));
+        qty1D[a.id]  = a.quantity || 1;
+      } else if(_base1DSnap && _base1DSnap.byAsset && _base1DSnap.byAsset[a.id]!=null){
         const bq = (_base1DSnap.byQty && _base1DSnap.byQty[a.id]) ? _base1DSnap.byQty[a.id] : (a.quantity||1);
         base1D[a.id] = _base1DSnap.byAsset[a.id];   // 당시 KRW 평가금액
         qty1D[a.id]  = bq;                          // 당시 수량 → 단가 = 평가/수량 일치
