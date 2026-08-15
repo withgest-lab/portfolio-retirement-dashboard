@@ -1320,7 +1320,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
   }
 
   ctx.beginPath();
-  ctx.strokeStyle='#2a78d6'; ctx.lineWidth=1.8;
+  ctx.strokeStyle='#5e5ce7'; ctx.lineWidth=1.8;
   points.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.close); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
 
@@ -1414,7 +1414,7 @@ async function loadAndDrawStockChart(id){
       const d = new Date(r.at), isBuy = r.type==='buy';
       return `<tr>
         <td style="text-align:left;font-size:11px;color:var(--color-tertiary);">${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}</td>
-        <td style="text-align:center;"><span style="color:${isBuy?'#34c759':'#8e8e93'};font-weight:700;">${isBuy?'매수':'매도'}</span></td>
+        <td style="text-align:center;"><span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span></td>
         <td style="font-size:11px;">${r.price!=null?fmt(r.price):'—'}</td>
         <td style="font-size:11px;">${r.quantity!=null?r.quantity.toLocaleString():'—'}</td>
         <td style="text-align:left;font-size:11px;color:var(--color-secondary);">${r.reason||''}</td>
@@ -1951,10 +1951,10 @@ function renderSoldHistory(){
     const isBuy = r.type==='buy';
     const isDiv = r.type==='dividend';
     const typeBadge = isBuy
-      ? `<span style="color:#34c759;font-weight:700;">매수</span>`
+      ? `<span style="color:#ff3b30;font-weight:700;">매수</span>`
       : isDiv
       ? `<span style="color:#ff9500;font-weight:700;">배당</span>`
-      : `<span style="color:#8e8e93;font-weight:700;">매도</span>`;
+      : `<span style="color:#0a84ff;font-weight:700;">매도</span>`;
     let pnlCell = '—';
     if(isDiv && r.pnl!==null && r.pnl!==undefined){
       pnlCell = `<span class="up" style="font-weight:600;">+${fmt(r.pnl)}</span>`;
@@ -2701,11 +2701,24 @@ function executeTrade(){
   // 수정저장
   if(mode==='edit'){
     const a = assets.find(x=>x.id===id); if(!a) return;
+    const oldSubacct = a.subAccount || null;
     if(!isNaN(qty)&&qty>=0)    a.quantity = qty;
     if(!isNaN(price)&&price>0) a.avgPrice = price;
     if(trade.cat)              a.category = trade.cat;
     if(trade.attr !== undefined) a.attribute = trade.attr || null;
-    if(trade.subacct !== undefined) a.subAccount = trade.subacct || null;
+    if(trade.subacct !== undefined){
+      const newSubacct = trade.subacct || null;
+      if(newSubacct !== oldSubacct){
+        // 계좌를 바꾸기 전에, 옛 계좌 기준으로 매칭되던 기존 매매이력의 계좌도 새 값으로 함께 갱신
+        // — 안 그러면 tradeMatchesAsset이 옛 계좌값과 어긋나 이력이 고아가 될 수 있음.
+        const before = {...a, subAccount: oldSubacct};
+        const log = loadTradeLog();
+        let changed = false;
+        log.forEach(r=>{ if((r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, before)){ r.subAccount = newSubacct; changed = true; } });
+        if(changed) saveTradeLog(log);
+      }
+      a.subAccount = newSubacct;
+    }
     editingId=null; quickTradeId=null;
     saveAssets();renderAll();
     return;
@@ -2718,10 +2731,19 @@ function executeTrade(){
     // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
     // → 계좌가 다르면(예: 개인연금 vs IRP) 별도 자산 항목으로 분리됨
     const attrOk = a => !attr || a.attribute === attr;
-    const acctOk = a => !subacct || a.subAccount === subacct;
-    const existing = tickerVal!=='—'
-      ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat && attrOk(a) && acctOk(a))
-      : assets.find(a=>a.name===name && a.currency===cur && a.category===cat && attrOk(a) && acctOk(a));
+    const nameTickerCatMatch = tickerVal!=='—'
+      ? (a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat)
+      : (a=>a.name===name && a.currency===cur && a.category===cat);
+    let existing;
+    if(!subacct){
+      // 계좌 미지정 시, 후보가 여러 계좌에 걸쳐 나뉘어 있으면 어느 쪽에 합칠지 모호하므로
+      // 병합하지 않고 새 자산으로 분리 생성한다(잘못된 계좌로 조용히 합쳐지는 것 방지).
+      const candidates = assets.filter(a=>nameTickerCatMatch(a) && attrOk(a));
+      const distinctAccts = new Set(candidates.map(a=>a.subAccount||null));
+      existing = distinctAccts.size<=1 ? candidates[0] : undefined;
+    } else {
+      existing = assets.find(a=>nameTickerCatMatch(a) && attrOk(a) && a.subAccount===subacct);
+    }
     let cashName = null;
     if(existing){
       const prevQty  = existing.quantity;
@@ -3253,10 +3275,18 @@ function addAsset(){
   const tickerVal = ticker||'—';
   // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
   const attrOk = a => !attr || a.attribute === attr;
-  const acctOk = a => !subacct || a.subAccount === subacct;
-  const existing  = tickerVal!=='—'
-    ? assets.find(a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat && attrOk(a) && acctOk(a))
-    : assets.find(a=>a.name===name && a.currency===cur && a.category===cat && attrOk(a) && acctOk(a));
+  const nameTickerCatMatch = tickerVal!=='—'
+    ? (a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat)
+    : (a=>a.name===name && a.currency===cur && a.category===cat);
+  let existing;
+  if(!subacct){
+    // executeTrade(form_buy)와 동일한 규칙: 계좌 미지정 시 후보가 여러 계좌에 걸쳐 있으면 병합 미리보기도 생략
+    const candidates = assets.filter(a=>nameTickerCatMatch(a) && attrOk(a));
+    const distinctAccts = new Set(candidates.map(a=>a.subAccount||null));
+    existing = distinctAccts.size<=1 ? candidates[0] : undefined;
+  } else {
+    existing = assets.find(a=>nameTickerCatMatch(a) && attrOk(a) && a.subAccount===subacct);
+  }
   const newAvg    = existing ? Math.round(((existing.avgPrice*existing.quantity)+(price*qty))/(existing.quantity+qty)) : price;
   const totalQty  = existing ? existing.quantity+qty : qty;
 
@@ -4201,15 +4231,18 @@ function treemapColor(returnPct){
   return `rgb(${mix(neutral[0],base[0],k)},${mix(neutral[1],base[1],k)},${mix(neutral[2],base[2],k)})`;
 }
 
-// 매매이력 항목 r이 asset과 같은 보유분인지 판정 — 종목명/티커 일치 + 계좌(subAccount) 일치.
-// 계좌(subAccount) 필드는 이 기능 도입 이후 기록된 매매이력부터 명시적으로 저장됨.
+// 매매이력 항목 r이 asset과 같은 보유분인지 판정 — 종목명/티커 일치 + (필요한 경우만) 계좌(subAccount) 일치.
 // r.subAccount가 undefined면(필드 자체가 없는 진짜 과거 이력) 계좌 구분 없이 종전대로 이름/티커만으로 매칭.
-// r.subAccount가 (null 포함) 존재하면 이 기능 도입 이후 기록된 것이므로 asset의 계좌와 정확히 일치해야 매칭
-// — 그래야 같은 종목을 여러 계좌에 나눠 보유할 때 매입이력이 계좌 간에 섞이지 않음.
+// 같은 이름/티커를 가진 "현재 보유 중"인 자산이 하나뿐이면 계좌가 어긋나 있어도(종목 수정으로 계좌를
+// 사후에 바꾼 경우 등) 매칭 — 모호하지 않으니 계좌 불일치로 이력을 고아로 만들 이유가 없다.
+// 같은 이름/티커가 실제로 여러 계좌에 나뉘어 보유 중일 때만 계좌 일치를 엄격히 요구해 원래 목적
+// (계좌 간 매입이력 혼선 방지)을 유지한다.
 function tradeMatchesAsset(r, asset){
   const nameMatch = (asset.ticker && asset.ticker!=='—' && r.ticker===asset.ticker) || r.name===asset.name;
   if(!nameMatch) return false;
   if(r.subAccount === undefined) return true;
+  const siblings = assets.filter(a2=>(asset.ticker && asset.ticker!=='—' && a2.ticker===asset.ticker) || a2.name===asset.name);
+  if(siblings.length <= 1) return true;
   return (r.subAccount||null) === (asset.subAccount||null);
 }
 
@@ -4235,6 +4268,23 @@ function costBasisAsOf(asset, ts){
   return toKRW(asset, avg) * qty;
 }
 
+// 기간 시작(ts) 시점의 매입원가를 시작 자본으로 삼아, 그 이후 ~ 지금까지의 매수/매도를
+// 실제 투입 자본 기준으로 반영한 "실투자원금"을 계산 — 매수는 그 시점 가격×수량만큼 더하고
+// 매도는 그만큼 뺀다. 기간 중 수량이 바뀐 경우에도 (평가액 vs 매입원가) 수량 불일치 없이
+// 정확한 "그 기간 동안 실제로 얼마를 벌었는지"를 낼 수 있다. 재구성 불가 시 null.
+function netInvestedAsOf(asset, startTs){
+  const base = costBasisAsOf(asset, startTs);
+  if(base===null) return null;
+  let net = base;
+  loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, asset) && r.at>startTs)
+    .sort((a,b)=>a.at-b.at)
+    .forEach(r=>{
+      const amt = toKRW(asset, r.price) * r.quantity;
+      net += r.type==='buy' ? amt : -amt;
+    });
+  return net;
+}
+
 // 자산 하나의 수익률을 계산 — mode로 두 축을 분리:
 //  'holding'(매입이력) = 그 기간 시작 시점에 실제로 들고 있던 매입원가 대비 현재 수익률("내가 그 기간 얼마를 벌었나")
 //  'market'(시장이력)  = 그 기간 시작 시점 1주당 단가 대비 현재 1주당 단가("이 종목 가격 자체가 얼마나 움직였나", 내 손익과 무관)
@@ -4246,7 +4296,7 @@ function assetReturnForPeriod(asset, mode, period){
       return cost>0 ? (ev-cost)/cost*100 : 0;
     }
     const startTs = getPeriodStart(period).getTime();
-    const basis = costBasisAsOf(asset, startTs);
+    const basis = netInvestedAsOf(asset, startTs);
     if(basis && basis>0) return (ev-basis)/basis*100;
     const cost=costKRW(asset); // 매매이력 없음(도입 이전부터 보유) → 전체 매입원가로 폴백
     return cost>0 ? (ev-cost)/cost*100 : 0;
@@ -5410,6 +5460,7 @@ function downloadBackup(){
       assets: assets,
       fx:     FX,
       snaps:  loadSnaps(),
+      tradeLog: loadTradeLog(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const url  = URL.createObjectURL(blob);
@@ -5443,11 +5494,12 @@ function restoreFromFile(event){
       assets = data.assets;
       if(data.fx?.USD > 1000) FX = data.fx;
       if(data.snaps?.length) saveSnaps(data.snaps);
+      if(data.tradeLog?.length) saveTradeLog(data.tradeLog);
       saveAssets(); saveFX();
       renderAll(); renderSnaps();
 
       statusEl.style.color = '#34c759';
-      statusEl.textContent = `✅ 복원 완료! (${data.assets.length}개 종목, 스냅샷 ${(data.snaps||[]).length}개)`;
+      statusEl.textContent = `✅ 복원 완료! (${data.assets.length}개 종목, 스냅샷 ${(data.snaps||[]).length}개, 매매이력 ${(data.tradeLog||[]).length}건)`;
       setTimeout(()=>closeSheetsModal(), 2000);
     }catch(err){
       statusEl.style.color = '#ff3b30';
