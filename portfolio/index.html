@@ -4270,27 +4270,62 @@ function tradeMatchesAsset(r, asset){
   return (r.subAccount||null) === (asset.subAccount||null) && (r.category||null) === (asset.category||null);
 }
 
-// 매매이력이 asset의 "현재 보유수량"을 온전히 설명하는지 확인 — 초기 보유분을 매매이력 없이
-// (예: 수정 폼으로 수량만 직접 입력) 들여온 경우, 트레이드 로그 재구성 수량이 실제 보유수량보다
-// 작아져 기간별 실투자원금 계산이 왜곡된다(분자는 항상 전체 현재 수량 기준인데 분모는 로그가
-// 아는 일부 수량만 반영되어 수익률이 크게 부풀려짐). 이럴 땐 기간별 계산 자체를 신뢰하지 않고
-// ALL과 동일한 전체 매입원가 기준으로 폴백하는 게 안전하다.
+// 매매이력이 자산의 "현재 보유수량"을 다 설명하지 못하면(초기 보유분을 매매이력 없이,
+// 예: 수정 폼으로 수량만 직접 입력해 들여온 경우) 그 차이만큼을 "가상 매수"로 보충해
+// 기간별 계산이 항상 가능하도록 한다. 값은 실제 이력과 합쳤을 때 정확히 지금의
+// 평단가·수량이 나오도록 역산하고, 시점은 실제 이력·스냅샷 중 가장 이른 시점보다도
+// 하루 앞서 잡아 "원래부터 들고 있던 몫"으로 취급되게 한다 — 그래야 실제 매매이력의
+// 날짜만으로 기간별 차이가 생긴다. 종목 상세 차트·매매이력 탭에는 절대 노출하지 않고
+// (거기는 loadTradeLog()를 직접 쓰지 이 함수를 거치지 않음) 기간별 수익률 계산에만 쓴다.
+function phantomEntryFor(asset){
+  const real = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, asset))
+    .sort((a,b)=>a.at-b.at);
+  let loggedQty=0, loggedAvg=0;
+  real.forEach(r=>{
+    if(r.type==='buy'){
+      loggedAvg = (loggedQty+r.quantity)>0 ? (loggedAvg*loggedQty + r.price*r.quantity)/(loggedQty+r.quantity) : r.price;
+      loggedQty += r.quantity;
+    } else {
+      loggedQty = Math.max(0, loggedQty - r.quantity);
+    }
+  });
+  const phantomQty = asset.quantity - loggedQty;
+  if(!(phantomQty > 1e-6)) return null; // 매매이력이 이미 충분함(또는 초과) — 보충 불필요
+  const phantomPrice = (asset.avgPrice*asset.quantity - loggedAvg*loggedQty) / phantomQty;
+  if(!(phantomPrice > 0)) return null; // 역산 결과가 이상하면 보정 포기(안전 폴백 유지)
+  const snaps = loadSnaps();
+  const earliestSnapTs = snaps.length ? Math.min(...snaps.map(s=>s.timestamp)) : Infinity;
+  const earliestRealTs = real.length ? real[0].at : Infinity;
+  const known = Math.min(earliestSnapTs, earliestRealTs);
+  const at = isFinite(known) ? known - 1 : Date.now() - 10*365*86400000;
+  return { type:'buy', price:phantomPrice, quantity:phantomQty, at,
+    ticker:asset.ticker, name:asset.name, subAccount:asset.subAccount||null, category:asset.category||null };
+}
+
+// 매매이력(+가상 보충분)이 asset의 "현재 보유수량"을 온전히 설명하는지 확인 — 위 가상
+// 보충이 정상적으로 계산됐다면 사실상 항상 true가 되고, 역산이 불가능한 극단적인
+// 경우에만 false로 남아 기간별 계산 대신 ALL과 동일한 전체 매입원가로 안전하게 폴백한다.
 function tradeLogFullyExplainsAsset(asset){
-  const entries = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, asset));
+  const real = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, asset));
+  const phantom = phantomEntryFor(asset);
+  const entries = phantom ? [...real, phantom] : real;
   if(!entries.length) return false;
   let qty=0;
   entries.forEach(r=>{ qty += r.type==='buy' ? r.quantity : -r.quantity; });
   return Math.abs(qty - asset.quantity) < 1e-6;
 }
 
-// 매매이력을 ts 시점까지 시간순으로 리플레이해서 그 시점의 매입원가(KRW)를 재구성.
+// 매매이력(+가상 보충분)을 ts 시점까지 시간순으로 리플레이해서 그 시점의 매입원가(KRW)를 재구성.
 // 매매이력이 아예 없거나 그 시점 보유수량이 0으로 계산되면(재구성 불가) null 반환 — 호출부에서 폴백 처리.
 // KRW 환산은 항상 현재 환율 사용(과거 환율은 저장하지 않음 — 매입원가 계산 전반의 기존 관례와 동일).
 function costBasisAsOf(asset, ts){
   const entries = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') &&
     tradeMatchesAsset(r, asset) &&
     r.at <= ts
-  ).sort((a,b)=>a.at-b.at);
+  );
+  const phantom = phantomEntryFor(asset);
+  if(phantom && phantom.at <= ts) entries.push(phantom);
+  entries.sort((a,b)=>a.at-b.at);
   if(!entries.length) return null;
   let qty=0, avg=0;
   entries.forEach(r=>{
