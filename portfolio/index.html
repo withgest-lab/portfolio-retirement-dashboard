@@ -41,14 +41,14 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
-  padding:2px;margin-bottom:8px;flex-wrap:wrap;}
+  padding:2px;margin-bottom:0;flex-wrap:wrap;}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
 .subtabbar button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
-.page{display:none;flex-direction:column;gap:16px;}
+.page{display:none;flex-direction:column;gap:6px;}
 .page.active{display:flex;}
 .subpage{display:none;flex-direction:column;gap:16px;}
 .subpage.active{display:flex;}
@@ -79,7 +79,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn-sheets{background:#34a85320;color:#34a853;}
 
 /* ── 레이아웃 ── */
-.main{max-width:1280px;margin:0 auto;padding:16px 12px 48px;display:flex;flex-direction:column;gap:16px;}
+.main{max-width:1280px;margin:0 auto;padding:4px 12px 48px;display:flex;flex-direction:column;gap:16px;}
 .card{background:var(--color-card);border-radius:var(--radius);border:1px solid var(--color-border);padding:16px;}
 .section-label{font-size:11px;font-weight:600;color:var(--color-tertiary);
   text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
@@ -89,6 +89,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .period-tabs button{border:none;cursor:pointer;border-radius:7px;padding:4px 7px;font-size:11px;
   font-weight:600;font-family:inherit;background:transparent;color:var(--color-secondary);transition:.15s;}
 .period-tabs button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.period-tabs.period-tabs-sm button{padding:3px 5px;font-size:9px;}
 
 /* ── 토글 ── */
 .toggles{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
@@ -132,10 +133,10 @@ canvas#lineChart{width:100%!important;display:block;}
 .summary-grid.compact .sum-val{font-size:13px;}
 .summary-grid.compact .sum-sub{font-size:9px;margin-top:0;}
 /* 자산 Quick View: 요약~트리맵 카드 간격, 트리맵 카드 자체 패딩을 줄여 세로 공간 절약 */
-#qvSubpage{gap:8px;}
+#qvSubpage{gap:4px;}
 #qvSubpage .card{padding:12px;}
 /* 자산변화추이: 그래프가 스크롤 없이 한 화면에 보이도록 카드 안쪽 여백/행간 축소 */
-#chartSubpage{gap:8px;}
+#chartSubpage{gap:6px;}
 #chartSubpage > .card{padding:12px;}
 
 /* ── 테이블 ── */
@@ -307,18 +308,24 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
       <div class="section-label" style="margin:0">종목 트리맵</div>
-      <div class="period-tabs" id="qvPeriodTabs">
-        <button data-p="1D" class="active" onclick="setQuickViewPeriod('1D')">1D</button>
-        <button data-p="5D" onclick="setQuickViewPeriod('5D')">5D</button>
-        <button data-p="1M" onclick="setQuickViewPeriod('1M')">1M</button>
-        <button data-p="3M" onclick="setQuickViewPeriod('3M')">3M</button>
-        <button data-p="6M" onclick="setQuickViewPeriod('6M')">6M</button>
-        <button data-p="YTD" onclick="setQuickViewPeriod('YTD')">YTD</button>
-        <button data-p="1Y" onclick="setQuickViewPeriod('1Y')">1Y</button>
-        <button data-p="3Y" onclick="setQuickViewPeriod('3Y')">3Y</button>
-        <button data-p="5Y" onclick="setQuickViewPeriod('5Y')">5Y</button>
-        <button data-p="10Y" onclick="setQuickViewPeriod('10Y')">10Y</button>
-        <button data-p="ALL" onclick="setQuickViewPeriod('ALL')">ALL</button>
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+        <div class="period-tabs" id="qvModeTabs">
+          <button data-mode="holding" class="active" onclick="setQuickViewMode('holding')">매입이력</button>
+          <button data-mode="market" onclick="setQuickViewMode('market')">시장이력</button>
+        </div>
+        <div class="period-tabs period-tabs-sm" id="qvPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
+          <button data-p="1D" onclick="setQuickViewPeriod('1D')">1D</button>
+          <button data-p="5D" onclick="setQuickViewPeriod('5D')">5D</button>
+          <button data-p="1M" onclick="setQuickViewPeriod('1M')">1M</button>
+          <button data-p="3M" onclick="setQuickViewPeriod('3M')">3M</button>
+          <button data-p="6M" onclick="setQuickViewPeriod('6M')">6M</button>
+          <button data-p="YTD" onclick="setQuickViewPeriod('YTD')">YTD</button>
+          <button data-p="1Y" onclick="setQuickViewPeriod('1Y')">1Y</button>
+          <button data-p="3Y" onclick="setQuickViewPeriod('3Y')">3Y</button>
+          <button data-p="5Y" onclick="setQuickViewPeriod('5Y')">5Y</button>
+          <button data-p="10Y" onclick="setQuickViewPeriod('10Y')">10Y</button>
+          <button data-p="ALL" class="active" onclick="setQuickViewPeriod('ALL')">ALL</button>
+        </div>
       </div>
     </div>
     <div class="chart-wrap"><canvas id="qvTreemapCanvas" height="340"></canvas></div>
@@ -329,9 +336,13 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <!-- 자산변화추이 -->
 <div class="subpage" data-sub="chart" id="chartSubpage">
 <div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-    <div class="section-label" style="margin:0">자산변화추이</div>
-    <div class="period-tabs" id="periodTabs">
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+    <div class="toggles" id="assetToggles" style="margin:0;"></div>
+    <details class="collapsible" style="margin:0;">
+      <summary>종목별 보기</summary>
+      <div class="toggles" id="assetTogglesDetail" style="margin-top:6px;"></div>
+    </details>
+    <div class="period-tabs period-tabs-sm" id="periodTabs" style="margin-left:auto;">
       <button onclick="setPeriod('1D')" class="active">1D</button>
       <button onclick="setPeriod('5D')">5D</button>
       <button onclick="setPeriod('1M')">1M</button>
@@ -345,17 +356,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <button onclick="setPeriod('ALL')">ALL</button>
     </div>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-top:6px;">
-    <div class="toggles" id="assetToggles" style="margin-top:0;"></div>
-    <details class="collapsible" style="margin:0;">
-      <summary>종목별 보기</summary>
-      <div class="toggles" id="assetTogglesDetail" style="margin-top:6px;"></div>
-    </details>
-  </div>
   <div class="chart-wrap" style="margin-top:6px;"><canvas id="lineChart" height="320"></canvas></div>
   <div class="stat-bar" id="statBar"></div>
 </div>
-<details class="collapsible" style="margin-top:10px;">
+<details class="collapsible" style="margin-top:8px;">
   <summary>스냅샷 이력 보기</summary>
   <div class="card" style="margin-top:10px;">
     <div class="snap-header">
@@ -398,8 +402,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <!-- 비중 현황 -->
 <div class="subpage" data-sub="alloc">
 <div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-    <div class="section-label" style="margin:0">비중 현황</div>
+  <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
     <div class="period-tabs" id="allocViewTabs">
       <button class="active" onclick="setAllocView('donut')">도넛</button>
       <button onclick="setAllocView('treemap')">트리맵</button>
@@ -449,19 +452,24 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
       <div style="font-size:10px;font-weight:600;color:var(--color-tertiary);
                   text-transform:uppercase;letter-spacing:.06em;">종목별 평가금액(크기) · 선택 기간 수익률(색)</div>
-      <div class="period-tabs" id="allocTreemapPeriodTabs">
-        <button data-p="COST" class="active" onclick="setAllocTreemapPeriod('COST')">매입가</button>
-        <button data-p="1D" onclick="setAllocTreemapPeriod('1D')">1D</button>
-        <button data-p="5D" onclick="setAllocTreemapPeriod('5D')">5D</button>
-        <button data-p="1M" onclick="setAllocTreemapPeriod('1M')">1M</button>
-        <button data-p="3M" onclick="setAllocTreemapPeriod('3M')">3M</button>
-        <button data-p="6M" onclick="setAllocTreemapPeriod('6M')">6M</button>
-        <button data-p="YTD" onclick="setAllocTreemapPeriod('YTD')">YTD</button>
-        <button data-p="1Y" onclick="setAllocTreemapPeriod('1Y')">1Y</button>
-        <button data-p="3Y" onclick="setAllocTreemapPeriod('3Y')">3Y</button>
-        <button data-p="5Y" onclick="setAllocTreemapPeriod('5Y')">5Y</button>
-        <button data-p="10Y" onclick="setAllocTreemapPeriod('10Y')">10Y</button>
-        <button data-p="ALL" onclick="setAllocTreemapPeriod('ALL')">ALL</button>
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+        <div class="period-tabs" id="allocTreemapModeTabs">
+          <button data-mode="holding" class="active" onclick="setAllocTreemapMode('holding')">매입이력</button>
+          <button data-mode="market" onclick="setAllocTreemapMode('market')">시장이력</button>
+        </div>
+        <div class="period-tabs period-tabs-sm" id="allocTreemapPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
+          <button data-p="1D" onclick="setAllocTreemapPeriod('1D')">1D</button>
+          <button data-p="5D" onclick="setAllocTreemapPeriod('5D')">5D</button>
+          <button data-p="1M" onclick="setAllocTreemapPeriod('1M')">1M</button>
+          <button data-p="3M" onclick="setAllocTreemapPeriod('3M')">3M</button>
+          <button data-p="6M" onclick="setAllocTreemapPeriod('6M')">6M</button>
+          <button data-p="YTD" onclick="setAllocTreemapPeriod('YTD')">YTD</button>
+          <button data-p="1Y" onclick="setAllocTreemapPeriod('1Y')">1Y</button>
+          <button data-p="3Y" onclick="setAllocTreemapPeriod('3Y')">3Y</button>
+          <button data-p="5Y" onclick="setAllocTreemapPeriod('5Y')">5Y</button>
+          <button data-p="10Y" onclick="setAllocTreemapPeriod('10Y')">10Y</button>
+          <button data-p="ALL" class="active" onclick="setAllocTreemapPeriod('ALL')">ALL</button>
+        </div>
       </div>
     </div>
     <div class="chart-wrap"><canvas id="treemapCanvas" height="320"></canvas></div>
@@ -481,18 +489,24 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="card" style="margin-top:16px;">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
     <div class="section-label" style="margin:0">내 보유종목 · 시장별 비중</div>
-    <div class="period-tabs" id="mktPeriodTabs">
-      <button data-p="1D" class="active" onclick="setMarketTreemapPeriod('1D')">1D</button>
-      <button data-p="5D" onclick="setMarketTreemapPeriod('5D')">5D</button>
-      <button data-p="1M" onclick="setMarketTreemapPeriod('1M')">1M</button>
-      <button data-p="3M" onclick="setMarketTreemapPeriod('3M')">3M</button>
-      <button data-p="6M" onclick="setMarketTreemapPeriod('6M')">6M</button>
-      <button data-p="YTD" onclick="setMarketTreemapPeriod('YTD')">YTD</button>
-      <button data-p="1Y" onclick="setMarketTreemapPeriod('1Y')">1Y</button>
-      <button data-p="3Y" onclick="setMarketTreemapPeriod('3Y')">3Y</button>
-      <button data-p="5Y" onclick="setMarketTreemapPeriod('5Y')">5Y</button>
-      <button data-p="10Y" onclick="setMarketTreemapPeriod('10Y')">10Y</button>
-      <button data-p="ALL" onclick="setMarketTreemapPeriod('ALL')">ALL</button>
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+      <div class="period-tabs" id="mktModeTabs">
+        <button data-mode="holding" class="active" onclick="setMarketTreemapMode('holding')">매입이력</button>
+        <button data-mode="market" onclick="setMarketTreemapMode('market')">시장이력</button>
+      </div>
+      <div class="period-tabs period-tabs-sm" id="mktPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
+        <button data-p="1D" onclick="setMarketTreemapPeriod('1D')">1D</button>
+        <button data-p="5D" onclick="setMarketTreemapPeriod('5D')">5D</button>
+        <button data-p="1M" onclick="setMarketTreemapPeriod('1M')">1M</button>
+        <button data-p="3M" onclick="setMarketTreemapPeriod('3M')">3M</button>
+        <button data-p="6M" onclick="setMarketTreemapPeriod('6M')">6M</button>
+        <button data-p="YTD" onclick="setMarketTreemapPeriod('YTD')">YTD</button>
+        <button data-p="1Y" onclick="setMarketTreemapPeriod('1Y')">1Y</button>
+        <button data-p="3Y" onclick="setMarketTreemapPeriod('3Y')">3Y</button>
+        <button data-p="5Y" onclick="setMarketTreemapPeriod('5Y')">5Y</button>
+        <button data-p="10Y" onclick="setMarketTreemapPeriod('10Y')">10Y</button>
+        <button data-p="ALL" class="active" onclick="setMarketTreemapPeriod('ALL')">ALL</button>
+      </div>
     </div>
   </div>
   <div class="market-treemap-grid">
@@ -1324,21 +1338,33 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
     else clusters.push({x:m.x, items:[m]});
   });
 
-  // 매수=초록 위쪽 화살표(진입), 매도=회색 아래쪽 화살표(청산) — 원이 아니라 삼각형으로, 가격선과 안 겹치게 살짝 띄움
+  // 매수=초록/매도=회색 "핀" 마커 — 화살촉 끝이 실제 데이터 포인트 바로 옆(3px)에 붙어 정확한 지점을 가리키고,
+  // 얇은 꼬리(리더선)로 몸통(원)을 살짝 띄워 가격선과는 겹치지 않게 한다. 고정폭 삼각형만으로 띄우면
+  // 선의 국소 기울기에 따라 "가까워 보이거나 멀어 보이는" 착시가 생기므로, 꼬리로 지점을 명시적으로 연결한다.
   clusters.forEach(c=>{
     const isBuyMarker = c.items.every(m=>m.entry.type==='buy'); // 매수/매도 섞인 클러스터는 매도(회색)로 표시
     const color = isBuyMarker ? '#34c759' : '#8e8e93';
-    const baseY = c.items.reduce((s,m)=>s+m.y,0)/c.items.length;
-    const my = baseY + (isBuyMarker ? 13 : -13); // 매수는 선 아래에서 위로, 매도는 선 위에서 아래로 향하게 배치해 겹침 방지
-    c.my = my; c.isBuyMarker = isBuyMarker; // 클릭 히트테스트에서 재사용
-    const S = 6; // 삼각형 크기(너무 크거나 작지 않게)
+    const baseY = c.items.reduce((s,m)=>s+m.y,0)/c.items.length; // 실제 데이터 포인트 y
+    const dir = isBuyMarker ? -1 : 1; // 매수는 위로, 매도는 아래로
+    const tipY = baseY + dir*3;   // 화살촉 끝 — 선에서 3px만 띄워 최대한 정확한 지점을 가리킴
+    const headY = tipY + dir*8;   // 마커 몸통(원) 위치 — 꼬리로 연결
+    c.my = headY; c.isBuyMarker = isBuyMarker; // 클릭 히트테스트에서 재사용
+
+    ctx.beginPath();
+    ctx.moveTo(c.x, tipY); ctx.lineTo(c.x, headY);
+    ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.stroke();
+
+    const S = 4; // 화살촉 크기(작게)
     ctx.beginPath();
     if(isBuyMarker){
-      ctx.moveTo(c.x, my-S); ctx.lineTo(c.x-S, my+S); ctx.lineTo(c.x+S, my+S);
+      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, tipY-S*1.5); ctx.lineTo(c.x+S, tipY-S*1.5);
     }else{
-      ctx.moveTo(c.x, my+S); ctx.lineTo(c.x-S, my-S); ctx.lineTo(c.x+S, my-S);
+      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, tipY+S*1.5); ctx.lineTo(c.x+S, tipY+S*1.5);
     }
     ctx.closePath();
+    ctx.fillStyle=color; ctx.fill();
+
+    ctx.beginPath(); ctx.arc(c.x, headY, 3.5, 0, Math.PI*2);
     ctx.fillStyle=color; ctx.fill();
   });
 
@@ -2318,7 +2344,7 @@ function renderTable(){
     // 거래 패널 (행 클릭) - 매수/매도
     if(quickTradeId===a.id){
       rows+=`<tr style="background:#f0f7ff;">
-        <td colspan="8" style="padding:14px 16px;" onclick="event.stopPropagation()">
+        <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#007aff;">
             ⚡ 빠른 거래
             <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
@@ -2360,7 +2386,7 @@ function renderTable(){
         // ── 현금 전용: 잔액설정 / 입금 / 출금 ──
         const sym=CUR_SYM[a.currency];
         rows+=`<tr style="background:#f0fff4;">
-          <td colspan="8" style="padding:14px 16px;" onclick="event.stopPropagation()">
+          <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
             <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
               ✏️ 현금 수정
               <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
@@ -2402,7 +2428,7 @@ function renderTable(){
         // ── 일반 종목: 수량 / 평균단가 / 계좌 / 구분 / 속성 ──
         const tpSubacctCustom = a.subAccount && !['nh','mf'].includes(a.subAccount);
         rows+=`<tr style="background:#f0fff4;">
-          <td colspan="8" style="padding:14px 16px;" onclick="event.stopPropagation()">
+          <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
             <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
               ✏️ 종목 수정
               <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
@@ -2480,7 +2506,7 @@ function renderTable(){
     // 종목별 가격 차트 (기능 A: 매수/매도 마커 오버레이) — 행 확장, 캔버스는 renderTable() 이후 비동기로 그려짐
     if(chartDetailId===a.id){
       rows+=`<tr style="background:#f9f9fb;">
-        <td colspan="8" style="padding:14px 16px;" onclick="event.stopPropagation()">
+        <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;color:var(--color-tertiary);">(매수 ▲ 매도 ▼)</span></div>
             <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">
@@ -4172,34 +4198,64 @@ function treemapColor(returnPct){
   return `rgb(${mix(neutral[0],base[0],k)},${mix(neutral[1],base[1],k)},${mix(neutral[2],base[2],k)})`;
 }
 
-// 자산 하나의 수익률을 계산 — period==='COST'는 매입원가 대비(비중현황 트리맵),
-// '1D'는 전일 종가 대비, 그 외는 기간 시작 시점과 가장 가까운 스냅샷의 byAsset 값과 현재값을 비교.
-// 스냅샷 데이터가 없으면 매입원가 대비 수익률로 폴백.
-function assetReturnForPeriod(asset, period){
+// 매매이력을 ts 시점까지 시간순으로 리플레이해서 그 시점의 매입원가(KRW)를 재구성.
+// 매매이력이 아예 없거나 그 시점 보유수량이 0으로 계산되면(재구성 불가) null 반환 — 호출부에서 폴백 처리.
+// KRW 환산은 항상 현재 환율 사용(과거 환율은 저장하지 않음 — 매입원가 계산 전반의 기존 관례와 동일).
+function costBasisAsOf(asset, ts){
+  const entries = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') &&
+    ((asset.ticker && asset.ticker!=='—' && r.ticker===asset.ticker) || r.name===asset.name) &&
+    r.at <= ts
+  ).sort((a,b)=>a.at-b.at);
+  if(!entries.length) return null;
+  let qty=0, avg=0;
+  entries.forEach(r=>{
+    if(r.type==='buy'){
+      avg = (qty+r.quantity)>0 ? (avg*qty + r.price*r.quantity)/(qty+r.quantity) : r.price;
+      qty += r.quantity;
+    } else {
+      qty = Math.max(0, qty - r.quantity);
+    }
+  });
+  if(qty<=0) return null;
+  return toKRW(asset, avg) * qty;
+}
+
+// 자산 하나의 수익률을 계산 — mode로 두 축을 분리:
+//  'holding'(매입이력) = 그 기간 시작 시점에 실제로 들고 있던 매입원가 대비 현재 수익률("내가 그 기간 얼마를 벌었나")
+//  'market'(시장이력)  = 그 기간 시작 시점 1주당 단가 대비 현재 1주당 단가("이 종목 가격 자체가 얼마나 움직였나", 내 손익과 무관)
+function assetReturnForPeriod(asset, mode, period){
   const ev = evKRW(asset);
-  if(period==='COST'){
-    const cost=costKRW(asset);
+  if(mode==='holding'){
+    if(period==='ALL'){
+      const cost=costKRW(asset);
+      return cost>0 ? (ev-cost)/cost*100 : 0;
+    }
+    const startTs = getPeriodStart(period).getTime();
+    const basis = costBasisAsOf(asset, startTs);
+    if(basis && basis>0) return (ev-basis)/basis*100;
+    const cost=costKRW(asset); // 매매이력 없음(도입 이전부터 보유) → 전체 매입원가로 폴백
     return cost>0 ? (ev-cost)/cost*100 : 0;
   }
+  // mode==='market' — 순수 시세 변화(1주당 단가 비교, 보유수량 변화의 영향을 배제)
   if(period==='1D'){
     if(!(asset.prevPrice>0)) return 0;
     return (asset.currentPrice-asset.prevPrice)/asset.prevPrice*100;
   }
   const startTs = getPeriodStart(period).getTime();
   const snaps = loadSnaps()
-    .filter(s=>s.timestamp<=startTs && s.byAsset && s.byAsset[asset.id]!=null)
+    .filter(s=>s.timestamp<=startTs && s.byAsset && s.byAsset[asset.id]!=null && s.byQty && s.byQty[asset.id]>0)
     .sort((a,b)=>b.timestamp-a.timestamp);
-  if(snaps.length){
-    const startVal = snaps[0].byAsset[asset.id];
-    if(startVal>0) return (ev-startVal)/startVal*100;
+  if(snaps.length && asset.quantity>0){
+    const startUnitKRW = snaps[0].byAsset[asset.id] / snaps[0].byQty[asset.id];
+    const nowUnitKRW = ev / asset.quantity;
+    if(startUnitKRW>0) return (nowUnitKRW-startUnitKRW)/startUnitKRW*100;
   }
-  const cost=costKRW(asset);
-  return cost>0 ? (ev-cost)/cost*100 : 0;
+  return 0; // 순수 시세 지표라 데이터 부족 시 매입원가로 폴백하지 않고 중립(0)
 }
 
-function buildTreemapItems(assetList, period){
+function buildTreemapItems(assetList, mode, period){
   return assetList.filter(a=>a.category!=='cash').map(a=>({
-    id:a.id, name:a.name, value:evKRW(a), rtn:assetReturnForPeriod(a,period)
+    id:a.id, name:a.name, value:evKRW(a), rtn:assetReturnForPeriod(a,mode,period)
   })).filter(i=>i.value>0).sort((a,b)=>b.value-a.value);
 }
 
@@ -4278,26 +4334,36 @@ function goToStockDetail(assetId){
   }, 100);
 }
 
-// 비중현황 트리맵 — 기간 선택 가능(기본 매입가 대비, COST)
-let allocTreemapPeriod = 'COST';
+// 비중현황 트리맵 — 매입이력(기본)/시장이력 모드 × 기간(기본 ALL) 두 축을 독립적으로 선택
+let allocTreemapMode = 'holding', allocTreemapPeriod = 'ALL';
+function setAllocTreemapMode(mode){
+  allocTreemapMode = mode;
+  document.querySelectorAll('#allocTreemapModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  drawTreemap();
+}
 function setAllocTreemapPeriod(period){
   allocTreemapPeriod = period;
   document.querySelectorAll('#allocTreemapPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawTreemap();
 }
 function drawTreemap(){
-  renderTreemapCanvas('treemapCanvas', buildTreemapItems(assets, allocTreemapPeriod), 320, goToStockDetail);
+  renderTreemapCanvas('treemapCanvas', buildTreemapItems(assets, allocTreemapMode, allocTreemapPeriod), 320, goToStockDetail);
 }
 
-// 자산 Quick View 트리맵 — 기간 선택 가능(기본 1D)
-let qvTreemapPeriod = '1D';
+// 자산 Quick View 트리맵 — 매입이력(기본)/시장이력 모드 × 기간(기본 ALL)
+let qvTreemapMode = 'holding', qvTreemapPeriod = 'ALL';
+function setQuickViewMode(mode){
+  qvTreemapMode = mode;
+  document.querySelectorAll('#qvModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  drawQuickViewTreemap();
+}
 function setQuickViewPeriod(period){
   qvTreemapPeriod = period;
   document.querySelectorAll('#qvPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawQuickViewTreemap();
 }
 function drawQuickViewTreemap(){
-  renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapPeriod), 340, goToStockDetail);
+  renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), 340, goToStockDetail);
 }
 
 // 글로벌시장: 보유종목을 4개 시장(S&P500/나스닥/코스피/코스닥)으로 근사 분류한 트리맵
@@ -4312,7 +4378,12 @@ function classifyMarketGroup(asset){
   if(asset.category==='stock_us') return 'nasdaq'; // 개별 미국주식은 나스닥으로 근사 편입
   return null;
 }
-let mktTreemapPeriod = '1D';
+let mktTreemapMode = 'holding', mktTreemapPeriod = 'ALL';
+function setMarketTreemapMode(mode){
+  mktTreemapMode = mode;
+  document.querySelectorAll('#mktModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
+  drawMarketGroupTreemaps();
+}
 function setMarketTreemapPeriod(period){
   mktTreemapPeriod = period;
   document.querySelectorAll('#mktPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
@@ -4323,7 +4394,7 @@ function drawMarketGroupTreemaps(){
   assets.forEach(a=>{ const g=classifyMarketGroup(a); if(g) groups[g].push(a); });
   const labels={sp500:'S&P500 보유종목 없음', nasdaq:'나스닥 보유종목 없음', kospi:'코스피 보유종목 없음', kosdaq:'코스닥 보유종목 없음'};
   Object.keys(groups).forEach(g=>{
-    renderTreemapCanvas('mktTreemap_'+g, buildTreemapItems(groups[g], mktTreemapPeriod), 160, goToStockDetail, labels[g]);
+    renderTreemapCanvas('mktTreemap_'+g, buildTreemapItems(groups[g], mktTreemapMode, mktTreemapPeriod), 160, goToStockDetail, labels[g]);
   });
 }
 
@@ -5522,7 +5593,14 @@ function renderAll(){
 /* ════════════════════════════════════════
    초기화
 ════════════════════════════════════════ */
-window.addEventListener('resize',()=>drawLineChart());
+// 화면 회전/크기 변경 시 자산변화그래프뿐 아니라 현재 활성 탭의 다른 캔버스(트리맵/도넛/원금그래프 등)도
+// 즉시 새 폭에 맞춰 다시 그림 — 이전에는 탭을 한 번 전환해야만(그 탭의 렌더 훅이 다시 불려야만) 반영됐음
+window.addEventListener('resize',()=>{
+  drawLineChart();
+  const activePage = localStorage.getItem('currentPage') || 'dashboard';
+  if(typeof PAGE_RENDER_HOOKS[activePage]==='function') PAGE_RENDER_HOOKS[activePage]();
+  if(activePage==='portfolio' && chartDetailId) loadAndDrawStockChart(chartDetailId);
+});
 
 (async function init(){
   migrateSoldHistory();
