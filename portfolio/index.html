@@ -2737,7 +2737,10 @@ function executeTrade(){
       cashName = cat!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1) : null;
       if(st){ st.textContent=`✅ ${name} 추가 완료 — 🔄 시세 갱신으로 현재가를 불러오세요.${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     }
-    addTradeLog({name, ticker:tickerVal, type:'buy', at:Date.now(), category:cat||null, attribute:attr||null, subAccount:subacct||null, price:fPrice, quantity:fQty, currency:cur, totalKRW:Math.round(fPrice*fQty*(cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1)), pnl:null, pnlPct:null, reason:tradeReason, cashAdjusted:cashName});
+    // 계좌 미선택 시(빈칸) 기존 보유분의 계좌를 그대로 사용 — 안 그러면 재매수 시 계좌가 null로 찍혀
+    // 원래 보유분(예: 미래에셋)과 매매이력의 계좌가 어긋나 종목 상세 차트에서 해당 거래가 안 보이게 됨.
+    const loggedSubacct = existing ? (existing.subAccount||null) : (subacct||null);
+    addTradeLog({name, ticker:tickerVal, type:'buy', at:Date.now(), category:cat||null, attribute:attr||null, subAccount:loggedSubacct, price:fPrice, quantity:fQty, currency:cur, totalKRW:Math.round(fPrice*fQty*(cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1)), pnl:null, pnlPct:null, reason:tradeReason, cashAdjusted:cashName});
     resetBuyForm();
     saveAssets();renderAll();
     saveSnap(true); // 매수 시점 수동 스냅샷 (압축 제외)
