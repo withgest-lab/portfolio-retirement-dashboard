@@ -310,8 +310,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <div class="section-label" style="margin:0">종목 트리맵</div>
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="qvModeTabs">
-          <button data-mode="holding" class="active" onclick="setQuickViewMode('holding')">매입이력</button>
-          <button data-mode="market" onclick="setQuickViewMode('market')">시장이력</button>
+          <button data-mode="holding" class="active" onclick="setQuickViewMode('holding')">기간별 총수익률</button>
+          <button data-mode="market" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="qvPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
           <button data-p="1D" onclick="setQuickViewPeriod('1D')">1D</button>
@@ -454,8 +454,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
                   text-transform:uppercase;letter-spacing:.06em;">종목별 평가금액(크기) · 선택 기간 수익률(색)</div>
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="allocTreemapModeTabs">
-          <button data-mode="holding" class="active" onclick="setAllocTreemapMode('holding')">매입이력</button>
-          <button data-mode="market" onclick="setAllocTreemapMode('market')">시장이력</button>
+          <button data-mode="holding" class="active" onclick="setAllocTreemapMode('holding')">기간별 총수익률</button>
+          <button data-mode="market" onclick="setAllocTreemapMode('market')">기간별 주가 변화율</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="allocTreemapPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
           <button data-p="1D" onclick="setAllocTreemapPeriod('1D')">1D</button>
@@ -491,8 +491,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="section-label" style="margin:0">내 보유종목 · 시장별 비중</div>
     <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
       <div class="period-tabs" id="mktModeTabs">
-        <button data-mode="holding" class="active" onclick="setMarketTreemapMode('holding')">매입이력</button>
-        <button data-mode="market" onclick="setMarketTreemapMode('market')">시장이력</button>
+        <button data-mode="holding" class="active" onclick="setMarketTreemapMode('holding')">기간별 총수익률</button>
+        <button data-mode="market" onclick="setMarketTreemapMode('market')">기간별 주가 변화율</button>
       </div>
       <div class="period-tabs period-tabs-sm" id="mktPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
         <button data-p="1D" onclick="setMarketTreemapPeriod('1D')">1D</button>
@@ -1379,7 +1379,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
     tipEl.style.display='block';
     tipEl.innerHTML = nearest.items.map(m=>{
       const r=m.entry, d=new Date(r.at), isBuy=r.type==='buy';
-      return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?fmt(r.price):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
+      return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
     }).join('<br>');
   };
 }
@@ -1415,7 +1415,7 @@ async function loadAndDrawStockChart(id){
       return `<tr>
         <td style="text-align:left;font-size:11px;color:var(--color-tertiary);">${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}</td>
         <td style="text-align:center;"><span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span></td>
-        <td style="font-size:11px;">${r.price!=null?fmt(r.price):'—'}</td>
+        <td style="font-size:11px;">${r.price!=null?unitPriceStr(r.price, r.currency):'—'}</td>
         <td style="font-size:11px;">${r.quantity!=null?r.quantity.toLocaleString():'—'}</td>
         <td style="text-align:left;font-size:11px;color:var(--color-secondary);">${r.reason||''}</td>
       </tr>`;
@@ -1603,6 +1603,12 @@ function fmtEval(n){
   return Math.round(n).toLocaleString('ko-KR')+'원';
 }
 function fmtPct(n){return(n>=0?'+':'')+n.toFixed(2)+'%';}
+// 종목 1주당 단가 표시 — fmt()와 달리 만/억으로 뭉개지 않고 원 단위까지 그대로 표시
+function unitPriceStr(price, currency){
+  if(currency==='USD') return '$'+price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  if(currency==='JPY') return '¥'+Math.round(price).toLocaleString('ja-JP');
+  return '₩'+Math.round(price).toLocaleString('ko-KR');
+}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function updn(n){return n>=0?'up':'dn';}
 
