@@ -114,6 +114,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 /* ── 차트 ── */
 .chart-wrap{margin-top:10px;}
 .chart-wrap canvas{-webkit-touch-callout:none;user-select:none;}
+#assetTbody{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 canvas#lineChart{width:100%!important;display:block;}
 .stat-bar{margin-top:12px;}
 .stat-item{min-width:110px;}
@@ -4785,12 +4786,22 @@ function getPeriodStart(period){
 //   3. 스냅샷 자체가 없으면 → prevPrice≠currentPrice면 prevPrice, 아니면 avgPrice
 let _baseCache = null;
 let _base1DSnap = null; // 1D 시작 직전 스냅샷 (기준가용)
+// "오늘 1D 시작 시점 이전부터 보유했던 종목"인지 판단.
+// 앱을 쓰기 시작한 이후의 가장 오래된 스냅샷 하나만 보면, 그보다 한참 전부터 보유해온
+// 종목이라도 "그 종목이 처음 추적된 시점 == 앱의 첫 스냅샷"이 아니라는 이유만으로 계속
+// 신규 종목 취급되어 1D 기준가가 매입원가(avgPrice)로 잘못 폴백하는 문제가 있었다.
+// (예: 최근 계좌에 추가했지만 실제로는 며칠 전부터 보유 중인 종목의 1D 등락률이
+//  총수익률처럼 크게 표시됨) → 오늘 1D 시작 시각(09:00) 이전의 스냅샷들을 모두 훑어
+// 그 시점까지 한 번이라도 기록된 적 있는 종목이면 "기존 보유"로 인정한다.
 function _getExistingIds(){
-  const snaps = loadSnaps().sort((a,b)=>a.timestamp-b.timestamp);
-  const oldest = snaps[0];
-  return oldest ? new Set(Object.keys(oldest.byAsset||{})) : null;
+  const startTs = getPeriodStart('1D').getTime();
+  const priorSnaps = loadSnaps().filter(s=>s.timestamp<=startTs);
+  if(!priorSnaps.length) return null;
+  const ids = new Set();
+  priorSnaps.forEach(s=>{ Object.keys(s.byAsset||{}).forEach(id=>ids.add(id)); });
+  return ids;
 }
-// 1D 기준 스냅샷 설정: 1D 시작 시각(어제 미국장) 직전의 마지막 스냅샷
+// 1D 기준 스냅샷 설정: 1D 시작 시각(오늘 국내장 개장 09:00, 주말이면 최근 평일 09:00) 직전의 마지막 스냅샷
 function setBase1DSnap(){
   const startTs = getPeriodStart('1D').getTime(); // 국내장 개장(09:00, 주말이면 최근 평일 09:00)
   const snaps = loadSnaps().sort((a,b)=>a.timestamp-b.timestamp);
