@@ -13,7 +13,7 @@
   --radius:16px; --radius-sm:10px;
   font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:88px;}
 
 /* ── 헤더 ── */
@@ -64,7 +64,8 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 /* ── 글로벌시장: 보유종목 시장별 트리맵 2x2 ── */
 .market-treemap-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.market-treemap-cell{background:var(--color-section-bg);border-radius:var(--radius-sm);padding:8px;}
+.market-treemap-cell{background:var(--color-section-bg);border-radius:var(--radius-sm);padding:8px;min-width:0;}
+.market-treemap-cell canvas{max-width:100%;display:block;}
 .market-treemap-cell .mt-label{font-size:10px;font-weight:700;color:var(--color-tertiary);text-align:center;margin-bottom:4px;}
 @media(max-width:480px){ .market-treemap-grid{grid-template-columns:1fr;} }
 
@@ -89,7 +90,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .period-tabs button{border:none;cursor:pointer;border-radius:7px;padding:4px 7px;font-size:11px;
   font-weight:600;font-family:inherit;background:transparent;color:var(--color-secondary);transition:.15s;}
 .period-tabs button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.period-tabs.period-tabs-sm button{padding:3px 5px;font-size:9px;}
+.period-tabs.period-tabs-sm button{padding:4px 6px;font-size:10px;}
 
 /* ── 토글 ── */
 .toggles{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
@@ -112,6 +113,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 /* ── 차트 ── */
 .chart-wrap{margin-top:10px;}
+.chart-wrap canvas{-webkit-touch-callout:none;user-select:none;}
 canvas#lineChart{width:100%!important;display:block;}
 .stat-bar{margin-top:12px;}
 .stat-item{min-width:110px;}
@@ -306,12 +308,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="subpage active" data-sub="summary" id="qvSubpage">
   <div class="summary-grid compact" id="summaryGrid"></div>
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
       <div class="section-label" style="margin:0">종목 트리맵</div>
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="qvModeTabs">
-          <button data-mode="holding" class="active" onclick="setQuickViewMode('holding')">기간별 총수익률</button>
-          <button data-mode="market" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
+          <button data-mode="holding" onclick="setQuickViewMode('holding')">기간별 총수익률</button>
+          <button data-mode="market" class="active" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="qvPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
           <button data-p="1D" onclick="setQuickViewPeriod('1D')">1D</button>
@@ -328,7 +330,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         </div>
       </div>
     </div>
-    <div class="chart-wrap"><canvas id="qvTreemapCanvas" height="340"></canvas></div>
+    <div class="chart-wrap"><canvas id="qvTreemapCanvas" height="300"></canvas></div>
     <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=선택 기간 수익률(초록 이익/빨강 손실). 1D는 전일 미장 종가·오늘 국장 반영 기준입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
   </div>
 </div>
@@ -449,13 +451,13 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
   </div>
   <div id="allocTreemapView" style="display:none;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
       <div style="font-size:10px;font-weight:600;color:var(--color-tertiary);
                   text-transform:uppercase;letter-spacing:.06em;">종목별 평가금액(크기) · 선택 기간 수익률(색)</div>
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="allocTreemapModeTabs">
-          <button data-mode="holding" class="active" onclick="setAllocTreemapMode('holding')">기간별 총수익률</button>
-          <button data-mode="market" onclick="setAllocTreemapMode('market')">기간별 주가 변화율</button>
+          <button data-mode="holding" onclick="setAllocTreemapMode('holding')">기간별 총수익률</button>
+          <button data-mode="market" class="active" onclick="setAllocTreemapMode('market')">기간별 주가 변화율</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="allocTreemapPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
           <button data-p="1D" onclick="setAllocTreemapPeriod('1D')">1D</button>
@@ -472,8 +474,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         </div>
       </div>
     </div>
-    <div class="chart-wrap"><canvas id="treemapCanvas" height="320"></canvas></div>
-    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색 진하기=선택 기간 수익률(초록 이익/빨강 손실). "매입가"는 매입가 대비 수익률입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
+    <div class="chart-wrap"><canvas id="treemapCanvas" height="280"></canvas></div>
+    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색 진하기=선택 기간 수익률(초록 이익/빨강 손실). "기간별 총수익률"은 매입원가 대비, "기간별 주가 변화율"은 시세 자체의 변화입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
   </div>
 </div>
 </div>
@@ -487,12 +489,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <div class="notice">※ 야후 파이낸스 기준 (15~20분 지연). 5분마다 자동 갱신됩니다.</div>
 </div>
 <div class="card" style="margin-top:16px;">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
     <div class="section-label" style="margin:0">내 보유종목 · 시장별 비중</div>
     <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
       <div class="period-tabs" id="mktModeTabs">
-        <button data-mode="holding" class="active" onclick="setMarketTreemapMode('holding')">기간별 총수익률</button>
-        <button data-mode="market" onclick="setMarketTreemapMode('market')">기간별 주가 변화율</button>
+        <button data-mode="holding" onclick="setMarketTreemapMode('holding')">기간별 총수익률</button>
+        <button data-mode="market" class="active" onclick="setMarketTreemapMode('market')">기간별 주가 변화율</button>
       </div>
       <div class="period-tabs period-tabs-sm" id="mktPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
         <button data-p="1D" onclick="setMarketTreemapPeriod('1D')">1D</button>
@@ -510,10 +512,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </div>
   </div>
   <div class="market-treemap-grid">
-    <div class="market-treemap-cell"><div class="mt-label">S&P500</div><canvas id="mktTreemap_sp500" height="160"></canvas></div>
-    <div class="market-treemap-cell"><div class="mt-label">나스닥</div><canvas id="mktTreemap_nasdaq" height="160"></canvas></div>
-    <div class="market-treemap-cell"><div class="mt-label">코스피</div><canvas id="mktTreemap_kospi" height="160"></canvas></div>
-    <div class="market-treemap-cell"><div class="mt-label">코스닥</div><canvas id="mktTreemap_kosdaq" height="160"></canvas></div>
+    <div class="market-treemap-cell"><div class="mt-label">S&P500</div><canvas id="mktTreemap_sp500" height="140"></canvas></div>
+    <div class="market-treemap-cell"><div class="mt-label">나스닥</div><canvas id="mktTreemap_nasdaq" height="140"></canvas></div>
+    <div class="market-treemap-cell"><div class="mt-label">코스피</div><canvas id="mktTreemap_kospi" height="140"></canvas></div>
+    <div class="market-treemap-cell"><div class="mt-label">코스닥</div><canvas id="mktTreemap_kosdaq" height="140"></canvas></div>
   </div>
   <div class="notice" style="text-align:center;">💡 ETF명·상장시장 기준 추정 분류입니다(실제 지수 편입 여부와 다를 수 있음). 해당 없는 종목은 표시되지 않습니다.</div>
 </div>
@@ -1290,7 +1292,7 @@ async function getStockHistory(ticker, range){
 
 // 종목별 가격 차트 캔버스 그리기 — drawLineChart()의 DPR/그리드 관례를 따르되
 // 단일 종목 절대가격 라인이라 다중자산 %-오버레이 로직과는 별도 함수로 분리
-function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
+function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency){
   const wrap = canvas.parentElement;
   const cssW = wrap.clientWidth || 300, cssH = 200;
   const dpr = window.devicePixelRatio || 1;
@@ -1316,7 +1318,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
   for(let i=0;i<=3;i++){
     const v=vMin+(vMax-vMin)*i/3, y=toY(v);
     ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(cssW-PAD_R,y); ctx.stroke();
-    ctx.fillText(fmt(v), PAD_L-6, y);
+    ctx.fillText(unitPriceStr(v, currency), PAD_L-6, y);
   }
 
   ctx.beginPath();
@@ -1456,7 +1458,7 @@ async function loadAndDrawStockChart(id){
     ctx.fillText('시세 데이터를 불러올 수 없습니다', cssW/2, 100);
     return;
   }
-  drawStockPriceChart(canvas, points, tradeEntries, 'stockChartTip_'+id);
+  drawStockPriceChart(canvas, points, tradeEntries, 'stockChartTip_'+id, a.currency);
 }
 
 // 종목 시세 조회: 한국 → 네이버 우선 → 야후 폴백 / 미국/일본 → 야후 프록시
@@ -2720,24 +2722,28 @@ function executeTrade(){
   // 수정저장
   if(mode==='edit'){
     const a = assets.find(x=>x.id===id); if(!a) return;
+    // 계좌·구분을 바꾸기 전에 옛 값을 먼저 기억해둔다 — tradeMatchesAsset이 계좌+구분 조합으로
+    // 보유분을 구분하므로(둘 중 하나만 바뀌어도 매칭이 어긋날 수 있음), 바뀌기 전 옛 조합으로
+    // 매칭되던 기존 매매이력의 계좌·구분을 새 값으로 함께 갱신해야 이력이 고아가 되지 않는다.
     const oldSubacct = a.subAccount || null;
+    const oldCategory = a.category || null;
     if(!isNaN(qty)&&qty>=0)    a.quantity = qty;
     if(!isNaN(price)&&price>0) a.avgPrice = price;
     if(trade.cat)              a.category = trade.cat;
     if(trade.attr !== undefined) a.attribute = trade.attr || null;
-    if(trade.subacct !== undefined){
-      const newSubacct = trade.subacct || null;
-      if(newSubacct !== oldSubacct){
-        // 계좌를 바꾸기 전에, 옛 계좌 기준으로 매칭되던 기존 매매이력의 계좌도 새 값으로 함께 갱신
-        // — 안 그러면 tradeMatchesAsset이 옛 계좌값과 어긋나 이력이 고아가 될 수 있음.
-        const before = {...a, subAccount: oldSubacct};
-        const log = loadTradeLog();
-        let changed = false;
-        log.forEach(r=>{ if((r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, before)){ r.subAccount = newSubacct; changed = true; } });
-        if(changed) saveTradeLog(log);
-      }
-      a.subAccount = newSubacct;
+    const newSubacct = trade.subacct !== undefined ? (trade.subacct || null) : oldSubacct;
+    if(newSubacct !== oldSubacct || a.category !== oldCategory){
+      const before = {...a, subAccount: oldSubacct, category: oldCategory};
+      const log = loadTradeLog();
+      let changed = false;
+      log.forEach(r=>{
+        if((r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, before)){
+          r.subAccount = newSubacct; r.category = a.category; changed = true;
+        }
+      });
+      if(changed) saveTradeLog(log);
     }
+    if(trade.subacct !== undefined) a.subAccount = newSubacct;
     editingId=null; quickTradeId=null;
     saveAssets();renderAll();
     return;
@@ -2996,7 +3002,17 @@ function switchSubPage(pageId, subId){
 }
 function restorePageState(){
   const savedPage = localStorage.getItem('currentPage') || 'dashboard';
-  switchPage(PAGE_IDS.includes(savedPage) ? savedPage : 'dashboard');
+  const pageId = PAGE_IDS.includes(savedPage) ? savedPage : 'dashboard';
+  switchPage(pageId);
+  // 서브탭이 있는 페이지는 마지막으로 보고 있던 서브탭도 함께 복원(새로고침 시 기본 서브탭으로
+  // 되돌아가지 않도록) — switchSubPage()가 이미 선택할 때마다 저장해두지만, 페이지 전환만으로는
+  // 서브탭까지 복원되지 않으므로 여기서 명시적으로 한 번 더 적용한다.
+  const savedSub = localStorage.getItem('currentSubPage_'+pageId);
+  if(savedSub){
+    const container = document.getElementById('page_'+pageId);
+    const validSub = container && container.querySelector(`:scope > .subpage[data-sub="${savedSub}"]`);
+    if(validSub) switchSubPage(pageId, savedSub);
+  }
 }
 
 // 대시보드 탭 자체가 display:none → 다시 보일 때 캔버스가 0 크기였던 채로 그려져 있으므로 재렌더.
@@ -4482,8 +4498,8 @@ function goToStockDetail(assetId){
   }, 100);
 }
 
-// 비중현황 트리맵 — 매입이력(기본)/시장이력 모드 × 기간(기본 ALL) 두 축을 독립적으로 선택
-let allocTreemapMode = 'holding', allocTreemapPeriod = 'ALL';
+// 비중현황 트리맵 — 매입이력/시장이력(기본) 모드 × 기간(기본 ALL) 두 축을 독립적으로 선택
+let allocTreemapMode = 'market', allocTreemapPeriod = 'ALL';
 function setAllocTreemapMode(mode){
   allocTreemapMode = mode;
   document.querySelectorAll('#allocTreemapModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
@@ -4498,8 +4514,8 @@ function drawTreemap(){
   renderTreemapCanvas('treemapCanvas', buildTreemapItems(assets, allocTreemapMode, allocTreemapPeriod), 320, goToStockDetail);
 }
 
-// 자산 Quick View 트리맵 — 매입이력(기본)/시장이력 모드 × 기간(기본 ALL)
-let qvTreemapMode = 'holding', qvTreemapPeriod = 'ALL';
+// 자산 Quick View 트리맵 — 매입이력/시장이력(기본) 모드 × 기간(기본 ALL)
+let qvTreemapMode = 'market', qvTreemapPeriod = 'ALL';
 function setQuickViewMode(mode){
   qvTreemapMode = mode;
   document.querySelectorAll('#qvModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
@@ -4526,7 +4542,7 @@ function classifyMarketGroup(asset){
   if(asset.category==='stock_us') return 'nasdaq'; // 개별 미국주식은 나스닥으로 근사 편입
   return null;
 }
-let mktTreemapMode = 'holding', mktTreemapPeriod = 'ALL';
+let mktTreemapMode = 'market', mktTreemapPeriod = 'ALL';
 function setMarketTreemapMode(mode){
   mktTreemapMode = mode;
   document.querySelectorAll('#mktModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
@@ -4542,7 +4558,7 @@ function drawMarketGroupTreemaps(){
   assets.forEach(a=>{ const g=classifyMarketGroup(a); if(g) groups[g].push(a); });
   const labels={sp500:'S&P500 보유종목 없음', nasdaq:'나스닥 보유종목 없음', kospi:'코스피 보유종목 없음', kosdaq:'코스닥 보유종목 없음'};
   Object.keys(groups).forEach(g=>{
-    renderTreemapCanvas('mktTreemap_'+g, buildTreemapItems(groups[g], mktTreemapMode, mktTreemapPeriod), 160, goToStockDetail, labels[g]);
+    renderTreemapCanvas('mktTreemap_'+g, buildTreemapItems(groups[g], mktTreemapMode, mktTreemapPeriod), 140, goToStockDetail, labels[g]);
   });
 }
 
@@ -4647,10 +4663,13 @@ function getPeriodStart(period){
   const usH = dst ? 22 : 23; // 미국장 시작 시간
 
   if(period==='1D'){
-    // 어제 미국장 시작 시각 (22:30 or 23:30)
+    // 어제 미국장 시작 시각 (22:30 or 23:30) — 주말이면 실제로 미국장이 열렸던
+    // 가장 최근 평일(보통 금요일)까지 거슬러 올라간다. 그래야 토·일요일에 1D를 봐도
+    // "금요일 미장 시작" 시점을 기준으로 삼아 금요일 마감 결과가 그대로 유지된다.
     const t = new Date(now);
     t.setHours(usH, 30, 0, 0);
     if(now < t) t.setDate(t.getDate()-1);
+    while(t.getDay()===0 || t.getDay()===6) t.setDate(t.getDate()-1);
     return t;
   }
   if(period==='5D'){
@@ -4761,14 +4780,16 @@ function calcBaseUnit(a, prices, fi){
 // - 평일 오전 9시 이전: KRW(국내·한국ETF)·JPY(일본) 개장 전 → 0%
 //   (USD 미국주식은 어젯밤 미국장 거래 반영)
 // - 공휴일: 전일종가=현재가가 되어 자연히 0% 처리됨 (별도 판단 안 함)
+// - 주말(토·일): 한국·일본장은 휴장이라 "개장 전"으로 취급하지만, 미국장은 주말에도
+//   금요일 마감 결과가 여전히 유효한 최신 거래일 데이터이므로 "개장 전"으로 보지 않는다
+//   (그래야 토·일요일에도 금요일 등락이 0%로 리셋되지 않고 그대로 유지됨).
 function isMarketPreOpen(a){
   if(a.category === 'cash') return false;
+  if(a.currency === 'USD') return false; // 미국장은 주말에도 금요일 마감 결과 유지
   const now = new Date();
   const day = now.getDay(); // 0=일, 6=토
-  // 주말이면 모든 종목 휴장 → 0%
+  // 주말이면 한국·일본장 휴장 → 개장 전
   if(day === 0 || day === 6) return true;
-  // 평일: 미국장은 어젯밤/오늘밤 거래됨 → 개장 전 아님
-  if(a.currency === 'USD') return false;
   // KRW·JPY:
   // ① 오전 9시 이전 → 개장 전
   // ② 22:30(비서머)/22:30(서머) 이후 → 새 하루 시작, 한국/일본장 미개장 → 0%
@@ -5738,12 +5759,18 @@ function renderAll(){
    초기화
 ════════════════════════════════════════ */
 // 화면 회전/크기 변경 시 자산변화그래프뿐 아니라 현재 활성 탭의 다른 캔버스(트리맵/도넛/원금그래프 등)도
-// 즉시 새 폭에 맞춰 다시 그림 — 이전에는 탭을 한 번 전환해야만(그 탭의 렌더 훅이 다시 불려야만) 반영됐음
+// 즉시 새 폭에 맞춰 다시 그림 — 이전에는 탭을 한 번 전환해야만(그 탭의 렌더 훅이 다시 불려야만) 반영됐음.
+// 폴더블 폰 접기/펼치기처럼 전환 도중 resize가 여러 번(중간 크기 포함) 발생할 수 있으므로, 마지막
+// 이벤트 이후 잠깐 기다렸다가 딱 한 번만 다시 그려서 애니메이션 중간 크기로 잘못 그려지지 않게 한다.
+let resizeRedrawTimer = null;
 window.addEventListener('resize',()=>{
-  drawLineChart();
-  const activePage = localStorage.getItem('currentPage') || 'dashboard';
-  if(typeof PAGE_RENDER_HOOKS[activePage]==='function') PAGE_RENDER_HOOKS[activePage]();
-  if(activePage==='portfolio' && chartDetailId) loadAndDrawStockChart(chartDetailId);
+  clearTimeout(resizeRedrawTimer);
+  resizeRedrawTimer = setTimeout(()=>{
+    drawLineChart();
+    const activePage = localStorage.getItem('currentPage') || 'dashboard';
+    if(typeof PAGE_RENDER_HOOKS[activePage]==='function') PAGE_RENDER_HOOKS[activePage]();
+    if(activePage==='portfolio' && chartDetailId) loadAndDrawStockChart(chartDetailId);
+  }, 150);
 });
 
 (async function init(){
