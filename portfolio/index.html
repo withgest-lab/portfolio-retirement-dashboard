@@ -1338,34 +1338,31 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
     else clusters.push({x:m.x, items:[m]});
   });
 
-  // 매수=초록/매도=회색 "핀" 마커 — 화살촉 끝이 실제 데이터 포인트 바로 옆(3px)에 붙어 정확한 지점을 가리키고,
-  // 얇은 꼬리(리더선)로 몸통(원)을 살짝 띄워 가격선과는 겹치지 않게 한다. 고정폭 삼각형만으로 띄우면
-  // 선의 국소 기울기에 따라 "가까워 보이거나 멀어 보이는" 착시가 생기므로, 꼬리로 지점을 명시적으로 연결한다.
+  // 매수=빨간 위쪽 화살표(▲, 점 아래에서 위로 향함)/매도=파란 아래쪽 화살표(▼, 점 위에서 아래로 향함).
+  // 꼬리·몸통 없는 단순 삼각형이되, 뾰족한 끝을 실제 데이터 포인트 바로 옆(3px)에 붙여
+  // 선의 국소 기울기와 무관하게 항상 정확한 지점을 가리키도록 한다.
   clusters.forEach(c=>{
-    const isBuyMarker = c.items.every(m=>m.entry.type==='buy'); // 매수/매도 섞인 클러스터는 매도(회색)로 표시
-    const color = isBuyMarker ? '#34c759' : '#8e8e93';
+    const isBuyMarker = c.items.every(m=>m.entry.type==='buy'); // 매수/매도 섞인 클러스터는 매도(파랑)로 표시
+    const color = isBuyMarker ? '#ff3b30' : '#0a84ff';
     const baseY = c.items.reduce((s,m)=>s+m.y,0)/c.items.length; // 실제 데이터 포인트 y
-    const dir = isBuyMarker ? -1 : 1; // 매수는 위로, 매도는 아래로
-    const tipY = baseY + dir*3;   // 화살촉 끝 — 선에서 3px만 띄워 최대한 정확한 지점을 가리킴
-    const headY = tipY + dir*8;   // 마커 몸통(원) 위치 — 꼬리로 연결
-    c.my = headY; c.isBuyMarker = isBuyMarker; // 클릭 히트테스트에서 재사용
+    const S = 4.5;   // 화살표 크기
+    const gap = 3;   // 실제 지점과 화살표 뾰족한 끝 사이 여백
 
-    ctx.beginPath();
-    ctx.moveTo(c.x, tipY); ctx.lineTo(c.x, headY);
-    ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.stroke();
-
-    const S = 4; // 화살촉 크기(작게)
     ctx.beginPath();
     if(isBuyMarker){
-      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, tipY-S*1.5); ctx.lineTo(c.x+S, tipY-S*1.5);
+      // ▲ 점 아래에 배치, 뾰족한 끝이 점을 향해 위로
+      const tipY = baseY + gap, baseYb = tipY + S*1.6;
+      c.my = (tipY+baseYb)/2;
+      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, baseYb); ctx.lineTo(c.x+S, baseYb);
     }else{
-      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, tipY+S*1.5); ctx.lineTo(c.x+S, tipY+S*1.5);
+      // ▼ 점 위에 배치, 뾰족한 끝이 점을 향해 아래로
+      const tipY = baseY - gap, baseYt = tipY - S*1.6;
+      c.my = (tipY+baseYt)/2;
+      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, baseYt); ctx.lineTo(c.x+S, baseYt);
     }
     ctx.closePath();
     ctx.fillStyle=color; ctx.fill();
-
-    ctx.beginPath(); ctx.arc(c.x, headY, 3.5, 0, Math.PI*2);
-    ctx.fillStyle=color; ctx.fill();
+    c.isBuyMarker = isBuyMarker; // 클릭 히트테스트에서 재사용
   });
 
   const tipEl = document.getElementById(tipElId);
@@ -1382,7 +1379,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
     tipEl.style.display='block';
     tipEl.innerHTML = nearest.items.map(m=>{
       const r=m.entry, d=new Date(r.at), isBuy=r.type==='buy';
-      return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#34c759':'#8e8e93'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?fmt(r.price):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
+      return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?fmt(r.price):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
     }).join('<br>');
   };
 }
@@ -1410,8 +1407,7 @@ async function loadAndDrawStockChart(id){
   if(!a || !canvas) return;
   const ctx = canvas.getContext('2d');
 
-  const tradeEntries = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') &&
-    ((a.ticker && a.ticker!=='—' && r.ticker===a.ticker) || r.name===a.name));
+  const tradeEntries = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a));
   const tbodyEl = document.getElementById('stockChartTradeBody_'+id);
   if(tbodyEl){
     tbodyEl.innerHTML = tradeEntries.length ? tradeEntries.slice().sort((x,y)=>y.at-x.at).map(r=>{
@@ -1782,7 +1778,7 @@ function logSellTrade(a, qty, sellPrice, reason){
   const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, sellPrice*qty, +1) : null;
   addTradeLog({
     name: a.name, ticker: a.ticker, type: 'sell', at: Date.now(),
-    category: a.category||null, attribute: a.attribute||null,
+    category: a.category||null, attribute: a.attribute||null, subAccount: a.subAccount||null,
     price: sellPrice, quantity: qty, currency: a.currency,
     totalKRW, pnl: Math.round(pnl),
     pnlPct: pnlPct===null?null:Math.round(pnlPct*100)/100,
@@ -1797,7 +1793,7 @@ function logBuyTrade(a, qty, buyPrice, reason){
   const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, buyPrice*qty, -1) : null;
   addTradeLog({
     name: a.name, ticker: a.ticker||'—', type: 'buy', at: Date.now(),
-    category: a.category||null, attribute: a.attribute||null,
+    category: a.category||null, attribute: a.attribute||null, subAccount: a.subAccount||null,
     price: buyPrice, quantity: qty, currency: a.currency,
     totalKRW, pnl: null, pnlPct: null,
     reason: reason||'', cashAdjusted: cashName
@@ -2505,7 +2501,7 @@ function renderTable(){
 
     // 종목별 가격 차트 (기능 A: 매수/매도 마커 오버레이) — 행 확장, 캔버스는 renderTable() 이후 비동기로 그려짐
     if(chartDetailId===a.id){
-      rows+=`<tr style="background:#f9f9fb;">
+      rows+=`<tr style="background:var(--color-card);">
         <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;color:var(--color-tertiary);">(매수 ▲ 매도 ▼)</span></div>
@@ -2527,11 +2523,15 @@ function renderTable(){
           <div id="stockChartTip_${a.id}" class="notice" style="display:none;margin-top:8px;line-height:1.6;"></div>
           <div class="tbl-wrap" style="margin-top:12px;">
             <table class="table-auto">
-              <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">메모</th></tr></thead>
+              <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span>메모</span>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="chartDetailId=null;renderTable();">✕ 닫기</button>
+                </div>
+              </th></tr></thead>
               <tbody id="stockChartTradeBody_${a.id}"></tbody>
             </table>
           </div>
-          <button class="btn btn-ghost" style="margin-top:10px;padding:6px 12px;font-size:12px;" onclick="chartDetailId=null;renderTable();">✕ 닫기</button>
         </td>
       </tr>`;
     }
@@ -2737,7 +2737,7 @@ function executeTrade(){
       cashName = cat!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1) : null;
       if(st){ st.textContent=`✅ ${name} 추가 완료 — 🔄 시세 갱신으로 현재가를 불러오세요.${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     }
-    addTradeLog({name, ticker:tickerVal, type:'buy', at:Date.now(), category:cat||null, attribute:attr||null, price:fPrice, quantity:fQty, currency:cur, totalKRW:Math.round(fPrice*fQty*(cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1)), pnl:null, pnlPct:null, reason:tradeReason, cashAdjusted:cashName});
+    addTradeLog({name, ticker:tickerVal, type:'buy', at:Date.now(), category:cat||null, attribute:attr||null, subAccount:subacct||null, price:fPrice, quantity:fQty, currency:cur, totalKRW:Math.round(fPrice*fQty*(cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1)), pnl:null, pnlPct:null, reason:tradeReason, cashAdjusted:cashName});
     resetBuyForm();
     saveAssets();renderAll();
     saveSnap(true); // 매수 시점 수동 스냅샷 (압축 제외)
@@ -4198,12 +4198,24 @@ function treemapColor(returnPct){
   return `rgb(${mix(neutral[0],base[0],k)},${mix(neutral[1],base[1],k)},${mix(neutral[2],base[2],k)})`;
 }
 
+// 매매이력 항목 r이 asset과 같은 보유분인지 판정 — 종목명/티커 일치 + 계좌(subAccount) 일치.
+// 계좌(subAccount) 필드는 이 기능 도입 이후 기록된 매매이력부터 명시적으로 저장됨.
+// r.subAccount가 undefined면(필드 자체가 없는 진짜 과거 이력) 계좌 구분 없이 종전대로 이름/티커만으로 매칭.
+// r.subAccount가 (null 포함) 존재하면 이 기능 도입 이후 기록된 것이므로 asset의 계좌와 정확히 일치해야 매칭
+// — 그래야 같은 종목을 여러 계좌에 나눠 보유할 때 매입이력이 계좌 간에 섞이지 않음.
+function tradeMatchesAsset(r, asset){
+  const nameMatch = (asset.ticker && asset.ticker!=='—' && r.ticker===asset.ticker) || r.name===asset.name;
+  if(!nameMatch) return false;
+  if(r.subAccount === undefined) return true;
+  return (r.subAccount||null) === (asset.subAccount||null);
+}
+
 // 매매이력을 ts 시점까지 시간순으로 리플레이해서 그 시점의 매입원가(KRW)를 재구성.
 // 매매이력이 아예 없거나 그 시점 보유수량이 0으로 계산되면(재구성 불가) null 반환 — 호출부에서 폴백 처리.
 // KRW 환산은 항상 현재 환율 사용(과거 환율은 저장하지 않음 — 매입원가 계산 전반의 기존 관례와 동일).
 function costBasisAsOf(asset, ts){
   const entries = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') &&
-    ((asset.ticker && asset.ticker!=='—' && r.ticker===asset.ticker) || r.name===asset.name) &&
+    tradeMatchesAsset(r, asset) &&
     r.at <= ts
   ).sort((a,b)=>a.at-b.at);
   if(!entries.length) return null;
@@ -4241,12 +4253,18 @@ function assetReturnForPeriod(asset, mode, period){
     if(!(asset.prevPrice>0)) return 0;
     return (asset.currentPrice-asset.prevPrice)/asset.prevPrice*100;
   }
-  const startTs = getPeriodStart(period).getTime();
-  const snaps = loadSnaps()
-    .filter(s=>s.timestamp<=startTs && s.byAsset && s.byAsset[asset.id]!=null && s.byQty && s.byQty[asset.id]>0)
-    .sort((a,b)=>b.timestamp-a.timestamp);
-  if(snaps.length && asset.quantity>0){
-    const startUnitKRW = snaps[0].byAsset[asset.id] / snaps[0].byQty[asset.id];
+  const validSnaps = loadSnaps().filter(s=>s.byAsset && s.byAsset[asset.id]!=null && s.byQty && s.byQty[asset.id]>0);
+  let startSnap;
+  if(period==='ALL'){
+    // 전체 스냅샷 중 가장 오래된 게 아니라, 이 종목 데이터가 남아있는 스냅샷 중 가장 오래된 것을 사용.
+    // (종목을 나중에 추가했다면 그 이전 스냅샷들엔 이 종목 데이터 자체가 없어 무의미하므로)
+    startSnap = validSnaps.slice().sort((a,b)=>a.timestamp-b.timestamp)[0];
+  } else {
+    const startTs = getPeriodStart(period).getTime();
+    startSnap = validSnaps.filter(s=>s.timestamp<=startTs).sort((a,b)=>b.timestamp-a.timestamp)[0];
+  }
+  if(startSnap && asset.quantity>0){
+    const startUnitKRW = startSnap.byAsset[asset.id] / startSnap.byQty[asset.id];
     const nowUnitKRW = ev / asset.quantity;
     if(startUnitKRW>0) return (nowUnitKRW-startUnitKRW)/startUnitKRW*100;
   }
