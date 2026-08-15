@@ -1324,18 +1324,31 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
   points.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.close); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
 
-  // 매수/매도 마커: 거래일을 가장 가까운 시세 지점에 매칭 → 화면 픽셀 거리 8px 이내는 하나로 묶어 "+N" 표시
-  const rawMarkers = tradeEntries.map(r=>{
+  // 매수/매도 마커: 같은 날짜(달력 기준)의 거래만 하나로 묶고, 날짜가 다르면 화면상 가까워도
+  // 항상 별개 포인트로 표시한다 — 매수 날짜 구분이 중요하므로 픽셀 근접도로 뭉개지 않는다.
+  const dateKey = ts => { const d=new Date(ts); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
+  const groups = new Map();
+  tradeEntries.forEach(r=>{
+    const key = dateKey(r.at);
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  });
+  const clusters = [...groups.values()].map(items=>{
+    const r0 = items[0];
     let nearest=points[0], minD=Infinity;
-    points.forEach(p=>{ const d=Math.abs(p.ts-r.at); if(d<minD){minD=d; nearest=p;} });
-    return {x:toX(nearest.ts), y:toY(nearest.close), entry:r};
+    points.forEach(p=>{ const d=Math.abs(p.ts-r0.at); if(d<minD){minD=d; nearest=p;} });
+    const x=toX(nearest.ts), y=toY(nearest.close);
+    return {x, y, items: items.map(r=>({x, y, entry:r}))};
   }).sort((a,b)=>a.x-b.x);
 
-  const clusters=[];
-  rawMarkers.forEach(m=>{
-    const last = clusters[clusters.length-1];
-    if(last && Math.abs(last.x-m.x)<8) last.items.push(m);
-    else clusters.push({x:m.x, items:[m]});
+  // 날짜는 다른데 화면상 겹칠 만큼 가까운 경우, 화살표가 뭉개져 안 보이지 않도록 실제 지점에서
+  // 점점 더 멀리 띄워 계단식으로 펼쳐 그린다(각 마커는 여전히 자기 날짜를 정확히 가리킴).
+  const COLLIDE_PX = 9, STEP = 7, MAX_LEVEL = 6;
+  let lastX = -Infinity, level = 0;
+  clusters.forEach(c=>{
+    level = (c.x - lastX < COLLIDE_PX) ? level+1 : 0;
+    c.level = Math.min(level, MAX_LEVEL);
+    lastX = c.x;
   });
 
   // 매수=빨간 위쪽 화살표(▲, 점 아래에서 위로 향함)/매도=파란 아래쪽 화살표(▼, 점 위에서 아래로 향함).
@@ -1346,7 +1359,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId){
     const color = isBuyMarker ? '#ff3b30' : '#0a84ff';
     const baseY = c.items.reduce((s,m)=>s+m.y,0)/c.items.length; // 실제 데이터 포인트 y
     const S = 4.5;   // 화살표 크기
-    const gap = 3;   // 실제 지점과 화살표 뾰족한 끝 사이 여백
+    const gap = 3 + c.level*STEP;   // 실제 지점과 화살표 뾰족한 끝 사이 여백(겹침 방지용 계단식 오프셋 포함)
 
     ctx.beginPath();
     if(isBuyMarker){
