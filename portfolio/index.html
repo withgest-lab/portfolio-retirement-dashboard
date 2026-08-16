@@ -971,7 +971,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <tbody id="divMonthlyBody"></tbody>
       </table>
     </div>
-    <div class="notice">💡 "예상"은 최근 배당 간격·금액을 바탕으로 이 앱이 추정한 값입니다(실제 배당 일정과 다를 수 있음).</div>
+    <div class="notice">💡 "예상"은 최근 배당 간격·금액을 바탕으로 이 앱이 추정한 값입니다(실제 배당 일정과 다를 수 있음). 월을 탭하면 해당 월의 확정 배당 기록을 수정·삭제할 수 있습니다.</div>
   </div>
 </div>
 <div class="subpage" data-sub="stock">
@@ -983,13 +983,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <tbody id="divStockBody"></tbody>
       </table>
     </div>
+    <div class="notice">💡 종목을 탭하면 개별 배당 기록을 수정·삭제할 수 있습니다.</div>
   </div>
 </div>
 <div class="subpage" data-sub="calendar">
   <div class="card">
     <div class="section-label">월별 배당 캘린더 (<span id="divCalYear"></span>년)</div>
     <div class="div-cal-grid" id="divCalendarGrid"></div>
-    <div class="notice">💡 확정 배당은 실제 기록된 금액, 예상 배당은 최근 이력 기반 추정치입니다.</div>
+    <div id="divCalendarDetail" style="display:none;"></div>
+    <div class="notice">💡 확정 배당은 실제 기록된 금액, 예상 배당은 최근 이력 기반 추정치입니다. 월을 탭하면 해당 월의 배당 기록을 수정·삭제할 수 있습니다.</div>
   </div>
 </div>
 </section>
@@ -1827,6 +1829,12 @@ function clearTradeLog(){
 function toggleTradeLogEdit(id){
   editingTradeLogId = editingTradeLogId===id ? null : id;
   renderSoldHistory();
+  renderCapitalGainsTax();
+}
+function closeTradeLogEdit(){
+  editingTradeLogId = null;
+  renderSoldHistory();
+  renderCapitalGainsTax();
 }
 
 function saveTradeLogEdit(id){
@@ -1878,6 +1886,8 @@ function saveTradeLogEdit(id){
   saveTradeLog(arr);
   editingTradeLogId = null;
   renderSoldHistory();
+  renderCapitalGainsTax();
+  renderYearlyReturns();
 }
 
 // 매도 시 매매 이력 자동 기록 (실현손익 계산 포함) + 현금 자동 가산
@@ -2115,103 +2125,110 @@ function renderSoldHistory(){
     }
 
     if(editingTradeLogId===r.id){
-      const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-      const tleSubacctCustom = r.subAccount && !['nh','mf'].includes(r.subAccount);
-      rowHtml += `<tr style="background:#f0fff4;">
-        <td colspan="6" style="padding:14px 16px;" onclick="event.stopPropagation()">
-          <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
-            ✏️ 매매 이력 수정
-            <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-              ${r.name} · 날짜/종목/계좌/구분/체결단가/수량/사유를 수정합니다
-            </span>
-          </div>
-          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              날짜
-              <input id="tle_date_${r.id}" type="date" value="${dateVal}"
-                style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              종목명
-              <input id="tle_name_${r.id}" value="${r.name.replace(/"/g,'&quot;')}"
-                style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              계좌
-              <select id="tle_subacct_${r.id}" onchange="toggleCustomInput('tle_subacct_${r.id}','tle_subacct_custom_${r.id}')"
-                style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                <option value=""   ${!r.subAccount?'selected':''}>-- 없음 --</option>
-                <option value="nh" ${r.subAccount==='nh'?'selected':''}>농협</option>
-                <option value="mf" ${r.subAccount==='mf'?'selected':''}>미래에셋</option>
-                <option value="__custom__" ${tleSubacctCustom?'selected':''}>+ 직접입력</option>
-              </select>
-              <input id="tle_subacct_custom_${r.id}" placeholder="계좌명 입력" value="${tleSubacctCustom?r.subAccount.replace(/"/g,'&quot;'):''}"
-                style="width:85px;display:${tleSubacctCustom?'inline-block':'none'};margin-top:3px;
-                       border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              유형
-              <select id="tle_type_${r.id}"
-                style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                <option value="buy"  ${r.type==='buy' ?'selected':''}>매수</option>
-                <option value="sell" ${r.type==='sell'?'selected':''}>매도</option>
-              </select>
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              구분
-              <select id="tle_cat_${r.id}"
-                style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                <option value=""                  ${!r.category?'selected':''}>-- 선택 --</option>
-                <option value="stock_kr"          ${r.category==='stock_kr'?'selected':''}>국내주식</option>
-                <option value="stock_us"          ${r.category==='stock_us'?'selected':''}>미국주식</option>
-                <option value="stock_jp"          ${r.category==='stock_jp'?'selected':''}>일본주식</option>
-                <option value="pension_personal"  ${r.category==='pension_personal'?'selected':''}>개인연금</option>
-                <option value="pension_retirement"${r.category==='pension_retirement'?'selected':''}>퇴직연금</option>
-                <option value="irp"               ${r.category==='irp'?'selected':''}>IRP 개인</option>
-                <option value="isa"               ${r.category==='isa'?'selected':''}>ISA</option>
-                <option value="crypto"            ${r.category==='crypto'?'selected':''}>가상자산</option>
-                <option value="cash"              ${r.category==='cash'?'selected':''}>현금</option>
-              </select>
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              속성
-              <select id="tle_attr_${r.id}"
-                style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                <option value=""       ${!r.attribute?'selected':''}>— 없음 —</option>
-                <option value="Core"   ${r.attribute==='Core'?'selected':''}>Core</option>
-                <option value="주도주" ${r.attribute==='주도주'?'selected':''}>주도주</option>
-                <option value="유망주" ${r.attribute==='유망주'?'selected':''}>유망주</option>
-                <option value="원자재" ${r.attribute==='원자재'?'selected':''}>원자재</option>
-              </select>
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              체결단가 (${r.currency})
-              <input id="tle_price_${r.id}" type="number" value="${r.price}"
-                style="width:110px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              수량
-              <input id="tle_qty_${r.id}" type="number" value="${r.quantity}"
-                style="width:90px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px;">
-              사유
-              <input id="tle_reason_${r.id}" value="${reasonStr.replace(/"/g,'&quot;')}"
-                style="width:100%;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn"
-                style="background:#34c759;color:#fff;padding:7px 16px;font-size:13px;box-shadow:0 2px 8px #34c75930;"
-                onclick="saveTradeLogEdit('${r.id}')">✓ 수정저장</button>
-              <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-                onclick="editingTradeLogId=null;renderSoldHistory();">✕ 닫기</button>
-            </div>
-          </div>
-        </td>
-      </tr>`;
+      rowHtml += renderTradeLogEditForm(r, 6);
     }
     return rowHtml;
   }).join('');
+}
+
+// 매매 이력 인라인 수정 폼 — "매매 이력" 탭과 "세금관리 > 해외주식 양도소득세" 탭에서 공용으로 사용
+function renderTradeLogEditForm(r, colspan){
+  const dt = new Date(r.at);
+  const reasonStr = r.reason ? r.reason : '';
+  const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  const tleSubacctCustom = r.subAccount && !['nh','mf'].includes(r.subAccount);
+  return `<tr style="background:#f0fff4;">
+    <td colspan="${colspan}" style="padding:14px 16px;" onclick="event.stopPropagation()">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
+        ✏️ 매매 이력 수정
+        <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
+          ${r.name} · 날짜/종목/계좌/구분/체결단가/수량/사유를 수정합니다
+        </span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          날짜
+          <input id="tle_date_${r.id}" type="date" value="${dateVal}"
+            style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          종목명
+          <input id="tle_name_${r.id}" value="${r.name.replace(/"/g,'&quot;')}"
+            style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          계좌
+          <select id="tle_subacct_${r.id}" onchange="toggleCustomInput('tle_subacct_${r.id}','tle_subacct_custom_${r.id}')"
+            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value=""   ${!r.subAccount?'selected':''}>-- 없음 --</option>
+            <option value="nh" ${r.subAccount==='nh'?'selected':''}>농협</option>
+            <option value="mf" ${r.subAccount==='mf'?'selected':''}>미래에셋</option>
+            <option value="__custom__" ${tleSubacctCustom?'selected':''}>+ 직접입력</option>
+          </select>
+          <input id="tle_subacct_custom_${r.id}" placeholder="계좌명 입력" value="${tleSubacctCustom?r.subAccount.replace(/"/g,'&quot;'):''}"
+            style="width:85px;display:${tleSubacctCustom?'inline-block':'none'};margin-top:3px;
+                   border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          유형
+          <select id="tle_type_${r.id}"
+            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="buy"  ${r.type==='buy' ?'selected':''}>매수</option>
+            <option value="sell" ${r.type==='sell'?'selected':''}>매도</option>
+          </select>
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          구분
+          <select id="tle_cat_${r.id}"
+            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value=""                  ${!r.category?'selected':''}>-- 선택 --</option>
+            <option value="stock_kr"          ${r.category==='stock_kr'?'selected':''}>국내주식</option>
+            <option value="stock_us"          ${r.category==='stock_us'?'selected':''}>미국주식</option>
+            <option value="stock_jp"          ${r.category==='stock_jp'?'selected':''}>일본주식</option>
+            <option value="pension_personal"  ${r.category==='pension_personal'?'selected':''}>개인연금</option>
+            <option value="pension_retirement"${r.category==='pension_retirement'?'selected':''}>퇴직연금</option>
+            <option value="irp"               ${r.category==='irp'?'selected':''}>IRP 개인</option>
+            <option value="isa"               ${r.category==='isa'?'selected':''}>ISA</option>
+            <option value="crypto"            ${r.category==='crypto'?'selected':''}>가상자산</option>
+            <option value="cash"              ${r.category==='cash'?'selected':''}>현금</option>
+          </select>
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          속성
+          <select id="tle_attr_${r.id}"
+            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value=""       ${!r.attribute?'selected':''}>— 없음 —</option>
+            <option value="Core"   ${r.attribute==='Core'?'selected':''}>Core</option>
+            <option value="주도주" ${r.attribute==='주도주'?'selected':''}>주도주</option>
+            <option value="유망주" ${r.attribute==='유망주'?'selected':''}>유망주</option>
+            <option value="원자재" ${r.attribute==='원자재'?'selected':''}>원자재</option>
+          </select>
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          체결단가 (${r.currency})
+          <input id="tle_price_${r.id}" type="number" value="${r.price}"
+            style="width:110px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          수량
+          <input id="tle_qty_${r.id}" type="number" value="${r.quantity}"
+            style="width:90px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px;">
+          사유
+          <input id="tle_reason_${r.id}" value="${reasonStr.replace(/"/g,'&quot;')}"
+            style="width:100%;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn"
+            style="background:#34c759;color:#fff;padding:7px 16px;font-size:13px;box-shadow:0 2px 8px #34c75930;"
+            onclick="saveTradeLogEdit('${r.id}')">✓ 수정저장</button>
+          <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
+            onclick="closeTradeLogEdit()">✕ 닫기</button>
+        </div>
+      </div>
+    </td>
+  </tr>`;
 }
 
 function deleteSnap(snapKey){
@@ -2770,6 +2787,8 @@ function executeTrade(){
     const arr = loadTradeLog().filter(r=>r.id!==tradeLogId);
     saveTradeLog(arr);
     renderSoldHistory();
+    renderCapitalGainsTax();
+    renderYearlyReturns();
     return;
   }
 
@@ -3620,10 +3639,18 @@ function renderCapitalGainsTax(){
   const taxableMan = Math.max(0, gainMan - CGT_EXEMPT);
   const taxMan = Math.round(taxableMan * 0.22);
 
-  const rowsHtml = sells.map(r=>
-    `<tr><td style="text-align:left">${r.name}</td><td>${new Date(r.at).toLocaleDateString('ko-KR')}</td>
-     <td class="${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</td></tr>`
-  ).join('');
+  const rowsHtml = sells.map(r=>{
+    let rowHtml = `<tr>
+      <td style="text-align:left">${r.name}</td><td>${new Date(r.at).toLocaleDateString('ko-KR')}</td>
+      <td class="${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn-icon" onclick="toggleTradeLogEdit('${r.id}')">✏️</button>
+        <button class="btn-icon" onclick="deleteSoldHistory('${r.id}')">🗑</button>
+      </td>
+    </tr>`;
+    if(editingTradeLogId===r.id) rowHtml += renderTradeLogEditForm(r, 4);
+    return rowHtml;
+  }).join('');
 
   el.innerHTML = `
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
@@ -3642,11 +3669,11 @@ function renderCapitalGainsTax(){
     </div>
     <div class="tbl-wrap">
       <table class="table-auto">
-        <thead><tr><th style="text-align:left">종목</th><th>매도일</th><th>실현손익</th></tr></thead>
+        <thead><tr><th style="text-align:left">종목</th><th>매도일</th><th>실현손익</th><th>관리</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>
-    <div class="notice">💡 종합소득세와는 별도 세목 — 매년 5/1~5/31 양도소득세 확정신고 대상(다른 소득과 합산 안 됨). 올해 남은 손실 종목을 추가로 매도해 손익을 통산하면 세금을 줄일 수 있습니다.</div>
+    <div class="notice">💡 종합소득세와는 별도 세목 — 매년 5/1~5/31 양도소득세 확정신고 대상(다른 소득과 합산 안 됨). 올해 남은 손실 종목을 추가로 매도해 손익을 통산하면 세금을 줄일 수 있습니다. 종목의 ✏️를 누르면 매도 기록을 바로 수정할 수 있습니다.</div>
   `;
 }
 
@@ -3693,7 +3720,7 @@ function renderFinIncomeThreshold(){
         <div class="sum-val">${totalMan.toLocaleString()} / 2,000만원</div>
       </div>
     </div>
-    <div class="notice" style="margin:0;">${statusHtml}<br>💡 이 앱의 배당 로그와 수동 입력값만 반영합니다 — 예금 이자, 다른 계좌 배당 등 여기 기록되지 않은 금액이 있으면 "기타 이자·배당 소득"에 직접 더해 넣으세요.</div>
+    <div class="notice" style="margin:0;">${statusHtml}<br>💡 이 앱의 배당 로그와 수동 입력값만 반영합니다 — 예금 이자, 다른 계좌 배당 등 여기 기록되지 않은 금액이 있으면 "기타 이자·배당 소득"에 직접 더해 넣으세요. "배당 로그 합계"를 고치려면 배당금관리 탭에서 해당 배당 기록을 수정·삭제하세요.</div>
   `;
 }
 PAGE_RENDER_HOOKS['tax'] = function(){ renderCapitalGainsTax(); renderFinIncomeThreshold(); };
@@ -4052,6 +4079,108 @@ function getDividendsByMonth(){
   return byMonth;
 }
 
+// 배당 개별 기록 수정/삭제 (원금기록장과 동일하게 기록 전용 — 자산/현금 잔액에는 영향 없음)
+let editingDividendId = null;
+let divExpandedMonthKey = null;   // 월별 집계·캘린더 공용 (YYYY-MM)
+let divExpandedStockName = null;  // 종목별 집계 전용
+
+function renderAllDividendViews(){
+  renderDividendMonthly();
+  renderDividendByStock();
+  renderDividendCalendar();
+  renderFinIncomeThreshold(); // 금융소득종합과세 합계가 배당 로그를 그대로 쓰므로 함께 갱신
+}
+
+function toggleDivMonthExpand(key){
+  divExpandedMonthKey = divExpandedMonthKey===key ? null : key;
+  editingDividendId = null;
+  renderDividendMonthly();
+}
+function toggleDivStockExpand(name){
+  divExpandedStockName = divExpandedStockName===name ? null : name;
+  editingDividendId = null;
+  renderDividendByStock();
+}
+function toggleDivCalExpand(key){
+  divExpandedMonthKey = divExpandedMonthKey===key ? null : key;
+  editingDividendId = null;
+  renderDividendCalendar();
+}
+function toggleDividendEntryEdit(id){
+  editingDividendId = editingDividendId===id ? null : id;
+  renderAllDividendViews();
+}
+function saveDividendEntryEdit(id){
+  const arr = loadTradeLog();
+  const r = arr.find(x=>x.id===id);
+  if(!r) return;
+  const dateV  = document.getElementById(`de_date_${id}`).value;
+  const name   = document.getElementById(`de_name_${id}`).value.trim();
+  const amount = parseFloat(document.getElementById(`de_amount_${id}`).value);
+  if(!name){ alert('종목/배당원천을 입력해 주세요.'); return; }
+  if(isNaN(amount) || amount<=0){ alert('금액을 입력해 주세요.'); return; }
+  if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
+  r.name = name;
+  r.totalKRW = Math.round(amount);
+  r.pnl = Math.round(amount);
+  saveTradeLog(arr);
+  editingDividendId = null;
+  renderAllDividendViews();
+}
+function deleteDividendEntry(id){
+  if(!confirm('이 배당 기록을 삭제할까요?')) return;
+  saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
+  renderAllDividendViews();
+}
+// 확정 배당 개별 기록 한 줄 — 보기/수정 모드 공용
+function renderDividendEntryRow(r){
+  const dt = new Date(r.at);
+  if(editingDividendId===r.id){
+    const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    return `<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--color-border);">
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        날짜
+        <input id="de_date_${r.id}" type="date" value="${dateVal}"
+          style="width:130px;border:1px solid #ff950060;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:100px;">
+        종목/배당원천
+        <input id="de_name_${r.id}" value="${(r.name||'').replace(/"/g,'&quot;')}"
+          style="width:100%;border:1px solid #ff950060;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        금액(원)
+        <input id="de_amount_${r.id}" type="number" value="${r.totalKRW||0}"
+          style="width:120px;border:1px solid #ff950060;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <div style="display:flex;gap:6px;">
+        <button class="btn" style="background:#ff9500;color:#fff;padding:7px 14px;font-size:13px;" onclick="saveDividendEntryEdit('${r.id}')">✓ 저장</button>
+        <button class="btn btn-ghost" style="padding:7px 10px;font-size:13px;" onclick="toggleDividendEntryEdit('${r.id}')">✕ 취소</button>
+      </div>
+    </div>`;
+  }
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--color-border);gap:8px;">
+    <div style="font-size:12px;">
+      <span style="color:var(--color-tertiary);">${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()}</span>
+      <span style="font-weight:600;margin-left:6px;">${r.name||'(미지정)'}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span class="up" style="font-weight:700;font-size:12px;">+${fmt(r.totalKRW||0)}</span>
+      <button class="btn-icon" onclick="toggleDividendEntryEdit('${r.id}')" title="수정">✏️</button>
+      <button class="btn-icon" onclick="deleteDividendEntry('${r.id}')" title="삭제">🗑</button>
+    </div>
+  </div>`;
+}
+// 특정 확정 배당 목록을 펼침 패널로 렌더 (없으면 안내 문구)
+function renderDividendEntryPanel(entries, hasProjected){
+  const list = entries.length
+    ? entries.slice().sort((a,b)=>b.at-a.at).map(renderDividendEntryRow).join('')
+    : `<div style="padding:8px 0;font-size:12px;color:var(--color-tertiary);">기록된 확정 배당이 없습니다.</div>`;
+  const projNote = hasProjected
+    ? `<div style="font-size:10px;color:var(--color-tertiary);margin-top:6px;">💡 예상 배당은 실제 기록이 아니라 여기서 수정·삭제할 수 없습니다.</div>` : '';
+  return `<div style="padding:4px 2px 2px;">${list}${projNote}</div>`;
+}
+
 function renderDividendMonthly(){
   const el = document.getElementById('divMonthlyBody');
   const barsEl = document.getElementById('divMonthlyBars');
@@ -4088,11 +4217,18 @@ function renderDividendMonthly(){
     const m = byMonth[key];
     const confirmedStr = m.confirmedSum ? `<span class="up" style="font-weight:600;">${fmt(m.confirmedSum)}</span>` : '—';
     const projectedStr = m.projectedSum ? `<span class="dim">예상 +${fmt(m.projectedSum)}</span>` : '—';
-    return `<tr>
-      <td style="text-align:left;font-weight:600;">${key}</td>
+    const isOpen = divExpandedMonthKey===key;
+    let rowHtml = `<tr style="cursor:pointer;" onclick="toggleDivMonthExpand('${key}')">
+      <td style="text-align:left;font-weight:600;">${isOpen?'▾':'▸'} ${key}</td>
       <td>${confirmedStr}</td>
       <td>${projectedStr}</td>
     </tr>`;
+    if(isOpen){
+      rowHtml += `<tr><td colspan="3" style="text-align:left;background:var(--color-section-bg);" onclick="event.stopPropagation()">
+        ${renderDividendEntryPanel(m.confirmed, m.projectedSum>0)}
+      </td></tr>`;
+    }
+    return rowHtml;
   }).join('');
 }
 
@@ -4111,12 +4247,19 @@ function renderDividendByStock(){
     const projStr = (proj && proj.nextAt>Date.now())
       ? `<span class="dim">${new Date(proj.nextAt).toLocaleDateString('ko-KR')} 예상 ${fmt(proj.amount)}</span>`
       : '—';
-    return `<tr>
-      <td style="text-align:left;font-weight:600;">${name}</td>
+    const isOpen = divExpandedStockName===name;
+    let rowHtml = `<tr style="cursor:pointer;" onclick="toggleDivStockExpand('${name.replace(/'/g,"\\'")}')">
+      <td style="text-align:left;font-weight:600;">${isOpen?'▾':'▸'} ${name}</td>
       <td>${s.events.length}회</td>
       <td class="up" style="font-weight:600;">${fmt(s.sum)}</td>
       <td style="font-size:11px;">${projStr}</td>
     </tr>`;
+    if(isOpen){
+      rowHtml += `<tr><td colspan="4" style="text-align:left;background:var(--color-section-bg);" onclick="event.stopPropagation()">
+        ${renderDividendEntryPanel(s.events, false)}
+      </td></tr>`;
+    }
+    return rowHtml;
   }).join('');
 }
 PAGE_RENDER_HOOKS['dividend'] = function(){ renderDividendMonthly(); renderDividendByStock(); renderDividendCalendar(); };
@@ -4137,13 +4280,25 @@ function renderDividendCalendar(){
     const confirmedSum = data ? data.confirmedSum : 0;
     const projectedSum = data ? data.projectedSum : 0;
     const isCur = m===curMonth;
-    html += `<div class="div-cal-cell" style="${isCur?'border-color:var(--color-accent);':''}">
+    const isOpen = divExpandedMonthKey===key;
+    html += `<div class="div-cal-cell" style="cursor:pointer;${isCur?'border-color:var(--color-accent);':''}${isOpen?'background:var(--color-card);box-shadow:0 0 0 1.5px var(--color-accent) inset;':''}" onclick="toggleDivCalExpand('${key}')">
       <div class="div-cal-month">${m}월</div>
       <div class="div-cal-confirmed ${confirmedSum?'up':'dim'}">${confirmedSum?fmt(confirmedSum):'—'}</div>
       ${projectedSum ? `<div class="div-cal-projected dim">예상 +${fmt(projectedSum)}</div>` : ''}
     </div>`;
   }
   el.innerHTML = html;
+
+  const detailEl = document.getElementById('divCalendarDetail');
+  if(detailEl){
+    if(!divExpandedMonthKey){ detailEl.innerHTML=''; detailEl.style.display='none'; }
+    else{
+      const m = byMonth[divExpandedMonthKey] || {confirmed:[], projectedSum:0};
+      detailEl.style.display='block';
+      detailEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--color-tertiary);margin:12px 0 2px;">${divExpandedMonthKey} 확정 배당 내역</div>
+        ${renderDividendEntryPanel(m.confirmed, m.projectedSum>0)}`;
+    }
+  }
 }
 
 /* ════════════════════════════════════════
