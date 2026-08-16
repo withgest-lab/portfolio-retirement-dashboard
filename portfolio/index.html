@@ -4040,14 +4040,16 @@ function drawPrincipalVsValueChart(){
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // 자산가치 선(실선) — 검정 고정, 손익은 채움 색으로 구분
+  // 자산가치 선(실선) — 짙은 회색(--color-secondary) 고정, 손익은 채움 색으로 구분.
+  // 순검정(#1c1c1e)은 눈에 너무 튀어서, 점선(투입원금, #8e8e93)보다는 진하되
+  // 부담스럽지 않은 톤으로 조정.
   ctx.beginPath();
-  ctx.strokeStyle = '#1c1c1e'; ctx.lineWidth=2;
+  ctx.strokeStyle = '#636366'; ctx.lineWidth=2;
   series.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
 
   const lastP = series[series.length-1];
-  ctx.fillStyle = '#1c1c1e';
+  ctx.fillStyle = '#636366';
   ctx.beginPath(); ctx.arc(toX(lastP.ts), toY(lastP.value), 3, 0, Math.PI*2); ctx.fill();
 
   canvas.onmousemove = canvas.onclick = (e)=>{
