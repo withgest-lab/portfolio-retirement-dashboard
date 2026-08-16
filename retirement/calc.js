@@ -5,10 +5,12 @@
 
 /* ── 연초 일시납 FV 계산 ──
    IRP: 연속 운용 (이월 O) - 납입기간 내 매년 1월21일 납입, 이후 운용
-   ISA: 5년 만기 독립 회차 (이월 X, 2026년 세법개정: 최대 계약기간 5년 제한)
-        - 각 5년은 0원에서 시작
-        - 만기 수령금은 ISA 외부(생활비 등)로 나감
-        - 57세 은퇴 시 잔액 = 마지막 회차 세후 잔액만
+   ISA: 은퇴할 때까지 해지·재개설 없이 계속 유지(만기 연장 가정) - 연속 복리로
+        굴리다가, 은퇴 시점에 전체 보유기간 누적 수익 기준으로 비과세 한도를
+        1회 적용해 세후 금액을 산출한다.
+        (예전에는 "5년 만기마다 계좌를 해지하고 0원부터 재개설"하는 2026년
+         세법개정 초안 가정을 반영했었지만, 이후 ISA 만기 연장이 가능하도록
+         재개정될 것으로 보여 계속 유지하는 쪽으로 설계를 되돌림)
    isaType: 'isa' | 'irp'(기본)
 */
 function calcISA_FV(curBal, isay, curAge, startAge, endAge, retAge, annualR, isaType){
@@ -26,48 +28,22 @@ function calcISA_FV(curBal, isay, curAge, startAge, endAge, retAge, annualR, isa
     return Math.max(0, Math.round(bal));
   }
 
-  // ── ISA: 5년 만기 독립 회차 (2026년 세법개정: 최대 계약기간 5년 제한) ──
-  // 핵심: 각 회차 만기 수령금은 별도 운용(CMA 등, 동일 수익률 가정)
-  //       은퇴 시점에 모든 회차 수령금(별도운용 포함) + 마지막 회차 잔액 합산
-  const ISA_CYCLE  = 5;
-  const ISA_EXEMPT = 200; // 일반형 비과세 한도/회차 (만원)
+  // ── ISA: 연속 복리(해지·재개설 없음), 은퇴 시점에 비과세 한도 1회 적용 ──
+  const ISA_EXEMPT = 200; // 비과세 한도(만원) — 계약기간 중 1회 적용
 
-  if(endAge < startAge || startAge >= retAge){
-    let bal = curBal;
-    for(let age=curAge; age<retAge; age++) bal = bal*growFull;
-    return Math.max(0, Math.round(bal));
+  let bal = curBal;
+  let principal = curBal;
+  for(let age=curAge; age<retAge; age++){
+    const paying = age>=startAge && age<=endAge;
+    bal = paying ? bal*growFull + isay*growDep : bal*growFull;
+    if(paying) principal += isay;
   }
 
-  const totalPayYrs = endAge - startAge + 1;
-  let totalAtRet = 0; // 은퇴 시점 총 공백기 자금
+  const gain     = Math.max(0, bal - principal);
+  const taxable  = Math.max(0, gain - ISA_EXEMPT);
+  const afterTax = bal - taxable * 0.099;
 
-  // 전체 회차 순회
-  let age = startAge;
-  while(age <= endAge){
-    const cycleEnd  = Math.min(age + ISA_CYCLE - 1, endAge);
-    const cycleYrs  = cycleEnd - age + 1;
-
-    // 이 회차: 0원에서 시작, 납입 후 운용
-    let bal = 0;
-    for(let a=age; a<=cycleEnd; a++){
-      bal = bal*growFull + isay*growDep;
-    }
-
-    // 세후 처리
-    const principal = cycleYrs * isay;
-    const gain      = Math.max(0, bal - principal);
-    const taxable   = Math.max(0, gain - ISA_EXEMPT);
-    const afterTax  = bal - taxable * 0.099;
-
-    // 만기 시점에서 은퇴(retAge)까지 별도 운용 (동일 수익률)
-    const yearsToRet = retAge - cycleEnd - 1; // 만기 다음해부터 은퇴 전까지
-    const grownVal   = afterTax * Math.pow(growFull, Math.max(0, yearsToRet));
-
-    totalAtRet += grownVal;
-    age = cycleEnd + 1;
-  }
-
-  return Math.max(0, Math.round(totalAtRet));
+  return Math.max(0, Math.round(afterTax));
 }
 
 /* ── 사적연금 저율분리과세 세율 (연령별 차등, 소득세법 연금소득 원천징수세율) ── */
