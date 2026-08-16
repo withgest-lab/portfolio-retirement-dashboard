@@ -1339,7 +1339,7 @@ async function getStockHistory(ticker, range){
 
 // 종목별 가격 차트 캔버스 그리기 — drawLineChart()의 DPR/그리드 관례를 따르되
 // 단일 종목 절대가격 라인이라 다중자산 %-오버레이 로직과는 별도 함수로 분리
-function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency){
+function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, period){
   const wrap = canvas.parentElement;
   const cssW = wrap.clientWidth || 300, cssH = 200;
   const dpr = window.devicePixelRatio || 1;
@@ -1366,6 +1366,32 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency){
     const v=vMin+(vMax-vMin)*i/3, y=toY(v);
     ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(cssW-PAD_R,y); ctx.stroke();
     ctx.fillText(unitPriceStr(v, currency), PAD_L-6, y);
+  }
+
+  // X축 날짜 — 기간이 바뀌어도 어느 구간을 보고 있는지 알 수 있도록 표시(겹침 방지)
+  ctx.font='9px Pretendard'; ctx.fillStyle='#8e8e93'; ctx.textBaseline='alphabetic';
+  const maxXT = cssW<400?3:cssW<600?4:6;
+  const xT = Math.max(2, Math.min(maxXT, points.length));
+  const xPositions = [];
+  for(let i=0;i<xT;i++){
+    const idx = xT>1 ? Math.round(i/(xT-1)*(points.length-1)) : 0;
+    const x = toX(points[idx].ts);
+    const lastX = xPositions.length ? xPositions[xPositions.length-1] : null;
+    if(lastX!==null && x-lastX<40) continue;
+    xPositions.push(x);
+    const d = new Date(points[idx].ts);
+    const mo=d.getMonth()+1, dd=d.getDate();
+    ctx.textAlign = i===0 ? 'left' : (i===xT-1 ? 'right' : 'center');
+    let label;
+    if(['1D','5D'].includes(period)){
+      const hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+      label = mo+'/'+dd+' '+hh+':'+mm;
+    }else if(['1M','3M','6M','YTD'].includes(period)){
+      label = mo+'/'+dd;
+    }else{
+      label = String(d.getFullYear()).slice(2)+'/'+String(mo).padStart(2,'0');
+    }
+    ctx.fillText(label, x, PAD_T+BH+15);
   }
 
   ctx.beginPath();
@@ -1507,7 +1533,7 @@ async function loadAndDrawStockChart(id){
     ctx.fillText('시세 데이터를 불러올 수 없습니다', cssW/2, 100);
     return;
   }
-  drawStockPriceChart(canvas, points, tradeEntries, 'stockChartTip_'+id, a.currency);
+  drawStockPriceChart(canvas, points, tradeEntries, 'stockChartTip_'+id, a.currency, period);
 }
 
 // 종목 시세 조회: 한국 → 네이버 우선 → 야후 폴백 / 미국/일본 → 야후 프록시
