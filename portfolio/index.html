@@ -864,8 +864,13 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 </div>
 <div class="subpage" data-sub="monthly_table">
   <div class="card">
-    <div class="section-label">월별 성과</div>
-    <div class="tbl-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
+      <div class="section-label" style="margin:0">월별 성과</div>
+      <button class="btn-icon" id="monthlyPerfViewBtn" onclick="toggleMonthlyPerfView()"
+        style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
+    </div>
+    <div id="monthlyPerfBars" style="display:none;margin:14px 0 4px;"></div>
+    <div class="tbl-wrap" id="monthlyPerfTableWrap">
       <table class="table-auto">
         <thead><tr>
           <th style="text-align:left">월</th><th>월초잔액</th><th>월말잔액</th><th>순입출금</th>
@@ -3861,15 +3866,56 @@ function renderSnapStartNotices(){
   });
 }
 
+// 월별 성과 표시 모드 — 'table'(표) / 'chart'(막대그래프, 월별 손익 기준)
+let monthlyPerfView = 'table';
+function toggleMonthlyPerfView(){
+  monthlyPerfView = monthlyPerfView==='table' ? 'chart' : 'table';
+  renderMonthlyTable();
+}
+function renderMonthlyPerfBars(rows){
+  const barsEl = document.getElementById('monthlyPerfBars');
+  if(!barsEl) return;
+  const withPnl = rows.filter(r=>r.pnl!=null);
+  if(!withPnl.length){
+    barsEl.innerHTML = `<div class="notice" style="margin:0;">그래프로 표시할 손익 데이터가 없습니다.</div>`;
+    return;
+  }
+  const maxAbs = Math.max(...withPnl.map(r=>Math.abs(r.pnl)), 1);
+  barsEl.innerHTML = rows.map(r=>{
+    const label = `${r.year}.${String(r.month+1).padStart(2,'0')}`;
+    if(r.pnl==null){
+      return `<div class="bar-row"><div class="bar-label">${label}</div><div class="bar-track"></div><div class="bar-pct dim">—</div></div>`;
+    }
+    const pct = Math.min(100, Math.abs(r.pnl)/maxAbs*100);
+    return `<div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${r.pnl>=0?'var(--color-up)':'var(--color-down)'};"></div></div>
+      <div class="bar-pct ${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</div>
+    </div>`;
+  }).join('');
+}
 function renderMonthlyTable(){
   renderSnapStartNotices();
   const el = document.getElementById('monthlyPerfBody');
   if(!el) return;
   const rows = buildMonthlyPerformance();
+
+  const btn = document.getElementById('monthlyPerfViewBtn');
+  const barsEl = document.getElementById('monthlyPerfBars');
+  const tableWrap = document.getElementById('monthlyPerfTableWrap');
+  const isChart = monthlyPerfView==='chart';
+  if(btn) btn.textContent = isChart ? '📋 표로 보기' : '📊 그래프로 보기';
+  if(barsEl) barsEl.style.display = isChart ? '' : 'none';
+  if(tableWrap) tableWrap.style.display = isChart ? 'none' : '';
+
   if(!rows.length){
     el.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--color-tertiary);">스냅샷 데이터가 부족합니다.</td></tr>`;
+    if(barsEl) barsEl.innerHTML = `<div class="notice" style="margin:0;">스냅샷 데이터가 부족합니다.</div>`;
     return;
   }
+
+  if(isChart) renderMonthlyPerfBars(rows.slice().sort((a,b)=>(a.year-b.year)||(a.month-b.month)));
+
   el.innerHTML = rows.slice().reverse().map(r=>{
     const label = `${r.year}.${String(r.month+1).padStart(2,'0')}`;
     const flowStr = r.hasFlowData ? `${r.netFlow>=0?'+':''}${fmt(r.netFlow)}` : '—';
