@@ -40,8 +40,11 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .tabbar button.active{background:var(--color-accent);color:#fff;}
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
+/* 상단 탭바(고정, 52px+높이=88px) 바로 아래에 고정 — 스크롤해서 내려가도 자산 Quick View/
+   자산변화추이 등 서브탭 행이 화면에서 사라지지 않고 계속 눌러서 전환할 수 있게 유지된다. */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
-  padding:2px;margin-bottom:0;flex-wrap:wrap;}
+  padding:2px;margin-bottom:0;flex-wrap:wrap;
+  position:sticky;top:88px;z-index:50;}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
@@ -1488,7 +1491,31 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   };
 }
 
-let stockChartRangeMap = {};
+// 종목별로 마지막에 선택한 기간을 기억 — localStorage에 저장해 새로고침/재실행 후에도
+// 유지한다. 예전에는 메모리(let {})에만 있어서 페이지가 새로 로드될 때마다 조용히
+// 초기화됐고, 그게 "가끔씩 기간이 1년으로 자동 이동된다"는 문제의 원인이었다
+// (재현 트리거가 새로고침이라 사용자 입장에서는 원인을 특정하기 어려웠음).
+const STOCK_CHART_RANGE_KEY = 'pf_stock_chart_range_v1';
+function loadStockChartRangeMap(){
+  try{ return JSON.parse(localStorage.getItem(STOCK_CHART_RANGE_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveStockChartRangeMap(){
+  try{ localStorage.setItem(STOCK_CHART_RANGE_KEY, JSON.stringify(stockChartRangeMap)); }catch(e){}
+}
+let stockChartRangeMap = loadStockChartRangeMap();
+const STOCK_CHART_DEFAULT_PERIOD = 'YTD';
+const STOCK_CHART_PERIODS = ['1D','5D','1M','3M','6M','YTD','1Y','3Y','5Y','10Y','ALL'];
+// 종목 상세 패널의 기간 탭 버튼 — stockChartRangeMap에 저장된(없으면 기본값) 기간을
+// 매번 렌더링 시점에 반영해서 그린다. 예전에는 "1Y" 버튼에 class="active"가 고정
+// 텍스트로 박혀 있어서, 실제 선택된 기간과 무관하게 테이블이 다시 그려질 때마다
+// (시세 갱신 등으로 renderTable()이 재호출될 때마다) 화면상 활성 탭이 1Y로 되돌아가
+// 보였다.
+function renderStockChartPeriodTabs(id){
+  const current = stockChartRangeMap[id] || STOCK_CHART_DEFAULT_PERIOD;
+  return STOCK_CHART_PERIODS.map(p=>
+    `<button data-p="${p}" class="${p===current?'active':''}" onclick="setStockChartRange('${id}','${p}')">${p}</button>`
+  ).join('');
+}
 function toggleStockChart(id){
   quickTradeId = null; editingId = null;
   chartDetailId = chartDetailId===id ? null : id;
@@ -1502,6 +1529,7 @@ const STOCK_CHART_PERIOD_TO_YAHOO_RANGE = {
 };
 function setStockChartRange(id, period){
   stockChartRangeMap[id] = period;
+  saveStockChartRangeMap();
   document.querySelectorAll(`#stockChartPeriodTabs_${id} button`).forEach(b=>{
     b.classList.toggle('active', b.dataset.p===period);
   });
@@ -1537,7 +1565,7 @@ async function loadAndDrawStockChart(id){
     ctx.fillText('티커 정보가 없어 시세를 불러올 수 없습니다', cssW/2, 100);
     return;
   }
-  const period = stockChartRangeMap[id] || '1Y';
+  const period = stockChartRangeMap[id] || STOCK_CHART_DEFAULT_PERIOD;
   const range = STOCK_CHART_PERIOD_TO_YAHOO_RANGE[period] || '1y';
   const points = await getStockHistory(yTicker, range);
   // 요청 중 사용자가 패널을 닫았거나 다른 종목으로 바꿨으면 그리지 않음
@@ -2634,19 +2662,7 @@ function renderTable(){
         <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
-            <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">
-              <button data-p="1D" onclick="setStockChartRange('${a.id}','1D')">1D</button>
-              <button data-p="5D" onclick="setStockChartRange('${a.id}','5D')">5D</button>
-              <button data-p="1M" onclick="setStockChartRange('${a.id}','1M')">1M</button>
-              <button data-p="3M" onclick="setStockChartRange('${a.id}','3M')">3M</button>
-              <button data-p="6M" onclick="setStockChartRange('${a.id}','6M')">6M</button>
-              <button data-p="YTD" onclick="setStockChartRange('${a.id}','YTD')">YTD</button>
-              <button data-p="1Y" class="active" onclick="setStockChartRange('${a.id}','1Y')">1Y</button>
-              <button data-p="3Y" onclick="setStockChartRange('${a.id}','3Y')">3Y</button>
-              <button data-p="5Y" onclick="setStockChartRange('${a.id}','5Y')">5Y</button>
-              <button data-p="10Y" onclick="setStockChartRange('${a.id}','10Y')">10Y</button>
-              <button data-p="ALL" onclick="setStockChartRange('${a.id}','ALL')">ALL</button>
-            </div>
+            <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
           </div>
           <div class="chart-wrap"><canvas id="stockChart_${a.id}" height="200"></canvas></div>
           <div id="stockChartTip_${a.id}" class="notice" style="display:none;margin-top:8px;line-height:1.6;"></div>
