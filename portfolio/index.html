@@ -14,7 +14,7 @@
   font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:88px;}
+body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:92px;}
 
 /* ── 헤더 ── */
 .topbar{background:var(--color-card);border-bottom:1px solid var(--color-border);
@@ -40,15 +40,21 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .tabbar button.active{background:var(--color-accent);color:#fff;}
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
-/* 상단 탭바(고정, 52px+높이=88px) 바로 아래에 고정 — 스크롤해서 내려가도 자산 Quick View/
-   자산변화추이 등 서브탭 행이 화면에서 사라지지 않고 계속 눌러서 전환할 수 있게 유지된다. */
+/* 상단 탭바(고정, 52px+높이=92px) 바로 아래에 완전히 고정(position:fixed) — 스크롤해서
+   내려가도 자산 Quick View/자산변화추이 등 서브탭 행이 화면에서 사라지지 않는다.
+   이전엔 position:sticky를 썼는데 스크롤 중 살짝 작아지며 흔들리는 현상이 있었고, 상단
+   탭바·헤더와도 위치 방식이 달라 통일성이 없었음 — topbar/tabbar와 동일하게 fixed로 통일.
+   fixed는 문서 흐름에서 빠지므로, 바로 뒤에 오는 .subtabbar-spacer가 그만큼의 높이를
+   차지해 아래 콘텐츠가 가려지지 않게 한다(실제 높이는 JS가 렌더 후 측정해 반영). */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
-  padding:2px;margin-bottom:0;flex-wrap:wrap;
-  position:sticky;top:88px;z-index:50;}
+  padding:2px;flex-wrap:wrap;
+  position:fixed;top:92px;left:12px;right:12px;max-width:1256px;margin:0 auto;
+  box-sizing:border-box;z-index:50;}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
 .subtabbar button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.subtabbar-spacer{height:31px;}
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
 .page{display:none;flex-direction:column;gap:6px;}
@@ -80,7 +86,6 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn-ghost{background:var(--color-section-bg);color:var(--color-text);}
 .btn-green{background:#34c75920;color:#34c759;}
 .btn-red{background:#ff3b3015;color:var(--color-up);}
-.btn-sheets{background:#34a85320;color:#34a853;}
 
 /* ── 레이아웃 ── */
 .main{max-width:1280px;margin:0 auto;padding:4px 12px 48px;display:flex;flex-direction:column;gap:16px;}
@@ -249,15 +254,16 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .index-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
 .index-val{font-size:14px;font-weight:800;letter-spacing:-.03em;margin-top:3px;}
 .index-chg{font-size:11px;font-weight:600;margin-top:2px;}
-/* 시장 그룹(미국/한국/환율)별로 한 카드에 종목을 나란히 표시 */
-.index-group-card{background:var(--color-card);border-radius:var(--radius);border:1px solid var(--color-border);padding:12px 14px;}
-.index-group-title{font-size:11px;color:var(--color-tertiary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
-.index-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--color-border);}
+/* 시장 그룹(미국/한국/환율)별로 한 카드에 종목을 나란히 표시 — 카드가 너무 커 보인다는
+   피드백에 따라 한눈에 알아볼 수 있는 선에서 여백·글자 크기를 최소화 */
+.index-group-card{background:var(--color-card);border-radius:var(--radius-sm);border:1px solid var(--color-border);padding:8px 10px;}
+.index-group-title{font-size:9px;color:var(--color-tertiary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+.index-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;border-top:1px solid var(--color-border);}
 .index-row:first-of-type{border-top:none;}
-.index-row-name{font-size:13px;font-weight:700;color:var(--color-text);}
-.index-row-vals{display:flex;align-items:baseline;gap:8px;flex-shrink:0;}
-.index-row-vals .index-val{font-size:13px;margin-top:0;}
-.index-row-vals .index-chg{font-size:11px;margin-top:0;white-space:nowrap;}
+.index-row-name{font-size:11px;font-weight:700;color:var(--color-text);}
+.index-row-vals{display:flex;align-items:baseline;gap:6px;flex-shrink:0;}
+.index-row-vals .index-val{font-size:11px;margin-top:0;}
+.index-row-vals .index-chg{font-size:9px;margin-top:0;white-space:nowrap;}
 
 /* ── 스냅샷 ── */
 .snap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
@@ -312,9 +318,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;"></span>
     </div>
     <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
-    <button class="btn btn-green" onclick="fetchAllPrices(false)">🔄 시세 갱신</button>
-    <button class="btn btn-primary" onclick="saveSnap(true)">📸 스냅샷</button>
-    <button class="btn btn-sheets" onclick="openBackupModal()">💾 백업 / 복원</button>
+    <button class="btn btn-green" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
+    <button class="btn btn-green" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
+    <button class="btn btn-green" onclick="openBackupModal()">💾 백업 / 복원</button>
   </div>
 </div>
 
@@ -337,6 +343,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-sub="alloc" onclick="switchSubPage('dashboard','alloc')">비중현황</button>
   <button data-sub="indices" onclick="switchSubPage('dashboard','indices')">글로벌시장</button>
 </nav>
+<div class="subtabbar-spacer"></div>
 
 <!-- 자산 Quick View: 축소 요약 + 트리맵이 메인 -->
 <div class="subpage active" data-sub="summary" id="qvSubpage">
@@ -346,8 +353,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <div class="section-label" style="margin:0">종목 트리맵</div>
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="qvModeTabs">
-          <button data-mode="holding" onclick="setQuickViewMode('holding')">기간별 총수익률</button>
           <button data-mode="market" class="active" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
+          <button data-mode="holding" onclick="setQuickViewMode('holding')">기간별 총수익률</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="qvPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
           <button data-p="1D" class="active" onclick="setQuickViewPeriod('1D')">1D</button>
@@ -374,10 +381,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="card">
   <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
     <div class="toggles" id="assetToggles" style="margin:0;"></div>
-    <details class="collapsible" style="margin:0;">
-      <summary>종목별 보기</summary>
-      <div class="toggles" id="assetTogglesDetail" style="margin-top:6px;"></div>
-    </details>
+    <button type="button" id="stockDetailToggleBtn" onclick="toggleStockDetailToggles()"
+      style="cursor:pointer;color:var(--color-secondary);font-weight:600;font-size:11px;
+             background:none;border:none;padding:4px 0;font-family:inherit;white-space:nowrap;">▸ 종목별 보기</button>
     <div class="period-tabs period-tabs-sm" id="periodTabs" style="margin-left:auto;">
       <button onclick="setPeriod('1D')" class="active">1D</button>
       <button onclick="setPeriod('5D')">5D</button>
@@ -392,6 +398,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <button onclick="setPeriod('ALL')">ALL</button>
     </div>
   </div>
+  <div class="toggles" id="assetTogglesDetail" style="display:none;margin-top:6px;"></div>
   <div class="chart-wrap" style="margin-top:6px;"><canvas id="lineChart" height="320"></canvas></div>
   <div class="stat-bar" id="statBar"></div>
 </div>
@@ -490,8 +497,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
                   text-transform:uppercase;letter-spacing:.06em;">종목별 평가금액(크기) · 선택 기간 수익률(색)</div>
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="allocTreemapModeTabs">
-          <button data-mode="holding" onclick="setAllocTreemapMode('holding')">기간별 총수익률</button>
           <button data-mode="market" class="active" onclick="setAllocTreemapMode('market')">기간별 주가 변화율</button>
+          <button data-mode="holding" onclick="setAllocTreemapMode('holding')">기간별 총수익률</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="allocTreemapPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
           <button data-p="1D" onclick="setAllocTreemapPeriod('1D')">1D</button>
@@ -527,8 +534,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="section-label" style="margin:0">내 보유종목 · 시장별 비중</div>
     <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
       <div class="period-tabs" id="mktModeTabs">
-        <button data-mode="holding" onclick="setMarketTreemapMode('holding')">기간별 총수익률</button>
         <button data-mode="market" class="active" onclick="setMarketTreemapMode('market')">기간별 주가 변화율</button>
+        <button data-mode="holding" onclick="setMarketTreemapMode('holding')">기간별 총수익률</button>
       </div>
       <div class="period-tabs period-tabs-sm" id="mktPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
         <button data-p="1D" onclick="setMarketTreemapPeriod('1D')">1D</button>
@@ -865,6 +872,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-sub="monthly_chart" onclick="switchSubPage('returns','monthly_chart')">원금 vs 자산가치</button>
   <button data-sub="principal" onclick="switchSubPage('returns','principal')">원금기록장</button>
 </nav>
+<div class="subtabbar-spacer"></div>
 <div class="subpage active" data-sub="yearly">
   <div class="card">
     <div class="section-label">연도별 수익률 분석</div>
@@ -989,6 +997,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-sub="stock" onclick="switchSubPage('dividend','stock')">종목별 집계</button>
   <button data-sub="calendar" onclick="switchSubPage('dividend','calendar')">월별 캘린더</button>
 </nav>
+<div class="subtabbar-spacer"></div>
 <div class="subpage active" data-sub="monthly">
   <div class="card">
     <div class="section-label">월별 배당 집계</div>
@@ -1041,6 +1050,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button class="active" data-sub="cgt" onclick="switchSubPage('tax','cgt')">해외주식 양도소득세</button>
   <button data-sub="fit" onclick="switchSubPage('tax','fit')">금융소득종합과세</button>
 </nav>
+<div class="subtabbar-spacer"></div>
 <div class="subpage active" data-sub="cgt">
   <div class="card">
     <div class="section-label">해외주식 양도소득세 (<span id="cgtYear"></span>년 예상)</div>
@@ -1657,6 +1667,30 @@ function setStatus(state,text){
   // 환율 항상 표시
   const fx = document.getElementById('fxDisplay');
   if(fx) fx.textContent = `$1=₩${FX.USD.toLocaleString('ko-KR',{maximumFractionDigits:1})} · ¥1=₩${FX.JPY.toFixed(2)}`;
+}
+
+// "시세 갱신"/"스냅샷" 버튼 클릭 피드백 — 상태 표시줄(statusDot/statusText)만으로는
+// 버튼을 눌렀다는 게 바로 눈에 띄지 않아서, 버튼 자체를 잠깐 비활성화하고 완료 문구로
+// 바꿔 눌렸다는 것과 완료됐다는 것을 명확히 알 수 있게 한다.
+async function onRefreshPricesClick(btn){
+  if(!btn || isFetching) return;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ 갱신 중...';
+  try{
+    await fetchAllPrices(false);
+    btn.innerHTML = '✅ 완료';
+  } finally {
+    setTimeout(()=>{ btn.innerHTML = original; btn.disabled = false; }, 900);
+  }
+}
+function onSaveSnapClick(btn){
+  saveSnap(true);
+  if(!btn) return;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '✅ 저장됨';
+  setTimeout(()=>{ btn.innerHTML = original; btn.disabled = false; }, 900);
 }
 
 let isFetching=false;
@@ -3093,6 +3127,18 @@ function delAsset(id){
 const PAGE_IDS = ['dashboard','portfolio','tradelog','returns','dividend','tax'];
 // 페이지 전환 후 다시 그려야 하는(캔버스 포함 등) 렌더 훅. 각 단계에서 해당 페이지 구현 시 채워 넣는다.
 const PAGE_RENDER_HOOKS = {};
+// 고정(position:fixed) 서브탭바는 문서 흐름 밖에 있어 바로 뒤 spacer가 그 높이만큼
+// 자리를 대신 차지해야 아래 콘텐츠가 가려지지 않는다 — 서브탭 구성이 페이지마다 달라
+// 줄바꿈 여부 등으로 실제 높이가 조금씩 다를 수 있으므로 렌더 후 실측해서 반영한다.
+function syncSubtabbarSpacers(){
+  document.querySelectorAll('.subtabbar').forEach(bar=>{
+    const spacer = bar.nextElementSibling;
+    if(!spacer || !spacer.classList.contains('subtabbar-spacer')) return;
+    const h = bar.getBoundingClientRect().height;
+    if(h > 0) spacer.style.height = h+'px';
+  });
+}
+
 function switchPage(pageId){
   if(!PAGE_IDS.includes(pageId)) return;
   PAGE_IDS.forEach(id=>{
@@ -3104,6 +3150,7 @@ function switchPage(pageId){
   });
   localStorage.setItem('currentPage', pageId);
   if(typeof PAGE_RENDER_HOOKS[pageId]==='function') PAGE_RENDER_HOOKS[pageId]();
+  setTimeout(syncSubtabbarSpacers, 0);
 }
 // 서브탭이 있는 페이지(대시보드/세금관리/배당금관리/월별성과)에서 사용.
 // subRenderHooks: {subId: fn} — 해당 서브페이지가 보여질 때 다시 그려야 하는 렌더 함수(캔버스 등)
@@ -6066,6 +6113,18 @@ function renderStatBar(){
   }).join('')+'</div>';
 }
 
+// 자산변화추이 "종목별 보기" — 예전에는 <details>였는데, 펼칠 때 같은 flex 행에 있던
+// 기간 탭(오른쪽)까지 같이 밀리거나 줄바꿈되어 위치가 흔들렸다. 버튼은 항상 제자리에
+// 고정하고, 펼침 목록만 그 아래 별도 줄에 나타나거나 사라지도록 분리.
+let stockDetailTogglesOpen = false;
+function toggleStockDetailToggles(){
+  stockDetailTogglesOpen = !stockDetailTogglesOpen;
+  const btn = document.getElementById('stockDetailToggleBtn');
+  const detail = document.getElementById('assetTogglesDetail');
+  if(btn) btn.textContent = (stockDetailTogglesOpen ? '▾' : '▸') + ' 종목별 보기';
+  if(detail) detail.style.display = stockDetailTogglesOpen ? '' : 'none';
+}
+
 function renderToggles(){
   const allSelected = assets.every(a=>selectedAssets.has(a.id));
   const noneSelected = assets.every(a=>!selectedAssets.has(a.id));
@@ -6378,6 +6437,7 @@ window.addEventListener('resize',()=>{
   resizeRedrawTimer = setTimeout(()=>{
     drawLineChart();
     refreshActiveViewCanvases();
+    syncSubtabbarSpacers();
   }, 150);
 });
 
