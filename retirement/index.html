@@ -325,12 +325,14 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row .ilabel{font-size:9px;white-space:nowrap;}
 .basic-row .ival-input{width:56px;font-size:12.5px;padding:3px 4px;}
 .basic-row .unit-tag{width:22px;font-size:9px;}
-.basic-row .suggest-btn{width:auto;min-width:88px;flex-shrink:0;margin:0 0 0 auto;padding:6px 12px;
+.basic-row .suggest-btn{width:auto;min-width:88px;flex-shrink:0;margin:0;padding:6px 12px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   line-height:1.25;}
-/* "자동설계 상세 근거 보기" — 사적연금한도 칸과 자동설계 버튼 사이 빈 공간에 끼워 넣어
-   별도 줄 없이 공간을 절약. 펼쳐도 트리거(summary)의 위치·basic-row 레이아웃은 그대로
-   유지되도록, 내용(suggest-box)만 position:absolute로 행 전체 아래에 드롭다운처럼 띄움. */
+/* "자동설계 상세 근거 보기" + 자동설계 버튼을 한 묶음으로 묶어 항상 근거 보기가 버튼
+   바로 왼쪽에 붙어 있게 하고(줄바꿈 때도 함께 이동), 이 묶음 자체를 basic-row 오른쪽
+   끝에 붙임. 펼쳐도 트리거(summary)의 위치·basic-row 레이아웃은 그대로 유지되도록,
+   내용(suggest-box)만 position:absolute로 행 전체 아래에 드롭다운처럼 띄움. */
+.basic-row-action{display:flex;align-items:center;gap:6px;flex-shrink:0;margin:0 0 0 auto;}
 .basic-row-detail{align-self:center;flex-shrink:1;min-width:0;position:static;}
 .basic-row-detail > summary{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
 .basic-row-detail #suggest-box{position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:6;
@@ -665,8 +667,9 @@ button{font-family:inherit;cursor:pointer;}
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500"  oninput="syncInput('plimit');scheduleUpd()">
 </div>
-<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. 아래는 상세 계산 근거(선택) —
-     사적연금한도 칸과 자동설계 버튼 사이 빈 공간에 배치해 별도 줄을 만들지 않음 -->
+<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. "자동설계 상세 근거 보기"는
+     항상 자동설계 버튼 바로 왼쪽에 붙어 있도록 버튼과 한 묶음으로 감싸 줄바꿈 때도 함께 이동함 -->
+<div class="basic-row-action">
 <details class="collapsible basic-row-detail">
   <summary>자동설계 상세 근거 보기</summary>
   <div class="suggest-result" id="suggest-box"></div>
@@ -675,6 +678,7 @@ button{font-family:inherit;cursor:pointer;}
   <span style="font-size:11.5px;">🎯 자동설계</span>
   <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
 </button>
+</div>
 </div>
 <div class="suggest-result" id="fit90-box"></div>
 </div>
