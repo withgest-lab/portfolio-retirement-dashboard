@@ -265,6 +265,10 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 .tab-btn{padding:3px 9px;font-size:11px;border-radius:5px;cursor:pointer;
   border:1px solid #ddd;background:#fff;color:#888;font-family:inherit;}
 .tab-btn.on{background:#3D5A66;color:#fff;border-color:#3D5A66;font-weight:700;}
+
+/* ── 최상위 탭: 설계 / 예상결과 ── */
+.main-tabs{display:flex;gap:6px;margin:10px 0;}
+.main-tabs .tab-btn{flex:1;padding:9px 10px;font-size:13px;border-radius:8px;text-align:center;font-weight:700;}
 .phase-seg{border-radius:4px;padding:5px 6px;font-size:10px;font-weight:700;
   line-height:1.5;white-space:pre-line;}
 .phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
@@ -579,10 +583,16 @@ button{font-family:inherit;cursor:pointer;}
   <div class="pb-insight" id="pb-insight"></div>
 </div>
 
+<!-- 최상위 탭: 설계(입력) / 예상결과(차트) -->
+<div class="main-tabs">
+  <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')">📝 설계</button>
+  <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')">📊 예상결과</button>
+</div>
+
 <div class="main-layout">
 
 <!-- ══ 왼쪽 패널 ══ -->
-<div class="left-panel">
+<div class="left-panel" id="designTab">
 
 <div class="panel">
 <div class="panel-title"><span>기본 정보</span><span class="req-tag">(필수 기입 항목)</span></div>
@@ -1092,7 +1102,7 @@ button{font-family:inherit;cursor:pointer;}
 
 </div><!-- left-panel -->
 
-<div class="right-panel">
+<div class="right-panel" id="resultTab" style="display:none;">
   <div class="chart-wrap">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:9px;">
       <div class="tabs">
@@ -2081,6 +2091,19 @@ function getP(){
 }
 
 function setTab(t){ chartTab=t; ['flow','asset'].forEach(x=>document.getElementById('tb-'+x).className='tab-btn'+(x===t?' on':'')); upd(); }
+
+// 최상위 탭: 설계(입력 폼) / 예상결과(차트·시나리오) — 캔버스 차트는 display:none인 상태에서
+// 그려지면 크기가 0으로 굳어버리므로, 결과 탭으로 전환할 때는 항상 upd()를 다시 호출해
+// 실제로 보이는 크기로 다시 그린다.
+let mainTab='design';
+function setMainTab(t){
+  mainTab=t;
+  document.getElementById('mtb-design').className='tab-btn'+(t==='design'?' on':'');
+  document.getElementById('mtb-result').className='tab-btn'+(t==='result'?' on':'');
+  document.getElementById('designTab').style.display = t==='design' ? '' : 'none';
+  document.getElementById('resultTab').style.display = t==='result' ? '' : 'none';
+  if(t==='result') upd();
+}
 
 /* ── 세금 상식 가이드 모달 ── */
 /* ── "세금 상식" 인라인 패널 (모달 아님 — 버튼으로 펼침/접힘 토글) ── */
