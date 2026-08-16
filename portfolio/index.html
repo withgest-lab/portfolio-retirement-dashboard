@@ -60,10 +60,17 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
    주의: sticky가 고정될 때는 margin가 top 오프셋에 반영되지 않으므로(margin으로 여백을
    주면 스크롤해서 붙는 순간 여백이 사라지는 점프가 생김), 여백은 margin이 아니라 top 값
    자체와 .main의 padding-top(아래)에 동일한 값을 넣어 흐름 상태·고정 상태 둘 다 똑같이 8px
-   여백이 나오도록 맞춘다. */
+   여백이 나오도록 맞춘다.
+   ::before로 subtabbar 바로 위 8px(tabbar가 고정되는 지점부터 subtabbar가 고정되는
+   지점까지)을 subtabbar 자신의 불투명한 배경으로 미리 덮어 둔다 — 이 구간은 어느 sticky
+   요소에도 속하지 않는 문서 흐름상의 빈틈이라, 스크롤 중 그 아래 콘텐츠(예: 자산변화추이의
+   "전체 선택/해제" 행)가 짧은 순간 그 틈으로 비쳐 보이는 문제가 있었음. ::before는 subtabbar와
+   같은 sticky 박스에 얹혀 있어 subtabbar가 스크롤되든 고정되든 항상 같이 그 틈을 가린다. */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
   padding:2px;flex-wrap:wrap;
   position:sticky;top:100px;z-index:50;}
+.subtabbar::before{content:'';position:absolute;top:-8px;left:0;right:0;height:8px;
+  background:var(--color-section-bg);}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
