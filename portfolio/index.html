@@ -14,7 +14,7 @@
   font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:92px;}
+body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:52px;}
 
 /* ── 헤더 ── */
 .topbar{background:var(--color-card);border-bottom:1px solid var(--color-border);
@@ -35,7 +35,11 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* ── 탭바 (상위 9개 탭) ── */
-.tabbar{position:fixed;top:52px;left:0;right:0;z-index:99;background:var(--color-card);
+/* position:sticky — topbar(fixed) 바로 아래에서 스크롤하면 자연스럽게 붙는다. sticky는
+   일반 문서 흐름 안에 남아 있으므로 자기 높이만큼의 자리를 스스로 차지한다(JS로 spacer
+   높이를 계산해줄 필요가 없음 — 예전 fixed+JS-spacer 방식은 모바일에서 스크롤 중 주소창이
+   접히고 펼쳐질 때마다 재계산이 겹쳐 콘텐츠가 순간적으로 겹치거나 흔들리는 문제가 반복됐음). */
+.tabbar{position:sticky;top:52px;z-index:99;background:var(--color-card);
   border-bottom:1px solid var(--color-border);display:flex;gap:4px;
   overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;scrollbar-width:none;}
 .tabbar::-webkit-scrollbar{display:none;}
@@ -45,21 +49,20 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .tabbar button.active{background:var(--color-accent);color:#fff;}
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
-/* 상단 탭바(고정, 52px+높이=92px) 바로 아래에 완전히 고정(position:fixed) — 스크롤해서
-   내려가도 자산 Quick View/자산변화추이 등 서브탭 행이 화면에서 사라지지 않는다.
-   이전엔 position:sticky를 썼는데 스크롤 중 살짝 작아지며 흔들리는 현상이 있었고, 상단
-   탭바·헤더와도 위치 방식이 달라 통일성이 없었음 — topbar/tabbar와 동일하게 fixed로 통일.
-   fixed는 문서 흐름에서 빠지므로, 바로 뒤에 오는 .subtabbar-spacer가 그만큼의 높이를
-   차지해 아래 콘텐츠가 가려지지 않게 한다(실제 높이는 JS가 렌더 후 측정해 반영). */
+/* tabbar와 동일하게 position:sticky. tabbar의 스크롤-고정 위치(top:52px) 바로 아래
+   8px 여백을 두고 100px(=52+tabbar 높이 40px+8px)에서 붙는다. .page 안의 일반 흐름
+   요소이므로 .main의 max-width를 그대로 물려받아 좌우 정렬을 위한 별도 계산이 필요 없다.
+   주의: sticky가 고정될 때는 margin가 top 오프셋에 반영되지 않으므로(margin으로 여백을
+   주면 스크롤해서 붙는 순간 여백이 사라지는 점프가 생김), 여백은 margin이 아니라 top 값
+   자체와 .main의 padding-top(아래)에 동일한 값을 넣어 흐름 상태·고정 상태 둘 다 똑같이 8px
+   여백이 나오도록 맞춘다. */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
   padding:2px;flex-wrap:wrap;
-  position:fixed;top:100px;left:12px;right:12px;max-width:1256px;margin:0 auto;
-  box-sizing:border-box;z-index:50;}
+  position:sticky;top:100px;z-index:50;}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
 .subtabbar button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.subtabbar-spacer{height:39px;}
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
 .page{display:none;flex-direction:column;gap:6px;}
@@ -93,7 +96,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn-red{background:#ff3b3015;color:var(--color-up);}
 
 /* ── 레이아웃 ── */
-.main{max-width:1280px;margin:0 auto;padding:4px 12px 48px;display:flex;flex-direction:column;gap:16px;}
+.main{max-width:1280px;margin:0 auto;padding:8px 12px 48px;display:flex;flex-direction:column;gap:16px;}
 .card{background:var(--color-card);border-radius:var(--radius);border:1px solid var(--color-border);padding:16px;}
 .section-label{font-size:11px;font-weight:600;color:var(--color-tertiary);
   text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
@@ -350,7 +353,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-sub="alloc" onclick="switchSubPage('dashboard','alloc')">비중현황</button>
   <button data-sub="indices" onclick="switchSubPage('dashboard','indices')">글로벌시장</button>
 </nav>
-<div class="subtabbar-spacer"></div>
 
 <!-- 자산 Quick View: 축소 요약 + 트리맵이 메인 -->
 <div class="subpage active" data-sub="summary" id="qvSubpage">
@@ -879,7 +881,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-sub="monthly_chart" onclick="switchSubPage('returns','monthly_chart')">원금 vs 자산가치</button>
   <button data-sub="principal" onclick="switchSubPage('returns','principal')">원금기록장</button>
 </nav>
-<div class="subtabbar-spacer"></div>
 <div class="subpage active" data-sub="yearly">
   <div class="card">
     <div class="section-label">연도별 수익률 분석</div>
@@ -1004,7 +1005,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-sub="stock" onclick="switchSubPage('dividend','stock')">종목별 집계</button>
   <button data-sub="calendar" onclick="switchSubPage('dividend','calendar')">월별 캘린더</button>
 </nav>
-<div class="subtabbar-spacer"></div>
 <div class="subpage active" data-sub="monthly">
   <div class="card">
     <div class="section-label">월별 배당 집계</div>
@@ -1057,7 +1057,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button class="active" data-sub="cgt" onclick="switchSubPage('tax','cgt')">해외주식 양도소득세</button>
   <button data-sub="fit" onclick="switchSubPage('tax','fit')">금융소득종합과세</button>
 </nav>
-<div class="subtabbar-spacer"></div>
 <div class="subpage active" data-sub="cgt">
   <div class="card">
     <div class="section-label">해외주식 양도소득세 (<span id="cgtYear"></span>년 예상)</div>
@@ -3134,24 +3133,6 @@ function delAsset(id){
 const PAGE_IDS = ['dashboard','portfolio','tradelog','returns','dividend','tax'];
 // 페이지 전환 후 다시 그려야 하는(캔버스 포함 등) 렌더 훅. 각 단계에서 해당 페이지 구현 시 채워 넣는다.
 const PAGE_RENDER_HOOKS = {};
-// 고정(position:fixed) 서브탭바는 문서 흐름 밖에 있어 바로 뒤 spacer가 그 높이만큼
-// 자리를 대신 차지해야 아래 콘텐츠가 가려지지 않는다 — 서브탭 구성이 페이지마다 달라
-// 줄바꿈 여부 등으로 실제 높이가 조금씩 다를 수 있으므로 렌더 후 실측해서 반영한다.
-function syncSubtabbarSpacers(){
-  document.querySelectorAll('.subtabbar').forEach(bar=>{
-    const spacer = bar.nextElementSibling;
-    if(!spacer || !spacer.classList.contains('subtabbar-spacer')) return;
-    // spacer 자신의 top 위치는 자신의 height와 무관(블록 요소는 앞선 형제들의 크기로만
-    // top이 정해짐)하므로, height를 0으로 잠깐 낮췄다 다시 올리는 과정 없이 바로 측정한다
-    // — 예전엔 0으로 낮췄다 복원하는 방식이라 스크롤 중 resize가 겹치면 순간적으로 콘텐츠가
-    // 확 붙었다 떨어지는 게 보이는 원인이었다.
-    const spacerTop = spacer.getBoundingClientRect().top;
-    const barBottom = bar.getBoundingClientRect().bottom;
-    const h = barBottom - spacerTop;
-    if(h > 0) spacer.style.height = h+'px';
-  });
-}
-
 function switchPage(pageId){
   if(!PAGE_IDS.includes(pageId)) return;
   PAGE_IDS.forEach(id=>{
@@ -3163,7 +3144,6 @@ function switchPage(pageId){
   });
   localStorage.setItem('currentPage', pageId);
   if(typeof PAGE_RENDER_HOOKS[pageId]==='function') PAGE_RENDER_HOOKS[pageId]();
-  setTimeout(syncSubtabbarSpacers, 0);
 }
 // 서브탭이 있는 페이지(대시보드/세금관리/배당금관리/월별성과)에서 사용.
 // subRenderHooks: {subId: fn} — 해당 서브페이지가 보여질 때 다시 그려야 하는 렌더 함수(캔버스 등)
@@ -6445,8 +6425,8 @@ function refreshActiveViewCanvases(){
 // 폴더블 폰 접기/펼치기처럼 전환 도중 resize가 여러 번(중간 크기 포함) 발생할 수 있으므로, 마지막
 // 이벤트 이후 잠깐 기다렸다가 딱 한 번만 다시 그려서 애니메이션 중간 크기로 잘못 그려지지 않게 한다.
 // 모바일에서는 스크롤 중 주소창이 접히고 펼쳐지며 innerHeight만 계속 바뀌어도 'resize'가 발생하는데,
-// 이때마다 차트를 다시 그리고 서브탭바 spacer를 재계산하면 스크롤 중 화면이 불안정하게 흔들리므로,
-// 실제로 폭(width)이 바뀐 경우에만 반응한다(높이만 바뀐 건 주소창 애니메이션으로 간주해 무시).
+// 이때마다 캔버스를 다시 그리면 스크롤 중 불필요하게 화면이 깜빡이므로, 실제로 폭(width)이
+// 바뀐 경우에만 반응한다(높이만 바뀐 건 주소창 애니메이션으로 간주해 무시).
 let resizeRedrawTimer = null;
 let lastResizeWidth = window.innerWidth;
 window.addEventListener('resize',()=>{
@@ -6456,7 +6436,6 @@ window.addEventListener('resize',()=>{
   resizeRedrawTimer = setTimeout(()=>{
     drawLineChart();
     refreshActiveViewCanvases();
-    syncSubtabbarSpacers();
   }, 150);
 });
 
