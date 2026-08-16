@@ -230,11 +230,18 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .bar-pct{font-size:12px;font-weight:700;white-space:nowrap;width:110px;flex-shrink:0;}
 
 /* ── 지수 ── */
-.index-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;}
-.index-card{background:var(--color-card);border-radius:var(--radius);border:1px solid var(--color-border);padding:12px 10px;}
-.index-name{font-size:10px;color:var(--color-tertiary);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.index-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
 .index-val{font-size:14px;font-weight:800;letter-spacing:-.03em;margin-top:3px;}
 .index-chg{font-size:11px;font-weight:600;margin-top:2px;}
+/* 시장 그룹(미국/한국/환율)별로 한 카드에 종목을 나란히 표시 */
+.index-group-card{background:var(--color-card);border-radius:var(--radius);border:1px solid var(--color-border);padding:12px 14px;}
+.index-group-title{font-size:11px;color:var(--color-tertiary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
+.index-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--color-border);}
+.index-row:first-of-type{border-top:none;}
+.index-row-name{font-size:13px;font-weight:700;color:var(--color-text);}
+.index-row-vals{display:flex;align-items:baseline;gap:8px;flex-shrink:0;}
+.index-row-vals .index-val{font-size:13px;margin-top:0;}
+.index-row-vals .index-chg{font-size:11px;margin-top:0;white-space:nowrap;}
 
 /* ── 스냅샷 ── */
 .snap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
@@ -269,7 +276,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   .topbar-actions .status-wrap span{display:none;}
   .biased-wrap{flex-direction:column;}
   .bar-side{min-width:unset;width:100%;}
-  .index-grid{grid-template-columns:repeat(3,1fr);}
+  .index-grid{grid-template-columns:1fr;}
   .add-form{flex-direction:column;align-items:stretch;}
   table{font-size:10px;}
   th,td{padding:6px 3px;}
@@ -2599,7 +2606,7 @@ function renderTable(){
       rows+=`<tr style="background:var(--color-card);">
         <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-            <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;color:var(--color-tertiary);">(매수 ▲ 매도 ▼)</span></div>
+            <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
             <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">
               <button data-p="1D" onclick="setStockChartRange('${a.id}','1D')">1D</button>
               <button data-p="5D" onclick="setStockChartRange('${a.id}','5D')">5D</button>
@@ -3925,6 +3932,32 @@ function drawPrincipalVsValueChart(){
     ctx.fillText(fmt(v), PAD_L-6, y);
   }
 
+  // X축 날짜 — 기간이 바뀌어도 어느 구간을 보고 있는지 알 수 있도록 표시(겹침 방지)
+  ctx.font='9px Pretendard'; ctx.fillStyle='#8e8e93'; ctx.textBaseline='alphabetic';
+  const maxXT = cssW<400?3:cssW<600?4:6;
+  const xT = Math.max(2, Math.min(maxXT, series.length));
+  const xPositions = [];
+  for(let i=0;i<xT;i++){
+    const idx = xT>1 ? Math.round(i/(xT-1)*(series.length-1)) : 0;
+    const x = toX(series[idx].ts);
+    const lastX = xPositions.length ? xPositions[xPositions.length-1] : null;
+    if(lastX!==null && x-lastX<40) continue;
+    xPositions.push(x);
+    const d = new Date(series[idx].ts);
+    const mo=d.getMonth()+1, dd=d.getDate();
+    ctx.textAlign = i===0 ? 'left' : (i===xT-1 ? 'right' : 'center');
+    let label;
+    if(['1D','5D'].includes(monthlyChartPeriod)){
+      const hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0');
+      label = mo+'/'+dd+' '+hh+':'+mm;
+    }else if(['1M','3M','6M','YTD'].includes(monthlyChartPeriod)){
+      label = mo+'/'+dd;
+    }else{
+      label = String(d.getFullYear()).slice(2)+'/'+String(mo).padStart(2,'0');
+    }
+    ctx.fillText(label, x, PAD_T+BH+15);
+  }
+
   const lastGain = series[series.length-1].value >= series[series.length-1].principal;
 
   // 손익 구간 채움 (자산가치선과 원금선 사이)
@@ -4714,22 +4747,36 @@ const GROUP_BG = {
 };
 let indices=INDEX_LIST.map(i=>({...i,val:null,chg:null}));
 
-function renderIndexCard(idx){
+const GROUP_TITLE = {us:'미국', kr:'한국', fx:'환율'};
+function renderIndexRow(idx){
   return `
-    <div class="index-card" style="${GROUP_BG[idx.group]||''}">
-      <div class="index-name" style="color:${idx.group==='us'?'#007aff':idx.group==='kr'?'#34c759':'#ff9500'};opacity:.7;">${idx.label}</div>
-      <div class="index-val ${idx.val!=null?updn(idx.chg):''}" style="${idx.val==null?'color:var(--color-tertiary)':''}">
-        ${idx.val!=null?idx.unit+idx.val.toLocaleString('en-US',{minimumFractionDigits:idx.dec,maximumFractionDigits:idx.dec}):'—'}
-      </div>
-      <div class="index-chg ${idx.chg!=null?updn(idx.chg):''}">
-        ${idx.chg!=null?(idx.chg>=0?'▲':'▼')+' '+Math.abs(idx.chg).toFixed(2)+'%':'조회 중...'}
+    <div class="index-row">
+      <div class="index-row-name">${idx.label}</div>
+      <div class="index-row-vals">
+        <span class="index-val ${idx.val!=null?updn(idx.chg):''}" style="${idx.val==null?'color:var(--color-tertiary)':''}">
+          ${idx.val!=null?idx.unit+idx.val.toLocaleString('en-US',{minimumFractionDigits:idx.dec,maximumFractionDigits:idx.dec}):'—'}
+        </span>
+        <span class="index-chg ${idx.chg!=null?updn(idx.chg):''}">
+          ${idx.chg!=null?(idx.chg>=0?'▲':'▼')+' '+Math.abs(idx.chg).toFixed(2)+'%':'조회 중...'}
+        </span>
       </div>
     </div>`;
 }
-// 1행 = 미국 지수, 2행 = KOSPI·KOSDAQ·환율 — 화면 너비와 무관하게 항상 이 순서로 고정
+// 시장(미국/한국/환율) 그룹별로 카드를 하나씩만 만들고, 그 안에 종목들을 행으로 나열한다.
+// 종목명은 검정(고정), 등락(값·%)만 상승/하락 색으로 표시.
+function renderIndexGroupCard(group){
+  const items = indices.filter(i=>i.group===group);
+  if(!items.length) return '';
+  return `
+    <div class="index-group-card" style="${GROUP_BG[group]||''}">
+      <div class="index-group-title">${GROUP_TITLE[group]}</div>
+      ${items.map(renderIndexRow).join('')}
+    </div>`;
+}
+// 1행 = 미국 카드, 2행 = 한국·환율 카드 — 화면 너비와 무관하게 항상 이 순서로 고정
 function renderIndices(){
-  document.getElementById('indexGridUS').innerHTML = indices.filter(i=>i.group==='us').map(renderIndexCard).join('');
-  document.getElementById('indexGridKR').innerHTML = indices.filter(i=>i.group==='kr'||i.group==='fx').map(renderIndexCard).join('');
+  document.getElementById('indexGridUS').innerHTML = renderIndexGroupCard('us');
+  document.getElementById('indexGridKR').innerHTML = renderIndexGroupCard('kr') + renderIndexGroupCard('fx');
 }
 
 async function fetchIndices(){
