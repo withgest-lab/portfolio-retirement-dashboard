@@ -25,7 +25,10 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
   overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .topbar-actions::-webkit-scrollbar{display:none;}
-.status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);flex-shrink:0;}
+.status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);
+  flex-shrink:1;min-width:0;overflow:hidden;}
+.status-wrap .dot{flex-shrink:0;}
+#statusText{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .dot{width:7px;height:7px;border-radius:50%;background:#8e8e93;flex-shrink:0;}
 .dot.ok{background:#34c759;} .dot.err{background:#ff3b30;}
 .dot.loading{background:#ff9500;animation:pulse .8s infinite;}
@@ -319,7 +322,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="status-wrap">
       <div class="dot" id="statusDot"></div>
       <span id="statusText">준비 중...</span>
-      <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;"></span>
+      <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
     <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
     <button class="btn btn-green" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
