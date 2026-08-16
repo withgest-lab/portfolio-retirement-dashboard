@@ -366,13 +366,10 @@ button{font-family:inherit;cursor:pointer;}
 .mini-note{margin-top:auto;font-size:9px;color:#8A90A0;line-height:1.5;
   background:#F0F2F5;border-radius:7px;padding:6px 7px;}
 
-/* ── 사적연금 그룹(농협·미래에셋·IRP) — 1,500만원 한도를 공유하는 3계좌를 하나로 묶음.
-   개별 카드는 외곽 박스 없이 그룹 박스 하나로만 묶어(이중 테두리 제거), 맨 위쪽은
-   패딩을 없애 ISA·퇴직연금 카드의 상단과 수평으로 맞춘다. ── */
-.priv-group{grid-column:span 3;background:transparent;border:1px solid #E8EAF0;border-radius:11px;
-  padding:0 7px 7px;display:flex;flex-direction:column;gap:6px;min-width:0;}
+/* ── 사적연금 그룹(농협·미래에셋·IRP) — 1,500만원 한도를 공유하는 3계좌를 배치만 묶고,
+   각 카드는 ISA·퇴직연금과 동일하게 개별 외곽 박스를 그대로 사용(공통 외곽 박스는 없음). ── */
+.priv-group{grid-column:span 3;background:transparent;display:flex;flex-direction:column;gap:6px;min-width:0;}
 .priv-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-width:0;}
-.priv-cards .acct-card{border:none;background:transparent;}
 
 /* ── 퇴직연금+국민연금 묶음: 내용이 짧은 두 계좌를 한 슬롯에 위/아래로 쌓음 ── */
 .stack-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
