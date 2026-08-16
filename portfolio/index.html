@@ -38,11 +38,16 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 /* position:sticky — topbar(fixed) 바로 아래에서 스크롤하면 자연스럽게 붙는다. sticky는
    일반 문서 흐름 안에 남아 있으므로 자기 높이만큼의 자리를 스스로 차지한다(JS로 spacer
    높이를 계산해줄 필요가 없음 — 예전 fixed+JS-spacer 방식은 모바일에서 스크롤 중 주소창이
-   접히고 펼쳐질 때마다 재계산이 겹쳐 콘텐츠가 순간적으로 겹치거나 흔들리는 문제가 반복됐음). */
+   접히고 펼쳐질 때마다 재계산이 겹쳐 콘텐츠가 순간적으로 겹치거나 흔들리는 문제가 반복됐음).
+   가로 스크롤(overflow-x:auto + -webkit-overflow-scrolling:touch)은 sticky를 건 .tabbar
+   자신이 아니라 안쪽 .tabbar-scroll에 따로 둔다 — 같은 요소에 sticky와 터치 모멘텀 스크롤을
+   같이 걸면 모바일 브라우저에서 두 스크롤 컨텍스트(페이지 세로 스크롤 vs 탭 가로 스크롤)가
+   충돌해 화면이 불안정하게 흔들리는 경우가 있어, 포지셔닝 담당과 스크롤 담당을 분리한다. */
 .tabbar{position:sticky;top:52px;z-index:99;background:var(--color-card);
-  border-bottom:1px solid var(--color-border);display:flex;gap:4px;
+  border-bottom:1px solid var(--color-border);}
+.tabbar-scroll{display:flex;gap:4px;
   overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;scrollbar-width:none;}
-.tabbar::-webkit-scrollbar{display:none;}
+.tabbar-scroll::-webkit-scrollbar{display:none;}
 .tabbar button{flex-shrink:0;border:none;cursor:pointer;background:transparent;
   color:var(--color-tertiary);font-family:inherit;font-size:11px;font-weight:600;
   padding:6px 10px;border-radius:var(--radius-sm);transition:.15s;white-space:nowrap;}
@@ -335,12 +340,14 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 </div>
 
 <nav class="tabbar" id="tabbar">
+  <div class="tabbar-scroll">
   <button data-page="dashboard" onclick="switchPage('dashboard')">📊 대시보드</button>
   <button data-page="portfolio" onclick="switchPage('portfolio')">💼 포트폴리오</button>
   <button data-page="tradelog" onclick="switchPage('tradelog')">🔁 매매 이력</button>
   <button data-page="returns" onclick="switchPage('returns')">📈 수익률분석</button>
   <button data-page="dividend" onclick="switchPage('dividend')">💰 배당금관리</button>
   <button data-page="tax" onclick="switchPage('tax')">🧾 세금관리</button>
+  </div>
 </nav>
 
 <div class="main">
