@@ -3,7 +3,8 @@ const assert = require('node:assert/strict');
 const {
   calcISA_FV, pensionTaxRate, tirpTaxDiscount, dependentStatusCheck,
   propertyInsuranceScore, regionalHealthPremium, HEALTH_CAP_MIN, HEALTH_CAP_MAX,
-  npsAdjustFactor, calcRetirementIncomeTax, pmtAnnualGrowing, buildNeedOnlyPlan
+  npsAdjustFactor, calcRetirementIncomeTax, pmtAnnualGrowing, buildNeedOnlyPlan,
+  propertyTaxBase
 } = require('./calc.js');
 
 test('pensionTaxRate: 연령별 사적연금 저율분리과세 구간', () => {
@@ -35,6 +36,18 @@ test('dependentStatusCheck: 건보료 피부양자 재산·소득 기준', () =>
   assert.equal(dependentStatusCheck(2001, 0).fail, true);
   // 재산 5.4억 이하 + 소득 2,000만원 이하 → 유지
   assert.equal(dependentStatusCheck(2000, 54000).fail, false);
+});
+
+test('propertyTaxBase: 공시가격 → 재산세 과세표준 자동 계산', () => {
+  // 1세대 1주택 특례: 3억↓43% / 3~6억44% / 6억↑45%
+  assert.equal(propertyTaxBase(30000, 'single'), 12900);   // 3억 × 43% = 1.29억
+  assert.equal(propertyTaxBase(50000, 'single'), 22000);   // 5억 × 44% = 2.2억 (가이드 예시)
+  assert.equal(propertyTaxBase(60000, 'single'), 26400);   // 6억 × 44% = 2.64억(경계값, 44% 구간에 포함)
+  assert.equal(propertyTaxBase(100000, 'single'), 45000);  // 10억 × 45% = 4.5억
+  // 다주택·법인: 특례 미적용, 항상 60%
+  assert.equal(propertyTaxBase(50000, 'multi'), 30000);    // 5억 × 60% = 3억
+  // 공시가격 0 → 과세표준 0
+  assert.equal(propertyTaxBase(0, 'single'), 0);
 });
 
 test('propertyInsuranceScore: 60등급표 경계값', () => {
