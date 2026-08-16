@@ -3969,11 +3969,23 @@ function drawPrincipalVsValueChart(){
 
   const PAD_L=56, PAD_R=14, PAD_T=14, PAD_B=26;
   const BW = cssW-PAD_L-PAD_R, BH = cssH-PAD_T-PAD_B;
-  const allVals = series.flatMap(p=>[p.value,p.principal]).filter(v=>v!=null);
-  let vMin = Math.min(...allVals), vMax = Math.max(...allVals);
+  // Y축 범위는 실제 자산가치를 아는 구간(밸류드 포인트)을 기준으로 잡는다 — 원금기록장에
+  // 소급 입력한 오래된 저원금 포인트까지 그대로 min/max에 넣으면(YTD/ALL처럼 긴 기간일 때
+  // 특히) 최근 변동 구간이 차트 상단에 눌려 보이는 문제가 있었다. 소급 구간의 원금은
+  // 여전히 전부 그리되, 그 최저값이 코어 범위보다 낮을 때만 코어 범위 대비 적은 여유만
+  // 더해 축 아래쪽으로 살짝 확장한다.
+  const valuedForRange = series.filter(p=>p.value!=null);
+  const coreVals = (valuedForRange.length ? valuedForRange : series)
+    .flatMap(p=>[p.value,p.principal]).filter(v=>v!=null);
+  let vMin = Math.min(...coreVals), vMax = Math.max(...coreVals);
   if(vMin===vMax){ vMin -= 1; vMax += 1; }
-  const pad = (vMax-vMin)*0.08;
-  vMin -= pad; vMax += pad;
+  const corePad = (vMax-vMin)*0.08;
+  vMin -= corePad; vMax += corePad;
+  const leadPrincipals = series.filter(p=>p.value==null).map(p=>p.principal);
+  if(leadPrincipals.length){
+    const leadMin = Math.min(...leadPrincipals);
+    if(leadMin < vMin) vMin = leadMin - (vMax-vMin)*0.05;
+  }
   const t0 = series[0].ts, t1 = series[series.length-1].ts;
   const toX = ts => PAD_L + (t1>t0 ? (ts-t0)/(t1-t0) : 0.5)*BW;
   const toY = v => PAD_T + (1-(v-vMin)/(vMax-vMin))*BH;
@@ -4061,6 +4073,31 @@ function drawPrincipalVsValueChart(){
   series.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.principal); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
   ctx.setLineDash([]);
+
+  // 점선(투입원금) 시작점 금액 라벨 — 기간을 바꿔도 이 구간이 얼마에서 시작했는지 바로
+  // 보이도록 표시. Y축이 눌려 보일 정도로 시작 원금이 낮은 경우에도(소급 입력 등) 숫자로
+  // 정확한 값을 확인할 수 있다.
+  {
+    const p0 = series[0];
+    const x0 = toX(p0.ts), y0 = toY(p0.principal);
+    const label = fmt(p0.principal);
+    ctx.font = 'bold 10px Pretendard';
+    const textW = ctx.measureText(label).width;
+    const boxPadX=5, boxH=16;
+    const boxX = x0;
+    const placeAbove = y0 > PAD_T + BH/2;
+    const boxY = placeAbove ? y0 - boxH - 6 : y0 + 6;
+    ctx.fillStyle = 'rgba(142,142,147,0.16)';
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(boxX, boxY, textW+boxPadX*2, boxH, 4);
+    else ctx.rect(boxX, boxY, textW+boxPadX*2, boxH);
+    ctx.fill();
+    ctx.fillStyle = '#636366';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, boxX+boxPadX, boxY+boxH/2);
+    ctx.fillStyle = '#8e8e93';
+    ctx.beginPath(); ctx.arc(x0, y0, 2.5, 0, Math.PI*2); ctx.fill();
+  }
 
   // 자산가치 선(실선) — 짙은 회색(--color-secondary) 고정, 손익은 채움 색으로 구분.
   // 순검정(#1c1c1e)은 눈에 너무 튀어서, 점선(투입원금, #8e8e93)보다는 진하되
