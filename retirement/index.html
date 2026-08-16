@@ -34,7 +34,7 @@ h1{font-size:16px;font-weight:700;color:#111;}
 /* ── 메트릭 바(요약 카드): 세로 높이 최소화 — 라벨+값을 한 줄로(1단) 압축, 카드 폭을
    넓게 쓰도록 바깥 padding·카드 간 gap을 최소화 ── */
 .metrics-bar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
-  gap:4px;padding:0 10px 10px;background:#F4F6F9;}
+  gap:4px;padding:0 0 10px;background:#F4F6F9;}
 .mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:5px 6px;
   display:flex;align-items:baseline;gap:4px;min-width:0;}
 .mlabel{font-size:9.5px;color:#AAB0BB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -84,8 +84,9 @@ h1{font-size:16px;font-weight:700;color:#111;}
 /* ── 입력 패널(상단) ── */
 .left-panel{padding:8px 10px 10px;background:#F4F6F9;}
 
-/* ── 결과 패널(하단) ── */
-.right-panel{padding:8px 12px 32px;}
+/* ── 결과 패널(하단) ── — 좌우 padding을 .main-tabs의 margin(10px)과 맞춰,
+   메트릭 카드·차트 카드의 좌우 가장자리가 위 탭 버튼과 수직으로 나란히 정렬되게 한다. */
+.right-panel{padding:8px 10px 32px;}
 
 /* ── 카드 패널 ── */
 .panel{background:#fff;border:1px solid #E8EAF0;border-radius:10px;
@@ -318,7 +319,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ── 기본 정보: 가로 배치 — 항목이 6개+버튼이라 폴드 펼침(~900px)에서 한 줄에
    다 들어가도록 입력칸·간격·라벨을 좁게 잡음(줄바꿈 방지가 최우선) ── */
-.basic-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;}
+.basic-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;position:relative;}
 .basic-row .irow{margin-bottom:0;min-width:0;}
 .basic-row .irow-top{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:0;}
 .basic-row .ilabel{font-size:9px;white-space:nowrap;}
@@ -328,11 +329,12 @@ button{font-family:inherit;cursor:pointer;}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   line-height:1.25;}
 /* "자동설계 상세 근거 보기" — 사적연금한도 칸과 자동설계 버튼 사이 빈 공간에 끼워 넣어
-   별도 줄 없이 공간을 절약. 접힌 상태(summary 한 줄)만 basic-row 안에 자연스럽게 놓이고,
-   펼치면 details 콘텐츠가 자기 폭만큼 자연스럽게 아래로 늘어남. */
-.basic-row-detail{align-self:center;flex-shrink:1;min-width:0;}
-.basic-row-detail > summary{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.basic-row-detail[open]{flex-basis:100%;}
+   별도 줄 없이 공간을 절약. 펼쳐도 트리거(summary)의 위치·basic-row 레이아웃은 그대로
+   유지되도록, 내용(suggest-box)만 position:absolute로 행 전체 아래에 드롭다운처럼 띄움. */
+.basic-row-detail{align-self:center;flex-shrink:1;min-width:0;position:static;}
+.basic-row-detail > summary{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.basic-row-detail #suggest-box{position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:6;
+  max-height:60vh;overflow-y:auto;}
 
 /* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ── */
 .acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;}
@@ -342,7 +344,7 @@ button{font-family:inherit;cursor:pointer;}
   line-height:1.3;word-break:keep-all;}
 .acct-head .dot{width:6px;height:6px;border-radius:2px;flex-shrink:0;margin-top:3px;}
 .acct-head .name{flex:1;min-width:0;}
-.acct-body{padding:5px 6px 6px;display:flex;flex-direction:column;gap:3px;flex:1;justify-content:center;}
+.acct-body{padding:5px 6px 6px;display:flex;flex-direction:column;gap:3px;flex:1;justify-content:flex-start;}
 .acct-body .irow{margin-bottom:0;padding-right:0;}
 .acct-body .irow-top{display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0;}
 .acct-body .ilabel{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -362,10 +364,13 @@ button{font-family:inherit;cursor:pointer;}
 .mini-note{margin-top:auto;font-size:9px;color:#8A90A0;line-height:1.5;
   background:#F0F2F5;border-radius:7px;padding:6px 7px;}
 
-/* ── 사적연금 그룹(농협·미래에셋·IRP) — 1,500만원 한도를 공유하는 3계좌를 하나로 묶음 ── */
+/* ── 사적연금 그룹(농협·미래에셋·IRP) — 1,500만원 한도를 공유하는 3계좌를 하나로 묶음.
+   개별 카드는 외곽 박스 없이 그룹 박스 하나로만 묶어(이중 테두리 제거), 맨 위쪽은
+   패딩을 없애 ISA·퇴직연금 카드의 상단과 수평으로 맞춘다. ── */
 .priv-group{grid-column:span 3;background:transparent;border:1px solid #E8EAF0;border-radius:11px;
-  padding:7px;display:flex;flex-direction:column;gap:6px;min-width:0;}
+  padding:0 7px 7px;display:flex;flex-direction:column;gap:6px;min-width:0;}
 .priv-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-width:0;}
+.priv-cards .acct-card{border:none;background:transparent;}
 
 /* ── 퇴직연금+국민연금 묶음: 내용이 짧은 두 계좌를 한 슬롯에 위/아래로 쌓음 ── */
 .stack-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
