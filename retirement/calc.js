@@ -146,7 +146,9 @@ function propertyInsuranceScore(totalPropertyMan){
 }
 
 // 지역가입자 보험료 산정용 소득월액(만원/월) — 항목별 반영률 적용(2차 출처 교차검증 수준)
-// 공적연금·근로소득 50%, 사업·기타소득 100%, 금융소득(1,000만원 초과분) 100%
+// 공적연금·근로소득 50%, 사업·기타소득 100%, 금융소득(1,000만원 초과 시 전액 반영, 문턱효과) 100%
+// ※ financeIncluded는 healthIncomeItems()에서 이미 "1,000만원 초과 시 전액 / 이하 0"으로 판정된
+//   값이라 여기서는 "초과분만"이 아니라 전액이 그대로 들어온다 — 아래 100% 가중치와 헷갈리지 말 것
 function regionalIncomeMonthly(p){
   const it = healthIncomeItems(p);
   const weightedAnnual = it.pensionAnnual*0.5 + it.laborAnnual*0.5 + it.businessAnnual + it.otherAnnual + it.financeIncluded;
