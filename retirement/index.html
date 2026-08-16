@@ -31,15 +31,18 @@ h1{font-size:16px;font-weight:700;color:#111;}
 .collapsible > summary::before{content:'▸ ';}
 .collapsible[open] > summary::before{content:'▾ ';}
 
-/* ── 메트릭 바(요약 카드): 세로 높이 최소화 — 라벨 1줄 + 값·부연설명을 한 줄에 같이 표시 ── */
+/* ── 메트릭 바(요약 카드): 세로 높이 최소화 — 라벨+값을 한 줄로(1단) 압축, 카드 폭을
+   넓게 쓰도록 바깥 padding·카드 간 gap을 최소화 ── */
 .metrics-bar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
-  gap:5px;padding:5px 14px;background:#F4F6F9;}
-.mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:4px 7px;}
-.mlabel{font-size:9.5px;color:#AAB0BB;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.mval-row{display:flex;align-items:baseline;gap:4px;min-width:0;}
-.mval{font-size:16px;font-weight:700;line-height:1.15;white-space:nowrap;}
+  gap:4px;padding:0 10px 10px;background:#F4F6F9;}
+.mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:5px 6px;
+  display:flex;align-items:baseline;gap:4px;min-width:0;}
+.mlabel{font-size:9.5px;color:#AAB0BB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  flex-shrink:1;min-width:34px;}
+.mval-row{display:flex;align-items:baseline;gap:2px;min-width:0;flex-shrink:1;margin-left:auto;overflow:hidden;}
+.mval{font-size:13px;font-weight:700;line-height:1.15;white-space:nowrap;flex-shrink:0;}
 .msub{font-size:9px;color:#BBB;margin-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.mval-row .badge{margin-top:0;}
+.mval-row .badge{margin-top:0;font-size:8px;padding:1px 4px;white-space:nowrap;flex-shrink:0;}
 .badge{display:inline-block;font-size:10px;font-weight:700;
   padding:2px 5px;border-radius:4px;margin-top:2px;}
 .badge-ok{background:#EAF3EE;color:#3F7A5E;}
@@ -274,8 +277,8 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 /* ── 최상위 탭: 설계 / 예상결과 ── */
 /* 좌우 여백을 .left-panel의 좌우 padding(10px)과 맞춰, 아래 "기본 정보" 패널 카드의
    가로 폭·좌우 가장자리와 탭 버튼 줄이 수직으로 나란히 정렬되게 한다. */
-.main-tabs{display:flex;gap:6px;margin:10px;}
-.main-tabs .tab-btn{flex:1;padding:9px 10px;font-size:13px;border-radius:8px;text-align:center;font-weight:700;}
+.main-tabs{display:flex;gap:6px;margin:10px 10px 2px;}
+.main-tabs .tab-btn{flex:1;padding:6px 10px;font-size:13px;border-radius:8px;text-align:center;font-weight:700;}
 .phase-seg{border-radius:4px;padding:5px 6px;font-size:10px;font-weight:700;
   line-height:1.5;white-space:pre-line;}
 .phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
@@ -324,6 +327,12 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row .suggest-btn{width:auto;min-width:88px;flex-shrink:0;margin:0 0 0 auto;padding:6px 12px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   line-height:1.25;}
+/* "자동설계 상세 근거 보기" — 사적연금한도 칸과 자동설계 버튼 사이 빈 공간에 끼워 넣어
+   별도 줄 없이 공간을 절약. 접힌 상태(summary 한 줄)만 basic-row 안에 자연스럽게 놓이고,
+   펼치면 details 콘텐츠가 자기 폭만큼 자연스럽게 아래로 늘어남. */
+.basic-row-detail{align-self:center;flex-shrink:1;min-width:0;}
+.basic-row-detail > summary{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.basic-row-detail[open]{flex-basis:100%;}
 
 /* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ── */
 .acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;}
@@ -609,7 +618,6 @@ button{font-family:inherit;cursor:pointer;}
 <div class="left-panel" id="designTab">
 
 <div class="panel">
-<div class="panel-title"><span>기본 정보</span><span class="req-tag">(필수 기입 항목)</span></div>
 <div class="basic-row">
 <div class="irow base-s">
   <div class="irow-top">
@@ -651,22 +659,22 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500"  oninput="syncInput('plimit');scheduleUpd()">
-</div><button class="suggest-btn" style="background:linear-gradient(135deg,#4E9B78,#C08A55);" onclick="autoSuggest()">
+</div>
+<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. 아래는 상세 계산 근거(선택) —
+     사적연금한도 칸과 자동설계 버튼 사이 빈 공간에 배치해 별도 줄을 만들지 않음 -->
+<details class="collapsible basic-row-detail">
+  <summary>자동설계 상세 근거 보기</summary>
+  <div class="suggest-result" id="suggest-box"></div>
+</details>
+<button class="suggest-btn" style="background:linear-gradient(135deg,#4E9B78,#C08A55);" onclick="autoSuggest()">
   <span style="font-size:11.5px;">🎯 자동설계</span>
   <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
 </button>
 </div>
-<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. 아래는 상세 계산 근거(선택) -->
-<details class="collapsible" style="margin-top:6px;">
-  <summary>자동설계 상세 근거 보기</summary>
-  <div class="suggest-result" id="suggest-box"></div>
-</details>
 <div class="suggest-result" id="fit90-box"></div>
 </div>
 
 <div class="panel">
-<div class="panel-title"><span>현금 흐름 운영 플랜 (인출/수령 순서 가이드 : ISA → 사적연금 → 퇴직연금 → 국민연금)</span><span class="req-tag">(필수 기입 항목)</span></div>
-<div class="note" style="margin:-2px 0 6px;">💡 색이 있는 칸은 직접 입력하는 필수 항목, 회색으로 흐려진 칸은 다른 값에 맞춰 자동으로 채워지는 항목입니다(직접 수정 불가).</div>
 <div id="pfSyncStatus"></div>
 <div class="acct-grid">
 
@@ -726,7 +734,6 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="isam-r" min="0" max="300" step="5" value="90"  oninput="syncInput('isam');scheduleUpd()">
 </div>
 </div>
-<div class="mini-note">💡 <span id="isa-info">계산 중...</span></div>
 </div>
 </div>
 
@@ -797,7 +804,6 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="nhpay-r" min="0" max="300" step="5" value="70"  oninput="syncInput('nhpay');scheduleUpd()">
 </div>
 </div>
-<div class="mini-note">💡 <span id="nh-nyear-info">계산 중...</span></div>
 </div>
 </div>
 
@@ -865,7 +871,6 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="mfpay-r" min="0" max="200" step="5" value="46"  oninput="syncInput('mfpay');scheduleUpd()">
 </div>
 </div>
-<div class="mini-note">💡 <span id="mf-nyear-info">계산 중...</span></div>
 </div>
 </div>
 
@@ -925,7 +930,6 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="irppay-r" min="0" max="150" step="5" value="0"  oninput="syncInput('irppay');scheduleUpd()">
 </div>
 </div>
-<div class="mini-note">💡 <span id="irp-nyear-info">계산 중...</span></div>
 </div>
 </div>
 
@@ -938,7 +942,6 @@ button{font-family:inherit;cursor:pointer;}
   </div>
   <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#4E9B78;"></div></div>
 </div>
-<div class="mini-note">💡 한도 초과분은 16.5% 세금 — 3계좌 합쳐 1,500만원 안에서 받는 게 유리해요</div>
 
 </div><!-- priv-group -->
 
