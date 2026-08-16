@@ -232,6 +232,19 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .bar-fill{height:100%;border-radius:4px;transition:width .4s;}
 .bar-pct{font-size:12px;font-weight:700;white-space:nowrap;width:110px;flex-shrink:0;}
 
+/* ── 세로 막대 그래프(연도별/월별 등 기간 비교 — 가로축 기간, 세로축 금액) ──
+   막대 행과 X축 라벨 행을 하나의 스크롤 컨테이너로 묶어야, 열 개수가 많아 가로
+   스크롤이 필요할 때 두 행이 함께 움직인다(따로 스크롤되면 라벨 행이 카드 밖으로
+   삐져나가는 문제가 있었음). */
+.vbar-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.vbar-chart{display:flex;align-items:flex-end;gap:10px;height:170px;padding:0 2px;}
+.vbar-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1 0 34px;min-width:34px;height:100%;}
+.vbar-value{font-size:10px;font-weight:700;white-space:nowrap;margin-bottom:4px;}
+.vbar-stack{width:26px;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
+.vbar-seg{width:100%;}
+.vbar-xaxis{display:flex;gap:10px;padding:6px 2px 0;border-top:1px solid var(--color-border);margin-top:2px;}
+.vbar-xlabel{flex:1 0 34px;min-width:34px;text-align:center;font-size:10px;color:var(--color-tertiary);white-space:nowrap;}
+
 /* ── 지수 ── */
 .index-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
 .index-val{font-size:14px;font-weight:800;letter-spacing:-.03em;margin-top:3px;}
@@ -854,7 +867,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="subpage active" data-sub="yearly">
   <div class="card">
     <div class="section-label">연도별 수익률 분석</div>
-    <div id="yearlyReturnsBars" style="margin-bottom:16px;"></div>
+    <div class="vbar-scroll" style="margin-bottom:16px;">
+      <div class="vbar-chart" id="yearlyReturnsBars"></div>
+      <div class="vbar-xaxis" id="yearlyReturnsBarsAxis"></div>
+    </div>
     <div class="tbl-wrap">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th></tr></thead>
@@ -872,7 +888,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <button class="btn-icon" id="monthlyPerfViewBtn" onclick="toggleMonthlyPerfView()"
         style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
     </div>
-    <div id="monthlyPerfBars" style="display:none;margin:14px 0 4px;"></div>
+    <div class="vbar-scroll" style="margin-bottom:4px;">
+      <div class="vbar-chart" id="monthlyPerfBars" style="display:none;"></div>
+      <div class="vbar-xaxis" id="monthlyPerfBarsAxis" style="display:none;"></div>
+    </div>
     <div class="tbl-wrap" id="monthlyPerfTableWrap">
       <table class="table-auto">
         <thead><tr>
@@ -972,7 +991,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="subpage active" data-sub="monthly">
   <div class="card">
     <div class="section-label">월별 배당 집계</div>
-    <div id="divMonthlyBars" style="margin-bottom:14px;"></div>
+    <div class="vbar-scroll" style="margin-bottom:14px;">
+      <div class="vbar-chart" id="divMonthlyBars"></div>
+      <div class="vbar-xaxis" id="divMonthlyBarsAxis"></div>
+    </div>
     <div class="tbl-wrap">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">월</th><th>확정 배당</th><th>예상 배당</th></tr></thead>
@@ -985,7 +1007,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="subpage" data-sub="stock">
   <div class="card">
     <div class="section-label">종목별 배당 집계</div>
-    <div id="divAddForm_stock"></div>
     <div class="tbl-wrap">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">종목</th><th>지급 횟수</th><th>누적 배당금</th><th>다음 예상</th></tr></thead>
@@ -993,15 +1014,24 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </table>
     </div>
     <div class="notice">💡 종목을 탭하면 개별 배당 기록을 수정·삭제할 수 있습니다.</div>
+    <div id="divAddForm_stock"></div>
   </div>
 </div>
 <div class="subpage" data-sub="calendar">
   <div class="card">
-    <div class="section-label">월별 배당 캘린더 (<span id="divCalYear"></span>년)</div>
-    <div id="divAddForm_cal"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div class="section-label" style="margin:0">월별 배당 캘린더 (<span id="divCalYear"></span>년)</div>
+      <button class="btn-icon" id="divCalViewBtn" onclick="toggleDivCalView()"
+        style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
+    </div>
     <div class="div-cal-grid" id="divCalendarGrid"></div>
+    <div class="vbar-scroll">
+      <div class="vbar-chart" id="divCalBars" style="display:none;"></div>
+      <div class="vbar-xaxis" id="divCalBarsAxis" style="display:none;"></div>
+    </div>
     <div id="divCalendarDetail" style="display:none;"></div>
     <div class="notice">💡 확정 배당은 실제 기록된 금액, 예상 배당은 최근 이력 기반 추정치입니다. 월을 탭하면 해당 월의 배당 기록을 수정·삭제할 수 있습니다.</div>
+    <div id="divAddForm_cal"></div>
   </div>
 </div>
 </section>
@@ -3856,27 +3886,46 @@ function toggleMonthlyPerfView(){
   monthlyPerfView = monthlyPerfView==='table' ? 'chart' : 'table';
   renderMonthlyTable();
 }
-function renderMonthlyPerfBars(rows){
-  const barsEl = document.getElementById('monthlyPerfBars');
-  if(!barsEl) return;
-  const withPnl = rows.filter(r=>r.pnl!=null);
-  if(!withPnl.length){
-    barsEl.innerHTML = `<div class="notice" style="margin:0;">그래프로 표시할 손익 데이터가 없습니다.</div>`;
-    return;
-  }
-  const maxAbs = Math.max(...withPnl.map(r=>Math.abs(r.pnl)), 1);
-  barsEl.innerHTML = rows.map(r=>{
-    const label = `${r.year}.${String(r.month+1).padStart(2,'0')}`;
-    if(r.pnl==null){
-      return `<div class="bar-row"><div class="bar-label">${label}</div><div class="bar-track"></div><div class="bar-pct dim">—</div></div>`;
-    }
-    const pct = Math.min(100, Math.abs(r.pnl)/maxAbs*100);
-    return `<div class="bar-row">
-      <div class="bar-label">${label}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${r.pnl>=0?'var(--color-up)':'var(--color-down)'};"></div></div>
-      <div class="bar-pct ${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</div>
+// 세로 막대 그래프 공용 렌더러 — 가로축=기간(items[].label), 세로축=금액(segments 합, 스택 가능).
+// items: [{label, segments:[{value,color}], valueLabel, valueClass}]
+function renderVBarChart(chartElId, xaxisElId, items, chartH){
+  const chartEl = document.getElementById(chartElId);
+  const xEl = xaxisElId ? document.getElementById(xaxisElId) : null;
+  if(!chartEl) return;
+  if(!items.length){ chartEl.innerHTML=''; if(xEl) xEl.innerHTML=''; return; }
+  const H = chartH || 130;
+  const maxTotal = Math.max(...items.map(it=>it.segments.reduce((s,seg)=>s+Math.abs(seg.value||0),0)), 1);
+  chartEl.innerHTML = items.map(it=>{
+    const total = it.segments.reduce((s,seg)=>s+Math.abs(seg.value||0),0);
+    const stackH = total>0 ? Math.max(2, Math.round(total/maxTotal*H)) : 0;
+    const segsHtml = it.segments.map(seg=>{
+      const segH = total>0 ? Math.round(Math.abs(seg.value||0)/total*stackH) : 0;
+      return `<div class="vbar-seg" style="height:${segH}px;background:${seg.color};"></div>`;
+    }).join('');
+    return `<div class="vbar-col">
+      <div class="vbar-value ${it.valueClass||''}">${it.valueLabel!=null?it.valueLabel:''}</div>
+      <div class="vbar-stack" style="height:${stackH}px;">${segsHtml}</div>
     </div>`;
   }).join('');
+  if(xEl) xEl.innerHTML = items.map(it=>`<div class="vbar-xlabel">${it.label}</div>`).join('');
+}
+
+function renderMonthlyPerfBars(rows){
+  const withPnl = rows.filter(r=>r.pnl!=null);
+  if(!withPnl.length){
+    const chartEl = document.getElementById('monthlyPerfBars');
+    if(chartEl) chartEl.innerHTML = `<div class="notice" style="margin:0;">그래프로 표시할 손익 데이터가 없습니다.</div>`;
+    const xEl = document.getElementById('monthlyPerfBarsAxis');
+    if(xEl) xEl.innerHTML='';
+    return;
+  }
+  const items = rows.map(r=>({
+    label: `${r.year}.${String(r.month+1).padStart(2,'0')}`,
+    segments: r.pnl==null ? [] : [{value:r.pnl, color: r.pnl>=0?'var(--color-up)':'var(--color-down)'}],
+    valueLabel: r.pnl==null ? '—' : `${r.pnl>=0?'+':''}${fmt(r.pnl)}`,
+    valueClass: r.pnl==null ? 'dim' : (r.pnl>=0?'up':'dn')
+  }));
+  renderVBarChart('monthlyPerfBars', 'monthlyPerfBarsAxis', items);
 }
 function renderMonthlyTable(){
   renderSnapStartNotices();
@@ -3886,15 +3935,18 @@ function renderMonthlyTable(){
 
   const btn = document.getElementById('monthlyPerfViewBtn');
   const barsEl = document.getElementById('monthlyPerfBars');
+  const barsAxisEl = document.getElementById('monthlyPerfBarsAxis');
   const tableWrap = document.getElementById('monthlyPerfTableWrap');
   const isChart = monthlyPerfView==='chart';
   if(btn) btn.textContent = isChart ? '📋 표로 보기' : '📊 그래프로 보기';
   if(barsEl) barsEl.style.display = isChart ? '' : 'none';
+  if(barsAxisEl) barsAxisEl.style.display = isChart ? '' : 'none';
   if(tableWrap) tableWrap.style.display = isChart ? 'none' : '';
 
   if(!rows.length){
     el.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--color-tertiary);">스냅샷 데이터가 부족합니다.</td></tr>`;
     if(barsEl) barsEl.innerHTML = `<div class="notice" style="margin:0;">스냅샷 데이터가 부족합니다.</div>`;
+    if(barsAxisEl) barsAxisEl.innerHTML = '';
     return;
   }
 
@@ -4206,6 +4258,11 @@ function getDividendsByMonth(){
 let editingDividendId = null;
 let divExpandedMonthKey = null;   // 월별 집계·캘린더 공용 (YYYY-MM)
 let divExpandedStockName = null;  // 종목별 집계 전용
+let divCalView = 'grid';          // 월별 캘린더 표시 모드 — 'grid'(달력) / 'chart'(세로 막대그래프)
+function toggleDivCalView(){
+  divCalView = divCalView==='grid' ? 'chart' : 'grid';
+  renderDividendCalendar();
+}
 
 function renderAllDividendViews(){
   renderDividendMonthly();
@@ -4306,22 +4363,25 @@ function renderDividendEntryPanel(entries, hasProjected){
 
 // 신규 배당 기록 추가 폼 — 종목별 집계·월별 캘린더 탭 상단에 배치(기록 전용, 자산/현금 잔액 미반영)
 function renderDividendAddForm(ctx){
-  return `<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
-    <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-      날짜
-      <input id="dnew_date_${ctx}" type="date" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-    </label>
-    <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;">
-      종목/배당원천
-      <input id="dnew_name_${ctx}" placeholder="예: SCHD" style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-    </label>
-    <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-      금액(원)
-      <input id="dnew_amount_${ctx}" type="number" placeholder="0" min="0" style="width:120px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-    </label>
-    <button class="btn" style="background:#ff950020;color:#ff9500;padding:7px 14px;font-size:13px;" onclick="addDividendEntry('${ctx}')">+ 배당 추가</button>
-  </div>
-  <div class="form-status" id="dnew_status_${ctx}"></div>`;
+  return `<details class="collapsible" style="margin-top:14px;border-top:1px solid var(--color-section-bg);padding-top:10px;">
+    <summary style="color:#A8433C;">배당 기록 추가 <b>(자산/현금에는 반영되지 않음)</b></summary>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding-top:14px;">
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        날짜
+        <input id="dnew_date_${ctx}" type="date" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;">
+        종목/배당원천
+        <input id="dnew_name_${ctx}" placeholder="예: SCHD" style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        금액(원)
+        <input id="dnew_amount_${ctx}" type="number" placeholder="0" min="0" style="width:120px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+      </label>
+      <button class="btn" style="background:#ff950020;color:#ff9500;padding:7px 14px;font-size:13px;" onclick="addDividendEntry('${ctx}')">+ 배당 추가</button>
+    </div>
+    <div class="form-status" id="dnew_status_${ctx}"></div>
+  </details>`;
 }
 function addDividendEntry(ctx){
   const dateEl = document.getElementById(`dnew_date_${ctx}`);
@@ -4355,27 +4415,26 @@ function renderDividendMonthly(){
   if(!allKeys.length){
     el.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:16px;color:var(--color-tertiary);">배당 기록이 없습니다.</td></tr>`;
     if(barsEl) barsEl.innerHTML='';
+    const axisEl = document.getElementById('divMonthlyBarsAxis');
+    if(axisEl) axisEl.innerHTML='';
     return;
   }
 
-  // 시간 흐름 트렌드 막대 — 오래된 달부터 최근 달 순으로, 확정(진한 색)+예상(옅은 색) 이어붙여 표시
+  // 시간 흐름 트렌드 막대 — 오래된 달부터 최근 달 순으로, 확정(진한 색)+예상(옅은 색) 스택 표시
   const ascKeys = allKeys.slice().sort();
-  const maxSum = Math.max(...ascKeys.map(k=>(byMonth[k].confirmedSum||0)+(byMonth[k].projectedSum||0)), 1);
-  if(barsEl){
-    barsEl.innerHTML = ascKeys.map(key=>{
-      const m = byMonth[key];
-      const confPct = Math.min(100, (m.confirmedSum||0)/maxSum*100);
-      const projPct = Math.min(100-confPct, (m.projectedSum||0)/maxSum*100);
-      return `<div class="bar-row">
-        <div class="bar-label">${key}</div>
-        <div class="bar-track" style="display:flex;">
-          <div class="bar-fill" style="width:${confPct}%;background:var(--color-up);"></div>
-          <div class="bar-fill" style="width:${projPct}%;background:var(--color-tertiary);opacity:.5;"></div>
-        </div>
-        <div class="bar-pct">${fmt((m.confirmedSum||0)+(m.projectedSum||0))}</div>
-      </div>`;
-    }).join('');
-  }
+  const monthlyItems = ascKeys.map(key=>{
+    const m = byMonth[key];
+    const total = (m.confirmedSum||0)+(m.projectedSum||0);
+    return {
+      label: key.slice(2), // "2026-08" → "26-08"
+      segments: [
+        {value:m.confirmedSum||0, color:'var(--color-up)'},
+        {value:m.projectedSum||0, color:'var(--color-tertiary)'}
+      ],
+      valueLabel: total ? fmt(total) : ''
+    };
+  });
+  renderVBarChart('divMonthlyBars', 'divMonthlyBarsAxis', monthlyItems);
 
   const descKeys = allKeys.slice().sort().reverse();
   el.innerHTML = descKeys.map(key=>{
@@ -4442,21 +4501,46 @@ function renderDividendCalendar(){
   if(yearEl) yearEl.textContent = year;
   const byMonth = getDividendsByMonth();
   const curMonth = new Date().getMonth()+1;
-  let html = '';
+
+  const months = [];
   for(let m=1; m<=12; m++){
     const key = `${year}-${String(m).padStart(2,'0')}`;
     const data = byMonth[key];
-    const confirmedSum = data ? data.confirmedSum : 0;
-    const projectedSum = data ? data.projectedSum : 0;
-    const isCur = m===curMonth;
-    const isOpen = divExpandedMonthKey===key;
-    html += `<div class="div-cal-cell" style="cursor:pointer;${isCur?'border-color:var(--color-accent);':''}${isOpen?'background:var(--color-card);box-shadow:0 0 0 1.5px var(--color-accent) inset;':''}" onclick="toggleDivCalExpand('${key}')">
-      <div class="div-cal-month">${m}월</div>
-      <div class="div-cal-confirmed ${confirmedSum?'up':'dim'}">${confirmedSum?fmt(confirmedSum):'—'}</div>
-      ${projectedSum ? `<div class="div-cal-projected dim">예상 +${fmt(projectedSum)}</div>` : ''}
-    </div>`;
+    months.push({m, key, confirmedSum: data?data.confirmedSum:0, projectedSum: data?data.projectedSum:0});
   }
-  el.innerHTML = html;
+
+  const btn = document.getElementById('divCalViewBtn');
+  const barsEl = document.getElementById('divCalBars');
+  const barsAxisEl = document.getElementById('divCalBarsAxis');
+  const isChart = divCalView==='chart';
+  if(btn) btn.textContent = isChart ? '📅 달력으로 보기' : '📊 그래프로 보기';
+  el.style.display = isChart ? 'none' : '';
+  if(barsEl) barsEl.style.display = isChart ? '' : 'none';
+  if(barsAxisEl) barsAxisEl.style.display = isChart ? '' : 'none';
+
+  if(isChart){
+    const items = months.map(({m, confirmedSum, projectedSum})=>({
+      label: `${m}월`,
+      segments: [
+        {value:confirmedSum, color:'var(--color-up)'},
+        {value:projectedSum, color:'var(--color-tertiary)'}
+      ],
+      valueLabel: (confirmedSum+projectedSum) ? fmt(confirmedSum+projectedSum) : ''
+    }));
+    renderVBarChart('divCalBars', 'divCalBarsAxis', items);
+  } else {
+    let html = '';
+    months.forEach(({m, key, confirmedSum, projectedSum})=>{
+      const isCur = m===curMonth;
+      const isOpen = divExpandedMonthKey===key;
+      html += `<div class="div-cal-cell" style="cursor:pointer;${isCur?'border-color:var(--color-accent);':''}${isOpen?'background:var(--color-card);box-shadow:0 0 0 1.5px var(--color-accent) inset;':''}" onclick="toggleDivCalExpand('${key}')">
+        <div class="div-cal-month">${m}월</div>
+        <div class="div-cal-confirmed ${confirmedSum?'up':'dim'}">${confirmedSum?fmt(confirmedSum):'—'}</div>
+        ${projectedSum ? `<div class="div-cal-projected dim">예상 +${fmt(projectedSum)}</div>` : ''}
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
 
   const detailEl = document.getElementById('divCalendarDetail');
   if(detailEl){
@@ -4500,22 +4584,20 @@ function renderYearlyReturns(){
   const barsEl = document.getElementById('yearlyReturnsBars');
   if(!el) return;
   const rows = buildYearlyReturns();
+  const axisEl = document.getElementById('yearlyReturnsBarsAxis');
   if(!rows.length){
     el.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-tertiary);">데이터가 없습니다.</td></tr>`;
     if(barsEl) barsEl.innerHTML='';
+    if(axisEl) axisEl.innerHTML='';
     return;
   }
-  const maxAbs = Math.max(...rows.map(r=>Math.abs(r.total)), 1);
-  if(barsEl){
-    barsEl.innerHTML = rows.map(r=>{
-      const pct = Math.min(100, Math.abs(r.total)/maxAbs*100);
-      return `<div class="bar-row">
-        <div class="bar-label">${r.year}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${r.total>=0?'var(--color-up)':'var(--color-down)'};"></div></div>
-        <div class="bar-pct ${r.total>=0?'up':'dn'}">${r.total>=0?'+':''}${fmt(r.total)}</div>
-      </div>`;
-    }).join('');
-  }
+  const yearlyItems = rows.map(r=>({
+    label: String(r.year),
+    segments: [{value:r.total, color: r.total>=0?'var(--color-up)':'var(--color-down)'}],
+    valueLabel: `${r.total>=0?'+':''}${fmt(r.total)}`,
+    valueClass: r.total>=0?'up':'dn'
+  }));
+  renderVBarChart('yearlyReturnsBars', 'yearlyReturnsBarsAxis', yearlyItems);
   el.innerHTML = rows.map(r=>{
     const unrealizedStr = r.unrealized!=null
       ? `<span class="${r.unrealized>=0?'up':'dn'}">${r.unrealized>=0?'+':''}${fmt(r.unrealized)}</span>`
