@@ -2672,46 +2672,9 @@ function toggleQuickTrade(id){
   renderTable();
   // 패널 열리면 수량 입력칸으로 포커스
   if(quickTradeId) setTimeout(()=>{
-    const el=document.getElementById(`qt_qty_${id}`);
+    const el=document.getElementById(`tp_qty_${id}`);
     if(el) el.focus();
   },50);
-}
-
-function quickBuy(id){
-  const a=assets.find(x=>x.id===id); if(!a) return;
-  const qty=parseFloat(document.getElementById(`qt_qty_${id}`).value);
-  const price=parseFloat(document.getElementById(`qt_price_${id}`).value)||a.currentPrice;
-  const st=document.getElementById(`qt_status_${id}`);
-  if(isNaN(qty)||qty<=0){st.textContent='❌ 수량을 입력해 주세요.';return;}
-  // 가중평균 단가 계산
-  const newAvg=Math.round(((a.avgPrice*a.quantity)+(price*qty))/(a.quantity+qty)*100)/100;
-  a.quantity+=qty;
-  a.avgPrice=newAvg;
-  st.innerHTML=`✅ ${qty.toLocaleString()}주 매수 → 총 <b>${a.quantity.toLocaleString()}주</b> · 평균 ${CUR_SYM[a.currency]}${newAvg.toLocaleString()}`;
-  saveAssets(); renderAll();
-  setTimeout(()=>{ quickTradeId=null; renderTable(); },2500);
-}
-
-function quickSell(id){
-  const a=assets.find(x=>x.id===id); if(!a) return;
-  const qty=parseFloat(document.getElementById(`qt_qty_${id}`).value);
-  const price=parseFloat(document.getElementById(`qt_price_${id}`).value)||a.currentPrice;
-  const st=document.getElementById(`qt_status_${id}`);
-  if(isNaN(qty)||qty<=0){st.textContent='❌ 수량을 입력해 주세요.';return;}
-  if(qty>a.quantity){st.textContent=`❌ 보유 수량(${a.quantity.toLocaleString()}주) 초과`;return;}
-  const pnl=(price-a.avgPrice)*qty;
-  const sym=CUR_SYM[a.currency];
-  if(qty===a.quantity){
-    assets=assets.filter(x=>x.id!==id);
-    selectedAssets.delete(id); // 그래프 선택에서도 제거
-    saveChartSel();
-    st.innerHTML=`✅ 전량 매도 · 실현손익 <b style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">${pnl>=0?'+':''}${sym}${Math.round(Math.abs(pnl)).toLocaleString()}</b>`;
-  }else{
-    a.quantity-=qty;
-    st.innerHTML=`✅ ${qty.toLocaleString()}주 매도 · 잔여 <b>${a.quantity.toLocaleString()}주</b> · 실현손익 <b style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">${pnl>=0?'+':''}${sym}${Math.round(Math.abs(pnl)).toLocaleString()}</b>`;
-  }
-  saveAssets(); renderAll();
-  setTimeout(()=>{ quickTradeId=null; renderTable(); },2500);
 }
 // 매수/매도 확인 팝업
 let pendingTrade = null;
