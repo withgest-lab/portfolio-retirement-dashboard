@@ -50,13 +50,13 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
    차지해 아래 콘텐츠가 가려지지 않게 한다(실제 높이는 JS가 렌더 후 측정해 반영). */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
   padding:2px;flex-wrap:wrap;
-  position:fixed;top:92px;left:12px;right:12px;max-width:1256px;margin:0 auto;
+  position:fixed;top:100px;left:12px;right:12px;max-width:1256px;margin:0 auto;
   box-sizing:border-box;z-index:50;}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
 .subtabbar button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
-.subtabbar-spacer{height:31px;}
+.subtabbar-spacer{height:39px;}
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
 .page{display:none;flex-direction:column;gap:6px;}
@@ -3138,7 +3138,10 @@ function syncSubtabbarSpacers(){
   document.querySelectorAll('.subtabbar').forEach(bar=>{
     const spacer = bar.nextElementSibling;
     if(!spacer || !spacer.classList.contains('subtabbar-spacer')) return;
-    const h = bar.getBoundingClientRect().height;
+    spacer.style.height = '0px';
+    const spacerTop = spacer.getBoundingClientRect().top;
+    const barBottom = bar.getBoundingClientRect().bottom;
+    const h = barBottom - spacerTop;
     if(h > 0) spacer.style.height = h+'px';
   });
 }
