@@ -2362,6 +2362,9 @@ function renderTable(){
       return (va-vb)*assetSort.dir;
     });
   }
+  // 현금은 정렬 기준과 무관하게 항상 목록 맨 아래 — Array.sort는 안정 정렬이므로
+  // 현금/비현금 각 그룹 내 상대 순서는 그대로 유지된다.
+  list = list.slice().sort((a,b)=> (a.category==='cash')-(b.category==='cash'));
   ['ev','pnl'].forEach(f=>{
     const el=document.getElementById('sortArrow_'+f);
     if(el) el.textContent = assetSort.field===f ? (assetSort.dir>0?' ▲':' ▼') : '';
