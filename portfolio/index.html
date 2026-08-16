@@ -982,6 +982,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="subpage" data-sub="stock">
   <div class="card">
     <div class="section-label">종목별 배당 집계</div>
+    <div id="divAddForm_stock"></div>
     <div class="tbl-wrap">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">종목</th><th>지급 횟수</th><th>누적 배당금</th><th>다음 예상</th></tr></thead>
@@ -994,6 +995,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="subpage" data-sub="calendar">
   <div class="card">
     <div class="section-label">월별 배당 캘린더 (<span id="divCalYear"></span>년)</div>
+    <div id="divAddForm_cal"></div>
     <div class="div-cal-grid" id="divCalendarGrid"></div>
     <div id="divCalendarDetail" style="display:none;"></div>
     <div class="notice">💡 확정 배당은 실제 기록된 금액, 예상 배당은 최근 이력 기반 추정치입니다. 월을 탭하면 해당 월의 배당 기록을 수정·삭제할 수 있습니다.</div>
@@ -3824,7 +3826,7 @@ function buildMonthlyPerformance(){
 function renderSnapStartNotices(){
   const dateStr = firstSnapDateStr();
   const msg = dateStr
-    ? `💡 수익률(%)은 최초 스냅샷 기록일(${dateStr})부터 계산됩니다. 원금기록장에 그 이전 날짜의 입출금을 소급 기록하면 누적 원금·이 차트의 점선에는 반영되지만, 그 이전 기간의 수익률(%)은 실제 자산가치 기록이 없어 계산되지 않습니다.`
+    ? `💡 수익률(%)은 최초 스냅샷 기록일(${dateStr})부터 계산됩니다. 원금기록장에 그 이전 날짜의 입출금을 소급 기록하면 "원금 vs 자산가치" 차트의 점선(투입원금)은 그 날짜부터 표시되지만, 실선(자산가치)과 수익률(%)은 여전히 최초 스냅샷 기록일부터만 표시됩니다 — 그 이전엔 실제 자산가치 기록이 없기 때문입니다.`
     : '';
   ['yearlySnapStartNotice','monthlySnapStartNotice','chartSnapStartNotice'].forEach(id=>{
     const el = document.getElementById(id);
@@ -3897,19 +3899,35 @@ function renderMonthlyTable(){
   }).join('');
 }
 
-// 기능(B): 스냅샷 시점마다 그 시점까지의 누적 투입원금을 함께 샘플링
+// 기능(B): 스냅샷 시점마다 그 시점까지의 누적 투입원금을 함께 샘플링.
+// 원금기록장에 최초 스냅샷보다 이전 날짜로 소급 입력한 입출금이 있으면, 그 시점의 실제
+// 자산가치는 알 수 없지만(스냅샷이 없음) 투입원금(점선)은 그 날짜부터 보여줘야 하므로
+// value:null인 포인트를 먼저 만들어 점선의 시작을 앞당긴다 — 실선(자산가치)은 여전히
+// 최초 스냅샷 시점부터만 그려진다(drawPrincipalVsValueChart에서 value:null 구간 처리).
 function buildPrincipalVsValueSeries(){
   const snaps = loadSnaps().slice().sort((a,b)=>a.timestamp-b.timestamp);
-  if(!snaps.length) return [];
   const cashEvents = loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal').slice().sort((a,b)=>a.at-b.at);
+  if(!snaps.length && !cashEvents.length) return [];
+
+  const firstSnapTs = snaps.length ? snaps[0].timestamp : Infinity;
   let cumPrincipal = 0, idx = 0;
-  return snaps.map(s=>{
+  const series = [];
+
+  while(idx < cashEvents.length && cashEvents[idx].at < firstSnapTs){
+    cumPrincipal += (cashEvents[idx].type==='deposit'?1:-1)*(cashEvents[idx].totalKRW||0);
+    series.push({ts:cashEvents[idx].at, value:null, principal:cumPrincipal});
+    idx++;
+  }
+
+  snaps.forEach(s=>{
     while(idx < cashEvents.length && cashEvents[idx].at <= s.timestamp){
       cumPrincipal += (cashEvents[idx].type==='deposit'?1:-1)*(cashEvents[idx].totalKRW||0);
       idx++;
     }
-    return {ts:s.timestamp, value:s.totalValue, principal:cumPrincipal};
+    series.push({ts:s.timestamp, value:s.totalValue, principal:cumPrincipal});
   });
+
+  return series;
 }
 
 let monthlyChartPeriod = 'ALL';
@@ -3951,7 +3969,7 @@ function drawPrincipalVsValueChart(){
 
   const PAD_L=56, PAD_R=14, PAD_T=14, PAD_B=26;
   const BW = cssW-PAD_L-PAD_R, BH = cssH-PAD_T-PAD_B;
-  const allVals = series.flatMap(p=>[p.value,p.principal]);
+  const allVals = series.flatMap(p=>[p.value,p.principal]).filter(v=>v!=null);
   let vMin = Math.min(...allVals), vMax = Math.max(...allVals);
   if(vMin===vMax){ vMin -= 1; vMax += 1; }
   const pad = (vMax-vMin)*0.08;
@@ -3997,15 +4015,19 @@ function drawPrincipalVsValueChart(){
     ctx.fillText(label, x, PAD_T+BH+15);
   }
 
-  const lastGain = series[series.length-1].value >= series[series.length-1].principal;
+  const valuedSeries = series.filter(p=>p.value!=null);
+  const lastValued = valuedSeries.length ? valuedSeries[valuedSeries.length-1] : null;
+  const lastGain = lastValued ? lastValued.value >= lastValued.principal : false;
   const GAIN_FILL = 'rgba(52,199,89,0.14)';   // 원금 대비 수익 구간 — 녹색
   const LOSS_FILL = 'rgba(255,59,48,0.10)';   // 원금 대비 손실 구간 — 빨강
 
   // 손익 구간 채움 (자산가치선과 원금선 사이) — 구간별로 원금 대비 수익/손실이 갈리면
   // 교차 지점을 선형보간해 그 지점에서 색을 나눠 칠한다(구간 전체를 마지막 시점 기준
-  // 한 가지 색으로 뭉뚱그리지 않음).
+  // 한 가지 색으로 뭉뚱그리지 않음). 실제 자산가치를 모르는(value:null) 소급 구간은
+  // 채울 수 없으므로 건너뛴다 — 점선(투입원금)만 표시된다.
   for(let i=0;i<series.length-1;i++){
     const p0=series[i], p1=series[i+1];
+    if(p0.value==null || p1.value==null) continue;
     const d0=p0.value-p0.principal, d1=p1.value-p1.principal;
     const x0=toX(p0.ts), x1=toX(p1.ts);
     const yv0=toY(p0.value), yv1=toY(p1.value);
@@ -4042,15 +4064,23 @@ function drawPrincipalVsValueChart(){
 
   // 자산가치 선(실선) — 짙은 회색(--color-secondary) 고정, 손익은 채움 색으로 구분.
   // 순검정(#1c1c1e)은 눈에 너무 튀어서, 점선(투입원금, #8e8e93)보다는 진하되
-  // 부담스럽지 않은 톤으로 조정.
-  ctx.beginPath();
-  ctx.strokeStyle = '#636366'; ctx.lineWidth=2;
-  series.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-  ctx.stroke();
+  // 부담스럽지 않은 톤으로 조정. value:null인 소급 구간(최초 스냅샷 이전)은 실제
+  // 자산가치를 모르므로 건너뛰고, 스냅샷이 시작되는 지점부터 이어서 그린다.
+  if(valuedSeries.length){
+    ctx.beginPath();
+    ctx.strokeStyle = '#636366'; ctx.lineWidth=2;
+    let started=false;
+    series.forEach(p=>{
+      if(p.value==null) return;
+      const x=toX(p.ts), y=toY(p.value);
+      started ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+      started=true;
+    });
+    ctx.stroke();
 
-  const lastP = series[series.length-1];
-  ctx.fillStyle = '#636366';
-  ctx.beginPath(); ctx.arc(toX(lastP.ts), toY(lastP.value), 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#636366';
+    ctx.beginPath(); ctx.arc(toX(lastValued.ts), toY(lastValued.value), 3, 0, Math.PI*2); ctx.fill();
+  }
 
   canvas.onmousemove = canvas.onclick = (e)=>{
     const rect = canvas.getBoundingClientRect();
@@ -4059,9 +4089,13 @@ function drawPrincipalVsValueChart(){
     series.forEach(p=>{ const d=Math.abs(toX(p.ts)-mx); if(d<minD){minD=d; nearest=p;} });
     if(!tipEl) return;
     const d = new Date(nearest.ts);
-    const pnl = nearest.value - nearest.principal;
     tipEl.style.display='block';
-    tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} — 자산가치 <b>${fmt(nearest.value)}</b> · 투입원금 <b>${fmt(nearest.principal)}</b> · 손익 <b class="${pnl>=0?'up':'dn'}">${pnl>=0?'+':''}${fmt(pnl)}</b>`;
+    if(nearest.value==null){
+      tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} — 투입원금 <b>${fmt(nearest.principal)}</b> · <span style="color:var(--color-tertiary);">이 시점은 스냅샷이 없어 자산가치를 알 수 없습니다</span>`;
+    } else {
+      const pnl = nearest.value - nearest.principal;
+      tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} — 자산가치 <b>${fmt(nearest.value)}</b> · 투입원금 <b>${fmt(nearest.principal)}</b> · 손익 <b class="${pnl>=0?'up':'dn'}">${pnl>=0?'+':''}${fmt(pnl)}</b>`;
+    }
   };
 }
 SUBPAGE_RENDER_HOOKS['returns_monthly_table'] = renderMonthlyTable;
@@ -4218,6 +4252,48 @@ function renderDividendEntryPanel(entries, hasProjected){
   return `<div style="padding:4px 2px 2px;">${list}${projNote}</div>`;
 }
 
+// 신규 배당 기록 추가 폼 — 종목별 집계·월별 캘린더 탭 상단에 배치(기록 전용, 자산/현금 잔액 미반영)
+function renderDividendAddForm(ctx){
+  return `<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
+    <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+      날짜
+      <input id="dnew_date_${ctx}" type="date" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+    </label>
+    <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;">
+      종목/배당원천
+      <input id="dnew_name_${ctx}" placeholder="예: SCHD" style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+    </label>
+    <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+      금액(원)
+      <input id="dnew_amount_${ctx}" type="number" placeholder="0" min="0" style="width:120px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+    </label>
+    <button class="btn" style="background:#ff950020;color:#ff9500;padding:7px 14px;font-size:13px;" onclick="addDividendEntry('${ctx}')">+ 배당 추가</button>
+  </div>
+  <div class="form-status" id="dnew_status_${ctx}"></div>`;
+}
+function addDividendEntry(ctx){
+  const dateEl = document.getElementById(`dnew_date_${ctx}`);
+  const nameEl = document.getElementById(`dnew_name_${ctx}`);
+  const amtEl  = document.getElementById(`dnew_amount_${ctx}`);
+  const st = document.getElementById(`dnew_status_${ctx}`);
+  const dateV = dateEl.value;
+  const name  = nameEl.value.trim();
+  const amount = parseFloat(amtEl.value);
+  if(!dateV){ if(st) st.textContent='❌ 날짜를 입력해 주세요.'; return; }
+  if(!name){ if(st) st.textContent='❌ 종목/배당원천을 입력해 주세요.'; return; }
+  if(isNaN(amount) || amount<=0){ if(st) st.textContent='❌ 금액을 입력해 주세요.'; return; }
+  addTradeLog({
+    name, ticker:'—', type:'dividend', at: new Date(dateV+'T00:00:00').getTime(),
+    category:'cash', attribute:null, subAccount:null,
+    price:null, quantity:null, currency:'KRW',
+    totalKRW: Math.round(amount), pnl: Math.round(amount), pnlPct:null,
+    reason:'', cashAdjusted:null
+  });
+  if(st){ st.textContent = `✅ ${dateV} ${name} 배당 기록 추가 (자산/현금 잔액 미반영)`; setTimeout(()=>{ if(st.textContent.startsWith('✅')) st.textContent=''; }, 3000); }
+  nameEl.value=''; amtEl.value='';
+  renderAllDividendViews();
+}
+
 function renderDividendMonthly(){
   const el = document.getElementById('divMonthlyBody');
   const barsEl = document.getElementById('divMonthlyBars');
@@ -4272,6 +4348,8 @@ function renderDividendMonthly(){
 function renderDividendByStock(){
   const el = document.getElementById('divStockBody');
   if(!el) return;
+  const addFormEl = document.getElementById('divAddForm_stock');
+  if(addFormEl) addFormEl.innerHTML = renderDividendAddForm('stock');
   const byName = getDividendsByStock();
   const names = Object.keys(byName).sort((a,b)=>byName[b].sum-byName[a].sum);
   if(!names.length){
@@ -4305,6 +4383,8 @@ SUBPAGE_RENDER_HOOKS['dividend_calendar'] = renderDividendCalendar;
 function renderDividendCalendar(){
   const el = document.getElementById('divCalendarGrid');
   if(!el) return;
+  const addFormEl = document.getElementById('divAddForm_cal');
+  if(addFormEl) addFormEl.innerHTML = renderDividendAddForm('cal');
   const year = new Date().getFullYear();
   const yearEl = document.getElementById('divCalYear');
   if(yearEl) yearEl.textContent = year;
