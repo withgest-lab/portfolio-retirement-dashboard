@@ -45,11 +45,16 @@ h1{font-size:16px;font-weight:700;color:#111;}
 .badge-ok{background:#EAF3EE;color:#3F7A5E;}
 .badge-warn{background:#F5EEE3;color:#9C6B2E;}
 
-/* ── 플랜 배너 ── */
-.plan-banner{flex:0 0 auto;display:none;overflow:hidden;max-height:0;
+/* ── 플랜 배너: 자동설계 결과 팝업 — 예상결과 화면 위에 떠서 오버랩되고,
+   닫으면 그 아래에 이미 전환되어 있던 예상결과 화면이 바로 보인다 ── */
+.plan-banner{display:none;position:fixed;left:10px;right:10px;
+  top:calc(var(--topbar-h) + 8px);max-width:480px;margin:0 auto;z-index:250;
+  border-radius:14px;max-height:calc(100vh - var(--topbar-h) - 24px);overflow-y:auto;
   background:linear-gradient(135deg,#2E5E47,#33566F 50%,#4F457F);
-  border-bottom:1px solid rgba(255,255,255,0.08);}
-.plan-banner.show{display:block;max-height:none;padding:10px 14px;}
+  box-shadow:0 12px 40px rgba(0,0,0,.35);}
+.plan-banner.show{display:block;padding:10px 14px;}
+.plan-banner-backdrop{display:none;position:fixed;inset:0;background:rgba(20,24,30,.4);z-index:240;}
+.plan-banner-backdrop.show{display:block;}
 .pb-title{font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);
   margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;}
 .pb-close{background:transparent;border:none;color:rgba(255,255,255,0.4);
@@ -445,6 +450,7 @@ button{font-family:inherit;cursor:pointer;}
     <div class="subtitle" id="subtitle">51세 → 57세 은퇴 · 사적연금 한도 1,400만원/년</div>
   </div>
   <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+    <a href="../portfolio/" class="tax-guide-btn" style="text-decoration:none;">📊 포트폴리오</a>
     <button type="button" class="tax-guide-btn" onclick="toggleTaxGuide()">📖 세금 상식</button>
     <button type="button" class="tax-guide-btn" onclick="toggleHealthPanel()">🏥 건보료 설계</button>
     <button onclick="if(confirm('모든 설정값을 초기화할까요?'))resetState();"
@@ -564,11 +570,12 @@ button{font-family:inherit;cursor:pointer;}
   <div class="mcard"><div class="mlabel">자산 소진 예상</div><div class="mval-row"><span class="mval" id="m4">-</span><span class="msub" id="m4s">-</span></div></div>
 </div>
 
-<!-- 플랜 요약 배너 -->
+<!-- 플랜 요약 배너: 자동설계 결과 팝업 (예상결과 화면 위에 오버랩) -->
+<div class="plan-banner-backdrop" id="planBannerBackdrop" onclick="closePlanBanner()"></div>
 <div class="plan-banner" id="planBanner">
   <div class="pb-title">
     <span>✨ 세금·건보료 최소화 최적 인출 플랜 요약</span>
-    <button class="pb-close" onclick="document.getElementById('planBanner').classList.remove('show')">✕</button>
+    <button class="pb-close" onclick="closePlanBanner()">✕</button>
   </div>
   <div class="pb-grid">
     <div class="pb-card"><div class="pb-label">공백기 월 수령 합계</div><div class="pb-val" id="pb-gap-total" style="color:#8FC7AC">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
@@ -1718,11 +1725,16 @@ ${nhLimited ? `<div style="background:#F5EEE3;border-radius:5px;padding:5px 8px;
   upd();
 }
 
-/* ── 플랜 요약 배너 업데이트 ── */
+/* ── 플랜 요약 배너 업데이트 ──
+   자동설계 결과는 예상결과 화면 위에 오버랩되는 팝업으로 뜨고, 닫으면 그 아래에
+   이미 전환되어 있던 예상결과 화면이 바로 보이도록 먼저 탭을 전환해둔다. */
 function showPlanBanner(d){
   const banner = document.getElementById('planBanner');
   if(!banner) return;
   banner.classList.add('show');
+  const backdrop = document.getElementById('planBannerBackdrop');
+  if(backdrop) backdrop.classList.add('show');
+  if(typeof setMainTab==='function') setMainTab('result');
 
   const p = getP();
   // 시뮬레이션으로 총자산·런웨이 가져오기
@@ -1813,6 +1825,12 @@ function showPlanBanner(d){
     : '💡 ISA·안세공 비과세 인출로 건보료 산정 소득을 낮춰 피부양자 유지(공적연금 등 소득 연 '+depThreshold.toLocaleString()+'만원 이하, 현재 재산 과표 기준)를 우선 검토하세요.');
 
   document.getElementById('pb-insight').innerHTML = insights.join('<br>');
+}
+function closePlanBanner(){
+  const banner = document.getElementById('planBanner');
+  if(banner) banner.classList.remove('show');
+  const backdrop = document.getElementById('planBannerBackdrop');
+  if(backdrop) backdrop.classList.remove('show');
 }
 
 /* ── 시뮬레이션 핵심 (완전 수정) ──
