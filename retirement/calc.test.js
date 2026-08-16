@@ -61,18 +61,20 @@ test('npsAdjustFactor: 국민연금 조기·연기수령 가산율', () => {
   assert.ok(Math.abs(npsAdjustFactor(68) - 0.216) < 1e-9); // 3년 연기 × +7.2%
 });
 
-test('calcISA_FV: 5년 만기 회차마다 0원부터 다시 시작 (2026년 세법개정 반영)', () => {
-  // 10년 내내 납입 시 정확히 두 번째 5년 회차 진입 시점(6년차)에 잔액이 급감해야 함
-  // (이전 회차 만기 수령금이 계좌 밖으로 나가고 0원부터 재시작하는 구조이므로)
+test('calcISA_FV: 은퇴할 때까지 해지·재개설 없이 연속 복리 (5년 만기 리셋 제거)', () => {
+  // 10년 내내 납입 후 즉시 은퇴 — 계좌가 6년차에 리셋되지 않고 계속 굴러가야 하므로,
+  // 10년차 결과는 5년차 결과의 단순 2배보다 뚜렷하게 커야 한다(복리 효과 누적).
+  // (예전 회차-리셋 구조였다면 10년차/5년차 비율이 2배를 크게 넘지 못했음)
   const rate = 4;
-  const fvThroughYear5 = calcISA_FV(0, 1000, 0, 0, 4, 5, rate, 'isa');  // 1~5년차 회차만 보고 즉시 은퇴
-  const fvThroughYear10 = calcISA_FV(0, 1000, 0, 0, 9, 10, rate, 'isa'); // 1~10년차(두 회차) 납입 후 은퇴
-  // 두 번째 회차도 첫 회차와 동일한 조건으로 굴러갔다면, 각 회차의 만기 성장분이
-  // 재투자되어 10년차 결과가 5년차 결과의 두 배보다는 크지만 완전히 복리 누적된
-  // (회차가 리셋되지 않는) 값보다는 작아야 한다.
-  const naiveDoubled = fvThroughYear5 * 2;
-  assert.ok(fvThroughYear10 > fvThroughYear5, '두 번째 회차 이후 자산이 더 커야 함');
-  assert.ok(fvThroughYear10 < naiveDoubled * 1.5, '단순 2배보다 과도하게 크면 회차 리셋이 적용 안 된 것');
+  const fvThroughYear5  = calcISA_FV(0, 1000, 0, 0, 4, 5, rate, 'isa');
+  const fvThroughYear10 = calcISA_FV(0, 1000, 0, 0, 9, 10, rate, 'isa');
+  assert.ok(fvThroughYear10 > fvThroughYear5 * 2.1, '회차 리셋 없이 연속 복리로 누적되어야 함');
+
+  // 비과세 한도(200만원) 이내로만 수익이 나는 시나리오에서는 세금이 붙지 않으므로,
+  // 연속 복리인 IRP(isaType 생략)와 정확히 같은 값이 나와야 한다.
+  const irpFV = calcISA_FV(0, 10, 0, 0, 4, 5, rate);
+  const isaFVUntaxed = calcISA_FV(0, 10, 0, 0, 4, 5, rate, 'isa');
+  assert.equal(isaFVUntaxed, irpFV, '비과세 한도 이내 수익이면 세금 없이 연속 복리 결과와 같아야 함');
 });
 
 test('pmtAnnualGrowing: 산출된 월 인출액으로 N년 뒤 잔액이 0에 수렴', () => {
