@@ -333,7 +333,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
           <button data-mode="market" class="active" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="qvPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
-          <button data-p="1D" onclick="setQuickViewPeriod('1D')">1D</button>
+          <button data-p="1D" class="active" onclick="setQuickViewPeriod('1D')">1D</button>
           <button data-p="5D" onclick="setQuickViewPeriod('5D')">5D</button>
           <button data-p="1M" onclick="setQuickViewPeriod('1M')">1M</button>
           <button data-p="3M" onclick="setQuickViewPeriod('3M')">3M</button>
@@ -343,7 +343,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
           <button data-p="3Y" onclick="setQuickViewPeriod('3Y')">3Y</button>
           <button data-p="5Y" onclick="setQuickViewPeriod('5Y')">5Y</button>
           <button data-p="10Y" onclick="setQuickViewPeriod('10Y')">10Y</button>
-          <button data-p="ALL" class="active" onclick="setQuickViewPeriod('ALL')">ALL</button>
+          <button data-p="ALL" onclick="setQuickViewPeriod('ALL')">ALL</button>
         </div>
       </div>
     </div>
@@ -4948,8 +4948,8 @@ function drawTreemap(){
   renderTreemapCanvas('treemapCanvas', buildTreemapItems(assets, allocTreemapMode, allocTreemapPeriod), 320, goToStockDetail);
 }
 
-// 자산 Quick View 트리맵 — 매입이력/시장이력(기본) 모드 × 기간(기본 ALL)
-let qvTreemapMode = 'market', qvTreemapPeriod = 'ALL';
+// 자산 Quick View 트리맵 — 대시보드 기본값: 기간별 주가 변화율(market) × 1D
+let qvTreemapMode = 'market', qvTreemapPeriod = '1D';
 function setQuickViewMode(mode){
   qvTreemapMode = mode;
   document.querySelectorAll('#qvModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
@@ -6217,6 +6217,17 @@ function renderAll(){
   // 환율 표시 갱신
   const fx = document.getElementById('fxDisplay');
   if(fx) fx.textContent = `$1=₩${FX.USD.toLocaleString('ko-KR',{maximumFractionDigits:1})} · ¥1=₩${FX.JPY.toFixed(2)}`;
+  refreshActiveViewCanvases();
+}
+
+// 시세 갱신(수동 🔄 버튼·5분 자동 갱신) 등으로 renderAll()이 호출될 때, 다른 탭으로 갔다
+// 돌아와야만 반영되던 캔버스(트리맵·차트 등)를 지금 보고 있는 탭·서브탭 자리에서 바로
+// 최신 데이터로 다시 그린다 — resize 핸들러와 동일한 "현재 활성 탭만" 재렌더 로직 재사용.
+// 탭 이동이나 다른 항목의 화면 상태는 건드리지 않고, 보고 있는 위치의 데이터만 갱신한다.
+function refreshActiveViewCanvases(){
+  const activePage = localStorage.getItem('currentPage') || 'dashboard';
+  if(typeof PAGE_RENDER_HOOKS[activePage]==='function') PAGE_RENDER_HOOKS[activePage]();
+  if(activePage==='portfolio' && chartDetailId) loadAndDrawStockChart(chartDetailId);
 }
 
 /* ════════════════════════════════════════
@@ -6231,9 +6242,7 @@ window.addEventListener('resize',()=>{
   clearTimeout(resizeRedrawTimer);
   resizeRedrawTimer = setTimeout(()=>{
     drawLineChart();
-    const activePage = localStorage.getItem('currentPage') || 'dashboard';
-    if(typeof PAGE_RENDER_HOOKS[activePage]==='function') PAGE_RENDER_HOOKS[activePage]();
-    if(activePage==='portfolio' && chartDetailId) loadAndDrawStockChart(chartDetailId);
+    refreshActiveViewCanvases();
   }, 150);
 });
 
