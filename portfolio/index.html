@@ -3998,16 +3998,39 @@ function drawPrincipalVsValueChart(){
   }
 
   const lastGain = series[series.length-1].value >= series[series.length-1].principal;
+  const GAIN_FILL = 'rgba(52,199,89,0.14)';   // 원금 대비 수익 구간 — 녹색
+  const LOSS_FILL = 'rgba(255,59,48,0.10)';   // 원금 대비 손실 구간 — 빨강
 
-  // 손익 구간 채움 (자산가치선과 원금선 사이)
-  ctx.save();
-  ctx.beginPath();
-  series.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
-  for(let i=series.length-1;i>=0;i--){ ctx.lineTo(toX(series[i].ts), toY(series[i].principal)); }
-  ctx.closePath();
-  ctx.fillStyle = lastGain ? 'rgba(255,59,48,0.10)' : 'rgba(0,122,255,0.10)';
-  ctx.fill();
-  ctx.restore();
+  // 손익 구간 채움 (자산가치선과 원금선 사이) — 구간별로 원금 대비 수익/손실이 갈리면
+  // 교차 지점을 선형보간해 그 지점에서 색을 나눠 칠한다(구간 전체를 마지막 시점 기준
+  // 한 가지 색으로 뭉뚱그리지 않음).
+  for(let i=0;i<series.length-1;i++){
+    const p0=series[i], p1=series[i+1];
+    const d0=p0.value-p0.principal, d1=p1.value-p1.principal;
+    const x0=toX(p0.ts), x1=toX(p1.ts);
+    const yv0=toY(p0.value), yv1=toY(p1.value);
+    const yp0=toY(p0.principal), yp1=toY(p1.principal);
+    const sameSign = (d0>=0)===(d1>=0);
+    if(sameSign){
+      ctx.beginPath();
+      ctx.moveTo(x0,yv0); ctx.lineTo(x1,yv1); ctx.lineTo(x1,yp1); ctx.lineTo(x0,yp0); ctx.closePath();
+      ctx.fillStyle = d0>=0 ? GAIN_FILL : LOSS_FILL;
+      ctx.fill();
+    } else {
+      // 구간 안에서 원금선과 자산가치선이 교차 — 교차점(diff=0)을 보간해 둘로 나눠 칠함
+      const t = d0/(d0-d1);
+      const xc = x0+t*(x1-x0);
+      const yc = yv0+t*(yv1-yv0); // 교차 지점에서는 value == principal
+      ctx.beginPath();
+      ctx.moveTo(x0,yv0); ctx.lineTo(xc,yc); ctx.lineTo(xc,yc); ctx.lineTo(x0,yp0); ctx.closePath();
+      ctx.fillStyle = d0>=0 ? GAIN_FILL : LOSS_FILL;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(xc,yc); ctx.lineTo(x1,yv1); ctx.lineTo(x1,yp1); ctx.lineTo(xc,yc); ctx.closePath();
+      ctx.fillStyle = d1>=0 ? GAIN_FILL : LOSS_FILL;
+      ctx.fill();
+    }
+  }
 
   // 투입원금 선(점선)
   ctx.beginPath();
@@ -4017,14 +4040,14 @@ function drawPrincipalVsValueChart(){
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // 자산가치 선(실선)
+  // 자산가치 선(실선) — 검정 고정, 손익은 채움 색으로 구분
   ctx.beginPath();
-  ctx.strokeStyle = lastGain ? '#ff3b30' : '#007aff'; ctx.lineWidth=2;
+  ctx.strokeStyle = '#1c1c1e'; ctx.lineWidth=2;
   series.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.value); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
 
   const lastP = series[series.length-1];
-  ctx.fillStyle = lastGain ? '#ff3b30' : '#007aff';
+  ctx.fillStyle = '#1c1c1e';
   ctx.beginPath(); ctx.arc(toX(lastP.ts), toY(lastP.value), 3, 0, Math.PI*2); ctx.fill();
 
   canvas.onmousemove = canvas.onclick = (e)=>{
