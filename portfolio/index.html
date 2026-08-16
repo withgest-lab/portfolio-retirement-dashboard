@@ -22,8 +22,10 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
   height:52px;gap:8px;position:fixed;top:0;left:0;right:0;z-index:100;}
 .logo{font-size:17px;font-weight:700;letter-spacing:-.04em;flex-shrink:0;}
 .logo span{color:var(--color-accent);}
-.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
-.status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);}
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.topbar-actions::-webkit-scrollbar{display:none;}
+.status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);flex-shrink:0;}
 .dot{width:7px;height:7px;border-radius:50%;background:#8e8e93;flex-shrink:0;}
 .dot.ok{background:#34c759;} .dot.err{background:#ff3b30;}
 .dot.loading{background:#ff9500;animation:pulse .8s infinite;}
@@ -80,7 +82,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 /* ── 버튼 ── */
 .btn{border:none;cursor:pointer;border-radius:var(--radius-sm);font-family:inherit;
-  font-size:12px;font-weight:600;padding:6px 12px;transition:.15s;}
+  font-size:12px;font-weight:600;padding:6px 12px;transition:.15s;white-space:nowrap;flex-shrink:0;}
 .btn:active{transform:scale(.97);}
 .btn-primary{background:var(--color-accent);color:#fff;}
 .btn-ghost{background:var(--color-section-bg);color:var(--color-text);}
@@ -277,6 +279,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 /* ── 반응형 ── */
 /* ── Z Fold7 펼침 (메인화면 ~904px) ── */
+@media(max-width:900px){
+  .topbar-actions .status-wrap span{display:none;}
+}
 @media(min-width:600px)and(max-width:960px){
   .summary-grid{grid-template-columns:repeat(4,1fr);}
   table{font-size:11px;}
@@ -295,7 +300,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   .summary-grid{grid-template-columns:repeat(2,1fr);}
   .col-hide{display:none;}
   .fold-hide{display:none;}
-  .topbar-actions .status-wrap span{display:none;}
   .biased-wrap{flex-direction:column;}
   .bar-side{min-width:unset;width:100%;}
   .index-grid{grid-template-columns:1fr;}
