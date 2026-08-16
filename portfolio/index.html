@@ -341,7 +341,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </div>
     </div>
     <div class="chart-wrap"><canvas id="qvTreemapCanvas" height="300"></canvas></div>
-    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=선택 기간 수익률(초록 이익/빨강 손실). 1D는 전일 미장 종가·오늘 국장 반영 기준입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
+    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=선택 기간 수익률(초록 이익/빨강 손실). 1D는 오늘 국내장 개장(09:00, 휴장일엔 직전 평일 09:00) 기준입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
   </div>
 </div>
 
@@ -852,6 +852,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </table>
     </div>
     <div class="notice">💡 미실현손익은 올해 현재 보유 종목 기준으로만 표시됩니다 — 과거 연도의 연말 시점 미실현손익은 스냅샷 밀도가 일정하지 않아 정확히 산출하기 어려워 실현손익만 표시합니다.</div>
+    <div class="notice" id="yearlySnapStartNotice"></div>
   </div>
 </div>
 <div class="subpage" data-sub="monthly_table">
@@ -867,6 +868,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </table>
     </div>
     <div class="notice">💡 순입출금은 '원금기록장' 탭에 기록된 입출금만 반영됩니다. 과거 월은 원금기록장에서 해당 월 입출금을 직접 추가하면 반영됩니다.</div>
+    <div class="notice" id="monthlySnapStartNotice"></div>
   </div>
 </div>
 <div class="subpage" data-sub="monthly_chart">
@@ -890,6 +892,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="chart-wrap"><canvas id="pvChart" height="280"></canvas></div>
     <div id="pvTooltip" class="notice" style="display:none;margin-top:10px;line-height:1.6;"></div>
     <div class="notice">💡 실선=자산가치, 점선=투입원금(원금기록장에 기록된 입출금 기준). 두 선 사이 채움은 현재 손익 구간을 나타냅니다.</div>
+    <div class="notice" id="chartSnapStartNotice"></div>
   </div>
 </div>
 <div class="subpage" data-sub="principal">
@@ -1692,6 +1695,14 @@ function loadSnaps(){
   }catch(e){return[];}
 }
 function saveSnaps(arr){localStorage.setItem(SNAP_KEY,JSON.stringify(arr));}
+// 최초 스냅샷 기록일 — 수익률(%) 계산이 가능한 시작 시점을 안내하는 데 사용
+function firstSnapDateStr(){
+  const snaps = loadSnaps();
+  if(!snaps.length) return null;
+  const ts = Math.min(...snaps.map(s=>s.timestamp));
+  const d = new Date(ts);
+  return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`;
+}
 
 // ── 매매 이력 ──
 function loadTradeLog(){ try{ return JSON.parse(localStorage.getItem(TRADE_KEY)||'[]'); }catch(e){return[];} }
@@ -3778,7 +3789,20 @@ function buildMonthlyPerformance(){
   });
 }
 
+// 수익률(%) 계산이 가능한 시작 시점(최초 스냅샷 기록일)을 각 수익률 화면에 안내
+function renderSnapStartNotices(){
+  const dateStr = firstSnapDateStr();
+  const msg = dateStr
+    ? `💡 수익률(%)은 최초 스냅샷 기록일(${dateStr})부터 계산됩니다. 원금기록장에 그 이전 날짜의 입출금을 소급 기록하면 누적 원금·이 차트의 점선에는 반영되지만, 그 이전 기간의 수익률(%)은 실제 자산가치 기록이 없어 계산되지 않습니다.`
+    : '';
+  ['yearlySnapStartNotice','monthlySnapStartNotice','chartSnapStartNotice'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = msg;
+  });
+}
+
 function renderMonthlyTable(){
+  renderSnapStartNotices();
   const el = document.getElementById('monthlyPerfBody');
   if(!el) return;
   const rows = buildMonthlyPerformance();
@@ -3824,6 +3848,7 @@ function setMonthlyChartPeriod(p){
 }
 
 function drawPrincipalVsValueChart(){
+  renderSnapStartNotices();
   const canvas = document.getElementById('pvChart');
   const tipEl = document.getElementById('pvTooltip');
   if(!canvas) return;
@@ -4087,6 +4112,7 @@ function buildYearlyReturns(){
 }
 
 function renderYearlyReturns(){
+  renderSnapStartNotices();
   const el = document.getElementById('yearlyReturnsBody');
   const barsEl = document.getElementById('yearlyReturnsBars');
   if(!el) return;
