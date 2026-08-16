@@ -98,6 +98,26 @@ function totalPropertyBase(p){
   return (p.realestate||0) + (p.hi_rentprop||0);
 }
 
+/* ── 재산세 과세표준액 자동 계산(지방세법 시행령 제109조, 2026년 적용 공정시장가액비율) ──
+   과세표준액 = 공시가격(시가표준액) × 공정시장가액비율
+   - 1세대 1주택 특례: 공시가격 3억원 이하 43% / 3억~6억원 44% / 6억원 초과 45%
+   - 다주택자(2주택 이상)·법인: 특례 대상 아님 → 원칙 60%
+   gongsigaMan: 공시가격(만원), houseType: 'single'(1세대1주택, 기본값) | 'multi'(다주택·법인) */
+function propertyTaxBase(gongsigaMan, houseType){
+  const g = gongsigaMan || 0;
+  let ratio;
+  if(houseType === 'multi'){
+    ratio = 0.60;
+  } else if(g <= 30000){
+    ratio = 0.43;
+  } else if(g <= 60000){
+    ratio = 0.44;
+  } else {
+    ratio = 0.45;
+  }
+  return Math.round(g * ratio);
+}
+
 /* ── 재산보험료부과점수 60등급표 (국민건강보험법 시행령 별표4, 2024.5.7 개정) ──
    재산금액(만원) 상한 기준 "이하" 구간, 60등급 마지막 행은 초과분(Infinity) */
 const PROPERTY_SCORE_TABLE = [
@@ -267,7 +287,7 @@ function buildNeedOnlyPlan(p){
 if(typeof module !== 'undefined'){
   module.exports = {
     calcISA_FV, pensionTaxRate, tirpTaxDiscount, dependentStatusCheck,
-    healthIncomeItems, dependentTotalIncome, totalPropertyBase,
+    healthIncomeItems, dependentTotalIncome, totalPropertyBase, propertyTaxBase,
     PROPERTY_SCORE_TABLE, propertyInsuranceScore, regionalIncomeMonthly,
     HEALTH_RATE_INCOME, HEALTH_RATE_PROPERTY_WON, HEALTH_RATE_LTC,
     HEALTH_CAP_MAX, HEALTH_CAP_MIN, regionalHealthPremium,

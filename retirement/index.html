@@ -272,7 +272,9 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 .tab-btn.on{background:#3D5A66;color:#fff;border-color:#3D5A66;font-weight:700;}
 
 /* ── 최상위 탭: 설계 / 예상결과 ── */
-.main-tabs{display:flex;gap:6px;margin:10px 0;}
+/* 좌우 여백을 .left-panel의 좌우 padding(10px)과 맞춰, 아래 "기본 정보" 패널 카드의
+   가로 폭·좌우 가장자리와 탭 버튼 줄이 수직으로 나란히 정렬되게 한다. */
+.main-tabs{display:flex;gap:6px;margin:10px;}
 .main-tabs .tab-btn{flex:1;padding:9px 10px;font-size:13px;border-radius:8px;text-align:center;font-weight:700;}
 .phase-seg{border-radius:4px;padding:5px 6px;font-size:10px;font-weight:700;
   line-height:1.5;white-space:pre-line;}
@@ -488,7 +490,7 @@ button{font-family:inherit;cursor:pointer;}
       · <b>1세대 1주택 특례</b>: 공시가격 3억원 이하 43% / 3억~6억원 44% / 6억원 초과 45%<br>
       · <b>다주택자(2주택 이상)·법인</b>: 특례 대상이 아니므로 원칙대로 <b>60%</b> 적용
     </p>
-    <p>즉 예를 들어 1세대 1주택으로 공시가격이 5억원이면 과세표준 = 5억 × 44% = <b>2.2억원</b>이 됩니다(시세·공시가격 그 자체가 아님). 정확한 숫자는 재산세 고지서나 위택스(wetax.go.kr)의 "과세표준액"을 확인하세요 — 시세로 짐작한 값을 그대로 넣으면 실제보다 과대평가될 수 있습니다.</p>
+    <p>즉 예를 들어 1세대 1주택으로 공시가격이 5억원이면 과세표준 = 5억 × 44% = <b>2.2억원</b>이 됩니다(시세·공시가격 그 자체가 아님). 이 대시보드는 아래 "🏥 건보료 설계" 패널에 <b>공시가격</b>과 주택 유형만 입력하면 위 공식대로 과세표준을 자동으로 계산합니다 — 정확한 공시가격은 국토교통부 부동산공시가격 알리미(realtyprice.kr)에서 확인하세요.</p>
     <p style="margin-bottom:2px;"><b>판정 예시</b></p>
     <table>
       <tr><th>재산세 과세표준</th><th>소득(연)</th><th>결과</th></tr>
@@ -519,11 +521,24 @@ button{font-family:inherit;cursor:pointer;}
 
   <div class="health-ref-row">
     <span class="health-ref-chip">국민연금(공적연금) <b id="hrefNp">-</b>만원/월</span>
-    <span class="health-ref-chip">재산세 과표 <b id="hrefRe">-</b>만원</span>
-    <span style="font-size:9px;color:#AAB0BB;">↑ 위 "기본 정보"에서 수정</span>
+    <span class="health-ref-chip">재산세 과표(자동계산) <b id="hrefRe">-</b>만원</span>
+    <span style="font-size:9px;color:#AAB0BB;">↑ 국민연금은 위 "기본 정보"에서, 재산세 과표는 아래 공시가격 입력으로 계산</span>
   </div>
 
   <div class="health-input-list">
+    <div class="health-input-row">
+      <span class="hir-label">공시가격</span>
+      <input class="hir-input" type="number" id="gongsiga" value="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">보유 주택의 공시가격(시가표준액) · 국토부 부동산공시가격 알리미에서 확인 · 예: 5억이면 50000 입력</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">주택 유형</span>
+      <select class="hir-input" id="housetype" style="width:auto;min-width:112px;font-size:12px;" onchange="scheduleUpd()">
+        <option value="single">1세대 1주택</option>
+        <option value="multi">다주택·법인</option>
+      </select>
+      <span class="hir-hint">1세대 1주택은 공정시장가액비율 43~45%(공시가격 구간별 특례), 다주택·법인은 60% 적용 → 아래 재산세 과표가 자동 계산됩니다</span>
+    </div>
     <div class="health-input-row">
       <span class="hir-label">사업소득(연)</span>
       <input class="hir-input" type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
@@ -636,14 +651,6 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1500"  oninput="syncInput('plimit');scheduleUpd()">
-</div><div class="irow base-s">
-  <div class="irow-top">
-    <span class="ilabel" title="실거래가·공시가격이 아닌 &quot;과세표준액&quot;(공시가격×공정시장가액비율, 1주택 43~45%/다주택 60%). 건보료 피부양자 판정용, 위택스(wetax.go.kr)의 과세표준액을 확인">재산세 과표</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="realestate" value="0" min="0" max="200000" step="1000" onblur="onBlurFix('realestate')" oninput="syncSlider('realestate');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="realestate-r" min="0" max="200000" step="1000" value="0"  oninput="syncInput('realestate');scheduleUpd()">
 </div><button class="suggest-btn" style="background:linear-gradient(135deg,#4E9B78,#C08A55);" onclick="autoSuggest()">
   <span style="font-size:11.5px;">🎯 자동설계</span>
   <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
@@ -659,6 +666,7 @@ button{font-family:inherit;cursor:pointer;}
 
 <div class="panel">
 <div class="panel-title"><span>현금 흐름 운영 플랜 (인출/수령 순서 가이드 : ISA → 사적연금 → 퇴직연금 → 국민연금)</span><span class="req-tag">(필수 기입 항목)</span></div>
+<div class="note" style="margin:-2px 0 6px;">💡 색이 있는 칸은 직접 입력하는 필수 항목, 회색으로 흐려진 칸은 다른 값에 맞춰 자동으로 채워지는 항목입니다(직접 수정 불가).</div>
 <div id="pfSyncStatus"></div>
 <div class="acct-grid">
 
@@ -2011,7 +2019,7 @@ const STORAGE_KEY = 'retirement_dashboard_v1';
 
 // 저장할 모든 필드 ID 목록
 const ALL_FIELDS = [
-  'age','ret','life','exp','plimit','realestate',
+  'age','ret','life','exp','plimit','gongsiga','housetype',
   'nh','nhm','nhstart','nhend','nhage','nhpay','nhprin',
   'mf','mfm','mfstart','mfend','mfage','mfpay','mfprin',
   'irp','irpy','irpstart','irpend','irpage','irppay',
@@ -2081,7 +2089,9 @@ function resetState(){
 
 function getP(){
   return{
-    age:gv('age'),ret:gv('ret'),life:gv('life'),exp:gv('exp'),realestate:gv('realestate'),
+    age:gv('age'),ret:gv('ret'),life:gv('life'),exp:gv('exp'),
+    gongsiga:gv('gongsiga'),housetype:document.getElementById('housetype')?.value||'single',
+    realestate:propertyTaxBase(gv('gongsiga'), document.getElementById('housetype')?.value),
     nh:gv('nh'),nhm:gv('nhm'),nhstart:gv('nhstart'),nhend:gv('nhend'),nhage:gv('nhage'),nhpay:gv('nhpay'),nhprin:gv('nhprin'),
     mf:gv('mf'),mfm:gv('mfm'),mfstart:gv('mfstart'),mfend:gv('mfend'),mfage:gv('mfage'),mfpay:gv('mfpay'),mfprin:gv('mfprin'),
     irp:gv('irp'),irpy:gv('irpy'),irpstart:gv('irpstart'),irpend:gv('irpend'),irpage:gv('irpage'),irppay:gv('irppay'),
@@ -2128,6 +2138,25 @@ function toggleInlinePanel(id, otherIds, onOpen){
   if(willOpen){
     if(onOpen) onOpen();
     el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+  updateGuidePanelVisibility();
+}
+
+// 세금 상식/건보료 설계 패널이 열려 있는 동안은 그 아래로 설계/예상결과 탭(+탭 버튼)이
+// 이어서 나오지 않도록 숨긴다 — 가이드 내용만 보이게 하고, 패널을 모두 닫으면 원래
+// 보고 있던 탭(설계 또는 예상결과) 화면으로 되돌아온다.
+function updateGuidePanelVisibility(){
+  const guideOpen = ['taxGuidePanel','healthPanel'].some(id => document.getElementById(id)?.classList.contains('show'));
+  const mainTabs = document.querySelector('.main-tabs');
+  if(mainTabs) mainTabs.style.display = guideOpen ? 'none' : '';
+  const designTab = document.getElementById('designTab');
+  const resultTab = document.getElementById('resultTab');
+  if(guideOpen){
+    if(designTab) designTab.style.display = 'none';
+    if(resultTab) resultTab.style.display = 'none';
+  } else {
+    if(designTab) designTab.style.display = mainTab==='design' ? '' : 'none';
+    if(resultTab) resultTab.style.display = mainTab==='result' ? '' : 'none';
   }
 }
 
