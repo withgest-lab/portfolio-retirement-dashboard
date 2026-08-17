@@ -150,6 +150,16 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 /* ── 차트 ── */
 .chart-wrap{margin-top:10px;}
+/* 종목 가격 추이 차트의 매수/매도 화살표를 클릭했을 때 뜨는 말풍선 — 예전엔 차트 아래에
+   일반 흐름(margin-top)으로 떠서 매매 이력 표와 겹치고, 클릭한 지점에서 멀어 바로 눈에
+   안 들어왔다. 이제 클릭한 화살표 바로 위에 절대좌표로 붙여서(꼬리 포함) 시인성을 높인다. */
+.chart-tip-bubble{position:absolute;
+  background:#1c1c1e;color:#fff;font-size:11px;line-height:1.5;font-weight:500;
+  padding:6px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;
+  box-shadow:0 3px 10px rgba(0,0,0,.22);z-index:5;max-width:260px;}
+.chart-tip-bubble::after{content:'';position:absolute;left:50%;top:100%;
+  transform:translateX(-50%);border:5px solid transparent;border-top-color:#1c1c1e;}
+.chart-tip-bubble.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#1c1c1e;}
 .chart-wrap canvas{-webkit-touch-callout:none;user-select:none;}
 #assetTbody{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 canvas#lineChart{width:100%!important;display:block;}
@@ -1576,7 +1586,17 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     if(!nearest || minD>14){ tipEl.style.display='none'; return; }
     const r=nearest.entry, d=new Date(r.at), isBuy=r.type==='buy';
     tipEl.style.display='block';
+    tipEl.classList.remove('below');
     tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
+    // 클릭한 화살표 바로 위에 말풍선을 붙인다 — 뒤에 나올 표까지 밀어내는 일반 흐름 배치
+    // 대신 캔버스 위에 절대좌표로 겹쳐서, 클릭 지점에서 눈을 뗄 필요 없이 바로 보이게 함.
+    // 화살표가 차트 맨 위쪽이라 위 공간이 부족하면 대신 아래에 붙이고 꼬리도 위로 뒤집는다.
+    const bw = tipEl.offsetWidth, bh = tipEl.offsetHeight;
+    let top = nearest.y - bh - 10;
+    if(top < 0){ top = nearest.y + 10; tipEl.classList.add('below'); }
+    const left = Math.max(4, Math.min(cssW - bw - 4, nearest.x - bw/2));
+    tipEl.style.left = left + 'px';
+    tipEl.style.top = top + 'px';
   };
 }
 
@@ -2866,8 +2886,10 @@ function renderTable(){
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
             <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
           </div>
-          <div class="chart-wrap"><canvas id="stockChart_${a.id}" height="200"></canvas></div>
-          <div id="stockChartTip_${a.id}" class="notice" style="display:none;margin-top:8px;line-height:1.6;"></div>
+          <div class="chart-wrap" style="position:relative;">
+            <canvas id="stockChart_${a.id}" height="200"></canvas>
+            <div id="stockChartTip_${a.id}" class="chart-tip-bubble" style="display:none;"></div>
+          </div>
           <div class="tbl-wrap" style="margin-top:12px;">
             <table class="table-auto">
               <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">
