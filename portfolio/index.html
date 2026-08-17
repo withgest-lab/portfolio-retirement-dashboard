@@ -919,36 +919,21 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 <section class="page" id="page_returns">
 <nav class="subtabbar">
-  <button class="active" data-sub="yearly" onclick="switchSubPage('returns','yearly')">연도별 분석</button>
-  <button data-sub="monthly_table" onclick="switchSubPage('returns','monthly_table')">월별 테이블</button>
+  <button class="active" data-sub="monthly_table" onclick="switchSubPage('returns','monthly_table')">스냅샷 기반 자산 추이</button>
+  <button data-sub="yearly" onclick="switchSubPage('returns','yearly')">매매이력 기반 손익분석</button>
   <button data-sub="monthly_chart" onclick="switchSubPage('returns','monthly_chart')">원금 vs 자산가치</button>
   <button data-sub="principal" onclick="switchSubPage('returns','principal')">원금기록장</button>
 </nav>
-<div class="subpage active" data-sub="yearly">
-  <div class="card">
-    <div class="section-label">연도별 수익률 분석</div>
-    <div class="vbar-scroll" style="margin-bottom:16px;">
-      <div class="vbar-chart" id="yearlyReturnsBars"></div>
-      <div class="vbar-xaxis" id="yearlyReturnsBarsAxis"></div>
-    </div>
-    <div class="tbl-wrap">
-      <table class="table-auto">
-        <thead><tr><th style="text-align:left">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th>
-          <th>스냅샷 순변동<br><span style="font-weight:400;text-transform:none;">(참고)</span></th></tr></thead>
-        <tbody id="yearlyReturnsBody"></tbody>
-      </table>
-    </div>
-    <div class="notice">💡 미실현손익은 올해 현재 보유 종목 기준으로만 표시됩니다 — 과거 연도의 연말 시점 미실현손익은 스냅샷 밀도가 일정하지 않아 정확히 산출하기 어려워 실현손익만 표시합니다.</div>
-    <div class="notice">💡 "스냅샷 순변동(참고)"은 매도 이력 대신 그 해의 스냅샷 잔액 변화(순입출금 제외)로 계산한 값입니다. 개별 매매를 다 기록하지 않은 해라면 "합계"보다 이 값이 실제에 더 가까울 수 있습니다 — 두 값이 크게 다르면 그 해 매매 기록이 빠졌다는 신호입니다.</div>
-    <div class="notice" id="yearlySnapStartNotice"></div>
-  </div>
-</div>
-<div class="subpage" data-sub="monthly_table">
+<div class="subpage active" data-sub="monthly_table">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
-      <div class="section-label" style="margin:0">월별 성과</div>
-      <button class="btn-icon" id="monthlyPerfViewBtn" onclick="toggleMonthlyPerfView()"
-        style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
+      <div class="section-label" style="margin:0" id="snapPerfLabel">스냅샷 기반 자산 추이 — 월별</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn-icon" id="monthlyPerfGranBtn" onclick="toggleMonthlyPerfGranularity()"
+          style="border:1px solid var(--color-border);border-radius:8px;">📅 연도별로 보기</button>
+        <button class="btn-icon" id="monthlyPerfViewBtn" onclick="toggleMonthlyPerfView()"
+          style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
+      </div>
     </div>
     <div class="vbar-scroll" style="margin-bottom:4px;">
       <div class="vbar-chart" id="monthlyPerfBars" style="display:none;"></div>
@@ -957,14 +942,33 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="tbl-wrap" id="monthlyPerfTableWrap">
       <table class="table-auto">
         <thead><tr>
-          <th style="text-align:left">월</th><th>월초잔액</th><th>월말잔액</th><th>순입출금</th>
+          <th style="text-align:left" id="monthlyPerfPeriodHeader">월</th><th>시작 잔액</th><th>종료 잔액</th><th>순입출금</th>
           <th>손익<br><span style="font-weight:400;text-transform:none;">수익률</span></th>
         </tr></thead>
         <tbody id="monthlyPerfBody"></tbody>
       </table>
     </div>
-    <div class="notice">💡 순입출금은 '원금기록장' 탭에 기록된 입출금만 반영됩니다. 과거 월은 원금기록장에서 해당 월 입출금을 직접 추가하면 반영됩니다.</div>
+    <div class="notice">💡 순입출금은 '원금기록장' 탭에 기록된 입출금만 반영됩니다. 과거 기간은 원금기록장에서 해당 시점 입출금을 직접 추가하면 반영됩니다.</div>
+    <div class="notice">💡 개별 매매 기록이 얼마나 빠졌든 상관없이, 그 기간의 실제 스냅샷 잔액 변화(순입출금 제외)만으로 계산되므로 자산 추이를 확인하기에 가장 정확합니다.</div>
     <div class="notice" id="monthlySnapStartNotice"></div>
+  </div>
+</div>
+<div class="subpage" data-sub="yearly">
+  <div class="card">
+    <div class="section-label">매매이력 기반 연도별 손익분석</div>
+    <div class="vbar-scroll" style="margin-bottom:16px;">
+      <div class="vbar-chart" id="yearlyReturnsBars"></div>
+      <div class="vbar-xaxis" id="yearlyReturnsBarsAxis"></div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="table-auto">
+        <thead><tr><th style="text-align:left">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th></tr></thead>
+        <tbody id="yearlyReturnsBody"></tbody>
+      </table>
+    </div>
+    <div class="notice">💡 미실현손익은 올해 현재 보유 종목 기준으로만 표시됩니다 — 과거 연도의 연말 시점 미실현손익은 스냅샷 밀도가 일정하지 않아 정확히 산출하기 어려워 실현손익만 표시합니다.</div>
+    <div class="notice">💡 이 화면은 매도 이력을 기반으로 하므로 개별 매매를 다 기록하지 않았다면 실제보다 적게 나올 수 있습니다 — 실제 자산 추이는 "스냅샷 기반 자산 추이" 탭을 참고하세요.</div>
+    <div class="notice" id="yearlySnapStartNotice"></div>
   </div>
 </div>
 <div class="subpage" data-sub="monthly_chart">
@@ -4076,10 +4080,38 @@ function renderSnapStartNotices(){
   });
 }
 
-// 월별 성과 표시 모드 — 'table'(표) / 'chart'(막대그래프, 월별 손익 기준)
+// 스냅샷 기반 성과를 연도 단위로도 보여주기 위해, 월별 집계(buildMonthlyPerformance)를
+// 그대로 재사용해 연도별로 합산한다 — 월별/연도별 두 화면이 서로 다른 계산을 하지 않고
+// 항상 같은 원본에서 나오게 함(월별 합이 연도별과 어긋나는 일이 없음).
+function buildYearlyPerformance(){
+  const monthly = buildMonthlyPerformance();
+  if(!monthly.length) return [];
+  const byYear = {};
+  monthly.forEach(m=>{ (byYear[m.year] = byYear[m.year] || []).push(m); });
+  return Object.keys(byYear).map(Number).sort((a,b)=>a-b).map(year=>{
+    const months = byYear[year];
+    const firstWithStart = months.find(m=>m.startVal!=null);
+    const lastWithEnd = [...months].reverse().find(m=>m.endVal!=null);
+    const startVal = firstWithStart ? firstWithStart.startVal : null;
+    const endVal = lastWithEnd ? lastWithEnd.endVal : null;
+    const netFlow = months.reduce((s,m)=>s+(m.netFlow||0),0);
+    const hasFlowData = months.some(m=>m.hasFlowData);
+    const pnl = (startVal!=null && endVal!=null) ? (endVal-startVal-netFlow) : null;
+    const rtn = (pnl!=null && startVal>0) ? (pnl/startVal*100) : null;
+    return {year, startVal, endVal, netFlow, hasFlowData, pnl, rtn};
+  });
+}
+
+// 스냅샷 기반 자산 추이 표시 모드 — 'table'(표) / 'chart'(막대그래프)와
+// 'month'(월별) / 'year'(연도별) 두 축은 서로 독립적으로 토글된다.
 let monthlyPerfView = 'table';
 function toggleMonthlyPerfView(){
   monthlyPerfView = monthlyPerfView==='table' ? 'chart' : 'table';
+  renderMonthlyTable();
+}
+let monthlyPerfGranularity = 'month';
+function toggleMonthlyPerfGranularity(){
+  monthlyPerfGranularity = monthlyPerfGranularity==='month' ? 'year' : 'month';
   renderMonthlyTable();
 }
 // 세로 막대 그래프 공용 렌더러 — 가로축=기간(items[].label), 세로축=금액(segments 합, 스택 가능).
@@ -4106,6 +4138,12 @@ function renderVBarChart(chartElId, xaxisElId, items, chartH){
   if(xEl) xEl.innerHTML = items.map(it=>`<div class="vbar-xlabel">${it.label}</div>`).join('');
 }
 
+// r.month가 있으면(undefined가 아니면) 월별 행, 없으면 연도별 행 — 두 granularity의
+// row shape이 {year, month?, startVal, endVal, netFlow, hasFlowData, pnl, rtn}로
+// 호환되므로 라벨 생성만 이 한 곳에서 분기하면 나머지(그래프·표)는 공용으로 쓸 수 있다.
+function monthlyPerfLabel(r){
+  return r.month!=null ? `${r.year}.${String(r.month+1).padStart(2,'0')}` : String(r.year);
+}
 function renderMonthlyPerfBars(rows){
   const withPnl = rows.filter(r=>r.pnl!=null);
   if(!withPnl.length){
@@ -4116,7 +4154,7 @@ function renderMonthlyPerfBars(rows){
     return;
   }
   const items = rows.map(r=>({
-    label: `${r.year}.${String(r.month+1).padStart(2,'0')}`,
+    label: monthlyPerfLabel(r),
     segments: r.pnl==null ? [] : [{value:r.pnl, color: r.pnl>=0?'var(--color-up)':'var(--color-down)'}],
     valueLabel: r.pnl==null ? '—' : `${r.pnl>=0?'+':''}${fmt(r.pnl)}`,
     valueClass: r.pnl==null ? 'dim' : (r.pnl>=0?'up':'dn')
@@ -4127,7 +4165,15 @@ function renderMonthlyTable(){
   renderSnapStartNotices();
   const el = document.getElementById('monthlyPerfBody');
   if(!el) return;
-  const rows = buildMonthlyPerformance();
+  const isYear = monthlyPerfGranularity==='year';
+  const rows = isYear ? buildYearlyPerformance() : buildMonthlyPerformance();
+
+  const labelEl = document.getElementById('snapPerfLabel');
+  const periodHeaderEl = document.getElementById('monthlyPerfPeriodHeader');
+  const granBtn = document.getElementById('monthlyPerfGranBtn');
+  if(labelEl) labelEl.textContent = `스냅샷 기반 자산 추이 — ${isYear?'연도별':'월별'}`;
+  if(periodHeaderEl) periodHeaderEl.textContent = isYear ? '연도' : '월';
+  if(granBtn) granBtn.textContent = isYear ? '🗓 월별로 보기' : '📅 연도별로 보기';
 
   const btn = document.getElementById('monthlyPerfViewBtn');
   const barsEl = document.getElementById('monthlyPerfBars');
@@ -4146,10 +4192,10 @@ function renderMonthlyTable(){
     return;
   }
 
-  if(isChart) renderMonthlyPerfBars(rows.slice().sort((a,b)=>(a.year-b.year)||(a.month-b.month)));
+  if(isChart) renderMonthlyPerfBars(rows.slice().sort((a,b)=>(a.year-b.year)||((a.month??0)-(b.month??0))));
 
   el.innerHTML = rows.slice().reverse().map(r=>{
-    const label = `${r.year}.${String(r.month+1).padStart(2,'0')}`;
+    const label = monthlyPerfLabel(r);
     const flowStr = r.hasFlowData ? `${r.netFlow>=0?'+':''}${fmt(r.netFlow)}` : '—';
     const pnlStr = r.pnl!=null ? `<span class="${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</span>` : '—';
     const rtnStr = r.rtn!=null ? `<span class="${r.rtn>=0?'up':'dn'}" style="font-size:10px;">${r.rtn>=0?'+':''}${r.rtn.toFixed(2)}%</span>` : '';
@@ -4859,21 +4905,6 @@ function renderDividendCalendar(){
    수익률 분석 — 연도별 실현손익 + (올해만) 미실현손익
    세금관리의 연도 버킷팅 패턴을 확장해 전체 통화/카테고리 대상으로 적용
 ════════════════════════════════════════ */
-// 매도 이력 기반 실현손익과 별개로, 스냅샷 잔액 변화(순입출금 제외)로도 연도별 순변동을
-// 구해 "참고"용으로 나란히 보여준다 — 매매를 전부 기록하지 않은 해는 실현손익 합계가
-// 실제보다 적게 나올 수 있는데, 이 값은 개별 매매 기록 완전성과 무관하게(스냅샷·원금기록장
-// 만으로) 계산되므로 그런 해의 실제 성과에 더 가깝다. 월별 테이블(buildMonthlyPerformance)과
-// 완전히 같은 공식을 월 단위로 합산해서 구한다 — 두 화면의 숫자가 서로 다른 계산을 하지
-// 않도록 로직을 공유.
-function buildYearlySnapshotChange(){
-  const byYear = {};
-  buildMonthlyPerformance().forEach(m=>{
-    if(m.pnl==null) return;
-    byYear[m.year] = (byYear[m.year]||0) + m.pnl;
-  });
-  return byYear;
-}
-
 function buildYearlyReturns(){
   const sells = loadTradeLog().filter(r=>r.type==='sell' && r.pnl!=null && r.pnl!==undefined);
   const byYear = {};
@@ -4885,14 +4916,12 @@ function buildYearlyReturns(){
   const years = new Set(Object.keys(byYear).map(Number));
   years.add(curYear); // 매도 이력이 없어도 올해는 미실현손익을 보여주기 위해 항상 포함
   const unrealizedThisYear = assets.reduce((s,a)=>s+(evKRW(a)-costKRW(a)),0);
-  const snapChangeByYear = buildYearlySnapshotChange();
 
   return [...years].sort((a,b)=>b-a).map(y=>{
     const realized = byYear[y]||0;
     const unrealized = (y===curYear) ? unrealizedThisYear : null;
     const total = unrealized!=null ? realized+unrealized : realized;
-    const snapChange = snapChangeByYear[y] ?? null;
-    return {year:y, realized, unrealized, total, snapChange};
+    return {year:y, realized, unrealized, total};
   });
 }
 
@@ -4904,7 +4933,7 @@ function renderYearlyReturns(){
   const rows = buildYearlyReturns();
   const axisEl = document.getElementById('yearlyReturnsBarsAxis');
   if(!rows.length){
-    el.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--color-tertiary);">데이터가 없습니다.</td></tr>`;
+    el.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-tertiary);">데이터가 없습니다.</td></tr>`;
     if(barsEl) barsEl.innerHTML='';
     if(axisEl) axisEl.innerHTML='';
     return;
@@ -4920,15 +4949,11 @@ function renderYearlyReturns(){
     const unrealizedStr = r.unrealized!=null
       ? `<span class="${r.unrealized>=0?'up':'dn'}">${r.unrealized>=0?'+':''}${fmt(r.unrealized)}</span>`
       : '<span class="dim">—</span>';
-    const snapChangeStr = r.snapChange!=null
-      ? `<span class="${r.snapChange>=0?'up':'dn'}">${r.snapChange>=0?'+':''}${fmt(r.snapChange)}</span>`
-      : '<span class="dim">—</span>';
     return `<tr>
       <td style="text-align:left;font-weight:700;">${r.year}</td>
       <td class="${r.realized>=0?'up':'dn'}">${r.realized>=0?'+':''}${fmt(r.realized)}</td>
       <td>${unrealizedStr}</td>
       <td class="${r.total>=0?'up':'dn'}" style="font-weight:700;">${r.total>=0?'+':''}${fmt(r.total)}</td>
-      <td>${snapChangeStr}</td>
     </tr>`;
   }).join('');
 }
