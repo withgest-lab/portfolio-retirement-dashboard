@@ -933,11 +933,13 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </div>
     <div class="tbl-wrap">
       <table class="table-auto">
-        <thead><tr><th style="text-align:left">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th></tr></thead>
+        <thead><tr><th style="text-align:left">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th>
+          <th>스냅샷 순변동<br><span style="font-weight:400;text-transform:none;">(참고)</span></th></tr></thead>
         <tbody id="yearlyReturnsBody"></tbody>
       </table>
     </div>
     <div class="notice">💡 미실현손익은 올해 현재 보유 종목 기준으로만 표시됩니다 — 과거 연도의 연말 시점 미실현손익은 스냅샷 밀도가 일정하지 않아 정확히 산출하기 어려워 실현손익만 표시합니다.</div>
+    <div class="notice">💡 "스냅샷 순변동(참고)"은 매도 이력 대신 그 해의 스냅샷 잔액 변화(순입출금 제외)로 계산한 값입니다. 개별 매매를 다 기록하지 않은 해라면 "합계"보다 이 값이 실제에 더 가까울 수 있습니다 — 두 값이 크게 다르면 그 해 매매 기록이 빠졌다는 신호입니다.</div>
     <div class="notice" id="yearlySnapStartNotice"></div>
   </div>
 </div>
@@ -4857,6 +4859,21 @@ function renderDividendCalendar(){
    수익률 분석 — 연도별 실현손익 + (올해만) 미실현손익
    세금관리의 연도 버킷팅 패턴을 확장해 전체 통화/카테고리 대상으로 적용
 ════════════════════════════════════════ */
+// 매도 이력 기반 실현손익과 별개로, 스냅샷 잔액 변화(순입출금 제외)로도 연도별 순변동을
+// 구해 "참고"용으로 나란히 보여준다 — 매매를 전부 기록하지 않은 해는 실현손익 합계가
+// 실제보다 적게 나올 수 있는데, 이 값은 개별 매매 기록 완전성과 무관하게(스냅샷·원금기록장
+// 만으로) 계산되므로 그런 해의 실제 성과에 더 가깝다. 월별 테이블(buildMonthlyPerformance)과
+// 완전히 같은 공식을 월 단위로 합산해서 구한다 — 두 화면의 숫자가 서로 다른 계산을 하지
+// 않도록 로직을 공유.
+function buildYearlySnapshotChange(){
+  const byYear = {};
+  buildMonthlyPerformance().forEach(m=>{
+    if(m.pnl==null) return;
+    byYear[m.year] = (byYear[m.year]||0) + m.pnl;
+  });
+  return byYear;
+}
+
 function buildYearlyReturns(){
   const sells = loadTradeLog().filter(r=>r.type==='sell' && r.pnl!=null && r.pnl!==undefined);
   const byYear = {};
@@ -4868,12 +4885,14 @@ function buildYearlyReturns(){
   const years = new Set(Object.keys(byYear).map(Number));
   years.add(curYear); // 매도 이력이 없어도 올해는 미실현손익을 보여주기 위해 항상 포함
   const unrealizedThisYear = assets.reduce((s,a)=>s+(evKRW(a)-costKRW(a)),0);
+  const snapChangeByYear = buildYearlySnapshotChange();
 
   return [...years].sort((a,b)=>b-a).map(y=>{
     const realized = byYear[y]||0;
     const unrealized = (y===curYear) ? unrealizedThisYear : null;
     const total = unrealized!=null ? realized+unrealized : realized;
-    return {year:y, realized, unrealized, total};
+    const snapChange = snapChangeByYear[y] ?? null;
+    return {year:y, realized, unrealized, total, snapChange};
   });
 }
 
@@ -4885,7 +4904,7 @@ function renderYearlyReturns(){
   const rows = buildYearlyReturns();
   const axisEl = document.getElementById('yearlyReturnsBarsAxis');
   if(!rows.length){
-    el.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-tertiary);">데이터가 없습니다.</td></tr>`;
+    el.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--color-tertiary);">데이터가 없습니다.</td></tr>`;
     if(barsEl) barsEl.innerHTML='';
     if(axisEl) axisEl.innerHTML='';
     return;
@@ -4901,11 +4920,15 @@ function renderYearlyReturns(){
     const unrealizedStr = r.unrealized!=null
       ? `<span class="${r.unrealized>=0?'up':'dn'}">${r.unrealized>=0?'+':''}${fmt(r.unrealized)}</span>`
       : '<span class="dim">—</span>';
+    const snapChangeStr = r.snapChange!=null
+      ? `<span class="${r.snapChange>=0?'up':'dn'}">${r.snapChange>=0?'+':''}${fmt(r.snapChange)}</span>`
+      : '<span class="dim">—</span>';
     return `<tr>
       <td style="text-align:left;font-weight:700;">${r.year}</td>
       <td class="${r.realized>=0?'up':'dn'}">${r.realized>=0?'+':''}${fmt(r.realized)}</td>
       <td>${unrealizedStr}</td>
       <td class="${r.total>=0?'up':'dn'}" style="font-weight:700;">${r.total>=0?'+':''}${fmt(r.total)}</td>
+      <td>${snapChangeStr}</td>
     </tr>`;
   }).join('');
 }
