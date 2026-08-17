@@ -2265,6 +2265,9 @@ function renderSoldHistory(){
   if(!el) return;
   let arr = loadTradeLog().filter(r=>r.type==='buy'||r.type==='sell').slice().sort((a,b)=>b.at-a.at); // 최신순 정렬
   renderTradeLogFilterOptions(arr);
+  // 계좌 배지 색: 자산목록 테이블(renderTable)과 동일한 방식(전체 assets 기준 등장 순서로
+  // LINE_COLS 순환 할당)을 그대로 재사용해, 같은 계좌면 매매이력에서도 항상 같은 색이 되게 함.
+  const subAcctNames = [...new Set(assets.filter(a=>a.subAccount).map(a=>a.subAccount))];
   arr = arr.filter(r=>{
     if(tradeLogFilter.search){
       const q=tradeLogFilter.search.trim().toLowerCase();
@@ -2318,8 +2321,10 @@ function renderSoldHistory(){
     const attrBadge = r.attribute
       ? `<span class="cat-badge" style="background:${ATTR_COLS[r.attribute]||'#8e8e93'}20;color:${ATTR_COLS[r.attribute]||'#8e8e93'};font-size:9px;">${r.attribute}</span>`
       : '';
+    const sacIdx = r.subAccount ? subAcctNames.indexOf(r.subAccount) : -1;
+    const sacCol = sacIdx>=0 ? LINE_COLS[sacIdx%LINE_COLS.length] : '#8e8e93';
     const subacctBadge = r.subAccount
-      ? `<span class="cat-badge" style="background:#8e8e9320;color:#8e8e93;font-size:9px;">${SUBACCT_LABELS[r.subAccount]||r.subAccount}</span>`
+      ? `<span class="cat-badge" style="background:${sacCol}20;color:${sacCol};font-size:9px;">${SUBACCT_LABELS[r.subAccount]||r.subAccount}</span>`
       : '';
     const catAttrLine = (catBadge||subacctBadge||attrBadge)
       ? `<div style="margin-top:1px;display:flex;gap:3px;justify-content:center;flex-wrap:wrap;">${subacctBadge}${catBadge}${attrBadge}</div>`
