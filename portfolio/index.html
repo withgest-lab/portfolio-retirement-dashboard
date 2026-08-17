@@ -55,33 +55,30 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
 /* tabbar와 동일하게 position:sticky. tabbar의 스크롤-고정 위치(top:52px) 바로 아래
-   20px 여백을 두고 112px(=52+tabbar 높이 40px+20px)에서 붙는다. .page 안의 일반 흐름
+   8px 여백을 두고 100px(=52+tabbar 높이 40px+8px)에서 붙는다. .page 안의 일반 흐름
    요소이므로 .main의 max-width를 그대로 물려받아 좌우 정렬을 위한 별도 계산이 필요 없다.
    주의: sticky가 고정될 때는 margin가 top 오프셋에 반영되지 않으므로(margin으로 여백을
    주면 스크롤해서 붙는 순간 여백이 사라지는 점프가 생김), 여백은 margin이 아니라 top 값
-   자체와 .main의 padding-top(아래)에 동일한 값을 넣어 흐름 상태·고정 상태 둘 다 똑같이 20px
+   자체와 .main의 padding-top(아래)에 동일한 값을 넣어 흐름 상태·고정 상태 둘 다 똑같이 8px
    여백이 나오도록 맞춘다.
-   ::before로 subtabbar 바로 위 20px(tabbar가 고정되는 지점부터 subtabbar가 고정되는
+   ::before로 subtabbar 바로 위 8px(tabbar가 고정되는 지점부터 subtabbar가 고정되는
    지점까지)을 subtabbar 자신의 불투명한 배경으로 미리 덮어 둔다 — 이 구간은 어느 sticky
-   요소에도 속하지 않는 문서 흐름상의 빈틈이라, 스크롤 중 그 아래 콘텐츠(예: 자산변화추이의
-   "전체 선택/해제" 행)가 짧은 순간 그 틈으로 비쳐 보이는 문제가 있었음. ::before는 subtabbar와
-   같은 sticky 박스에 얹혀 있어 subtabbar가 스크롤되든 고정되든 항상 같이 그 틈을 가린다.
-   ::after는 대칭으로 subtabbar 바로 아래 20px(.page의 flex gap)을 덮는다 — subtabbar가
-   고정된 뒤에는 그 gap이 문서 흐름상 이미 subtabbar 밑으로 스크롤되어 들어온 subpage
-   콘텐츠(예: 비중현황의 "카테고리 구분/카테고리 속성" 라벨)가 차지하게 되는데, 이 gap을
-   가려주는 요소가 없으면 그 라벨처럼 subtabbar 바로 아래에 걸쳐 있는 한 줄짜리 콘텐츠가
-   완전히 가려지기 전에 일부만 삐져나와 보이는 문제가 있었다. 실측해보니 8px/16px로는
-   일반적인 한 줄 텍스트(줄높이 포함 약 15~18px)를 다 못 가려 여전히 비쳐 보였고, 20px로
-   늘려야 실제로 안전하게 가려짐 — 이 20px는 .page의 flex gap 값과 정확히 일치시켜서,
-   스크롤하지 않은 정지 상태에서 각 서브페이지의 첫 콘텐츠가 시작되는 위치와 ::after가
-   덮는 범위가 딱 맞아떨어지게 한다(더 크게 덮으면 정지 상태에서도 콘텐츠 윗부분이 잘려
-   보이는 새 문제가 생김 — 자산 Quick View처럼 간격이 좁은 서브페이지에서 실측 확인함). */
+   요소에도 속하지 않는 문서 흐름상의 빈틈이라, 스크롤 중 그 아래 콘텐츠가 짧은 순간 그
+   틈으로 비쳐 보이는 문제가 있었음. ::before는 subtabbar와 같은 sticky 박스에 얹혀 있어
+   subtabbar가 스크롤되든 고정되든 항상 같이 그 틈을 가린다.
+   subtabbar 바로 아래(.page의 flex gap) 쪽은 ::before와 같은 방식(고정 크기 패치)으로는
+   근본적으로 못 고친다 — 그 밑은 실제 콘텐츠(subpage)가 스크롤에 따라 자유롭게 지나가는
+   구간이라, 패치를 아무리 키워도 "패치 경계에 걸쳐 반쯤만 보이는 순간"이 사라지지 않고
+   그 스크롤 위치만 옮겨갈 뿐이다(직접 8/16/20px로 다 시도해서 확인함) — 게다가 패치를
+   키우면 정지 상태에서 자산 Quick View처럼 간격이 좁은 서브페이지의 콘텐츠 윗부분이
+   잘려 보이는 새 문제까지 생겼다. 그래서 이 아래쪽은 고정 크기 패치 대신 JS로 정확히
+   해결한다: clipSubpageUnderSubtabbar()가 스크롤마다 subtabbar의 실제 화면상 하단
+   좌표를 재서, 그 아래 subpage를 clip-path로 정확히 그 지점까지 잘라낸다 — 여백 크기와
+   무관하게 subtabbar 뒤로 들어간 콘텐츠는 항상 정확히, 완전히 가려진다. */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
   padding:2px;flex-wrap:wrap;
-  position:sticky;top:112px;z-index:50;}
-.subtabbar::before{content:'';position:absolute;top:-20px;left:0;right:0;height:20px;
-  background:var(--color-section-bg);}
-.subtabbar::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:20px;
+  position:sticky;top:100px;z-index:50;}
+.subtabbar::before{content:'';position:absolute;top:-8px;left:0;right:0;height:8px;
   background:var(--color-section-bg);}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
@@ -89,7 +86,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .subtabbar button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
-.page{display:none;flex-direction:column;gap:20px;}
+.page{display:none;flex-direction:column;gap:8px;}
 .page.active{display:flex;}
 .subpage{display:none;flex-direction:column;gap:16px;}
 .subpage.active{display:flex;}
@@ -120,7 +117,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn-red{background:#ff3b3015;color:var(--color-up);}
 
 /* ── 레이아웃 ── */
-.main{max-width:1280px;margin:0 auto;padding:20px 12px 48px;display:flex;flex-direction:column;gap:16px;}
+.main{max-width:1280px;margin:0 auto;padding:8px 12px 48px;display:flex;flex-direction:column;gap:16px;}
 .card{background:var(--color-card);border-radius:var(--radius);border:1px solid var(--color-border);padding:16px;}
 .section-label{font-size:11px;font-weight:600;color:var(--color-tertiary);
   text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
@@ -3183,6 +3180,7 @@ function switchPage(pageId){
   });
   localStorage.setItem('currentPage', pageId);
   if(typeof PAGE_RENDER_HOOKS[pageId]==='function') PAGE_RENDER_HOOKS[pageId]();
+  scheduleSubtabbarClip();
 }
 // 서브탭이 있는 페이지(대시보드/세금관리/배당금관리/월별성과)에서 사용.
 // subRenderHooks: {subId: fn} — 해당 서브페이지가 보여질 때 다시 그려야 하는 렌더 함수(캔버스 등)
@@ -3199,7 +3197,31 @@ function switchSubPage(pageId, subId){
   localStorage.setItem('currentSubPage_'+pageId, subId);
   const hook = SUBPAGE_RENDER_HOOKS[pageId+'_'+subId];
   if(typeof hook==='function') hook();
+  scheduleSubtabbarClip();
 }
+// subtabbar가 sticky로 고정된 상태에서, 그 바로 아래 subpage 콘텐츠가 완전히 가려지기
+// 전에 일부만 삐져나와 보이는 문제를 고정 크기 CSS 패치가 아니라 실측 기반으로 고친다.
+// subtabbar의 실제 화면상 하단 좌표(stbBottom)를 스크롤마다 재서, 그 지점까지 subpage를
+// clip-path로 정확히 잘라낸다 — subtabbar가 아직 안 붙어 있으면(stbBottom < spTop)
+// clip이 0 이하로 계산돼 자동으로 해제된다. 어떤 여백 크기를 쓰든 항상 정확히 맞는다.
+function clipSubpageUnderSubtabbar(){
+  document.querySelectorAll('.page.active > .subtabbar').forEach(stb=>{
+    const container = stb.parentElement;
+    const sp = container.querySelector(':scope > .subpage.active');
+    if(!sp) return;
+    const stbBottom = stb.getBoundingClientRect().bottom;
+    const spTop = sp.getBoundingClientRect().top;
+    const clip = Math.round(stbBottom - spTop);
+    sp.style.clipPath = clip>0 ? `inset(${clip}px 0 0 0)` : '';
+  });
+}
+let _subtabbarClipRaf = null;
+function scheduleSubtabbarClip(){
+  if(_subtabbarClipRaf) return;
+  _subtabbarClipRaf = requestAnimationFrame(()=>{ _subtabbarClipRaf=null; clipSubpageUnderSubtabbar(); });
+}
+window.addEventListener('scroll', scheduleSubtabbarClip, {passive:true});
+window.addEventListener('resize', scheduleSubtabbarClip);
 function restorePageState(){
   const savedPage = localStorage.getItem('currentPage') || 'dashboard';
   const pageId = PAGE_IDS.includes(savedPage) ? savedPage : 'dashboard';
