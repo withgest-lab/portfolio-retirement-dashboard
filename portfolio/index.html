@@ -312,15 +312,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* ── 원금 vs 자산가치 차트: 캔버스 + 선택 지점 상세 패널을 나란히 배치
    (넓은 화면), 좁은 화면에서는 패널이 아래로 자동으로 쌓임 — 정보가
    그림 위에 겹치는 플로팅 툴팁 대신 항상 빈 공간에 고정 표시됨 */
-.pv-chart-body{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;margin-top:10px;}
+.pv-chart-body{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-top:10px;}
 .pv-canvas-wrap{position:relative;flex:2 1 300px;min-width:0;margin-top:0;}
-.pv-detail{flex:1 1 200px;min-width:180px;max-width:320px;background:var(--color-section-bg);
-  border:1px solid var(--color-border);border-radius:10px;padding:12px 14px;}
+.pv-detail{flex:1 1 180px;min-width:160px;max-width:260px;background:var(--color-section-bg);
+  border:1px solid var(--color-border);border-radius:10px;padding:9px 11px;}
 .pv-detail .pd-empty{font-size:11px;color:var(--color-tertiary);}
-.pv-detail .pd-title{font-size:11px;font-weight:700;color:var(--color-secondary);margin-bottom:8px;}
-.pv-detail .pd-value{font-size:17px;font-weight:700;color:var(--color-text);margin-bottom:8px;}
-.pv-detail .pd-row{font-size:12px;color:var(--color-secondary);margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;}
-.pv-detail .pd-note{font-size:10.5px;color:var(--color-tertiary);margin-top:6px;line-height:1.5;}
+.pv-detail .pd-title{font-size:10.5px;font-weight:700;color:var(--color-secondary);margin-bottom:5px;}
+.pv-detail .pd-value{font-size:15px;font-weight:700;color:var(--color-text);margin-bottom:5px;}
+.pv-detail .pd-row{font-size:11.5px;color:var(--color-secondary);margin-bottom:2px;display:flex;justify-content:space-between;gap:8px;}
+.pv-detail .pd-note{font-size:10px;color:var(--color-tertiary);margin-top:4px;line-height:1.4;}
 @media(max-width:600px){ .pv-canvas-wrap{flex-basis:100%;} .pv-detail{flex-basis:100%;max-width:none;} }
 
 /* ── 모달 ── */
@@ -3538,6 +3538,42 @@ function selectTickerTL(sym,name,cat,cur){
   document.getElementById('tl_qty').focus();
 }
 
+// 배당 기록 추가 폼(종목별 집계/월별 캘린더 두 곳에서 renderDividendAddForm(ctx)로 공유
+// 재사용됨, ctx='stock'|'cal')의 종목명 자동완성 — 위 매수/이력 폼과 동일하게 stocks.csv
+// 기준으로 검색하되, 이 폼은 티커/구분/통화 입력란이 없이 종목명(배당원천) 하나뿐이라
+// 이름만 채운다.
+let searchTimerDiv={};
+function searchTickerDiv(ctx, query){
+  const box=document.getElementById(`dnew_suggestions_${ctx}`);
+  if(!box) return;
+  const q=query.trim().toLowerCase();
+  if(!q){box.style.display='none';return;}
+  clearTimeout(searchTimerDiv[ctx]);
+  searchTimerDiv[ctx]=setTimeout(()=>{
+    const results=rankStockMatches(q);
+    if(!results.length){box.style.display='none';return;}
+    const catColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30'};
+    const catLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인'};
+    const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    box.innerHTML=results.map(s=>{
+      const cc=catColor[s.c]||'#8e8e93';
+      const cl=catLabel[s.c]||s.c;
+      const hl=s.n.replace(re,'<b style="color:var(--color-accent)">$1</b>');
+      return`<div class="suggest-item" onclick="selectTickerDiv('${ctx}','${s.n.replace(/'/g,"\\'")}')">
+        <span style="background:${cc}20;color:${cc};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;flex-shrink:0;">${cl}</span>
+        <span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hl}</span>
+        <span style="font-size:11px;color:var(--color-tertiary);flex-shrink:0;">${s.t}</span>
+      </div>`;
+    }).join('');
+    box.style.display='block';
+  },150);
+}
+function selectTickerDiv(ctx, name){
+  document.getElementById(`dnew_name_${ctx}`).value=name;
+  document.getElementById(`dnew_suggestions_${ctx}`).style.display='none';
+  document.getElementById(`dnew_amount_${ctx}`).focus();
+}
+
 function searchSell(query){
   const box=document.getElementById('sf_suggestions');
   const q=query.trim().toLowerCase();
@@ -4749,9 +4785,11 @@ function renderDividendAddForm(ctx){
         날짜
         <input id="dnew_date_${ctx}" type="date" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
       </label>
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;">
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;position:relative;">
         종목/배당원천
-        <input id="dnew_name_${ctx}" placeholder="예: SCHD" style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        <input id="dnew_name_${ctx}" placeholder="예: SCHD" style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;"
+          oninput="searchTickerDiv('${ctx}', this.value)" autocomplete="off">
+        <div class="suggest-box" id="dnew_suggestions_${ctx}"></div>
       </label>
       <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
         금액(원)
