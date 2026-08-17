@@ -1502,71 +1502,39 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   points.forEach((p,i)=>{ const x=toX(p.ts), y=toY(p.close); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
 
-  // 매수/매도 마커: 같은 날짜(달력 기준)의 거래만 하나로 묶고, 날짜가 다르면 화면상 가까워도
-  // 항상 별개 포인트로 표시한다 — 매수 날짜 구분이 중요하므로 픽셀 근접도로 뭉개지 않는다.
-  const dateKey = ts => { const d=new Date(ts); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
-  const groups = new Map();
-  tradeEntries.forEach(r=>{
-    const key = dateKey(r.at);
-    if(!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(r);
-  });
-  const clusters = [...groups.values()].map(items=>{
-    const r0 = items[0];
+  // 매수/매도 마커: 거래 건별로 각각 화살표를 하나씩 그린다(날짜·좌표가 같아 겹치더라도
+  // 합치지 않음) — 화살표 개수가 실제 매매 횟수와 항상 일치해야 하므로, 예전처럼 같은 날짜
+  // 여러 건을 화살표 1개로 뭉치거나 화면상 가까운 서로 다른 지점을 계단식으로 떨어뜨려
+  // 그리지 않는다. 겹치는 것은 허용하되, 완전히 같은 자리에 여러 개가 쌓이는 경우만 살짝
+  // 바깥으로 벌려 "여러 건 있다"는 것 자체는 알아볼 수 있게 한다.
+  const S = 4.5; // 화살표 크기
+  const stackCount = new Map(); // key: 같은 자리·같은 방향 화살표가 몇 번째인지
+  const allMarkers = []; // 클릭 히트테스트용 — 화살표 하나(=거래 한 건)마다 좌표 기록
+  tradeEntries.slice().sort((a,b)=>a.at-b.at).forEach(r=>{
     let nearest=points[0], minD=Infinity;
-    points.forEach(p=>{ const d=Math.abs(p.ts-r0.at); if(d<minD){minD=d; nearest=p;} });
-    const x=toX(nearest.ts), y=toY(nearest.close);
-    return {x, y, items: items.map(r=>({x, y, entry:r}))};
-  }).sort((a,b)=>a.x-b.x);
-
-  // 날짜는 다른데 화면상 겹칠 만큼 가까운 경우, 화살표가 뭉개져 안 보이지 않도록 실제 지점에서
-  // 점점 더 멀리 띄워 계단식으로 펼쳐 그린다(각 마커는 여전히 자기 날짜를 정확히 가리킴).
-  // 기간이 길어질수록(3Y/5Y/10Y/ALL) 좁은 픽셀 폭에 매매가 몰려서 이 계단식 오프셋이 계속
-  // 누적돼(레벨이 최대치까지 쌓임) 화살표가 실제 지점에서 시각적으로 한참 떨어져 보여
-  // "어느 시점 화살표인지" 확인이 안 되던 문제가 있었음 — STEP/MAX_LEVEL을 줄여 최대
-  // 오프셋 자체를 줄이고, 오프셋이 있는 화살표는 실제 지점까지 가는 얇은 안내선을 함께
-  // 그려서 아무리 떨어져 있어도 항상 어느 지점을 가리키는지 눈으로 바로 따라갈 수 있게 한다.
-  const COLLIDE_PX = 9, STEP = 5, MAX_LEVEL = 5;
-  let lastX = -Infinity, level = 0;
-  clusters.forEach(c=>{
-    level = (c.x - lastX < COLLIDE_PX) ? level+1 : 0;
-    c.level = Math.min(level, MAX_LEVEL);
-    lastX = c.x;
-  });
-
-  // 매수=빨간 위쪽 화살표(▲, 점 아래에서 위로 향함)/매도=파란 아래쪽 화살표(▼, 점 위에서 아래로 향함).
-  // 꼬리·몸통 없는 단순 삼각형이되, 뾰족한 끝을 실제 데이터 포인트 바로 옆(3px)에 붙여
-  // 선의 국소 기울기와 무관하게 항상 정확한 지점을 가리키도록 한다.
-  clusters.forEach(c=>{
-    const isBuyMarker = c.items.every(m=>m.entry.type==='buy'); // 매수/매도 섞인 클러스터는 매도(파랑)로 표시
-    const color = isBuyMarker ? '#ff3b30' : '#0a84ff';
-    const baseY = c.items.reduce((s,m)=>s+m.y,0)/c.items.length; // 실제 데이터 포인트 y
-    const S = 4.5;   // 화살표 크기
-    const gap = 3 + c.level*STEP;   // 실제 지점과 화살표 뾰족한 끝 사이 여백(겹침 방지용 계단식 오프셋 포함)
+    points.forEach(p=>{ const d=Math.abs(p.ts-r.at); if(d<minD){minD=d; nearest=p;} });
+    const x=toX(nearest.ts), baseY=toY(nearest.close);
+    const isBuy = r.type==='buy'; // 매수=빨간 위쪽 화살표(▲)/매도=파란 아래쪽 화살표(▼)
+    const color = isBuy ? '#ff3b30' : '#0a84ff';
+    const key = x.toFixed(1)+'_'+baseY.toFixed(1)+'_'+isBuy;
+    const idx = stackCount.get(key)||0;
+    stackCount.set(key, idx+1);
+    const gap = 3 + idx*3; // 실제 지점과 화살표 뾰족한 끝 사이 여백 + 같은 자리 중복분 쌓기
 
     ctx.beginPath();
-    if(isBuyMarker){
-      // ▲ 점 아래에 배치, 뾰족한 끝이 점을 향해 위로
+    let my;
+    if(isBuy){
       const tipY = baseY + gap, baseYb = tipY + S*1.6;
-      c.my = (tipY+baseYb)/2;
-      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, baseYb); ctx.lineTo(c.x+S, baseYb);
+      my = (tipY+baseYb)/2;
+      ctx.moveTo(x, tipY); ctx.lineTo(x-S, baseYb); ctx.lineTo(x+S, baseYb);
     }else{
-      // ▼ 점 위에 배치, 뾰족한 끝이 점을 향해 아래로
       const tipY = baseY - gap, baseYt = tipY - S*1.6;
-      c.my = (tipY+baseYt)/2;
-      ctx.moveTo(c.x, tipY); ctx.lineTo(c.x-S, baseYt); ctx.lineTo(c.x+S, baseYt);
-    }
-    // 계단식 오프셋으로 실제 지점에서 떨어진 화살표는, 그 지점까지 얇은 안내선을 그려
-    // 어느 시점을 가리키는지 항상 눈으로 확인 가능하게 한다.
-    if(c.level>0){
-      ctx.save();
-      ctx.strokeStyle=color; ctx.globalAlpha=0.35; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(c.x, baseY); ctx.lineTo(c.x, isBuyMarker?(baseY+gap):(baseY-gap)); ctx.stroke();
-      ctx.restore();
+      my = (tipY+baseYt)/2;
+      ctx.moveTo(x, tipY); ctx.lineTo(x-S, baseYt); ctx.lineTo(x+S, baseYt);
     }
     ctx.closePath();
     ctx.fillStyle=color; ctx.fill();
-    c.isBuyMarker = isBuyMarker; // 클릭 히트테스트에서 재사용
+    allMarkers.push({x, y:my, entry:r});
   });
 
   const tipEl = document.getElementById(tipElId);
@@ -1574,17 +1542,15 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX-rect.left, myPos = e.clientY-rect.top;
     let nearest=null, minD=Infinity;
-    clusters.forEach(c=>{
-      const d = Math.hypot(c.x-mx, c.my-myPos);
-      if(d<minD){ minD=d; nearest=c; }
+    allMarkers.forEach(m=>{
+      const d = Math.hypot(m.x-mx, m.y-myPos);
+      if(d<minD){ minD=d; nearest=m; }
     });
     if(!tipEl) return;
     if(!nearest || minD>14){ tipEl.style.display='none'; return; }
+    const r=nearest.entry, d=new Date(r.at), isBuy=r.type==='buy';
     tipEl.style.display='block';
-    tipEl.innerHTML = nearest.items.map(m=>{
-      const r=m.entry, d=new Date(r.at), isBuy=r.type==='buy';
-      return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
-    }).join('<br>');
+    tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
   };
 }
 
@@ -1600,7 +1566,7 @@ function saveStockChartRangeMap(){
   try{ localStorage.setItem(STOCK_CHART_RANGE_KEY, JSON.stringify(stockChartRangeMap)); }catch(e){}
 }
 let stockChartRangeMap = loadStockChartRangeMap();
-const STOCK_CHART_DEFAULT_PERIOD = 'YTD';
+const STOCK_CHART_DEFAULT_PERIOD = 'ALL';
 const STOCK_CHART_PERIODS = ['1D','5D','1M','3M','6M','YTD','1Y','3Y','5Y','10Y','ALL'];
 // 종목 상세 패널의 기간 탭 버튼 — stockChartRangeMap에 저장된(없으면 기본값) 기간을
 // 매번 렌더링 시점에 반영해서 그린다. 예전에는 "1Y" 버튼에 class="active"가 고정
