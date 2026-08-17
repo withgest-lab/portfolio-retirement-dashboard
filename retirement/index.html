@@ -831,6 +831,14 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="nh-r" min="0" max="50000" step="500" value="15000"  oninput="syncInput('nh');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
+    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금 — 현재 잔액에 이미 포함된 금액입니다">안세공 원금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhprin" value="0" min="0" max="20000" step="100" onblur="onBlurFix('nhprin')" oninput="syncSlider('nhprin');scheduleUpd()"><span class="unit-tag">만원</span>
+      </div>
+  </div>
+  <input type="range" id="nhprin-r" min="0" max="20000" step="100" value="0"  oninput="syncInput('nhprin');scheduleUpd()">
+</div><div class="irow nh">
+  <div class="irow-top">
     <span class="ilabel">월 납입액</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="nhm" value="50" min="0" max="150" step="5" onblur="onBlurFix('nhm')" oninput="syncSlider('nhm');scheduleUpd()"><span class="unit-tag">만원</span>
@@ -854,14 +862,6 @@ button{font-family:inherit;cursor:pointer;}
     </div>
   </div>
   <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('nhend');scheduleUpd()">
-</div><div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금">안세공 원금</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhprin" value="0" min="0" max="20000" step="100" onblur="onBlurFix('nhprin')" oninput="syncSlider('nhprin');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="nhprin-r" min="0" max="20000" step="100" value="0"  oninput="syncInput('nhprin');scheduleUpd()">
 </div>
 <div class="fv-row">
 <div class="irow nh">
@@ -898,6 +898,14 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="mf-r" min="0" max="30000" step="500" value="9000"  oninput="syncInput('mf');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
+    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금 — 현재 잔액에 이미 포함된 금액입니다">안세공 원금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfprin" value="0" min="0" max="20000" step="100" onblur="onBlurFix('mfprin')" oninput="syncSlider('mfprin');scheduleUpd()"><span class="unit-tag">만원</span>
+      </div>
+  </div>
+  <input type="range" id="mfprin-r" min="0" max="20000" step="100" value="0"  oninput="syncInput('mfprin');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
     <span class="ilabel">월 납입액</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="mfm" value="0" min="0" max="150" step="5" onblur="onBlurFix('mfm')" oninput="syncSlider('mfm');scheduleUpd()"><span class="unit-tag">만원</span>
@@ -921,14 +929,6 @@ button{font-family:inherit;cursor:pointer;}
     </div>
   </div>
   <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('mfend');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금">안세공 원금</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfprin" value="0" min="0" max="20000" step="100" onblur="onBlurFix('mfprin')" oninput="syncSlider('mfprin');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="mfprin-r" min="0" max="20000" step="100" value="0"  oninput="syncInput('mfprin');scheduleUpd()">
 </div>
 <div class="fv-row">
 <div class="irow mf">
