@@ -55,21 +55,33 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
 /* tabbar와 동일하게 position:sticky. tabbar의 스크롤-고정 위치(top:52px) 바로 아래
-   8px 여백을 두고 100px(=52+tabbar 높이 40px+8px)에서 붙는다. .page 안의 일반 흐름
+   20px 여백을 두고 112px(=52+tabbar 높이 40px+20px)에서 붙는다. .page 안의 일반 흐름
    요소이므로 .main의 max-width를 그대로 물려받아 좌우 정렬을 위한 별도 계산이 필요 없다.
    주의: sticky가 고정될 때는 margin가 top 오프셋에 반영되지 않으므로(margin으로 여백을
    주면 스크롤해서 붙는 순간 여백이 사라지는 점프가 생김), 여백은 margin이 아니라 top 값
-   자체와 .main의 padding-top(아래)에 동일한 값을 넣어 흐름 상태·고정 상태 둘 다 똑같이 8px
+   자체와 .main의 padding-top(아래)에 동일한 값을 넣어 흐름 상태·고정 상태 둘 다 똑같이 20px
    여백이 나오도록 맞춘다.
-   ::before로 subtabbar 바로 위 8px(tabbar가 고정되는 지점부터 subtabbar가 고정되는
+   ::before로 subtabbar 바로 위 20px(tabbar가 고정되는 지점부터 subtabbar가 고정되는
    지점까지)을 subtabbar 자신의 불투명한 배경으로 미리 덮어 둔다 — 이 구간은 어느 sticky
    요소에도 속하지 않는 문서 흐름상의 빈틈이라, 스크롤 중 그 아래 콘텐츠(예: 자산변화추이의
    "전체 선택/해제" 행)가 짧은 순간 그 틈으로 비쳐 보이는 문제가 있었음. ::before는 subtabbar와
-   같은 sticky 박스에 얹혀 있어 subtabbar가 스크롤되든 고정되든 항상 같이 그 틈을 가린다. */
+   같은 sticky 박스에 얹혀 있어 subtabbar가 스크롤되든 고정되든 항상 같이 그 틈을 가린다.
+   ::after는 대칭으로 subtabbar 바로 아래 20px(.page의 flex gap)을 덮는다 — subtabbar가
+   고정된 뒤에는 그 gap이 문서 흐름상 이미 subtabbar 밑으로 스크롤되어 들어온 subpage
+   콘텐츠(예: 비중현황의 "카테고리 구분/카테고리 속성" 라벨)가 차지하게 되는데, 이 gap을
+   가려주는 요소가 없으면 그 라벨처럼 subtabbar 바로 아래에 걸쳐 있는 한 줄짜리 콘텐츠가
+   완전히 가려지기 전에 일부만 삐져나와 보이는 문제가 있었다. 실측해보니 8px/16px로는
+   일반적인 한 줄 텍스트(줄높이 포함 약 15~18px)를 다 못 가려 여전히 비쳐 보였고, 20px로
+   늘려야 실제로 안전하게 가려짐 — 이 20px는 .page의 flex gap 값과 정확히 일치시켜서,
+   스크롤하지 않은 정지 상태에서 각 서브페이지의 첫 콘텐츠가 시작되는 위치와 ::after가
+   덮는 범위가 딱 맞아떨어지게 한다(더 크게 덮으면 정지 상태에서도 콘텐츠 윗부분이 잘려
+   보이는 새 문제가 생김 — 자산 Quick View처럼 간격이 좁은 서브페이지에서 실측 확인함). */
 .subtabbar{display:flex;gap:2px;background:var(--color-section-bg);border-radius:9px;
   padding:2px;flex-wrap:wrap;
-  position:sticky;top:100px;z-index:50;}
-.subtabbar::before{content:'';position:absolute;top:-8px;left:0;right:0;height:8px;
+  position:sticky;top:112px;z-index:50;}
+.subtabbar::before{content:'';position:absolute;top:-20px;left:0;right:0;height:20px;
+  background:var(--color-section-bg);}
+.subtabbar::after{content:'';position:absolute;bottom:-20px;left:0;right:0;height:20px;
   background:var(--color-section-bg);}
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
@@ -77,7 +89,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .subtabbar button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
-.page{display:none;flex-direction:column;gap:8px;}
+.page{display:none;flex-direction:column;gap:20px;}
 .page.active{display:flex;}
 .subpage{display:none;flex-direction:column;gap:16px;}
 .subpage.active{display:flex;}
@@ -108,7 +120,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn-red{background:#ff3b3015;color:var(--color-up);}
 
 /* ── 레이아웃 ── */
-.main{max-width:1280px;margin:0 auto;padding:8px 12px 48px;display:flex;flex-direction:column;gap:16px;}
+.main{max-width:1280px;margin:0 auto;padding:20px 12px 48px;display:flex;flex-direction:column;gap:16px;}
 .card{background:var(--color-card);border-radius:var(--radius);border:1px solid var(--color-border);padding:16px;}
 .section-label{font-size:11px;font-weight:600;color:var(--color-tertiary);
   text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
@@ -1118,7 +1130,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div style="background:var(--color-surface);border-radius:12px;padding:14px;margin-bottom:12px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📥 백업 (JSON 다운로드)</div>
       <div style="font-size:11px;color:var(--color-secondary);margin-bottom:10px;line-height:1.5;">
-        JSON 파일로 저장 후 구글 드라이브에 수동 업로드하세요.
+        자산목록·환율·스냅샷·매매이력(배당/입출금 포함)·기타 금융소득을 JSON 파일로 저장합니다. 수익률분석·배당금관리·세금관리는 이 데이터로부터 계산되므로 함께 백업됩니다. 다운로드 후 구글 드라이브에 수동 업로드하세요.
       </div>
       <label style="font-size:11px;color:var(--color-tertiary);display:block;margin-bottom:4px;">파일 이름</label>
       <input id="sheetsFileName" type="text"
@@ -1692,8 +1704,14 @@ function setStatus(state,text){
 // "시세 갱신"/"스냅샷" 버튼 클릭 피드백 — 상태 표시줄(statusDot/statusText)만으로는
 // 버튼을 눌렀다는 게 바로 눈에 띄지 않아서, 버튼 자체를 잠깐 비활성화하고 완료 문구로
 // 바꿔 눌렸다는 것과 완료됐다는 것을 명확히 알 수 있게 한다.
+// 주의: 예전엔 여기서 isFetching이면 그냥 return해버려서, 페이지 로드 직후·5분 자동갱신·
+// 30초 간격 누락 스냅샷 체크 등 백그라운드 시세 조회가 하필 진행 중일 때 버튼을 누르면
+// 아무 피드백 없이 조용히 무시됐다(버튼 텍스트도 안 바뀜) — 사용자 입장에선 "눌렀는데
+// 안 눌린 것처럼" 보여서 여러 번 다시 누르게 되는 원인이었음. 지금은 isFetching이어도
+// 항상 로딩 피드백을 보여주고, fetchAllPrices가 반환하는 진행 중인 요청에 그대로 올라타
+// 그 완료를 기다린다 — 새 요청을 중복으로 또 쏘지 않으면서도 클릭에는 항상 반응한다.
 async function onRefreshPricesClick(btn){
-  if(!btn || isFetching) return;
+  if(!btn) return;
   const original = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '⏳ 갱신 중...';
@@ -1714,9 +1732,14 @@ function onSaveSnapClick(btn){
 }
 
 let isFetching=false;
-async function fetchAllPrices(saveSnapshot=false){
-  if(isFetching) return;
+// 이미 진행 중인 요청이 있으면 새로 쏘지 않고 그 요청에 그대로 올라타 기다린다 — 그래야
+// "시세 갱신" 버튼을 백그라운드 자동갱신과 겹치는 타이밍에 눌러도 조용히 무시되지 않고
+// 항상 응답한다(호출부는 onRefreshPricesClick 참고).
+let fetchAllPricesPromise=null;
+function fetchAllPrices(saveSnapshot=false){
+  if(isFetching) return fetchAllPricesPromise;
   isFetching=true;
+  fetchAllPricesPromise=(async()=>{
   setStatus('loading','시세 조회 중...');
   try{
     const[usd,jpy]=await Promise.all([fetchFXRate('USDKRW=X'),fetchFXRate('JPYKRW=X')]);
@@ -1792,7 +1815,9 @@ async function fetchAllPrices(saveSnapshot=false){
     // ★ 에러여도 스냅샷 요청이면 현재 값으로 저장 시도
     if(saveSnapshot) try{ saveSnap(); }catch(e2){}
   }
-  finally{isFetching=false;}
+  finally{isFetching=false;fetchAllPricesPromise=null;}
+  })();
+  return fetchAllPricesPromise;
 }
 
 /* ════════════════════════════════════════
@@ -6218,6 +6243,7 @@ function downloadBackup(){
       fx:     FX,
       snaps:  loadSnaps(),
       tradeLog: loadTradeLog(),
+      otherFinIncome: loadOtherFinIncome(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const url  = URL.createObjectURL(blob);
@@ -6252,6 +6278,7 @@ function restoreFromFile(event){
       if(data.fx?.USD > 1000) FX = data.fx;
       if(data.snaps?.length) saveSnaps(data.snaps);
       if(data.tradeLog?.length) saveTradeLog(data.tradeLog);
+      if(data.otherFinIncome!=null) saveOtherFinIncome(data.otherFinIncome);
       saveAssets(); saveFX();
       renderAll(); renderSnaps();
 
