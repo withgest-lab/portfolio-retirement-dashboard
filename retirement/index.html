@@ -717,7 +717,7 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="life-r" min="75" max="105" step="1" value="90"  oninput="syncInput('life');scheduleUpd()">
-</div><div class="irow exp">
+</div><div class="irow base-s">
   <div class="irow-top">
     <span class="ilabel" title="현재 기준, 물가상승률 반영">월 생활비</span>
     <div class="irow-ctrl">
@@ -725,7 +725,7 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="exp-r" min="100" max="600" step="5" value="225"  oninput="syncInput('exp');scheduleUpd()">
-</div><div class="irow exp">
+</div><div class="irow base-s">
   <div class="irow-top">
     <span class="ilabel">사적연금 한도</span>
     <div class="irow-ctrl">
@@ -1567,6 +1567,16 @@ function autoSuggest(){
   const monLimit = Math.round(p.plimit / 12);
   const gapYrs   = Math.max(1, p.npage - p.ret);
 
+  // 납입 종료 나이(IRP/ISA/퇴직연금/농협/미래에셋) — 예전엔 자동설계를 누르면 무조건
+  // 은퇴 시점으로 리셋해버려서, 사용자가 일부러 은퇴 전에 납입을 끊도록 설정해둔 값이
+  // 사라졌었다(계산도 리셋 "전" 값으로 한 번 하고 리셋 "후" 값으로 다시 하는 순서
+  // 문제까지 있었음). 이제는 사용자가 넣어둔 값을 그대로 존중해서 계산하고, 값이
+  // 비어있을 때만(gv()가 0을 반환하는 경우) 은퇴 시점으로 채운다 — 계산에 쓰는 p
+  // 객체와 화면(sv)에 동일하게 반영해, 계산 근거와 화면에 남는 값이 항상 일치하게 함.
+  ['isaend','irpend','tdcend','nhend','mfend'].forEach(fid => {
+    if(!p[fid] || p[fid]<=0){ p[fid] = p.ret; sv(fid, p.ret); }
+  });
+
   // 시나리오 반영 수익률/물가 — simulate()와 동일 기준으로 산정해야
   // 인출 계획(autoSuggest)과 실제 시뮬레이션 결과(simulate)가 일치함
   const rNh=p.rnh+adj.r, rMf=p.rmf+adj.r, rIrp=p.rirp+adj.r, rTirp=p.rtirp+adj.r, rIsa=p.risa+adj.r;
@@ -1723,10 +1733,8 @@ function autoSuggest(){
   sv('irpage', irpStartAge); sv('irppay', irpMon);
   sv('isaage', p.ret);       sv('isam',   isaFinal);
   sv('tage',   tage);        sv('tm',     tirpMonSug);
-  // 납입 종료 나이(IRP/ISA/퇴직연금)는 은퇴 시점까지 계속 납입한다고 가정하고
-  // 자동설계 클릭 시에만 은퇴나이로 갱신 — isaage/isam과 동일하게 평소엔 자유 편집됨
-  sv('isaend', p.ret); sv('irpend', p.ret); sv('tdcend', p.ret);
-  sv('nhend', p.ret); sv('mfend', p.ret);
+  // 납입 종료 나이는 함수 맨 앞에서 이미 처리함(비어있을 때만 은퇴시점으로 채움,
+  // 사용자가 넣어둔 값이 있으면 그대로 존중) — 여기서 다시 건드리지 않는다.
 
   // 사적연금 한도 체크: 공백기/완성기 각각 (퇴직IRP는 한도 무관 계좌라 여기엔 포함 안 함)
   const privGap  = mfMon + nhMon;
