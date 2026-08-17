@@ -6669,8 +6669,11 @@ function restoreFromFile(event){
 
       assets = data.assets;
       if(data.fx?.USD > 1000) FX = data.fx;
-      if(data.snaps?.length) saveSnaps(data.snaps);
-      if(data.tradeLog?.length) saveTradeLog(data.tradeLog);
+      // 길이가 0이어도(백업 시점에 스냅샷/매매이력이 진짜로 비어있었던 경우) 배열이기만
+      // 하면 무조건 덮어써야 완전한 복원이 된다 — .length로만 판단하면 "0건" 백업을
+      // 복원할 때 조용히 스킵되어 기존 기기에 남아있던 값이 섞여 들어가는 불일치가 생김.
+      if(Array.isArray(data.snaps)) saveSnaps(data.snaps);
+      if(Array.isArray(data.tradeLog)) saveTradeLog(data.tradeLog);
       if(data.otherFinIncome!=null) saveOtherFinIncome(data.otherFinIncome);
       saveAssets(); saveFX();
       renderAll(); renderSnaps();
