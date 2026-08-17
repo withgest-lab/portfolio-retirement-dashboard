@@ -470,6 +470,55 @@ button{font-family:inherit;cursor:pointer;}
   .metrics-bar{grid-template-columns:repeat(4,1fr);}
   .acct-grid{grid-template-columns:repeat(5,1fr);}
 }
+
+/* 411px+ 전용 압축(폴드 펼침 세로/가로 둘 다) — 설계 탭이 가로/세로 스크롤 없이
+   한 화면에 들어가야 함. 퇴직연금 카드에 납입 시작/종료 나이 행이 추가된 만큼
+   카드·패널 padding/gap을 소폭 줄여 상쇄한다. 410px 이하(폴드 접힘)는 대상 아님. */
+@media (min-width:411px){
+  .acct-head{padding:4px 6px;}
+  .acct-body{padding:4px 5px 4px;gap:2px;}
+  .acct-body .ival-input{padding:2px 4px;}
+  .acct-body .fv-row .ival-input,
+  .acct-body .irow-ymon .ival-input{padding:2px 3px;}
+  .acct-grid{gap:4px;}
+  .priv-cards{gap:4px;}
+  .priv-group{gap:4px;}
+  .stack-group{gap:4px;}
+  .panel{padding:6px 10px;margin-bottom:4px;}
+  .basic-row .irow-top{padding:3px 0;}
+}
+
+/* 폴드를 가로(landscape)로 돌렸을 때처럼 폭은 넓은데 뷰포트 높이가 짧은 상태 전용 추가 압축.
+   위 폭 기준 압축만으론 짧은 높이에서 스크롤이 남아 한 번 더 줄인다 — 카드 그리드(가장
+   비중이 큰 stack-group: 퇴직연금+국민연금)를 중심으로 폰트·행간을 더 좁힌다. 세로로
+   펼친 상태(411~900px, 높이 충분)는 이 블록의 영향을 받지 않도록 max-height로 제한. */
+@media (min-width:411px) and (max-height:520px){
+  .top-bar{padding:4px 10px;}
+  .tax-guide-btn{padding:3px 8px;font-size:10px;}
+  h1{font-size:13px;}
+  .main-tabs{margin:5px 10px 2px;}
+  .main-tabs .tab-btn{padding:4px 8px;font-size:12px;}
+  .left-panel{padding:5px 10px 6px;}
+  .panel{padding:4px 8px;margin-bottom:3px;}
+  .basic-row .ilabel{font-size:8px;}
+  .basic-row .ival-input{width:48px;font-size:11px;padding:2px 3px;}
+  .acct-head{padding:2px 5px;font-size:10px;}
+  .acct-head .dot{margin-top:2px;}
+  .acct-body{padding:2px 4px 2px;gap:1px;}
+  .acct-body .ilabel{font-size:8.5px;line-height:1.1;}
+  .acct-body .irow-top{gap:1px;}
+  .acct-body .irow{margin-bottom:0;}
+  .acct-body .ival-input{font-size:11px;padding:1px 3px;}
+  .acct-body .fv-row .ival-input,
+  .acct-body .irow-ymon .ival-input{font-size:10px;padding:1px 2px;}
+  .acct-body .unit-tag,.acct-body .ymon-select{font-size:8px;}
+  .acct-grid{gap:3px;}
+  .priv-cards{gap:3px;}
+  .priv-group{gap:3px;}
+  .stack-group{gap:3px;}
+  .fv-row{gap:2px;}
+  .collapsible summary{padding:2px 0;font-size:11px;}
+}
 </style>
 </head>
 <body>
@@ -725,23 +774,24 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="isay-r" min="0" max="2000" step="100" value="2000"  oninput="syncInput('isay');scheduleUpd()">
-</div><div class="irow isa">
+</div><div class="fv-row">
+<div class="irow isa">
   <div class="irow-top">
-    <span class="ilabel">납입 시작 나이</span>
+    <span class="ilabel">납입 시작<br>나이</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="isastart" value="51" min="40" max="65" step="1" onblur="onBlurFix('isastart')" oninput="syncSlider('isastart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
   <input type="range" id="isastart-r" min="40" max="65" step="1" value="51" oninput="syncInput('isastart');scheduleUpd()">
-</div><div class="irow isa irow-hidden">
+</div><div class="irow isa">
   <div class="irow-top">
     <span class="ilabel">납입 종료<br>나이</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isaend" value="57" min="50" max="75" step="1" onblur="onBlurFix('isaend')" oninput="syncSlider('isaend')"><span class="unit-tag">세</span>
-      <button class="lock-btn locked" id="lock-isaend" onclick="toggleLock('isaend')">🔒</button>
+      <input class="ival-input" type="number" id="isaend" value="57" min="50" max="75" step="1" onblur="onBlurFix('isaend')" oninput="syncSlider('isaend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="isaend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('isaend');scheduleUpd()">
+  <input type="range" id="isaend-r" min="50" max="75" step="1" value="57" oninput="syncInput('isaend');scheduleUpd()">
+</div>
 </div>
 <div class="fv-row">
 <div class="irow isa">
@@ -769,7 +819,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="priv-cards">
 
 <div class="acct-card" style="border-color:#8FB89D;">
-<div class="acct-head" style="background:#EAF3EE;color:#2E5E47;"><span class="dot" style="background:#4E9B78;"></span><span class="name">농협</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head" style="background:#EAF3EE;color:#2E5E47;"><span class="dot" style="background:#4E9B78;"></span><span class="name">농협 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow nh">
   <div class="irow-top">
@@ -836,7 +886,7 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 
 <div class="acct-card" style="border-color:#7EBAB6;">
-<div class="acct-head" style="background:#E7F2F1;color:#2C5C59;"><span class="dot" style="background:#4C9793;"></span><span class="name">미래에셋</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head" style="background:#E7F2F1;color:#2C5C59;"><span class="dot" style="background:#4C9793;"></span><span class="name">미래에셋 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow mf">
   <div class="irow-top">
@@ -903,7 +953,7 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 
 <div class="acct-card" style="border-color:#8FB3D1;">
-<div class="acct-head" style="background:#E9F0F6;color:#33566F;"><span class="dot" style="background:#5D8AB0;"></span><span class="name">IRP</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head" style="background:#E9F0F6;color:#33566F;"><span class="dot" style="background:#5D8AB0;"></span><span class="name">IRP 개인</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow irp">
   <div class="irow-top">
@@ -927,23 +977,24 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="irpy-r" min="0" max="1200" step="50" value="300"  oninput="syncInput('irpy');scheduleUpd()">
-</div><div class="irow irp">
+</div><div class="fv-row">
+<div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">납입 시작</span>
+    <span class="ilabel">납입 시작<br>나이</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="irpstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
   <input type="range" id="irpstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('irpstart');scheduleUpd()">
-</div><div class="irow irp irow-hidden">
+</div><div class="irow irp">
   <div class="irow-top">
     <span class="ilabel">납입 종료<br>나이</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpend" value="57" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend')"><span class="unit-tag">세</span>
-      <button class="lock-btn locked" id="lock-irpend" onclick="toggleLock('irpend')">🔒</button>
+      <input class="ival-input" type="number" id="irpend" value="57" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="irpend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('irpend');scheduleUpd()">
+  <input type="range" id="irpend-r" min="50" max="75" step="1" value="57" oninput="syncInput('irpend');scheduleUpd()">
+</div>
 </div>
 <div class="fv-row">
 <div class="irow irp">
@@ -992,7 +1043,26 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="tirp-r" min="0" max="100000" step="1000" value="32000"  oninput="syncInput('tirp');scheduleUpd()">
-</div><div class="irow dc irow-ymon">
+</div><div class="fv-row">
+<div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tdcstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('tdcstart')" oninput="syncSlider('tdcstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="tdcstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('tdcstart');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료<br>나이</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tdcend" value="57" min="50" max="75" step="1" onblur="onBlurFix('tdcend')" oninput="syncSlider('tdcend');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="tdcend-r" min="50" max="75" step="1" value="57" oninput="syncInput('tdcend');scheduleUpd()">
+</div>
+</div>
+<div class="irow dc irow-ymon">
   <div class="irow-top">
     <span class="ilabel">연간 DC 적립액</span>
     <div class="irow-ctrl">
@@ -1271,10 +1341,12 @@ function scheduleUpd(delay){
 }
 const SA={base:{r:0,inf:0}, opt:{r:2,inf:-0.5}, pes:{r:-2,inf:1}};
 
-/* ── 납입종료 나이(은퇴나이 자동추종) 잠금 토글 — 이 4개 필드에만 사용 ── */
+/* ── 납입종료 나이(은퇴나이 자동추종) 잠금 토글 — 농협·미래에셋 2개 필드에만 사용
+   (IRP/ISA/퇴직연금은 잠금 없이 자동설계 클릭 시에만 은퇴나이로 갱신되고 평소엔
+   자유 편집됨 — isaage/isam과 동일한 tag-auto 패턴, autoSuggest()/AUTO 배열 참고) ── */
 function toggleLock(id){
   // 납입시작/종료는 하나의 자물쇠로 페어 제어
-  const PAIR_MAP = {nhstart:'nhend',mfstart:'mfend',irpstart:'irpend',isastart:'isaend'};
+  const PAIR_MAP = {nhstart:'nhend',mfstart:'mfend'};
   if(PAIR_MAP[id]){ _toggleLockSingle(id); _toggleLockSingle(PAIR_MAP[id]); return; }
   _toggleLockSingle(id);
 }
@@ -1293,7 +1365,7 @@ function _toggleLockSingle(id){
     btn.textContent='🔓'; btn.title='클릭하여 잠금';
     if(inp){ inp.removeAttribute('disabled'); inp.style.opacity='1'; inp.style.cursor='text'; }
     // 납입종료 잠금 해제 시 현재 은퇴나이로 초기값 설정 (이후 자유롭게 수정 가능)
-    if(['nhend','mfend','irpend','isaend'].includes(id)){
+    if(['nhend','mfend'].includes(id)){
       const retVal = document.getElementById('ret') ? document.getElementById('ret').value : inp.value;
       inp.value = retVal; rng.value = retVal;
     }
@@ -1424,8 +1496,12 @@ function optimizeTage(p, tirpFV, rTirp, infR){
   const tirptaxV = p.tirptax || 0;
   // 퇴직소득세는 투자수익이 아니라 "얼마를 퇴직금 원금으로 받았는지"에 매겨지므로,
   // 세금 안분 기준(분모)은 투자수익이 포함된 tirpFV가 아니라 은퇴 시점까지 쌓일
-  // 원금 총합(현재 잔액 + 은퇴 전까지 매년 들어올 DC 적립액)으로 잡는다.
-  const tirpBase = (p.tirp || 0) + (p.tdc || 0) * Math.max(0, p.ret - p.age);
+  // 원금 총합(현재 잔액 + 납입 기간 동안 매년 들어올 DC 적립액)으로 잡는다.
+  // 납입 기간은 tdcstart~tdcend(은퇴나이 초과 방지 클램프)로, FV 계산(calcISA_FV 호출부)과
+  // 동일한 가정을 써야 세금 최적화 탐색이 실제 FV/세금 계산과 어긋나지 않는다.
+  const tdcStartEffOpt = Math.max(p.age, p.tdcstart);
+  const tdcEndEffOpt   = Math.min(p.ret - 1, p.tdcend);
+  const tirpBase = (p.tirp || 0) + (p.tdc || 0) * Math.max(0, tdcEndEffOpt - tdcStartEffOpt + 1);
   const life = p.life;
   // 퇴직IRP도 연금저축과 마찬가지로 만 55세 이상부터만 "연금"으로 수령 가능 —
   // 은퇴 나이가 55세 미만이어도 실제 수령 개시 후보는 55세부터 탐색해야 함
@@ -1535,8 +1611,8 @@ function autoSuggest(){
   const mfPrinFV = mfPrinEff > 0 ? calcMonthlyDepositFV(mfPrinEff, 0, p.age, p.age, p.age, p.ret, rMf) : 0;
   // IRP FV (autoSuggest)
   const irpFV = calcISA_FV(p.irp, p.irpy, p.age, Math.max(p.age,p.irpstart), Math.min(p.ret-1,p.irpend), p.ret, rIrp, undefined, p.irpymon);
-  // 퇴직연금(DC) FV: 현재 잔액 + 은퇴 전까지 매년 회사가 적립하는 DC 적립액(연납입 방식과 동일 패턴)
-  const tirpFV= calcISA_FV(p.tirp, p.tdc, p.age, p.age, p.ret, p.ret, rTirp, undefined, p.tdcymon);
+  // 퇴직연금(DC) FV: 현재 잔액 + 납입 기간(tdcstart~tdcend) 동안 매년 회사가 적립하는 DC 적립액
+  const tirpFV= calcISA_FV(p.tirp, p.tdc, p.age, Math.max(p.age,p.tdcstart), Math.min(p.ret-1,p.tdcend), p.ret, rTirp, undefined, p.tdcymon);
   // ISA FV: 매년 지정한 달 일시납 (연납입 → 12개월 복리, 기본 1월)
   const isaFV = calcISA_FV(
     p.isa,
@@ -1647,9 +1723,12 @@ function autoSuggest(){
   window._acctMaxMon = {nh:nhMaxMon, mf:mfMaxMon, irp:irpMaxMon};
 
   // STEP 5.5: 퇴직소득세 추정치 자동 계산 (국세청 공식) — 은퇴 시점까지 쌓일 원금
-  // (현재 잔액 + 남은 기간 DC 적립액)과 근속연수를 실제 퇴직소득세 계산 공식에 넣어
-  // 자동으로 채운다. 회사에서 실제 안내받은 금액이 있으면 이 값을 직접 덮어써도 됨.
-  const tirpPrincipalAtRet = p.tirp + p.tdc * Math.max(0, p.ret - p.age);
+  // (현재 잔액 + 납입 기간 DC 적립액, tdcstart~tdcend)과 근속연수를 실제 퇴직소득세
+  // 계산 공식에 넣어 자동으로 채운다. 회사에서 실제 안내받은 금액이 있으면 이 값을
+  // 직접 덮어써도 됨. tirpFV 계산(위 calcISA_FV 호출부)과 동일한 납입 기간 가정을 써야 함.
+  const tdcStartEffTax = Math.max(p.age, p.tdcstart);
+  const tdcEndEffTax   = Math.min(p.ret - 1, p.tdcend);
+  const tirpPrincipalAtRet = p.tirp + p.tdc * Math.max(0, tdcEndEffTax - tdcStartEffTax + 1);
   const tservAtRet = p.tservice + Math.max(0, p.ret - p.age);
   const tirptaxAuto = calcRetirementIncomeTax(tirpPrincipalAtRet, tservAtRet);
   sv('tirptax', tirptaxAuto);
@@ -1672,6 +1751,9 @@ function autoSuggest(){
   sv('irpage', irpStartAge); sv('irppay', irpMon);
   sv('isaage', p.ret);       sv('isam',   isaFinal);
   sv('tage',   tage);        sv('tm',     tirpMonSug);
+  // 납입 종료 나이(IRP/ISA/퇴직연금)는 은퇴 시점까지 계속 납입한다고 가정하고
+  // 자동설계 클릭 시에만 은퇴나이로 갱신 — isaage/isam과 동일하게 평소엔 자유 편집됨
+  sv('isaend', p.ret); sv('irpend', p.ret); sv('tdcend', p.ret);
 
   // 사적연금 한도 체크: 공백기/완성기 각각 (퇴직IRP는 한도 무관 계좌라 여기엔 포함 안 함)
   const privGap  = mfMon + nhMon;
@@ -1920,8 +2002,11 @@ function simulate(p, adj){
     Math.max(p.age, p.irpstart),
     Math.min(p.ret - 1, p.irpend),  // 은퇴 직전 나이까지만 납입
     p.ret, rIrp, undefined, p.irpymon);
-  // 퇴직연금(DC) FV: 현재 잔액 + 은퇴 전까지 매년 회사가 적립하는 DC 적립액
-  const tirpFV = calcISA_FV(p.tirp, p.tdc, p.age, p.age, p.ret, p.ret, rTirp, undefined, p.tdcymon);
+  // 퇴직연금(DC) FV: 현재 잔액 + 납입 기간(tdcstart~tdcend) 동안 매년 회사가 적립하는 DC 적립액
+  const tirpFV = calcISA_FV(p.tirp, p.tdc, p.age,
+    Math.max(p.age, p.tdcstart),
+    Math.min(p.ret - 1, p.tdcend),
+    p.ret, rTirp, undefined, p.tdcymon);
   // ISA FV: 매년 지정한 달 일시납 (연납입 → 12개월 복리, 기본 1월)
   const isaFV = calcISA_FV(
     p.isa,
@@ -1958,7 +2043,9 @@ function simulate(p, adj){
   // 세후(net) 계산용: 퇴직소득세는 은퇴 시점까지 쌓일 원금 대비 그해 인출 비율로 안분
   // (optimizeTage의 세금 안분 로직과 동일 기준 사용 — ISA는 이미 인출 전 회차별 과세가
   //  끝난 세후 잔액이라 별도 차감이 필요 없고, 안세공/국민연금은 각각 비과세·별도세목이라 제외)
-  const tirpBaseForTax = p.tirp + p.tdc * Math.max(0, p.ret - p.age);
+  const tdcStartEffSim = Math.max(p.age, p.tdcstart);
+  const tdcEndEffSim   = Math.min(p.ret - 1, p.tdcend);
+  const tirpBaseForTax = p.tirp + p.tdc * Math.max(0, tdcEndEffSim - tdcStartEffSim + 1);
 
   for(let age=p.ret; age<=p.life; age++){
     const el = age-p.ret; // 은퇴 후 경과 연수
@@ -2068,7 +2155,7 @@ const ALL_FIELDS = [
   'nh','nhm','nhstart','nhend','nhage','nhpay','nhprin',
   'mf','mfm','mfstart','mfend','mfage','mfpay','mfprin',
   'irp','irpy','irpymon','irpstart','irpend','irpage','irppay',
-  'tirp','tdc','tdcymon','tservice','tage','tm','tirptax',
+  'tirp','tdc','tdcymon','tdcstart','tdcend','tservice','tage','tm','tirptax',
   'np','npbase','npage',
   'isa','isay','isaymon','isastart','isaend','isaage','isam',
   'rnh','rmf','rirp','rtirp','risa','inf',
@@ -2116,6 +2203,22 @@ function loadState(){
       if(inp) inp.value = state[id];
       if(rng) rng.value = state[id];
     });
+
+    // ── 마이그레이션: tdcstart/tdcend는 이번 업데이트로 신설된 필드라 예전 저장
+    //    데이터엔 없음 — 없으면 저장돼 있던 age/ret 값으로 채워, 예전 하드코딩 동작
+    //    ("현재 나이부터 은퇴까지 계속 DC 적립")과 동일한 계산 결과가 나오게 한다.
+    if(state.tdcstart === undefined && state.age !== undefined){
+      const inp = document.getElementById('tdcstart');
+      const rng = document.getElementById('tdcstart-r');
+      if(inp) inp.value = state.age;
+      if(rng) rng.value = state.age;
+    }
+    if(state.tdcend === undefined && state.ret !== undefined){
+      const inp = document.getElementById('tdcend');
+      const rng = document.getElementById('tdcend-r');
+      if(inp) inp.value = state.ret;
+      if(rng) rng.value = state.ret;
+    }
     return true;
   } catch(e) { return false; }
 }
@@ -2140,7 +2243,7 @@ function getP(){
     nh:gv('nh'),nhm:gv('nhm'),nhstart:gv('nhstart'),nhend:gv('nhend'),nhage:gv('nhage'),nhpay:gv('nhpay'),nhprin:gv('nhprin'),
     mf:gv('mf'),mfm:gv('mfm'),mfstart:gv('mfstart'),mfend:gv('mfend'),mfage:gv('mfage'),mfpay:gv('mfpay'),mfprin:gv('mfprin'),
     irp:gv('irp'),irpy:gv('irpy'),irpymon:gv('irpymon'),irpstart:gv('irpstart'),irpend:gv('irpend'),irpage:gv('irpage'),irppay:gv('irppay'),
-    tirp:gv('tirp'),tdc:gv('tdc'),tdcymon:gv('tdcymon'),tservice:gv('tservice'),tage:gv('tage'),tm:gv('tm'),tirptax:gv('tirptax'),
+    tirp:gv('tirp'),tdc:gv('tdc'),tdcymon:gv('tdcymon'),tdcstart:gv('tdcstart'),tdcend:gv('tdcend'),tservice:gv('tservice'),tage:gv('tage'),tm:gv('tm'),tirptax:gv('tirptax'),
     np:gv('np'),npbase:gv('npbase'),npage:gv('npage'),
     isa:gv('isa'),isay:gv('isay'),isaymon:gv('isaymon'),isastart:gv('isastart'),isaend:gv('isaend'),isaage:gv('isaage'),isam:gv('isam'),
     plimit:gv('plimit'),
@@ -2646,10 +2749,11 @@ function upd(){
   saveState();
   const p=getP();
 
-  // 납입종료 나이 자동 추종:
+  // 납입종료 나이 자동 추종(농협·미래에셋만 — IRP/ISA/퇴직연금은 잠금 없이 자동설계 때만
+  // 은퇴나이로 갱신되고 평소엔 자유 편집됨, autoSuggest()/AUTO 배열 참고):
   // 잠금(locked) 상태 → 은퇴 나이에 자동 동기화
   // 잠금 해제(unlocked) 상태 → 사용자가 수동으로 설정한 값 유지
-  ['nhend','mfend','irpend','isaend'].forEach(fid => {
+  ['nhend','mfend'].forEach(fid => {
     const inp = document.getElementById(fid);
     const rng = document.getElementById(fid+'-r');
     if(!inp || !rng) return;
@@ -2682,10 +2786,10 @@ function upd(){
     p.age+'세 → '+p.ret+'세 은퇴 · 사적연금 한도 '+p.plimit.toLocaleString()+'만원/년';
   document.getElementById('note-limit').textContent=p.plimit.toLocaleString();
 
-  // ── 납입 종료 나이: 슬라이더 max를 은퇴 나이로 확장 + 기본값 연동 ──
+  // ── 납입 종료 나이(농협·미래에셋): 슬라이더 max를 은퇴 나이로 확장 + 기본값 연동 ──
   // 잠금 해제 상태의 슬라이더는 max만 조정하고 값은 유지
   // 잠금 상태의 슬라이더는 은퇴나이에 맞게 max + 값 모두 동기화
-  ['nhend','mfend','irpend','isaend'].forEach(fid => {
+  ['nhend','mfend'].forEach(fid => {
     const rng = document.getElementById(fid+'-r');
     const inp = document.getElementById(fid);
     if(!rng || !inp) return;
@@ -2888,7 +2992,7 @@ window.addEventListener('resize', syncTopBarPad);
 if(!loadState()) upd(); else upd();
 _initLockStates();
 applyInputTags();
-['lock-nhend','lock-mfend','lock-irpend','lock-isaend'].forEach(id=>{
+['lock-nhend','lock-mfend'].forEach(id=>{
   const el=document.getElementById(id);
   if(el) el.style.display='none';
 });
@@ -2898,7 +3002,7 @@ function applyInputTags(){
   // 자동설계가 채워주는 필드만 표시(회색 배경·글자색)로 구분 — REQ/OPT 배지·색띠·범례는
   // "복잡해 보인다"는 피드백으로 제거하고, 수동 입력값과 확실히 구분되어야 하는
   // 자동계산 필드 표시만 남김
-  const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','tage','tm','np','tirptax'];
+  const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','isaend','irpend','tdcend','tage','tm','np','tirptax'];
 
   function tag(id, cls){
     const el = document.getElementById(id);
