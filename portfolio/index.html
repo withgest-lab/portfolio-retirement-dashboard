@@ -3318,7 +3318,7 @@ let STOCK_DB=[],stocksLoaded=false;
 // stocks.csv를 고칠 때마다 이 값을 올려서 캐시 문제(특히 일부 모바일 브라우저의 완고한 fetch
 // 캐시)로 갱신된 파일을 못 받아오는 경우를 원천 차단한다 — 쿼리스트링이 다르면 완전히 다른
 // URL로 취급되어 새로 받아온다.
-const STOCKS_CSV_VERSION='20260817a';
+const STOCKS_CSV_VERSION='20260817b';
 async function loadStocksCSV(){
   if(stocksLoaded) return;
   const paths=['./stocks.csv','stocks.csv',location.pathname.replace(/\/[^/]*$/,'/')+('stocks.csv')]
