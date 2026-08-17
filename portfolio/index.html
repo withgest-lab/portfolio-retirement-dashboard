@@ -298,6 +298,20 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .snap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .notice{font-size:11px;color:var(--color-tertiary);padding:6px 0 0;}
 
+/* ── 원금 vs 자산가치 차트: 캔버스 + 선택 지점 상세 패널을 나란히 배치
+   (넓은 화면), 좁은 화면에서는 패널이 아래로 자동으로 쌓임 — 정보가
+   그림 위에 겹치는 플로팅 툴팁 대신 항상 빈 공간에 고정 표시됨 */
+.pv-chart-body{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;margin-top:10px;}
+.pv-canvas-wrap{position:relative;flex:2 1 300px;min-width:0;margin-top:0;}
+.pv-detail{flex:1 1 200px;min-width:180px;max-width:320px;background:var(--color-section-bg);
+  border:1px solid var(--color-border);border-radius:10px;padding:12px 14px;}
+.pv-detail .pd-empty{font-size:11px;color:var(--color-tertiary);}
+.pv-detail .pd-title{font-size:11px;font-weight:700;color:var(--color-secondary);margin-bottom:8px;}
+.pv-detail .pd-value{font-size:17px;font-weight:700;color:var(--color-text);margin-bottom:8px;}
+.pv-detail .pd-row{font-size:12px;color:var(--color-secondary);margin-bottom:4px;display:flex;justify-content:space-between;gap:8px;}
+.pv-detail .pd-note{font-size:10.5px;color:var(--color-tertiary);margin-top:6px;line-height:1.5;}
+@media(max-width:600px){ .pv-canvas-wrap{flex-basis:100%;} .pv-detail{flex-basis:100%;max-width:none;} }
+
 /* ── 모달 ── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
   align-items:center;justify-content:center;}
@@ -969,43 +983,48 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <button data-p="ALL" class="active" onclick="setMonthlyChartPeriod('ALL')">ALL</button>
       </div>
     </div>
-    <div class="chart-wrap"><canvas id="pvChart" height="280"></canvas></div>
-    <div id="pvTooltip" class="notice" style="display:none;margin-top:10px;line-height:1.6;"></div>
-    <div class="notice">💡 실선=자산가치, 점선=투입원금(원금기록장에 기록된 입출금 기준). 두 선 사이 채움은 현재 손익 구간을 나타냅니다.</div>
+    <div class="pv-chart-body">
+      <div class="pv-canvas-wrap chart-wrap"><canvas id="pvChart" height="280"></canvas></div>
+      <div class="pv-detail" id="pvDetail"><div class="pd-empty">차트의 지점을 선택하면 상세 정보가 표시됩니다</div></div>
+    </div>
+    <div class="notice">💡 실선=자산가치, 점선=투입원금(원금기록장에 기록된 입출금 기준). 두 선 사이 채움은 현재 손익 구간을 나타냅니다. 원금선 위의 ●/● 표시는 실제 입금·출금이 발생한 시점입니다.</div>
     <div class="notice" id="chartSnapStartNotice"></div>
   </div>
 </div>
 <div class="subpage" data-sub="principal">
   <div class="card">
     <div class="section-label" style="margin:0">원금 기록장</div>
-    <div class="notice" style="margin:0 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다. (기록 전용 — 자산/현금 잔액에는 영향 없음)</div>
-    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        날짜
-        <input id="pl_date" type="date" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-      </label>
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        구분
-        <select id="pl_type" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-          <option value="deposit">입금</option>
-          <option value="withdrawal">출금</option>
-        </select>
-      </label>
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        금액
-        <input id="pl_amount" type="number" placeholder="0" min="0" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-      </label>
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        통화
-        <select id="pl_cur" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-          <option value="KRW">KRW ₩</option>
-          <option value="USD">USD $</option>
-          <option value="JPY">JPY ¥</option>
-        </select>
-      </label>
-      <button class="btn" style="background:#34c75920;color:#34c759;padding:7px 14px;" onclick="addPrincipalLedgerEntry()">추가</button>
-    </div>
-    <div class="form-status" id="principalLedgerStatus"></div>
+    <details class="collapsible" style="margin:10px 0 14px;">
+      <summary>원금 입출금 추가 <b>(자산/현금 잔액에는 영향 없음)</b></summary>
+      <div class="notice" style="margin:10px 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다.</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          날짜
+          <input id="pl_date" type="date" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          구분
+          <select id="pl_type" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="deposit">입금</option>
+            <option value="withdrawal">출금</option>
+          </select>
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          금액
+          <input id="pl_amount" type="number" placeholder="0" min="0" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          통화
+          <select id="pl_cur" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="KRW">KRW ₩</option>
+            <option value="USD">USD $</option>
+            <option value="JPY">JPY ¥</option>
+          </select>
+        </label>
+        <button class="btn" style="background:#34c75920;color:#34c759;padding:7px 14px;" onclick="addPrincipalLedgerEntry()">추가</button>
+      </div>
+      <div class="form-status" id="principalLedgerStatus"></div>
+    </details>
     <div class="summary-grid" style="grid-template-columns:1fr;margin-bottom:14px;">
       <div class="sum-card">
         <div class="sum-lbl">누적 순입금액(기록된 입출금 기준)</div>
@@ -4147,35 +4166,52 @@ function renderMonthlyTable(){
 // 자산가치는 알 수 없지만(스냅샷이 없음) 투입원금(점선)은 그 날짜부터 보여줘야 하므로
 // value:null인 포인트를 먼저 만들어 점선의 시작을 앞당긴다 — 실선(자산가치)은 여전히
 // 최초 스냅샷 시점부터만 그려진다(drawPrincipalVsValueChart에서 value:null 구간 처리).
+//
+// series: 실선(자산가치)·손익 채움·선택 상세패널에 쓰는 스냅샷 단위 포인트(예전과 동일).
+// principalPath: 점선(투입원금) 전용 — 스냅샷 사이에 있는 입출금도 "실제 발생한 그 날"에
+// 자기 포인트를 하나씩 갖는다. series만 쓰면 스냅샷 사이의 입출금이 전부 다음 스냅샷
+// 시점까지 미뤄져 반영되면서, 실제로는 특정 날짜에 목돈을 넣었는데도 원금이 서서히
+// 늘어난 것처럼 보이는 착시가 있었다 — principalPath는 이 착시 없이 입출금이 발생한
+// "그 날" 정확히 꺾이도록 하고, 그 지점에 입금/출금 마커도 찍을 수 있게 한다.
 function buildPrincipalVsValueSeries(){
   const snaps = loadSnaps().slice().sort((a,b)=>a.timestamp-b.timestamp);
   const cashEvents = loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal').slice().sort((a,b)=>a.at-b.at);
-  if(!snaps.length && !cashEvents.length) return [];
+  if(!snaps.length && !cashEvents.length) return {series:[], principalPath:[]};
 
   const firstSnapTs = snaps.length ? snaps[0].timestamp : Infinity;
   let cumPrincipal = 0, idx = 0;
   const series = [];
+  const principalPath = [];
 
   while(idx < cashEvents.length && cashEvents[idx].at < firstSnapTs){
     cumPrincipal += (cashEvents[idx].type==='deposit'?1:-1)*(cashEvents[idx].totalKRW||0);
     series.push({ts:cashEvents[idx].at, value:null, principal:cumPrincipal});
+    principalPath.push({ts:cashEvents[idx].at, principal:cumPrincipal, event:cashEvents[idx]});
     idx++;
   }
 
   snaps.forEach(s=>{
     while(idx < cashEvents.length && cashEvents[idx].at <= s.timestamp){
       cumPrincipal += (cashEvents[idx].type==='deposit'?1:-1)*(cashEvents[idx].totalKRW||0);
+      principalPath.push({ts:cashEvents[idx].at, principal:cumPrincipal, event:cashEvents[idx]});
       idx++;
     }
     series.push({ts:s.timestamp, value:s.totalValue, principal:cumPrincipal});
+    principalPath.push({ts:s.timestamp, principal:cumPrincipal});
   });
 
-  return series;
+  return {series, principalPath};
 }
 
 let monthlyChartPeriod = 'ALL';
+// 선택 지점 상세 패널(#pvDetail)에 표시 중인 series 인덱스. 마우스무브/클릭으로 갱신되고,
+// 기간 탭을 바꿔 데이터셋 자체가 바뀔 때만 null로 리셋한다(리셋해야 최신 지점이 다시
+// 기본 선택됨) — 크로스헤어를 그리려고 매 mousemove마다 이 함수를 다시 호출하므로,
+// 여기서 매번 리셋해버리면 선택이 유지되지 않는다.
+let pvSelectedIdx = null;
 function setMonthlyChartPeriod(p){
   monthlyChartPeriod = p;
+  pvSelectedIdx = null;
   document.querySelectorAll('#monthlyChartPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===p));
   drawPrincipalVsValueChart();
 }
@@ -4183,7 +4219,6 @@ function setMonthlyChartPeriod(p){
 function drawPrincipalVsValueChart(){
   renderSnapStartNotices();
   const canvas = document.getElementById('pvChart');
-  const tipEl = document.getElementById('pvTooltip');
   if(!canvas) return;
   const wrap = canvas.parentElement;
   const cssW = wrap.clientWidth || 300;
@@ -4195,10 +4230,11 @@ function drawPrincipalVsValueChart(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cssW,cssH);
 
-  let series = buildPrincipalVsValueSeries();
+  let {series, principalPath} = buildPrincipalVsValueSeries();
   if(monthlyChartPeriod !== 'ALL'){
     const cutoff = getPeriodStart(monthlyChartPeriod).getTime();
     series = series.filter(p=>p.ts>=cutoff);
+    principalPath = principalPath.filter(p=>p.ts>=cutoff);
   }
 
   if(series.length < 2){
@@ -4206,7 +4242,7 @@ function drawPrincipalVsValueChart(){
     ctx.font = '12px Pretendard';
     ctx.textAlign = 'center';
     ctx.fillText('표시할 데이터가 부족합니다', cssW/2, cssH/2);
-    if(tipEl) tipEl.style.display='none';
+    renderPvDetail(null, []);
     return;
   }
 
@@ -4270,8 +4306,11 @@ function drawPrincipalVsValueChart(){
   const valuedSeries = series.filter(p=>p.value!=null);
   const lastValued = valuedSeries.length ? valuedSeries[valuedSeries.length-1] : null;
   const lastGain = lastValued ? lastValued.value >= lastValued.principal : false;
-  const GAIN_FILL = 'rgba(52,199,89,0.14)';   // 원금 대비 수익 구간 — 녹색
-  const LOSS_FILL = 'rgba(255,59,48,0.10)';   // 원금 대비 손실 구간 — 빨강
+  // 국내 주식 등락 관례(빨강=상승/이익, 파랑=하락/손실)에 맞춰 손익 텍스트(.up/.dn,
+  // --color-up/--color-down)와 동일한 색 계열 사용 — 이 차트 안에서도 서로 다른 색
+  // 관례가 섞이지 않도록 통일.
+  const GAIN_FILL = 'rgba(255,59,48,0.12)';   // 원금 대비 수익 구간 — 빨강
+  const LOSS_FILL = 'rgba(0,122,255,0.10)';   // 원금 대비 손실 구간 — 파랑
 
   // 손익 구간 채움 (자산가치선과 원금선 사이) — 구간별로 원금 대비 수익/손실이 갈리면
   // 교차 지점을 선형보간해 그 지점에서 색을 나눠 칠한다(구간 전체를 마지막 시점 기준
@@ -4306,12 +4345,14 @@ function drawPrincipalVsValueChart(){
     }
   }
 
-  // 투입원금 선(점선) — Y축 범위(vMin~vMax)를 벗어나는 소급 구간은 축을 늘리는 대신
-  // toYClamped()로 바닥/천장에 붙여 그린다("차트범위 밖" 표시는 시작점 라벨의 ↓로 대신함).
+  // 투입원금 선(점선) — series가 아니라 principalPath를 사용해서, 스냅샷 사이에 있는
+  // 입출금도 실제 발생일에 정확히 꺾이도록 그린다. Y축 범위(vMin~vMax)를 벗어나는
+  // 소급 구간은 축을 늘리는 대신 toYClamped()로 바닥/천장에 붙여 그린다("차트범위 밖"
+  // 표시는 시작점 라벨의 ↓로 대신함).
   ctx.beginPath();
   ctx.setLineDash([4,3]);
   ctx.strokeStyle = '#8e8e93'; ctx.lineWidth=1.5;
-  series.forEach((p,i)=>{ const x=toX(p.ts), y=toYClamped(p.principal); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  principalPath.forEach((p,i)=>{ const x=toX(p.ts), y=toYClamped(p.principal); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
   ctx.stroke();
   ctx.setLineDash([]);
 
@@ -4319,7 +4360,7 @@ function drawPrincipalVsValueChart(){
   // 보이도록 표시. 시작 원금이 Y축 범위보다 낮아 바닥에 붙여 그려진 경우(소급 입력 등)엔
   // ↓ 표시를 붙여 "차트에 보이는 위치가 아니라 실제 값"임을 알려준다.
   {
-    const p0 = series[0];
+    const p0 = principalPath[0];
     const x0 = toX(p0.ts), y0 = toYClamped(p0.principal);
     const isClamped = Math.abs(toY(p0.principal) - y0) > 0.5;
     const label = (isClamped ? '↓ ' : '') + fmt(p0.principal);
@@ -4361,21 +4402,104 @@ function drawPrincipalVsValueChart(){
     ctx.beginPath(); ctx.arc(toX(lastValued.ts), toY(lastValued.value), 3, 0, Math.PI*2); ctx.fill();
   }
 
+  // 입출금 마커 — principalPath에서 스냅샷이 아니라 실제 입출금 이벤트인 포인트만
+  // 그 정확한 날짜·원금 위치에 작은 점으로 표시(입금=녹색/출금=빨강). 클릭하면
+  // 상세 패널에 그 이벤트 정보가 뜬다(아래 클릭 핸들러의 마커 히트테스트).
+  const eventMarkers = [];
+  principalPath.forEach(p=>{
+    if(!p.event) return;
+    const x=toX(p.ts), y=toYClamped(p.principal);
+    const color = p.event.type==='deposit' ? '#34c759' : '#ff3b30';
+    ctx.beginPath(); ctx.fillStyle='#fff'; ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.fillStyle=color; ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+    eventMarkers.push({x, y, point:p});
+  });
+
+  // 선택 지점 크로스헤어 — 세로 점선 + 자산가치선 위 강조 점(선택된 series 인덱스 기준).
+  // 아직 선택된 적 없거나(최초 렌더) 기간이 바뀌어 인덱스가 범위를 벗어났으면 가장
+  // 최근의 밸류드 지점을 기본 선택한다.
+  if(pvSelectedIdx===null || pvSelectedIdx>=series.length){
+    pvSelectedIdx = lastValued ? series.indexOf(lastValued) : series.length-1;
+  }
+  const sel = series[pvSelectedIdx];
+  if(sel){
+    const xs = toX(sel.ts);
+    ctx.save();
+    ctx.strokeStyle='rgba(17,17,17,0.28)'; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(xs,PAD_T); ctx.lineTo(xs,PAD_T+BH); ctx.stroke();
+    ctx.restore();
+    if(sel.value!=null){
+      ctx.beginPath(); ctx.fillStyle='#fff'; ctx.arc(xs, toY(sel.value), 5.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.fillStyle='#636366'; ctx.arc(xs, toY(sel.value), 4, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  renderPvDetail(pvSelectedIdx, series);
+
   canvas.onmousemove = canvas.onclick = (e)=>{
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX-rect.left);
-    let nearest=series[0], minD=Infinity;
-    series.forEach(p=>{ const d=Math.abs(toX(p.ts)-mx); if(d<minD){minD=d; nearest=p;} });
-    if(!tipEl) return;
-    const d = new Date(nearest.ts);
-    tipEl.style.display='block';
-    if(nearest.value==null){
-      tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} — 투입원금 <b>${fmt(nearest.principal)}</b> · <span style="color:var(--color-tertiary);">이 시점은 스냅샷이 없어 자산가치를 알 수 없습니다</span>`;
-    } else {
-      const pnl = nearest.value - nearest.principal;
-      tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} — 자산가치 <b>${fmt(nearest.value)}</b> · 투입원금 <b>${fmt(nearest.principal)}</b> · 손익 <b class="${pnl>=0?'up':'dn'}">${pnl>=0?'+':''}${fmt(pnl)}</b>`;
+    const mx = e.clientX-rect.left, my = e.clientY-rect.top;
+
+    // 클릭이 입출금 마커에 정확히 찍히면(mousemove로는 지나가다 우연히 스쳐도 반응하지
+    // 않도록 click일 때만) 그 이벤트 상세를 우선 보여준다. 크로스헤어 위치는 그대로 두고
+    // 패널 내용만 바뀐다 — 마커 클릭은 크로스헤어가 가리키는 "선택 지점"과는 별개의,
+    // 그 순간의 입출금 자체를 보기 위한 것이기 때문.
+    if(e.type==='click'){
+      let hitMarker=null, minMd=Infinity;
+      eventMarkers.forEach(m=>{ const d=Math.hypot(m.x-mx, m.y-my); if(d<minMd){minMd=d; hitMarker=m;} });
+      if(hitMarker && minMd<=8){ renderPvEventDetail(hitMarker.point); return; }
     }
+
+    let nearestIdx=0, minD=Infinity;
+    series.forEach((p,i)=>{ const d=Math.abs(toX(p.ts)-mx); if(d<minD){minD=d; nearestIdx=i;} });
+    if(nearestIdx===pvSelectedIdx) return; // 선택이 바뀌지 않았으면 다시 그리지 않음(불필요한 리렌더 방지)
+    pvSelectedIdx = nearestIdx;
+    drawPrincipalVsValueChart();
   };
+}
+
+// 크로스헤어로 선택한 지점(스냅샷 또는 스냅샷 이전 소급 원금 포인트)의 상세 정보
+function renderPvDetail(idx, series){
+  const panel = document.getElementById('pvDetail');
+  if(!panel) return;
+  if(idx===null || !series || !series.length || !series[idx]){
+    panel.innerHTML = `<div class="pd-empty">차트의 지점을 선택하면 상세 정보가 표시됩니다</div>`;
+    return;
+  }
+  const p = series[idx];
+  const d = new Date(p.ts);
+  const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`;
+  if(p.value==null){
+    panel.innerHTML = `
+      <div class="pd-title">📅 ${dateStr}</div>
+      <div class="pd-row"><span>투입원금</span><b>${fmt(p.principal)}</b></div>
+      <div class="pd-note">이 시점은 스냅샷이 없어 자산가치를 알 수 없습니다.</div>
+    `;
+    return;
+  }
+  const pnl = p.value - p.principal;
+  const pnlPct = p.principal>0 ? (pnl/p.principal*100) : 0;
+  panel.innerHTML = `
+    <div class="pd-title">📅 ${dateStr}</div>
+    <div class="pd-value">${fmt(p.value)}</div>
+    <div class="pd-row"><span>투입원금</span><b>${fmt(p.principal)}</b></div>
+    <div class="pd-row"><span>손익</span><b class="${pnl>=0?'up':'dn'}">${pnl>=0?'+':''}${fmt(pnl)} (${pnl>=0?'+':''}${pnlPct.toFixed(1)}%)</b></div>
+  `;
+}
+
+// 원금선 위의 입금/출금 마커를 클릭했을 때 — 그 이벤트 자체의 정보(크로스헤어 선택과 무관)
+function renderPvEventDetail(point){
+  const panel = document.getElementById('pvDetail');
+  if(!panel) return;
+  const r = point.event;
+  const d = new Date(r.at);
+  const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`;
+  const isDeposit = r.type==='deposit';
+  panel.innerHTML = `
+    <div class="pd-title">📅 ${dateStr}</div>
+    <div class="pd-row"><span style="color:${isDeposit?'#34c759':'#ff3b30'};font-weight:700;">${isDeposit?'입금':'출금'}</span><b>${fmt(r.totalKRW||0)}</b></div>
+    <div class="pd-row"><span>누적 투입원금</span><b>${fmt(point.principal)}</b></div>
+    <div class="pd-note">원금기록장에 기록된 입출금 — 자산/현금 잔액에는 반영되지 않습니다.</div>
+  `;
 }
 SUBPAGE_RENDER_HOOKS['returns_monthly_table'] = renderMonthlyTable;
 SUBPAGE_RENDER_HOOKS['returns_monthly_chart'] = drawPrincipalVsValueChart;
