@@ -817,6 +817,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="section-label" style="margin:0">매수/매도 이력</div>
     <button class="btn btn-ghost" onclick="clearTradeLog()">이력 초기화</button>
   </div>
+  <div class="filter-bar">
+    <input id="tradeLogFilterSearch" placeholder="종목명·티커 검색" oninput="setTradeLogFilter('search', this.value)">
+    <select id="tradeLogFilterCat" onchange="setTradeLogFilter('cat', this.value)"><option value="">구분 전체</option></select>
+    <select id="tradeLogFilterSubacct" onchange="setTradeLogFilter('subacct', this.value)"><option value="">계좌 전체</option></select>
+    <select id="tradeLogFilterAttr" onchange="setTradeLogFilter('attr', this.value)"><option value="">속성 전체</option></select>
+  </div>
   <div id="soldTotal" style="display:none;padding:8px 0 4px;font-size:13px;color:var(--color-secondary);"></div>
   <div class="tbl-wrap">
     <table class="table-auto">
@@ -2218,12 +2224,52 @@ function saveSnap(isManual=false){
 }
 // ── 매매 이력 렌더링 ──
 // "매수/매도 이력" 탭 전용 — 배당은 배당금관리 탭으로 이동했으므로 여기서는 매수/매도만 표시
+// ── 매매 이력 필터 ── 자산 목록(assetFilter)과 동일한 구성(종목 검색 + 구분/계좌/속성)을
+// 그대로 재사용해 두 탭에서 일관된 필터 UX를 유지한다.
+let tradeLogFilter = {search:'', cat:'', subacct:'', attr:''};
+function setTradeLogFilter(key, val){ tradeLogFilter[key]=val; renderSoldHistory(); }
+// 구분/속성은 고정 목록이라 최초 1회만 채우고, 계좌는 매매 이력에 실제 등장한 값 기준으로
+// 매번 다시 채운다(자산 목록에서는 이미 사라진 계좌의 과거 이력도 걸러볼 수 있어야 하므로
+// assets가 아니라 매매 이력 자체에서 계좌 목록을 뽑는다).
+function renderTradeLogFilterOptions(arr){
+  const catSel=document.getElementById('tradeLogFilterCat');
+  if(catSel && !catSel.dataset.built){
+    catSel.innerHTML='<option value="">구분 전체</option>'+
+      Object.keys(CAT_LABELS).map(k=>`<option value="${k}">${CAT_LABELS[k]}</option>`).join('');
+    catSel.dataset.built='1';
+  }
+  const attrSel=document.getElementById('tradeLogFilterAttr');
+  if(attrSel && !attrSel.dataset.built){
+    attrSel.innerHTML='<option value="">속성 전체</option>'+
+      ATTR_OPTIONS.map(a=>`<option value="${a}">${a}</option>`).join('');
+    attrSel.dataset.built='1';
+  }
+  const subSel=document.getElementById('tradeLogFilterSubacct');
+  if(subSel){
+    const names=[...new Set(arr.filter(r=>r.subAccount).map(r=>r.subAccount))];
+    subSel.innerHTML='<option value="">계좌 전체</option>'+
+      names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${SUBACCT_LABELS[n]||n}</option>`).join('');
+    subSel.value=tradeLogFilter.subacct;
+  }
+}
 function renderSoldHistory(){
   const el = document.getElementById('soldTbody');
   if(!el) return;
-  const arr = loadTradeLog().filter(r=>r.type==='buy'||r.type==='sell').slice().sort((a,b)=>b.at-a.at); // 최신순 정렬
+  let arr = loadTradeLog().filter(r=>r.type==='buy'||r.type==='sell').slice().sort((a,b)=>b.at-a.at); // 최신순 정렬
+  renderTradeLogFilterOptions(arr);
+  arr = arr.filter(r=>{
+    if(tradeLogFilter.search){
+      const q=tradeLogFilter.search.trim().toLowerCase();
+      if(q && !(r.name.toLowerCase().includes(q) || (r.ticker&&r.ticker.toLowerCase().includes(q)))) return false;
+    }
+    if(tradeLogFilter.cat && r.category!==tradeLogFilter.cat) return false;
+    if(tradeLogFilter.subacct && r.subAccount!==tradeLogFilter.subacct) return false;
+    if(tradeLogFilter.attr && r.attribute!==tradeLogFilter.attr) return false;
+    return true;
+  });
   if(!arr.length){
-    el.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--color-tertiary);">매수/매도 이력 없음</td></tr>`;
+    const filterActive = tradeLogFilter.search||tradeLogFilter.cat||tradeLogFilter.subacct||tradeLogFilter.attr;
+    el.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--color-tertiary);">${filterActive?'조건에 맞는 이력이 없습니다':'매수/매도 이력 없음'}</td></tr>`;
     const total = document.getElementById('soldTotal');
     if(total) total.style.display='none';
     return;
