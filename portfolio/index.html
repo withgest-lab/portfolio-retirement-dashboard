@@ -1292,6 +1292,14 @@ const KR_TICKER_RE = /^[0-9A-Za-z]{6}$/;
 function isKoreanTicker(ticker){
   return /\.(KS|KQ|KN)$/i.test(ticker) || KR_TICKER_RE.test(ticker.trim());
 }
+// 같은 종목이라도 티커가 ".KS" 접미사 유무·대소문자가 서로 다르게 입력될 수 있다(자동완성은
+// stocks.csv 그대로 ".KS"를 붙여 채우지만, 자산을 처음 만들 때 직접입력하면 접미사 없이
+// 6자리 코드만 적는 경우가 흔함). tradeMatchesAsset의 티커 비교가 순수 문자열 일치라서, 같은
+// 종목인데 이 표기 차이 하나로 매매이력이 자산과 매칭 안 돼(이름으로도 정확히 안 겹치면)
+// 종목 상세 차트에 매수/매도 마커가 안 뜨는 문제가 있었다 — 비교 전에 항상 이 함수로 정규화한다.
+function normalizeTicker(ticker){
+  return (ticker||'').trim().toUpperCase().replace(/\.(KS|KQ|KN)$/,'');
+}
 
 async function fetchNaver(ticker){
   const code = ticker.replace(/\.(KS|KQ|KN)$/i,'').trim();
@@ -5039,10 +5047,10 @@ function treemapColor(returnPct){
 // 함께 봐야 정확히 구분된다. 그 조합으로도 여전히 구분이 안 되면(계좌·구분이 실질적으로 동일) 모호하지
 // 않은 것으로 보고 매칭한다.
 function tradeMatchesAsset(r, asset){
-  const nameMatch = (asset.ticker && asset.ticker!=='—' && r.ticker===asset.ticker) || r.name===asset.name;
+  const nameMatch = (asset.ticker && asset.ticker!=='—' && normalizeTicker(r.ticker)===normalizeTicker(asset.ticker)) || r.name===asset.name;
   if(!nameMatch) return false;
   if(r.subAccount === undefined) return true;
-  const siblings = assets.filter(a2=>(asset.ticker && asset.ticker!=='—' && a2.ticker===asset.ticker) || a2.name===asset.name);
+  const siblings = assets.filter(a2=>(asset.ticker && asset.ticker!=='—' && normalizeTicker(a2.ticker)===normalizeTicker(asset.ticker)) || a2.name===asset.name);
   if(siblings.length <= 1) return true;
   const key = a2 => (a2.subAccount||null)+'|'+(a2.category||null);
   const distinctKeys = new Set(siblings.map(key));
