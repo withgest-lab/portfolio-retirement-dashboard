@@ -347,8 +347,13 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row-detail #suggest-box{position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:6;
   max-height:60vh;overflow-y:auto;}
 
-/* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ── */
-.acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;}
+/* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ──
+   align-items:start — 기본값(stretch)이면 ISA 카드가 옆의 priv-group(3카드+사적연금
+   합계 박스)이나 stack-group 중 더 긴 쪽 높이에 강제로 맞춰져, ISA 카드 안에 내용
+   없는 빈 여백이 크게 남아 밸런스가 깨져 보였음 — 각 열이 자기 내용만큼만 높이를
+   갖게 해서 불필요한 빈 공간을 없앤다(priv-cards 내부 3장은 아래에서 별도로 서로
+   맞춰서 그 안의 "같은 종류" 필드들끼리는 계속 정렬됨). */
+.acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;align-items:start;}
 .acct-card{border:1px solid #E8EAF0;border-radius:10px;overflow:hidden;background:#fff;min-width:0;
   display:flex;flex-direction:column;}
 .acct-head{display:flex;align-items:flex-start;gap:5px;font-size:11px;font-weight:700;padding:6px 7px;
@@ -777,7 +782,7 @@ button{font-family:inherit;cursor:pointer;}
 </div><div class="fv-row">
 <div class="irow isa">
   <div class="irow-top">
-    <span class="ilabel">납입 시작<br>나이</span>
+    <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="isastart" value="51" min="40" max="65" step="1" onblur="onBlurFix('isastart')" oninput="syncSlider('isastart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
@@ -785,7 +790,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="isastart-r" min="40" max="65" step="1" value="51" oninput="syncInput('isastart');scheduleUpd()">
 </div><div class="irow isa">
   <div class="irow-top">
-    <span class="ilabel">납입 종료<br>나이</span>
+    <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="isaend" value="57" min="50" max="75" step="1" onblur="onBlurFix('isaend')" oninput="syncSlider('isaend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
@@ -845,23 +850,24 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="nhm-r" min="0" max="150" step="5" value="50"  oninput="syncInput('nhm');scheduleUpd()">
-</div><div class="irow nh irow-hidden">
+</div><div class="fv-row">
+<div class="irow nh">
   <div class="irow-top">
-    <span class="ilabel">납입 시작<br>나이</span>
+    <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="nhstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('nhstart')" oninput="syncSlider('nhstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
   <input type="range" id="nhstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('nhstart');scheduleUpd()">
-</div><div class="irow nh irow-hidden">
+</div><div class="irow nh">
   <div class="irow-top">
-    <span class="ilabel">납입 종료<br>나이</span>
+    <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhend" value="57" min="50" max="75" step="1" onblur="onBlurFix('nhend')" oninput="syncSlider('nhend')"><span class="unit-tag">세</span>
-      <button class="lock-btn locked" id="lock-nhend" onclick="toggleLock('nhend')">🔒</button>
+      <input class="ival-input" type="number" id="nhend" value="57" min="50" max="75" step="1" onblur="onBlurFix('nhend')" oninput="syncSlider('nhend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('nhend');scheduleUpd()">
+  <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" oninput="syncInput('nhend');scheduleUpd()">
+</div>
 </div>
 <div class="fv-row">
 <div class="irow nh">
@@ -912,23 +918,24 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="mfm-r" min="0" max="150" step="5" value="0"  oninput="syncInput('mfm');scheduleUpd()">
-</div><div class="irow mf irow-hidden">
+</div><div class="fv-row">
+<div class="irow mf">
   <div class="irow-top">
-    <span class="ilabel">납입 시작<br>나이</span>
+    <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="mfstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('mfstart')" oninput="syncSlider('mfstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
   <input type="range" id="mfstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('mfstart');scheduleUpd()">
-</div><div class="irow mf irow-hidden">
+</div><div class="irow mf">
   <div class="irow-top">
-    <span class="ilabel">납입 종료<br>나이</span>
+    <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfend" value="57" min="50" max="75" step="1" onblur="onBlurFix('mfend')" oninput="syncSlider('mfend')"><span class="unit-tag">세</span>
-      <button class="lock-btn locked" id="lock-mfend" onclick="toggleLock('mfend')">🔒</button>
+      <input class="ival-input" type="number" id="mfend" value="57" min="50" max="75" step="1" onblur="onBlurFix('mfend')" oninput="syncSlider('mfend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" class="locked-range" oninput="syncInput('mfend');scheduleUpd()">
+  <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" oninput="syncInput('mfend');scheduleUpd()">
+</div>
 </div>
 <div class="fv-row">
 <div class="irow mf">
@@ -977,10 +984,21 @@ button{font-family:inherit;cursor:pointer;}
       </div>
   </div>
   <input type="range" id="irpy-r" min="0" max="1200" step="50" value="300"  oninput="syncInput('irpy');scheduleUpd()">
+</div><div class="irow irp" style="visibility:hidden;" aria-hidden="true">
+  <!-- 농협/미래에셋 카드의 "안세공 원금" 행과 같은 자리를 차지하는 투명 스페이서 —
+       IRP는 이 개념이 없지만, 옆 3장(농협/미래에셋/IRP)이 나란히 놓이는 priv-cards에서
+       이 행이 없으면 그 아래 "납입 시작/종료"·"수령 시작/월 수령액" 행들이 한 칸씩
+       위로 밀려 다른 카드와 안 맞아 보임(들쑥날쑥 방지용). -->
+  <div class="irow-top">
+    <span class="ilabel">-</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" value="0" tabindex="-1"><span class="unit-tag">만원</span>
+    </div>
+  </div>
 </div><div class="fv-row">
 <div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">납입 시작<br>나이</span>
+    <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="irpstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
@@ -988,7 +1006,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="irpstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('irpstart');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">납입 종료<br>나이</span>
+    <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="irpend" value="57" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
@@ -1046,7 +1064,7 @@ button{font-family:inherit;cursor:pointer;}
 </div><div class="fv-row">
 <div class="irow dc">
   <div class="irow-top">
-    <span class="ilabel">납입 시작<br>나이</span>
+    <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="tdcstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('tdcstart')" oninput="syncSlider('tdcstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
@@ -1054,7 +1072,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="tdcstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('tdcstart');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
-    <span class="ilabel">납입 종료<br>나이</span>
+    <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="tdcend" value="57" min="50" max="75" step="1" onblur="onBlurFix('tdcend')" oninput="syncSlider('tdcend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
@@ -1321,14 +1339,6 @@ const activeIndexHighlightPlugin = {
 };
 Chart.register(activeIndexHighlightPlugin);
 
-/* ── 초기 잠금 상태 UI 적용 (납입종료 나이 4개 필드만 은퇴나이 자동추종 대상) ── */
-function _initLockStates(){
-  document.querySelectorAll('input[type=range].locked-range').forEach(rng => {
-    const id = rng.id.replace('-r','');
-    const inp = document.getElementById(id);
-    if(inp){ inp.setAttribute('disabled',''); inp.style.opacity='0.5'; inp.style.cursor='not-allowed'; }
-  });
-}
 let chartTab='flow', mainChart=null;
 
 // 타이핑 중 매 키 입력마다 무거운 upd()(차트·배너 재렌더링)가 즉시 실행되면
@@ -1340,43 +1350,6 @@ function scheduleUpd(delay){
   _updTimer = setTimeout(upd, delay || 180);
 }
 const SA={base:{r:0,inf:0}, opt:{r:2,inf:-0.5}, pes:{r:-2,inf:1}};
-
-/* ── 납입종료 나이(은퇴나이 자동추종) 잠금 토글 — 농협·미래에셋 2개 필드에만 사용
-   (IRP/ISA/퇴직연금은 잠금 없이 자동설계 클릭 시에만 은퇴나이로 갱신되고 평소엔
-   자유 편집됨 — isaage/isam과 동일한 tag-auto 패턴, autoSuggest()/AUTO 배열 참고) ── */
-function toggleLock(id){
-  // 납입시작/종료는 하나의 자물쇠로 페어 제어
-  const PAIR_MAP = {nhstart:'nhend',mfstart:'mfend'};
-  if(PAIR_MAP[id]){ _toggleLockSingle(id); _toggleLockSingle(PAIR_MAP[id]); return; }
-  _toggleLockSingle(id);
-}
-
-function _toggleLockSingle(id){
-  const rng = document.getElementById(id+'-r');
-  const btn = document.getElementById('lock-'+id);
-  const inp = document.getElementById(id);
-  if(!rng||!btn) return;
-  const isLocked = rng.classList.contains('locked-range');
-
-  // 잠금 해제 → 편집 가능
-  if(isLocked){
-    rng.classList.replace('locked-range','unlocked-range');
-    btn.classList.replace('locked','unlocked');
-    btn.textContent='🔓'; btn.title='클릭하여 잠금';
-    if(inp){ inp.removeAttribute('disabled'); inp.style.opacity='1'; inp.style.cursor='text'; }
-    // 납입종료 잠금 해제 시 현재 은퇴나이로 초기값 설정 (이후 자유롭게 수정 가능)
-    if(['nhend','mfend'].includes(id)){
-      const retVal = document.getElementById('ret') ? document.getElementById('ret').value : inp.value;
-      inp.value = retVal; rng.value = retVal;
-    }
-  } else {
-    // 잠금 → 편집 불가
-    rng.classList.replace('unlocked-range','locked-range');
-    btn.classList.replace('unlocked','locked');
-    btn.textContent='🔒'; btn.title='클릭하여 잠금 해제';
-    if(inp){ inp.setAttribute('disabled',''); inp.style.opacity='0.5'; inp.style.cursor='not-allowed'; }
-  }
-}
 
 /* ── 동기화 ── */
 // 숫자 입력 중 중간 상태(공백·마이너스·소수점만 있는 경우)는 슬라이더/계산에 반영하지 않음
@@ -1605,8 +1578,8 @@ function autoSuggest(){
   // (안세공 원금 자체도 계좌 안에서 같이 굴러가므로 은퇴 시점까지는 별도로 불려서 nhPrinFV로 추적)
   const nhPrinEff = Math.min(p.nhprin||0, p.nh||0);
   const mfPrinEff = Math.min(p.mfprin||0, p.mf||0);
-  const nhFV = calcMonthlyDepositFV(p.nh - nhPrinEff, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
-  const mfFV = calcMonthlyDepositFV(p.mf - mfPrinEff, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
+  const nhFV = calcMonthlyDepositFV(p.nh - nhPrinEff, p.nhm, Math.max(p.age,p.nhstart), Math.min(p.ret-1,p.nhend), p.age, p.ret, rNh);
+  const mfFV = calcMonthlyDepositFV(p.mf - mfPrinEff, p.mfm, Math.max(p.age,p.mfstart), Math.min(p.ret-1,p.mfend), p.age, p.ret, rMf);
   const nhPrinFV = nhPrinEff > 0 ? calcMonthlyDepositFV(nhPrinEff, 0, p.age, p.age, p.age, p.ret, rNh) : 0;
   const mfPrinFV = mfPrinEff > 0 ? calcMonthlyDepositFV(mfPrinEff, 0, p.age, p.age, p.age, p.ret, rMf) : 0;
   // IRP FV (autoSuggest)
@@ -1754,6 +1727,7 @@ function autoSuggest(){
   // 납입 종료 나이(IRP/ISA/퇴직연금)는 은퇴 시점까지 계속 납입한다고 가정하고
   // 자동설계 클릭 시에만 은퇴나이로 갱신 — isaage/isam과 동일하게 평소엔 자유 편집됨
   sv('isaend', p.ret); sv('irpend', p.ret); sv('tdcend', p.ret);
+  sv('nhend', p.ret); sv('mfend', p.ret);
 
   // 사적연금 한도 체크: 공백기/완성기 각각 (퇴직IRP는 한도 무관 계좌라 여기엔 포함 안 함)
   const privGap  = mfMon + nhMon;
@@ -1993,8 +1967,8 @@ function simulate(p, adj){
   // 같은 돈이 연금소득(nhFV)과 안세공 비과세(nhPrinFV) 두 곳에 중복으로 잡히지 않는다.
   const nhPrinEff = Math.min(p.nhprin||0, p.nh||0);
   const mfPrinEff = Math.min(p.mfprin||0, p.mf||0);
-  const nhFV = calcMonthlyDepositFV(p.nh - nhPrinEff, p.nhm, p.nhstart, p.nhend, p.age, p.ret, rNh);
-  const mfFV = calcMonthlyDepositFV(p.mf - mfPrinEff, p.mfm, p.mfstart, p.mfend, p.age, p.ret, rMf);
+  const nhFV = calcMonthlyDepositFV(p.nh - nhPrinEff, p.nhm, Math.max(p.age,p.nhstart), Math.min(p.ret-1,p.nhend), p.age, p.ret, rNh);
+  const mfFV = calcMonthlyDepositFV(p.mf - mfPrinEff, p.mfm, Math.max(p.age,p.mfstart), Math.min(p.ret-1,p.mfend), p.age, p.ret, rMf);
   const nhPrinFV = nhPrinEff > 0 ? calcMonthlyDepositFV(nhPrinEff, 0, p.age, p.age, p.age, p.ret, rNh) : 0;
   const mfPrinFV = mfPrinEff > 0 ? calcMonthlyDepositFV(mfPrinEff, 0, p.age, p.age, p.age, p.ret, rMf) : 0;
   // IRP FV: 매년 지정한 달 일시납(기본 1월), 납입 시작~종료 기간 반영 (은퇴나이 초과 방지)
@@ -2749,29 +2723,6 @@ function upd(){
   saveState();
   const p=getP();
 
-  // 납입종료 나이 자동 추종(농협·미래에셋만 — IRP/ISA/퇴직연금은 잠금 없이 자동설계 때만
-  // 은퇴나이로 갱신되고 평소엔 자유 편집됨, autoSuggest()/AUTO 배열 참고):
-  // 잠금(locked) 상태 → 은퇴 나이에 자동 동기화
-  // 잠금 해제(unlocked) 상태 → 사용자가 수동으로 설정한 값 유지
-  ['nhend','mfend'].forEach(fid => {
-    const inp = document.getElementById(fid);
-    const rng = document.getElementById(fid+'-r');
-    if(!inp || !rng) return;
-    const isLocked = rng.classList.contains('locked-range');
-    if(isLocked){
-      inp.value = p.ret; rng.value = p.ret;
-    }
-  });
-
-  // 납입 시작 나이(농협·미래에셋)는 이미 납입 중인 계좌라 화면에서 숨기고,
-  // 항상 현재 나이로 자동 동기화(nhend/mfend가 은퇴나이로 동기화되는 것과 대칭)
-  ['nhstart','mfstart'].forEach(fid => {
-    const inp = document.getElementById(fid);
-    const rng = document.getElementById(fid+'-r');
-    if(!inp || !rng) return;
-    inp.value = p.age; rng.value = p.age;
-  });
-
   // 국민연금 "실제 월 수령액"(np)은 "65세 기준 예상액"(npbase)에 조기·연기수령
   // 가산율을 자동 반영해 매번 다시 계산 — 수령 시작 나이만 바꾸면 자동으로 맞춰짐
   (function(){
@@ -2785,27 +2736,6 @@ function upd(){
   document.getElementById('subtitle').textContent=
     p.age+'세 → '+p.ret+'세 은퇴 · 사적연금 한도 '+p.plimit.toLocaleString()+'만원/년';
   document.getElementById('note-limit').textContent=p.plimit.toLocaleString();
-
-  // ── 납입 종료 나이(농협·미래에셋): 슬라이더 max를 은퇴 나이로 확장 + 기본값 연동 ──
-  // 잠금 해제 상태의 슬라이더는 max만 조정하고 값은 유지
-  // 잠금 상태의 슬라이더는 은퇴나이에 맞게 max + 값 모두 동기화
-  ['nhend','mfend'].forEach(fid => {
-    const rng = document.getElementById(fid+'-r');
-    const inp = document.getElementById(fid);
-    if(!rng || !inp) return;
-    const newMax = p.ret + 5;
-    rng.max = newMax;
-    // 잠금 상태이면 은퇴나이로 값도 동기화
-    const isLocked = rng.classList.contains('locked-range');
-    if(isLocked){
-      inp.value = p.ret; rng.value = p.ret;
-    } else {
-      // 잠금 해제 상태: 현재 값이 새 max보다 크면 클램핑만
-      if(parseFloat(inp.value) > newMax){
-        inp.value = newMax; rng.value = newMax;
-      }
-    }
-  });
 
   // ISA 납입 요약 정보 업데이트
   (function(){
@@ -2990,19 +2920,14 @@ syncTopBarPad();
 window.addEventListener('resize', syncTopBarPad);
 
 if(!loadState()) upd(); else upd();
-_initLockStates();
 applyInputTags();
-['lock-nhend','lock-mfend'].forEach(id=>{
-  const el=document.getElementById(id);
-  if(el) el.style.display='none';
-});
 
 /* ── 자동 제안 시 입력 필요도 뱃지 표시 ── */
 function applyInputTags(){
   // 자동설계가 채워주는 필드만 표시(회색 배경·글자색)로 구분 — REQ/OPT 배지·색띠·범례는
   // "복잡해 보인다"는 피드백으로 제거하고, 수동 입력값과 확실히 구분되어야 하는
   // 자동계산 필드 표시만 남김
-  const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','isaend','irpend','tdcend','tage','tm','np','tirptax'];
+  const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','isaend','irpend','tdcend','nhend','mfend','tage','tm','np','tirptax'];
 
   function tag(id, cls){
     const el = document.getElementById(id);
