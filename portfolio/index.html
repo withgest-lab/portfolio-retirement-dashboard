@@ -840,7 +840,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         oninput="searchTickerTL(this.value)">
       <div class="suggest-box" id="tl_suggestions"></div>
     </label>
-    <label>티커<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
+    <label>티커
       <input id="tl_ticker" placeholder="예:005930" style="width:100px" autocomplete="off">
     </label>
     <label>계좌<select id="tl_subacct" onchange="toggleCustomInput('tl_subacct','tl_subacct_custom')" style="width:100px;">
@@ -1998,6 +1998,7 @@ function saveTradeLogEdit(id){
   if(!r) return;
   const dateV = document.getElementById(`tle_date_${id}`).value;
   const name  = document.getElementById(`tle_name_${id}`).value.trim();
+  const tickerInput = document.getElementById(`tle_ticker_${id}`).value.trim().toUpperCase();
   const type  = document.getElementById(`tle_type_${id}`).value;
   const subacct = readSelectOrCustom(`tle_subacct_${id}`, `tle_subacct_custom_${id}`, false);
   if(subacct===null) return;
@@ -2008,11 +2009,19 @@ function saveTradeLogEdit(id){
   const reason = document.getElementById(`tle_reason_${id}`).value.trim();
 
   if(!name){ alert('종목명을 입력해 주세요.'); return; }
+  // 티커가 없으면 종목 상세 차트에 매매 마커가 안 그려지므로 필수 — 단, 이미 포트폴리오에
+  // 유효한 티커로 등록된 종목이면 그 티커를 그대로 쓰므로(바로 아래) 다시 입력하게 강제하지 않는다.
+  const existingAsset = assets.find(a=>a.name===name);
+  if(!tickerInput && !(existingAsset && existingAsset.ticker && existingAsset.ticker!=='—') && !(r.ticker && r.ticker!=='—')){
+    alert('티커를 입력해 주세요.');
+    return;
+  }
   if(isNaN(price)||price<=0){ alert('체결단가를 입력해 주세요.'); return; }
   if(isNaN(qty)||qty<=0){ alert('수량을 입력해 주세요.'); return; }
 
   if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
   r.name = name;
+  r.ticker = tickerInput || (existingAsset && existingAsset.ticker!=='—' ? existingAsset.ticker : (r.ticker||'—'));
   r.type = type;
   r.subAccount = subacct || null;
   r.category = cat || null;
@@ -2097,6 +2106,14 @@ function addTradeLog_manual(){
 
   const at = dateV ? new Date(dateV+'T00:00:00').getTime() : Date.now();
   const existing = assets.find(a=>a.name===name);
+  // 티커가 없으면 종목 상세 차트에 가격 추이·매매 마커가 아예 안 그려지는 문제가 있어서
+  // 필수로 바꿈. 다만 이미 포트폴리오에 유효한 티커로 등록된 종목이면(existing.ticker)
+  // 어차피 그 티커가 그대로 쓰이므로(바로 아래 addTradeLog의 ticker 필드 참고) 다시
+  // 타이핑하게 강제하지 않는다 — 실제로 티커가 비어 저장될 수 있는 경우만 막는다.
+  if(!tickerInput && !(existing && existing.ticker && existing.ticker!=='—')){
+    st.textContent='❌ 티커를 입력해 주세요(자동완성에서 선택하면 자동으로 채워집니다).';
+    return;
+  }
   // 입력값 우선, 없으면 기존 자산값 (카테고리/속성/계좌 참고용)
   const catVal  = catSel  || (existing?existing.category:null) || null;
   const attrVal = attrSel || (existing?existing.attribute:null) || null;
@@ -2297,7 +2314,7 @@ function renderTradeLogEditForm(r, colspan){
       <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
         ✏️ 매매 이력 수정
         <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-          ${r.name} · 날짜/종목/계좌/구분/체결단가/수량/사유를 수정합니다
+          ${r.name} · 날짜/종목/티커/계좌/구분/체결단가/수량/사유를 수정합니다
         </span>
       </div>
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
@@ -2310,6 +2327,11 @@ function renderTradeLogEditForm(r, colspan){
           종목명
           <input id="tle_name_${r.id}" value="${r.name.replace(/"/g,'&quot;')}"
             style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          티커
+          <input id="tle_ticker_${r.id}" value="${(r.ticker&&r.ticker!=='—'?r.ticker:'').replace(/"/g,'&quot;')}" placeholder="예:005930"
+            style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
         </label>
         <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
           계좌
@@ -3296,7 +3318,7 @@ let STOCK_DB=[],stocksLoaded=false;
 // stocks.csv를 고칠 때마다 이 값을 올려서 캐시 문제(특히 일부 모바일 브라우저의 완고한 fetch
 // 캐시)로 갱신된 파일을 못 받아오는 경우를 원천 차단한다 — 쿼리스트링이 다르면 완전히 다른
 // URL로 취급되어 새로 받아온다.
-const STOCKS_CSV_VERSION='20260816a';
+const STOCKS_CSV_VERSION='20260817a';
 async function loadStocksCSV(){
   if(stocksLoaded) return;
   const paths=['./stocks.csv','stocks.csv',location.pathname.replace(/\/[^/]*$/,'/')+('stocks.csv')]
