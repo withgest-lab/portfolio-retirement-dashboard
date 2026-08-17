@@ -4,7 +4,7 @@
 */
 
 /* ── 연초 일시납 FV 계산 ──
-   IRP: 연속 운용 (이월 O) - 납입기간 내 매년 1월21일 납입, 이후 운용
+   IRP: 연속 운용 (이월 O) - 납입기간 내 매년 지정한 달 21일 납입, 이후 운용
    ISA: 은퇴할 때까지 해지·재개설 없이 계속 유지(만기 연장 가정) - 연속 복리로
         굴리다가, 은퇴 시점에 전체 보유기간 누적 수익 기준으로 비과세 한도를
         1회 적용해 세후 금액을 산출한다.
@@ -12,11 +12,15 @@
          세법개정 초안 가정을 반영했었지만, 이후 ISA 만기 연장이 가능하도록
          재개정될 것으로 보여 계속 유지하는 쪽으로 설계를 되돌림)
    isaType: 'isa' | 'irp'(기본)
+   payMonth: 연납입을 실제로 하는 달(1~12, 기본 1월) — 매년 그 달 21일에 한 번에
+     납입한다고 가정하고, 그 시점부터 그 해가 끝날 때까지 남은 기간(개월+10/30)만큼만
+     복리 성장분을 붙인다. 1월이면 (12-1)+10/30 = 기존과 동일한 11+10/30.
 */
-function calcISA_FV(curBal, isay, curAge, startAge, endAge, retAge, annualR, isaType){
+function calcISA_FV(curBal, isay, curAge, startAge, endAge, retAge, annualR, isaType, payMonth){
+  const pm       = payMonth>=1 && payMonth<=12 ? payMonth : 1;
   const rm       = annualR/100/12;
   const growFull = Math.pow(1+rm, 12);
-  const growDep  = Math.pow(1+rm, 11+10/30); // 1월21일 납입 기준
+  const growDep  = Math.pow(1+rm, (12-pm)+10/30); // 매년 지정한 달 21일 납입 기준
 
   // ── IRP: 연속 복리 (기존 방식) ──
   if(isaType !== 'isa'){
