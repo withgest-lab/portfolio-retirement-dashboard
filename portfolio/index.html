@@ -3559,7 +3559,7 @@ function searchTickerDiv(ctx, query){
       const cc=catColor[s.c]||'#8e8e93';
       const cl=catLabel[s.c]||s.c;
       const hl=s.n.replace(re,'<b style="color:var(--color-accent)">$1</b>');
-      return`<div class="suggest-item" onclick="selectTickerDiv('${ctx}','${s.n.replace(/'/g,"\\'")}')">
+      return`<div class="suggest-item" onclick="selectTickerDiv('${ctx}','${s.n.replace(/'/g,"\\'")}','${s.cur}')">
         <span style="background:${cc}20;color:${cc};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;flex-shrink:0;">${cl}</span>
         <span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hl}</span>
         <span style="font-size:11px;color:var(--color-tertiary);flex-shrink:0;">${s.t}</span>
@@ -3568,10 +3568,12 @@ function searchTickerDiv(ctx, query){
     box.style.display='block';
   },150);
 }
-function selectTickerDiv(ctx, name){
+function selectTickerDiv(ctx, name, cur){
   document.getElementById(`dnew_name_${ctx}`).value=name;
+  if(cur) document.getElementById(`dnew_cur_${ctx}`).value=cur;
   document.getElementById(`dnew_suggestions_${ctx}`).style.display='none';
-  document.getElementById(`dnew_amount_${ctx}`).focus();
+  updateDividendAmount(ctx);
+  document.getElementById(`dnew_qty_${ctx}`).focus();
 }
 
 function searchSell(query){
@@ -4782,7 +4784,7 @@ function renderDividendAddForm(ctx){
     <summary>배당 기록 추가 <b>(자산/현금에는 반영되지 않음)</b></summary>
     <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding-top:14px;">
       <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        날짜
+        배당일
         <input id="dnew_date_${ctx}" type="date" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
       </label>
       <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;position:relative;">
@@ -4792,34 +4794,71 @@ function renderDividendAddForm(ctx){
         <div class="suggest-box" id="dnew_suggestions_${ctx}"></div>
       </label>
       <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        금액(원)
+        기준수량
+        <input id="dnew_qty_${ctx}" type="number" placeholder="0" min="0" step="0.0001" style="width:90px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;"
+          oninput="updateDividendAmount('${ctx}')">
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        1주당 배당금
+        <div style="display:flex;gap:4px;">
+          <input id="dnew_pershare_${ctx}" type="number" placeholder="0" min="0" step="0.0001" style="width:78px;border:1px solid var(--color-border);border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;"
+            oninput="updateDividendAmount('${ctx}')">
+          <select id="dnew_cur_${ctx}" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 2px;font-size:12px;font-family:inherit;background:var(--color-card);color:var(--color-text);"
+            onchange="updateDividendAmount('${ctx}')">
+            <option value="KRW">KRW ₩</option>
+            <option value="USD">USD $</option>
+            <option value="JPY">JPY ¥</option>
+          </select>
+        </div>
+      </label>
+      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+        배당금(원)
         <input id="dnew_amount_${ctx}" type="number" placeholder="0" min="0" style="width:120px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
       </label>
       <button class="btn" style="background:#ff950020;color:#ff9500;padding:7px 14px;font-size:13px;" onclick="addDividendEntry('${ctx}')">+ 배당 추가</button>
     </div>
+    <div class="notice" style="margin:6px 0 0;">💡 기준수량 × 1주당 배당금(선택한 통화 기준)을 입력하면 환율을 반영해 배당금(원)이 자동 계산됩니다 — 배당금(원)은 직접 수정도 가능합니다.</div>
     <div class="form-status" id="dnew_status_${ctx}"></div>
   </details>`;
+}
+// 기준수량 × 1주당 배당금(선택 통화) × 환율 → 배당금(원) 자동 계산. 원화 배당이면
+// FX 변환 없이(fxRate=1) 그대로 반영됨. 사용자가 배당금(원)을 나중에 직접 고치면
+// 그 값이 유지되다가, qty/1주당/통화 중 하나라도 다시 바뀌면 이 계산으로 덮어써진다.
+function updateDividendAmount(ctx){
+  const qty = parseFloat(document.getElementById(`dnew_qty_${ctx}`)?.value);
+  const per = parseFloat(document.getElementById(`dnew_pershare_${ctx}`)?.value);
+  const cur = document.getElementById(`dnew_cur_${ctx}`)?.value || 'KRW';
+  const amtEl = document.getElementById(`dnew_amount_${ctx}`);
+  if(!amtEl || isNaN(qty) || isNaN(per)) return;
+  const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
+  amtEl.value = Math.round(qty*per*fxRate);
 }
 function addDividendEntry(ctx){
   const dateEl = document.getElementById(`dnew_date_${ctx}`);
   const nameEl = document.getElementById(`dnew_name_${ctx}`);
+  const qtyEl  = document.getElementById(`dnew_qty_${ctx}`);
+  const perEl  = document.getElementById(`dnew_pershare_${ctx}`);
+  const curEl  = document.getElementById(`dnew_cur_${ctx}`);
   const amtEl  = document.getElementById(`dnew_amount_${ctx}`);
   const st = document.getElementById(`dnew_status_${ctx}`);
   const dateV = dateEl.value;
   const name  = nameEl.value.trim();
+  const qty   = parseFloat(qtyEl.value);
+  const per   = parseFloat(perEl.value);
+  const cur   = curEl.value || 'KRW';
   const amount = parseFloat(amtEl.value);
   if(!dateV){ if(st) st.textContent='❌ 날짜를 입력해 주세요.'; return; }
   if(!name){ if(st) st.textContent='❌ 종목/배당원천을 입력해 주세요.'; return; }
-  if(isNaN(amount) || amount<=0){ if(st) st.textContent='❌ 금액을 입력해 주세요.'; return; }
+  if(isNaN(amount) || amount<=0){ if(st) st.textContent='❌ 배당금(원)을 입력하거나 기준수량·1주당 배당금을 입력해 주세요.'; return; }
   addTradeLog({
     name, ticker:'—', type:'dividend', at: new Date(dateV+'T00:00:00').getTime(),
     category:'cash', attribute:null, subAccount:null,
-    price:null, quantity:null, currency:'KRW',
+    price: isNaN(per)?null:per, quantity: isNaN(qty)?null:qty, currency: cur,
     totalKRW: Math.round(amount), pnl: Math.round(amount), pnlPct:null,
     reason:'', cashAdjusted:null
   });
   if(st){ st.textContent = `✅ ${dateV} ${name} 배당 기록 추가 (자산/현금 잔액 미반영)`; setTimeout(()=>{ if(st.textContent.startsWith('✅')) st.textContent=''; }, 3000); }
-  nameEl.value=''; amtEl.value='';
+  nameEl.value=''; qtyEl.value=''; perEl.value=''; amtEl.value=''; curEl.value='KRW';
   renderAllDividendViews();
 }
 
