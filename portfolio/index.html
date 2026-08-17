@@ -292,6 +292,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 /* ── 지수 ── */
 .index-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
+/* 미국 카드는 왼쪽에 세로로 길게, 오른쪽엔 한국(위)·환율(아래)을 쌓아서 전체 카드
+   가로폭을 크게 줄인다 — 예전엔 미국 카드가 혼자 한 줄 전체를 차지해 불필요하게 넓었음 */
+.index-market-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"us kr" "us fx";gap:8px;max-width:440px;}
+.index-market-us{grid-area:us;}
+.index-market-kr{grid-area:kr;}
+.index-market-fx{grid-area:fx;}
+@media (max-width:480px){
+  .index-market-grid{grid-template-columns:1fr;grid-template-areas:"us" "kr" "fx";max-width:none;}
+}
 .index-val{font-size:14px;font-weight:800;letter-spacing:-.03em;margin-top:3px;}
 .index-chg{font-size:11px;font-weight:600;margin-top:2px;}
 /* 시장 그룹(미국/한국/환율)별로 한 카드에 종목을 나란히 표시 — 카드가 너무 커 보인다는
@@ -580,13 +589,16 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 <!-- 글로벌 시장 -->
 <div class="subpage" data-sub="indices">
-<div class="card">
+<div class="card" style="max-width:440px;">
   <div class="section-label">글로벌 시장</div>
-  <div class="index-grid" id="indexGridUS"></div>
-  <div class="index-grid" id="indexGridKR" style="margin-top:8px;"></div>
+  <div class="index-market-grid">
+    <div class="index-market-us" id="indexGridUS"></div>
+    <div class="index-market-kr" id="indexGridKR"></div>
+    <div class="index-market-fx" id="indexGridFX"></div>
+  </div>
   <div class="notice">※ 야후 파이낸스 기준 (15~20분 지연). 5분마다 자동 갱신됩니다.</div>
 </div>
-<div class="card" style="margin-top:16px;">
+<div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
     <div class="section-label" style="margin:0">내 보유종목 · 시장별 비중</div>
     <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
@@ -5524,7 +5536,8 @@ function goToStockDetail(assetId){
 }
 
 // 비중현황 트리맵 — 매입이력/시장이력(기본) 모드 × 기간(기본 ALL) 두 축을 독립적으로 선택
-let allocTreemapMode = 'market', allocTreemapPeriod = 'ALL';
+// 선택한 기간은 localStorage에 저장해 새로고침해도 유지된다(currentPeriod와 동일한 패턴).
+let allocTreemapMode = 'market', allocTreemapPeriod = localStorage.getItem('allocTreemapPeriod') || 'ALL';
 function setAllocTreemapMode(mode){
   allocTreemapMode = mode;
   document.querySelectorAll('#allocTreemapModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
@@ -5532,6 +5545,7 @@ function setAllocTreemapMode(mode){
 }
 function setAllocTreemapPeriod(period){
   allocTreemapPeriod = period;
+  localStorage.setItem('allocTreemapPeriod', period);
   document.querySelectorAll('#allocTreemapPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawTreemap();
 }
@@ -5540,7 +5554,7 @@ function drawTreemap(){
 }
 
 // 자산 Quick View 트리맵 — 대시보드 기본값: 기간별 주가 변화율(market) × 1D
-let qvTreemapMode = 'market', qvTreemapPeriod = '1D';
+let qvTreemapMode = 'market', qvTreemapPeriod = localStorage.getItem('qvTreemapPeriod') || '1D';
 function setQuickViewMode(mode){
   qvTreemapMode = mode;
   document.querySelectorAll('#qvModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
@@ -5548,6 +5562,7 @@ function setQuickViewMode(mode){
 }
 function setQuickViewPeriod(period){
   qvTreemapPeriod = period;
+  localStorage.setItem('qvTreemapPeriod', period);
   document.querySelectorAll('#qvPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawQuickViewTreemap();
 }
@@ -5567,7 +5582,7 @@ function classifyMarketGroup(asset){
   if(asset.category==='stock_us') return 'nasdaq'; // 개별 미국주식은 나스닥으로 근사 편입
   return null;
 }
-let mktTreemapMode = 'market', mktTreemapPeriod = 'ALL';
+let mktTreemapMode = 'market', mktTreemapPeriod = localStorage.getItem('mktTreemapPeriod') || 'ALL';
 function setMarketTreemapMode(mode){
   mktTreemapMode = mode;
   document.querySelectorAll('#mktModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
@@ -5575,6 +5590,7 @@ function setMarketTreemapMode(mode){
 }
 function setMarketTreemapPeriod(period){
   mktTreemapPeriod = period;
+  localStorage.setItem('mktTreemapPeriod', period);
   document.querySelectorAll('#mktPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawMarketGroupTreemaps();
 }
@@ -5596,8 +5612,6 @@ const INDEX_LIST=[
   {sym:'^IXIC',    label:'NASDAQ',      dec:2,unit:'',  group:'us'},
   {sym:'^DJI',     label:'DOW 30',      dec:2,unit:'',  group:'us'},
   {sym:'^RUT',     label:'Russell 2000',dec:2,unit:'',  group:'us'},
-  {sym:'^SOX',     label:'SOX',         dec:2,unit:'',  group:'us'},
-  {sym:'BTC-USD',  label:'BTC/USD',     dec:0,unit:'$', group:'us'},
   {sym:'^KS11',    label:'KOSPI',       dec:2,unit:'',  group:'kr'},
   {sym:'^KQ11',    label:'KOSDAQ',      dec:2,unit:'',  group:'kr'},
   {sym:'USDKRW=X', label:'USD/KRW',     dec:1,unit:'₩', group:'fx'},
@@ -5636,10 +5650,12 @@ function renderIndexGroupCard(group){
       ${items.map(renderIndexRow).join('')}
     </div>`;
 }
-// 1행 = 미국 카드, 2행 = 한국·환율 카드 — 화면 너비와 무관하게 항상 이 순서로 고정
+// 왼쪽 = 미국 카드(세로로 김), 오른쪽 위 = 한국, 오른쪽 아래 = 환율 — .index-market-grid의
+// grid-template-areas로 배치되므로 여기서는 각자의 컨테이너에 채우기만 하면 된다.
 function renderIndices(){
   document.getElementById('indexGridUS').innerHTML = renderIndexGroupCard('us');
-  document.getElementById('indexGridKR').innerHTML = renderIndexGroupCard('kr') + renderIndexGroupCard('fx');
+  document.getElementById('indexGridKR').innerHTML = renderIndexGroupCard('kr');
+  document.getElementById('indexGridFX').innerHTML = renderIndexGroupCard('fx');
 }
 
 async function fetchIndices(){
@@ -6876,6 +6892,18 @@ window.addEventListener('resize',()=>{
   // ★ 저장된 기간 탭 활성화 (리프레시 시 유지)
   document.querySelectorAll('#periodTabs button').forEach(b=>{
     b.classList.toggle('active', b.textContent===currentPeriod);
+  });
+  // ★ 트리맵 3곳(비중현황/Quick View/글로벌시장) 선택 기간도 새로고침 후 그대로 유지 —
+  // 값 자체는 localStorage에서 이미 복원됐으니(변수 선언부), 정적 HTML로 박혀 있는 탭
+  // 버튼들의 active 표시만 그 값에 맞게 다시 맞춰준다.
+  document.querySelectorAll('#allocTreemapPeriodTabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.p===allocTreemapPeriod);
+  });
+  document.querySelectorAll('#qvPeriodTabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.p===qvTreemapPeriod);
+  });
+  document.querySelectorAll('#mktPeriodTabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.p===mktTreemapPeriod);
   });
 
   fetchIndices();
