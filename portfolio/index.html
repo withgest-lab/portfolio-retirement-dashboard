@@ -1304,17 +1304,53 @@ function saveAssets(){localStorage.setItem(ASSETS_KEY,JSON.stringify(assets));}
 /* ════════════════════════════════════════
    야후 파이낸스 시세 조회
 ════════════════════════════════════════ */
+// 2026-08-24 이후로 proxy.cors.sh가 API 키 없이는 무조건 400을 반환하도록 정책이
+// 바뀌어 완전히 죽었다 — 매 종목마다 실패가 확정된 요청을 계속 쏘던 걸 제거하고,
+// 대신 후보를 늘려 나머지 프록시 중 하나라도 살아있을 확률을 높인다.
 const PROXIES = [
-  'https://api.allorigins.win/raw?url=',  // 가장 안정적
-  'https://proxy.cors.sh/',
-  'https://corsproxy.io/?',
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?url=',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://api.cors.lol/?url=',
 ];
 
+// 종목 수만큼 fetchPrice를 전부 한꺼번에 쏘면(각각 최대 16개 프록시 조합) 브라우저의
+// 프록시 호스트당 동시 연결 제한에 걸려 뒤쪽 종목들이 줄줄이 밀린다 — 한 번에 처리할
+// 종목 수를 제한해 프록시 서버 쪽으로 나가는 순간 동시 연결 수 자체를 낮춘다.
+async function mapWithConcurrency(items, limit, fn){
+  const results = new Array(items.length);
+  let next = 0;
+  async function worker(){
+    while(next < items.length){
+      const i = next++;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(limit, items.length)}, worker));
+  return results;
+}
+
+// 여러 프록시 후보를 동시에 쏘고 하나라도 성공하면 즉시 나머지를 취소(abort)한다.
+// 예전엔 Promise.any로 경쟁만 시키고 진 요청들은 그대로 방치해 자체 8초 타임아웃까지
+// 브라우저의 호스트당 동시 연결 슬롯을 계속 붙잡고 있었다 — 종목 수가 늘면서 죽은
+// 프록시(allorigins 500/hang, corsproxy.io 403 등)로 가는 요청들이 슬롯을 잠식해
+// 뒤에 나가는 요청이 밀리고, 시세 갱신이 느려지거나 일부 종목만 랜덤하게 실패하는
+// 원인이 됐다. fn은 (signal)=>Promise 형태.
+async function firstSuccess(fns){
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 8000);
+  try{
+    return await Promise.any(fns.map(fn=>fn(controller.signal)));
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
+}
+
 async function yahooFetch(url){
-  // 프록시 병렬 시도 → 가장 빠른 응답 사용
-  const tryProxy = async (proxy) => {
+  const tryProxy = async (proxy, signal) => {
     const res = await fetch(proxy+encodeURIComponent(url),{
-      signal:AbortSignal.timeout(8000),
+      signal,
       headers:{'User-Agent':'Mozilla/5.0'}
     });
     if(!res.ok) throw new Error('not ok');
@@ -1326,7 +1362,7 @@ async function yahooFetch(url){
     return json;
   };
   try{
-    return await Promise.any(PROXIES.map(p=>tryProxy(p)));
+    return await firstSuccess(PROXIES.map(p=>signal=>tryProxy(p,signal)));
   }catch(e){ return null; }
 }
 
@@ -1383,11 +1419,11 @@ async function fetchNaver(ticker){
     return {ok:true, price, prev:prev>0?prev:price, regularPrice:price};
   };
 
-  // 모든 URL × 프록시 조합 병렬 시도 → 가장 빠른 성공 응답 사용
+  // 모든 URL × 프록시 조합 병렬 시도 → 가장 빠른 성공 응답 사용 (실패한 나머지는 즉시 취소)
   const combos = naverUrls.flatMap(naverUrl =>
-    PROXIES.map(proxy => async () => {
+    PROXIES.map(proxy => async (signal) => {
       const res = await fetch(proxy+encodeURIComponent(naverUrl),{
-        signal:AbortSignal.timeout(8000),
+        signal,
         headers:{'User-Agent':'Mozilla/5.0'}
       });
       if(!res.ok) throw new Error('not ok');
@@ -1398,18 +1434,18 @@ async function fetchNaver(ticker){
   );
 
   try{
-    return await Promise.any(combos.map(fn=>fn()));
+    return await firstSuccess(combos);
   }catch(e){
     return {ok:false};
   }
 }
 
 async function fetchYahoo(ticker){
-  // query1/query2 × 프록시 3개 병렬 시도 → 가장 빠른 응답 사용
-  const tryCombo = async (host, proxy) => {
+  // query1/query2 × 프록시 조합 병렬 시도 → 가장 빠른 응답 사용 (실패한 나머지는 즉시 취소)
+  const tryCombo = async (host, proxy, signal) => {
     const url=`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
     const res = await fetch(proxy+encodeURIComponent(url),{
-      signal:AbortSignal.timeout(8000),
+      signal,
       headers:{'User-Agent':'Mozilla/5.0'}
     });
     if(!res.ok) throw new Error('not ok');
@@ -1424,8 +1460,8 @@ async function fetchYahoo(ticker){
     return {ok:true, price:regularPrice, prev, regularPrice, marketState:'REGULAR', postMarketPct: null};
   };
   try{
-    return await Promise.any(
-      ['query1','query2'].flatMap(host => PROXIES.map(proxy => tryCombo(host, proxy)))
+    return await firstSuccess(
+      ['query1','query2'].flatMap(host => PROXIES.map(proxy => signal=>tryCombo(host, proxy, signal)))
     );
   }catch(e){ return {ok:false}; }
 }
@@ -1450,10 +1486,10 @@ function yahooIntervalForRange(range){
 }
 async function fetchYahooHistory(ticker, range){
   const interval = yahooIntervalForRange(range);
-  const tryCombo = async (host, proxy) => {
+  const tryCombo = async (host, proxy, signal) => {
     const url=`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`;
     const res = await fetch(proxy+encodeURIComponent(url),{
-      signal:AbortSignal.timeout(8000),
+      signal,
       headers:{'User-Agent':'Mozilla/5.0'}
     });
     if(!res.ok) throw new Error('not ok');
@@ -1469,8 +1505,8 @@ async function fetchYahooHistory(ticker, range){
     return points;
   };
   try{
-    return await Promise.any(
-      ['query1','query2'].flatMap(host => PROXIES.map(proxy => tryCombo(host, proxy)))
+    return await firstSuccess(
+      ['query1','query2'].flatMap(host => PROXIES.map(proxy => signal=>tryCombo(host, proxy, signal)))
     );
   }catch(e){ return null; }
 }
@@ -1809,10 +1845,13 @@ function fetchAllPrices(saveSnapshot=false){
 
     const targets=assets.filter(a=>a.ticker&&a.ticker!=='—'&&a.category!=='cash');
 
-    // 한국=네이버, 미국/일본=야후 프록시 병렬 조회
-    const results=await Promise.allSettled(targets.map(async a=>{
-      return {id:a.id, name:a.name, r:await fetchPrice(a.ticker)};
-    }));
+    // 한국=네이버, 미국/일본=야후 프록시 조회. 종목별로 firstSuccess가 이미 최대
+    // 16개 프록시 조합을 동시에 쏘므로, 종목 자체를 전부 한꺼번에 풀어버리면 브라우저의
+    // 프록시 호스트당 동시 연결 한도에 걸려 뒤쪽 종목이 밀린다 — 동시 처리 종목 수를
+    // 제한해 실제 네트워크로 나가는 순간 최대 동시 연결 수를 낮춘다.
+    const results=await mapWithConcurrency(targets, 4, async a=>{
+      return {status:'fulfilled', value:{id:a.id, name:a.name, r:await fetchPrice(a.ticker)}};
+    });
     let ok=0,fail=0;
     const failNames=[];
     results.forEach(p=>{
