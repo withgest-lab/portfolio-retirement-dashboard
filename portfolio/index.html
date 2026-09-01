@@ -1833,6 +1833,41 @@ function onSaveSnapClick(btn){
   setTimeout(()=>{ btn.innerHTML = original; btn.disabled = false; }, 900);
 }
 
+// 한국=네이버, 미국/일본=야후 프록시 조회. 종목별로 firstSuccess가 이미 최대 12개
+// 프록시 조합을 동시에 쏘므로, 종목 자체를 전부 한꺼번에 풀어버리면 브라우저의 프록시
+// 호스트당 동시 연결 한도에 걸려 뒤쪽 종목이 밀린다 — 동시 처리 종목 수를 제한해 실제
+// 네트워크로 나가는 순간 최대 동시 연결 수를 낮춘다.
+// 2026-09-01: 현재 실질적으로 살아있는 프록시가 cors.lol 하나뿐이라(PROXIES 위 설명
+// 참고) 4개씩만 풀어도 그 하나에 요청이 몰려 자체 rate limit로 전량 실패하는 게
+// 재현됐다 — 2개로 더 낮춰 한 프록시에 몰리는 순간 부하 자체를 줄인다.
+// targets의 asset 객체를 직접 변형(currentPrice 등)하고, 실패한 asset들을 그대로
+// 돌려준다 — 호출부(fetchAllPrices)가 실패분만 추려 재시도할 수 있도록.
+async function fetchPricesFor(targets){
+  const results=await mapWithConcurrency(targets, 2, async a=>({a, r:await fetchPrice(a.ticker)}));
+  let ok=0; const failed=[];
+  results.forEach(({a,r})=>{
+    if(r.ok){
+      // prev가 price와 같으면 (전일 데이터 없음) 기존 prevPrice 유지
+      const newPrice = r.price;
+      const newPrev  = r.prev;
+      a.currentPrice = newPrice;
+      if(newPrev && newPrev !== newPrice){
+        a.prevPrice = newPrev;
+      } else if(!a.prevPrice || a.prevPrice===0){
+        a.prevPrice = newPrice;
+      }
+      // 정규장 가격만 저장
+      if(r.regularPrice) a.regularPrice = r.regularPrice;
+      // postMarketPct는 아래 별도 조회에서 갱신
+      if(a.currency !== 'USD') a.postMarketPct = null;
+      ok++;
+    } else {
+      failed.push(a);
+    }
+  });
+  return {ok, failed};
+}
+
 let isFetching=false;
 // 이미 진행 중인 요청이 있으면 새로 쏘지 않고 그 요청에 그대로 올라타 기다린다 — 그래야
 // "시세 갱신" 버튼을 백그라운드 자동갱신과 겹치는 타이밍에 눌러도 조용히 무시되지 않고
@@ -1851,42 +1886,20 @@ function fetchAllPrices(saveSnapshot=false){
 
     const targets=assets.filter(a=>a.ticker&&a.ticker!=='—'&&a.category!=='cash');
 
-    // 한국=네이버, 미국/일본=야후 프록시 조회. 종목별로 firstSuccess가 이미 최대
-    // 12개 프록시 조합을 동시에 쏘므로, 종목 자체를 전부 한꺼번에 풀어버리면 브라우저의
-    // 프록시 호스트당 동시 연결 한도에 걸려 뒤쪽 종목이 밀린다 — 동시 처리 종목 수를
-    // 제한해 실제 네트워크로 나가는 순간 최대 동시 연결 수를 낮춘다.
-    // 2026-09-01: 현재 실질적으로 살아있는 프록시가 cors.lol 하나뿐이라(PROXIES 위 설명
-    // 참고) 4개씩만 풀어도 그 하나에 요청이 몰려 자체 rate limit로 전량 실패하는 게
-    // 재현됐다 — 2개로 더 낮춰 한 프록시에 몰리는 순간 부하 자체를 줄인다.
-    const results=await mapWithConcurrency(targets, 2, async a=>{
-      return {status:'fulfilled', value:{id:a.id, name:a.name, r:await fetchPrice(a.ticker)}};
-    });
-    let ok=0,fail=0;
-    const failNames=[];
-    results.forEach(p=>{
-      if(p.status==='fulfilled'&&p.value.r.ok){
-        const a=assets.find(x=>x.id===p.value.id);
-        if(a){
-          // prev가 price와 같으면 (전일 데이터 없음) 기존 prevPrice 유지
-          const newPrice = p.value.r.price;
-          const newPrev  = p.value.r.prev;
-          a.currentPrice = newPrice;
-          if(newPrev && newPrev !== newPrice){
-            a.prevPrice = newPrev;
-          } else if(!a.prevPrice || a.prevPrice===0){
-            a.prevPrice = newPrice;
-          }
-          // 정규장 가격만 저장
-          if(p.value.r.regularPrice)  a.regularPrice  = p.value.r.regularPrice;
-          // postMarketPct는 아래 별도 조회에서 갱신
-          if(a.currency !== 'USD') a.postMarketPct = null;
-          ok++;
-        }
-      }else{
-        fail++;
-        if(p.status==='fulfilled') failNames.push(p.value.name);
-      }
-    });
+    let {ok, failed}=await fetchPricesFor(targets);
+
+    // 실패한 종목만 잠깐 쉬었다가 한 번 더 시도한다. 실패의 실제 원인은 프록시(특히
+    // 현재 유일하게 안정적인 cors.lol) 쪽 순간 rate limit인 경우가 대부분이라, 그 부하가
+    // 가라앉을 시간을 주면 재시도에서 회복되는 경우가 많다(재현 확인: 첫 시도에서 일부
+    // 종목이 실패해도 몇 초 후 재시도하면 성공).
+    if(failed.length){
+      await new Promise(r=>setTimeout(r, 3000));
+      const retry=await fetchPricesFor(failed);
+      ok += retry.ok;
+      failed = retry.failed;
+    }
+    const fail = failed.length;
+    const failNames = failed.map(a=>a.name);
     saveAssets();renderAll();
     const t=new Date().toLocaleTimeString('ko-KR');
     if(ok>0&&fail===0){
@@ -5706,18 +5719,21 @@ function renderIndices(){
   document.getElementById('indexGridFX').innerHTML = renderIndexGroupCard('fx');
 }
 
+// INDEX_LIST 8개를 한꺼번에 쏘면(각각 최대 3개 프록시 조합) 페이지 로드 시점에
+// fetchAllPrices/fetchFXRate와 겹쳐 프록시 하나(cors.lol)에 요청이 몰린다 —
+// fetchAllPrices와 동일하게 동시 처리 개수를 제한한다.
 async function fetchIndices(){
-  const results=await Promise.allSettled(
-    INDEX_LIST.map(async(item,i)=>{
+  const results=await mapWithConcurrency(INDEX_LIST, 2, async(item,i)=>{
+    try{
       const url=`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(item.sym)}?interval=1d&range=1d`;
       const json=await yahooFetch(url);
       const meta=json?.chart?.result?.[0]?.meta;
       if(!meta) throw new Error('no meta');
       const val=meta.regularMarketPrice;
       const prev=meta.chartPreviousClose||meta.previousClose||val;
-      return{i,val,chg:prev>0?((val-prev)/prev)*100:0};
-    })
-  );
+      return{status:'fulfilled', value:{i,val,chg:prev>0?((val-prev)/prev)*100:0}};
+    }catch(e){ return {status:'rejected'}; }
+  });
   results.forEach(r=>{
     if(r.status==='fulfilled'){
       const{i,val,chg}=r.value;
