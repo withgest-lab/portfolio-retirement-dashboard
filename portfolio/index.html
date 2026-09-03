@@ -1309,12 +1309,16 @@ function saveAssets(){localStorage.setItem(ASSETS_KEY,JSON.stringify(assets));}
 // 대신 후보를 늘려 나머지 프록시 중 하나라도 살아있을 확률을 높인다.
 // 2026-09-01: 이번엔 corsproxy.io가 같은 방식으로 죽음(API 키 필수 401, proxy.cors.sh와
 // 동일 패턴) — 제거. allorigins.win도 요청을 그냥 계속 붙들고 있다가 8초 타임아웃까지
-// 가는 경우가 잦아져(사실상 실사용 불가) 사실상 cors.lol만 안정적으로 응답하는 상태.
-// 살아있는 프록시가 하나뿐이다 보니, 종목 수만큼(각 최대 8개 프록시 조합) 동시에 쏘면
-// 그 하나(cors.lol)에 요청이 몰려 자체 rate limit에 걸려 한꺼번에 실패하는 게 실제
-// 원인이었다(재현: 10개 종목 전부 "시세 조회 실패"로 약 55초 만에 끝남) — 동시 처리
-// 종목 수를 낮춰 프록시 하나에 몰리는 순간 부하를 줄인다(아래 mapWithConcurrency 참고).
+// 가는 경우가 잦아져(사실상 실사용 불가) 사실상 cors.lol만 안정적으로 응답하는 상태였고,
+// 이마저도 부하가 몰리면 자체 rate limit로 실패해 시세 갱신 성공률이 6~7/10에서
+// 더 안 올라갔다(무료 서드파티 프록시 생태계 자체의 구조적 한계, 코드 튜닝으로는
+// 해결 안 됨 — project_portfolio_cors_proxy_instability 메모 참고).
+// 2026-09-03: 근본 해결로 직접 호스팅하는 Cloudflare Worker(portfolio/cors-worker.js)를
+// 배열 맨 앞에 추가 — 남 눈치 안 보고 안정적으로 쓸 수 있는 유일한 프록시라 우선순위를
+// 가장 높게 둔다(firstSuccess가 전부 동시에 쏘긴 하지만, 이게 거의 항상 가장 먼저
+// 응답해서 나머지 3개는 대부분 즉시 abort됨).
 const PROXIES = [
+  'https://pf-cors-proxy.withgest.workers.dev/?url=',
   'https://api.allorigins.win/raw?url=',
   'https://api.codetabs.com/v1/proxy?quest=',
   'https://api.cors.lol/?url=',
