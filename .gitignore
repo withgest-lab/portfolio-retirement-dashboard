@@ -1,2 +1,7 @@
 .DS_Store
 Thumbs.db
+
+# signals/(KIS 매수신호)는 이 저장소에 커밋하지 않는다 - index.html/scores.json/
+# detail/*.json 전부 배포 시점에 kis-buy-signal 저장소의 공개 Pages에서 자동으로
+# 받아온다(.github/workflows/deploy.yml). 로컬 테스트 중 실수로 커밋되는 것 방지.
+signals/
