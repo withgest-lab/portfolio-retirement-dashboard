@@ -1,0 +1,92 @@
+name: Deploy dashboards to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # UTC 23:00 = KST 08:00(다음날). kis-buy-signal의 daily.yml은 매일 KST 07:30에
+    # 시작해 보통 30분 안에 docs/scores.json 발행까지 끝나므로(timeout-minutes: 30),
+    # 그 뒤 넉넉히 버퍼를 두고 새 신호 데이터를 가져온다.
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# GitHub Pages 배포는 동시에 두 개가 겹치면 안 되므로 큐잉한다(취소하지 않고 순서대로).
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+env:
+  SITE_DIR: _site
+  SIGNALS_BASE_URL: https://withgest-lab.github.io/kis-buy-signal
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout portfolio-retirement-dashboard
+        uses: actions/checkout@v4
+
+      - name: Assemble portfolio/retirement/shared (unchanged) into site dir
+        run: |
+          set -euo pipefail
+          rm -rf "$SITE_DIR"
+          mkdir -p "$SITE_DIR/signals/detail"
+          cp index.html "$SITE_DIR/index.html"
+          cp -r portfolio "$SITE_DIR/portfolio"
+          cp -r retirement "$SITE_DIR/retirement"
+          cp -r shared "$SITE_DIR/shared"
+
+      # signals/ 아래는 이 저장소에 커밋된 파일이 하나도 없다 - index.html까지 포함해
+      # 매 배포마다 kis-buy-signal(별도 저장소, 완전히 독립적으로 운영되는 KIS 매수신호
+      # 파이프라인의 결과물)의 공개 Pages에서 그대로 받아온다. 이 단계들에는
+      # continue-on-error를 절대 넣지 않는다 - 셋 중 하나라도 실패하면 이 job 자체가
+      # 실패해서 아래 업로드 단계로 넘어가지 않고, 아티팩트가 없으면 deploy job도 돌지
+      # 않으므로 직전에 정상 배포됐던 사이트가 그대로 유지된다(부분/깨진 배포 불가능).
+      - name: Fetch latest KIS signal dashboard (index.html + scores.json + detail/*.json)
+        run: |
+          set -euo pipefail
+
+          curl --fail --show-error --silent --retry 3 --retry-delay 5 \
+            -o "$SITE_DIR/signals/index.html" "$SIGNALS_BASE_URL/index.html"
+
+          SCORES="$SITE_DIR/signals/scores.json"
+          curl --fail --show-error --silent --retry 3 --retry-delay 5 \
+            -o "$SCORES" "$SIGNALS_BASE_URL/scores.json"
+
+          # 형식이 깨졌거나 빈 스냅샷이면 여기서 즉시 실패시킨다(부분 데이터 방지).
+          jq -e '(.tickers // []) | length > 0' "$SCORES" > /dev/null
+
+          # 파이프가 아니라 프로세스 치환(< <(...))을 쓰는 이유: jq ... | while ... 로
+          # 쓰면 셸에 따라 루프가 서브셸에서 돌아서, 루프 안의 curl --fail 실패가 set -e로
+          # 이 스텝 전체를 확실히 죽인다는 보장이 없어진다. 프로세스 치환은 루프를 현재
+          # 셸에서 그대로 실행하므로 그 보장이 유지된다.
+          while IFS= read -r symb; do
+            [ -z "$symb" ] && continue
+            curl --fail --show-error --silent --retry 3 --retry-delay 5 \
+              -o "$SITE_DIR/signals/detail/${symb}.json" \
+              "$SIGNALS_BASE_URL/detail/${symb}.json"
+          done < <(jq -r '.tickers[].symb' "$SCORES")
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.SITE_DIR }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
