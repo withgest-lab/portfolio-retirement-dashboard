@@ -74,6 +74,11 @@ jobs:
               "$SIGNALS_BASE_URL/detail/${symb}.json"
           done < <(jq -r '.tickers[].symb' "$SCORES")
 
+      # kis-buy-signal 저장소 자체는 건드리지 않고(그 사이트 단독 방문자에게는 불필요한
+      # 링크가 됨), 방금 받아온 사본에만 "홈으로" 버튼을 심는다.
+      - name: Inject home button into fetched signals/index.html
+        run: python3 .github/scripts/inject_home_button.py "$SITE_DIR/signals/index.html"
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
