@@ -980,18 +980,26 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 </div>
 <div class="subpage" data-sub="yearly">
   <div class="card">
-    <div class="section-label">매매이력 기반 연도별 손익분석</div>
-    <div class="vbar-scroll" style="margin-bottom:16px;">
-      <div class="vbar-chart" id="yearlyReturnsBars"></div>
-      <div class="vbar-xaxis" id="yearlyReturnsBarsAxis"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
+      <div class="section-label" style="margin:0" id="yearlyReturnsLabel">매매이력 기반 손익분석 — 연도별</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn-icon" id="yearlyReturnsGranBtn" onclick="toggleTradeReturnsGranularity()"
+          style="border:1px solid var(--color-border);border-radius:8px;">🗓 월별로 보기</button>
+        <button class="btn-icon" id="yearlyReturnsViewBtn" onclick="toggleTradeReturnsView()"
+          style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
+      </div>
     </div>
-    <div class="tbl-wrap">
+    <div class="vbar-scroll" style="margin-bottom:16px;">
+      <div class="vbar-chart" id="yearlyReturnsBars" style="display:none;"></div>
+      <div class="vbar-xaxis" id="yearlyReturnsBarsAxis" style="display:none;"></div>
+    </div>
+    <div class="tbl-wrap" id="yearlyReturnsTableWrap">
       <table class="table-auto">
-        <thead><tr><th style="text-align:left">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th></tr></thead>
+        <thead><tr><th style="text-align:left" id="yearlyReturnsPeriodHeader">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th></tr></thead>
         <tbody id="yearlyReturnsBody"></tbody>
       </table>
     </div>
-    <div class="notice">💡 미실현손익은 올해 현재 보유 종목 기준으로만 표시됩니다 — 과거 연도의 연말 시점 미실현손익은 스냅샷 밀도가 일정하지 않아 정확히 산출하기 어려워 실현손익만 표시합니다.</div>
+    <div class="notice">💡 미실현손익은 이번 기간(연도별=올해, 월별=이번 달) 현재 보유 종목 기준으로만 표시됩니다 — 과거 기간의 미실현손익은 스냅샷 밀도가 일정하지 않아 정확히 산출하기 어려워 실현손익만 표시합니다.</div>
     <div class="notice">💡 이 화면은 매도 이력을 기반으로 하므로 개별 매매를 다 기록하지 않았다면 실제보다 적게 나올 수 있습니다 — 실제 자산 추이는 "스냅샷 기반 자산 추이" 탭을 참고하세요.</div>
     <div class="notice" id="yearlySnapStartNotice"></div>
   </div>
@@ -5113,32 +5121,95 @@ function buildYearlyReturns(){
   });
 }
 
+// buildYearlyReturns()를 월 단위로 확장한 버전 - "매매이력 기반 손익분석"의 월별
+// 보기 토글용. 미실현손익은 "스냅샷 기반 자산 추이"와 마찬가지로 현재 시점(이번 달)에만
+// 붙인다(과거 달의 월말 시점 미실현손익은 스냅샷 밀도가 일정하지 않아 정확히 산출 불가).
+function buildMonthlyReturns(){
+  const sells = loadTradeLog().filter(r=>r.type==='sell' && r.pnl!=null && r.pnl!==undefined);
+  const byKey = {};
+  sells.forEach(r=>{
+    const d = new Date(r.at);
+    const key = d.getFullYear()+'-'+d.getMonth();
+    byKey[key] = (byKey[key]||0) + (r.pnl||0);
+  });
+  const now = new Date();
+  const curKey = now.getFullYear()+'-'+now.getMonth();
+  const keys = new Set(Object.keys(byKey));
+  keys.add(curKey); // 매도 이력이 없어도 이번 달은 미실현손익을 보여주기 위해 항상 포함
+  const unrealizedNow = assets.reduce((s,a)=>s+(evKRW(a)-costKRW(a)),0);
+
+  return [...keys].map(key=>{
+    const [year, month] = key.split('-').map(Number);
+    const realized = byKey[key]||0;
+    const unrealized = (key===curKey) ? unrealizedNow : null;
+    const total = unrealized!=null ? realized+unrealized : realized;
+    return {year, month, realized, unrealized, total};
+  }).sort((a,b)=>(b.year-a.year)||(b.month-a.month));
+}
+
+// 스냅샷 섹션(monthlyPerfGranularity/monthlyPerfView, renderMonthlyTable)과 동일한
+// 토글 패턴 - 연도별/월별, 그래프/표.
+let tradeReturnsGranularity = 'year';
+function toggleTradeReturnsGranularity(){
+  tradeReturnsGranularity = tradeReturnsGranularity==='year' ? 'month' : 'year';
+  renderYearlyReturns();
+}
+let tradeReturnsView = 'table';
+function toggleTradeReturnsView(){
+  tradeReturnsView = tradeReturnsView==='table' ? 'chart' : 'table';
+  renderYearlyReturns();
+}
+function tradeReturnsLabel(r){
+  return r.month!=null ? `${r.year}.${String(r.month+1).padStart(2,'0')}` : String(r.year);
+}
+
 function renderYearlyReturns(){
   renderSnapStartNotices();
   const el = document.getElementById('yearlyReturnsBody');
   const barsEl = document.getElementById('yearlyReturnsBars');
   if(!el) return;
-  const rows = buildYearlyReturns();
+  const isYear = tradeReturnsGranularity==='year';
+  const rows = isYear ? buildYearlyReturns() : buildMonthlyReturns();
   const axisEl = document.getElementById('yearlyReturnsBarsAxis');
+
+  const labelEl = document.getElementById('yearlyReturnsLabel');
+  const periodHeaderEl = document.getElementById('yearlyReturnsPeriodHeader');
+  const granBtn = document.getElementById('yearlyReturnsGranBtn');
+  if(labelEl) labelEl.textContent = `매매이력 기반 손익분석 — ${isYear?'연도별':'월별'}`;
+  if(periodHeaderEl) periodHeaderEl.textContent = isYear ? '연도' : '월';
+  if(granBtn) granBtn.textContent = isYear ? '🗓 월별로 보기' : '📅 연도별로 보기';
+
+  const viewBtn = document.getElementById('yearlyReturnsViewBtn');
+  const tableWrap = document.getElementById('yearlyReturnsTableWrap');
+  const isChart = tradeReturnsView==='chart';
+  if(viewBtn) viewBtn.textContent = isChart ? '📋 표로 보기' : '📊 그래프로 보기';
+  if(barsEl) barsEl.style.display = isChart ? '' : 'none';
+  if(axisEl) axisEl.style.display = isChart ? '' : 'none';
+  if(tableWrap) tableWrap.style.display = isChart ? 'none' : '';
+
   if(!rows.length){
     el.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-tertiary);">데이터가 없습니다.</td></tr>`;
     if(barsEl) barsEl.innerHTML='';
     if(axisEl) axisEl.innerHTML='';
     return;
   }
-  const yearlyItems = rows.map(r=>({
-    label: String(r.year),
-    segments: [{value:r.total, color: r.total>=0?'var(--color-up)':'var(--color-down)'}],
-    valueLabel: `${r.total>=0?'+':''}${fmt(r.total)}`,
-    valueClass: r.total>=0?'up':'dn'
-  }));
-  renderVBarChart('yearlyReturnsBars', 'yearlyReturnsBarsAxis', yearlyItems);
+
+  if(isChart){
+    const items = rows.slice().reverse().map(r=>({
+      label: tradeReturnsLabel(r),
+      segments: [{value:r.total, color: r.total>=0?'var(--color-up)':'var(--color-down)'}],
+      valueLabel: `${r.total>=0?'+':''}${fmt(r.total)}`,
+      valueClass: r.total>=0?'up':'dn'
+    }));
+    renderVBarChart('yearlyReturnsBars', 'yearlyReturnsBarsAxis', items);
+  }
+
   el.innerHTML = rows.map(r=>{
     const unrealizedStr = r.unrealized!=null
       ? `<span class="${r.unrealized>=0?'up':'dn'}">${r.unrealized>=0?'+':''}${fmt(r.unrealized)}</span>`
       : '<span class="dim">—</span>';
     return `<tr>
-      <td style="text-align:left;font-weight:700;">${r.year}</td>
+      <td style="text-align:left;font-weight:700;">${tradeReturnsLabel(r)}</td>
       <td class="${r.realized>=0?'up':'dn'}">${r.realized>=0?'+':''}${fmt(r.realized)}</td>
       <td>${unrealizedStr}</td>
       <td class="${r.total>=0?'up':'dn'}" style="font-weight:700;">${r.total>=0?'+':''}${fmt(r.total)}</td>
@@ -6700,10 +6771,14 @@ function downloadBackup(){
   const fileName = document.getElementById('sheetsFileName').value.trim()||'포트폴리오-백업';
   const statusEl = document.getElementById('sheetsStatus');
   try{
+    // assets/fx는 메모리상 전역변수 대신 localStorage에서 직접 다시 읽는다(스냅샷/
+    // 매매이력/기타금융소득과 동일한 패턴) - 이 앱을 여러 탭에서 동시에 열어둔 상태로
+    // 한 탭에서 수정한 뒤 다른(오래된) 탭에서 백업을 누르면, 메모리 변수는 그 탭이
+    // 열렸을 때 값 그대로라 최신 변경사항이 조용히 빠진 백업이 만들어지는 문제가 있었다.
     const data = {
       ts:     Date.now(),
-      assets: assets,
-      fx:     FX,
+      assets: JSON.parse(localStorage.getItem(ASSETS_KEY) || '[]'),
+      fx:     JSON.parse(localStorage.getItem(FX_KEY) || 'null') || FX,
       snaps:  loadSnaps(),
       tradeLog: loadTradeLog(),
       otherFinIncome: loadOtherFinIncome(),
