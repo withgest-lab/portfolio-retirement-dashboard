@@ -375,16 +375,16 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <body>
 
 <div class="topbar">
-  <div class="logo">자산<span>트래커</span></div>
+  <div class="logo"><span>포트폴리오</span></div>
   <div class="topbar-actions">
     <div class="status-wrap">
       <div class="dot" id="statusDot"></div>
       <span id="statusText">준비 중...</span>
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
-    <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
-    <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 KIS 매매전략</a>
     <a href="../" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🏠 홈</a>
+    <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 KIS 매매전략</a>
+    <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
     <button class="btn btn-green" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
     <button class="btn btn-green" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
     <button class="btn btn-green" onclick="openBackupModal()">💾 백업 / 복원</button>
@@ -394,7 +394,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <nav class="tabbar" id="tabbar">
   <div class="tabbar-scroll">
   <button data-page="dashboard" onclick="switchPage('dashboard')">📊 대시보드</button>
-  <button data-page="portfolio" onclick="switchPage('portfolio')">💼 포트폴리오</button>
+  <button data-page="portfolio" onclick="switchPage('portfolio')">💼 보유종목</button>
   <button data-page="tradelog" onclick="switchPage('tradelog')">🔁 매매 이력</button>
   <button data-page="returns" onclick="switchPage('returns')">📈 수익률분석</button>
   <button data-page="dividend" onclick="switchPage('dividend')">💰 배당금관리</button>
