@@ -601,12 +601,11 @@ button{font-family:inherit;cursor:pointer;}
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
     <span style="font-size:12px;font-weight:700;color:#333;">🏥 건보료 설계 — 지역가입자 전환 시 예상 보험료</span>
   </div>
-  <div class="note" style="margin-top:0;">건강보험 피부양자 자격을 잃으면 소득+재산 모두에 보험료가 부과되는 지역가입자로 전환됩니다. 계산에 필요한 항목은 아래 8개 전부이며, 채울수록 정확도가 올라갑니다. 자세한 개념 설명은 상단 "세금 상식" 참고.</div>
+  <div class="note" style="margin-top:0;">건강보험 피부양자 자격을 잃으면 소득+재산 모두에 보험료가 부과되는 지역가입자로 전환됩니다. 계산에 필요한 항목은 아래 8개(국민연금은 위 현금흐름에서 자동 반영)이며, 채울수록 정확도가 올라갑니다. 자세한 개념 설명은 상단 "세금 상식" 참고.</div>
 
   <div class="health-ref-row">
-    <span class="health-ref-chip">국민연금(공적연금) <b id="hrefNp">-</b>만원/월</span>
     <span class="health-ref-chip">재산세 과표(자동계산) <b id="hrefRe">-</b>만원</span>
-    <span style="font-size:9px;color:#AAB0BB;">↑ 국민연금은 위 "기본 정보"에서, 재산세 과표는 아래 공시가격 입력으로 계산</span>
+    <span style="font-size:9px;color:#AAB0BB;">↑ 재산세 과표는 아래 공시가격 입력으로 계산</span>
   </div>
 
   <div class="health-input-list">
@@ -622,6 +621,12 @@ button{font-family:inherit;cursor:pointer;}
         <option value="multi">다주택·법인</option>
       </select>
       <span class="hir-hint">1세대 1주택은 공정시장가액비율 43~45%(공시가격 구간별 특례), 다주택·법인은 60% 적용 → 아래 재산세 과표가 자동 계산됩니다</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">국민연금(공적연금)</span>
+      <input class="hir-input" type="text" id="hi_np_display" value="0" disabled
+        style="background:#F0F2F5;color:#8e8e93;cursor:not-allowed;"><span class="unit-tag">만원/월</span>
+      <span class="hir-hint">현금흐름의 "국민연금" 카드 실제 월 수령액을 그대로 가져옵니다(금액을 바꾸려면 위 국민연금 카드에서 수정) · 반영률 50%로 계산에 포함됨</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">사업소득(연)</span>
@@ -2344,9 +2349,9 @@ function renderHealthPanel(){
   const propBase = totalPropertyBase(p);
   const check = dependentStatusCheck(totalIncome, propBase);
 
-  const refNp = document.getElementById('hrefNp');
+  const npDisplay = document.getElementById('hi_np_display');
   const refRe = document.getElementById('hrefRe');
-  if(refNp) refNp.textContent = p.np.toLocaleString();
+  if(npDisplay) npDisplay.value = p.np.toLocaleString();
   if(refRe) refRe.textContent = p.realestate.toLocaleString();
 
   if(!check.fail){
