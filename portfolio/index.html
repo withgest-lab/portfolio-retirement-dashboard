@@ -382,10 +382,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <span id="statusText">준비 중...</span>
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
+    <button class="btn btn-green" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
     <a href="../" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🏠 홈</a>
     <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 KIS 매매전략</a>
     <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
-    <button class="btn btn-green" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
     <button class="btn btn-green" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
     <button class="btn btn-green" onclick="openBackupModal()">💾 백업 / 복원</button>
   </div>
@@ -639,10 +639,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 <!-- 2. 자산 목록 -->
 <div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <div class="section-label" style="margin:0">자산 목록</div>
-    <span style="font-size:10px;color:var(--color-tertiary)">※ 야후 파이낸스 (15~20분 지연)</span>
-  </div>
   <div class="filter-bar">
     <input id="assetFilterSearch" placeholder="종목명·티커 검색" oninput="setAssetFilter('search', this.value)">
     <select id="assetFilterCat" onchange="setAssetFilter('cat', this.value)"><option value="">구분 전체</option></select>
@@ -654,9 +650,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <thead><tr>
         <th>종목</th>
         <th class="fold-hide">구분</th><th class="fold-hide">계좌</th><th class="fold-hide">속성</th>
-        <th class="fold-hide">현재가<br><span style="font-weight:400;text-transform:none;">전일比</span></th>
+        <th>현재가<br><span style="font-weight:400;text-transform:none;">전일比</span></th>
         <th class="fold-hide">평단<br><span style="font-weight:400;text-transform:none;">수량</span></th>
-        <th onclick="setAssetSort('ev')" style="cursor:pointer;">평가금액<span id="sortArrow_ev"></span></th>
+        <th class="fold-hide" onclick="setAssetSort('ev')" style="cursor:pointer;">평가금액<span id="sortArrow_ev"></span></th>
         <th onclick="setAssetSort('pnl')" style="cursor:pointer;">평가손익<span id="sortArrow_pnl"></span><br><span style="font-weight:400;text-transform:none;">수익률</span></th>
         <th>편집</th>
       </tr></thead>
@@ -2783,22 +2779,22 @@ function renderTable(){
       <td class="fold-hide"><span class="cat-badge" style="background:${cc}20;color:${cc}">${tableBadge(a)}</span></td>
       <td class="fold-hide">${a.subAccount?`<span class="cat-badge" style="background:${sac}20;color:${sac}">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:na}</td>
       <td class="fold-hide">${isCash ? na : (a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na)}</td>
-      <td class="fold-hide" style="font-size:11px;">
+      <td style="font-size:11px;">
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
       <td class="fold-hide" style="font-size:11px;">
         ${isCash ? na : `${priceStr(a.avgPrice)}<div style="font-size:10px;color:var(--color-tertiary);margin-top:1px;">×${a.quantity.toLocaleString()}</div>`}
       </td>
-      <td style="font-size:11px;">${isCash ? cashEvDisplay : fmt(ev)}</td>
+      <td class="fold-hide" style="font-size:11px;">${isCash ? cashEvDisplay : fmt(ev)}</td>
       <td class="${updn(pnl)}" style="font-size:11px;">
         ${isCash ? na : `${pnl>=0?'+':''}${fmt(pnl)}<div style="font-size:10px;font-weight:700;margin-top:1px;">${fmtPct(rtn)}</div>`}
       </td>
       <td style="white-space:nowrap;" onclick="event.stopPropagation()">
-        ${!isCash ? `<button class="edit-btn btn-chart"
+        ${!isCash ? `<button class="edit-btn btn-chart fold-hide"
           onclick="toggleStockChart('${a.id}')" title="종목별 가격 차트">📈</button>` : ''}
         <button class="edit-btn btn-editicon"
           onclick="toggleEdit('${a.id}')" title="수정">✏️</button>
-        <button class="del-btn"
+        <button class="del-btn fold-hide"
           onclick="confirmDelete('${a.id}','${a.name.replace(/'/g,'')}')" title="삭제">🗑</button>
       </td>
     </tr>`;
