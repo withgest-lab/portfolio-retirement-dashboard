@@ -1614,7 +1614,7 @@ function resolveIndicatorTimeframe(period, points){
 // 단일 종목 절대가격 라인이라 다중자산 %-오버레이 로직과는 별도 함수로 분리
 function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, period, avgPrice, curPrice){
   const wrap = canvas.parentElement;
-  const cssW = wrap.clientWidth || 300, cssH = 232;
+  const cssW = wrap.clientWidth || 300, cssH = 252;
   const dpr = window.devicePixelRatio || 1;
   canvas.width = cssW*dpr; canvas.height = cssH*dpr;
   canvas.style.width = cssW+'px'; canvas.style.height = cssH+'px';
@@ -1622,11 +1622,13 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cssW,cssH);
 
-  const PAD_L=14, PAD_R=52, PAD_T=14, PAD_B=22;
+  const PAD_L=14, PAD_R=68, PAD_T=32, PAD_B=22; // PAD_T: 좌상단 헤더(2줄) 전용 여백 — 그래프가 항상 헤더 아래에서 시작. PAD_R: "평단 " 접두어가 붙는 우측 라벨이 잘리지 않을 만큼 여유
   const VOL_H=26, VOL_GAP=4; // 하단 거래량 막대 밴드 높이·간격
   const UP_COLOR = '#1e8e5a', DOWN_COLOR = '#c0392b'; // 기준선 위/아래 축(4번째 색상 축) — 좌상단 헤더·가격 라인이 공유
+  const BUY_COLOR = '#d4695f', SELL_COLOR = '#4f83a3'; // 매수/매도 화살표 — 앱 전체 원색(#ff3b30/#0a84ff)의 톤다운 버전, 이 차트에서만 사용
   const BW=cssW-PAD_L-PAD_R, BH=cssH-PAD_T-VOL_H-VOL_GAP-PAD_B;
   const closes = points.map(p=>p.close);
+  const periodHigh = Math.max(...closes), periodLow = Math.min(...closes);
   let vMin=Math.min(...closes), vMax=Math.max(...closes);
   if(vMin===vMax){ vMin-=1; vMax+=1; }
   const pad=(vMax-vMin)*0.08; vMin-=pad; vMax+=pad;
@@ -1637,12 +1639,14 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
   ctx.font='9px Pretendard'; ctx.fillStyle='#8e8e93';
   ctx.textAlign='left'; ctx.textBaseline='middle';
+  const gridYs = []; // 평단 라벨이 이 위치들과 겹치지 않게 피하는 데 재사용
   for(let i=0;i<=3;i++){
     const v=vMin+(vMax-vMin)*i/3, y=toY(v);
     ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(cssW-PAD_R,y); ctx.stroke();
     // 맨 위/아래 라벨은 그래프 가장자리에 바짝 붙지 않도록 안쪽으로 살짝 띄운다(야후 스타일)
     const labelY = i===3 ? y+6 : (i===0 ? y-6 : y);
-    ctx.fillText(unitPriceStr(v, currency), cssW-PAD_R+6, labelY);
+    ctx.fillText(unitPriceStr(v, currency), cssW-PAD_R+10, labelY);
+    gridYs.push(labelY);
   }
 
   // 평균매입단가 기준선 — 톤다운된 하늘색 점선 + 우측 끝 라벨. 매도 화살표(#0a84ff)의
@@ -1657,9 +1661,15 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     ctx.strokeStyle=AVG_COLOR; ctx.lineWidth=1.2;
     ctx.beginPath(); ctx.moveTo(PAD_L,avgY); ctx.lineTo(cssW-PAD_R,avgY); ctx.stroke();
     ctx.restore();
+    // 라벨은 우측 가격축 그리드 라벨과 같은 컨벤션(x, 정렬, 폰트)으로 그려 플롯 영역
+    // 바깥(PAD_R 여백 칼럼)에 위치시킨다 — 가격 라인은 x<=cssW-PAD_R 범위에만 그려지므로
+    // 이 위치에서는 라인·마커와 구조적으로 겹칠 수 없다. 다만 가격축 그리드 라벨(4개) 중
+    // 하나와 y가 가까우면 그 글자끼리는 겹칠 수 있어 살짝 밀어낸다.
+    let avgLabelY = avgY;
+    gridYs.forEach(gy=>{ if(Math.abs(avgLabelY-gy) < 10) avgLabelY += (avgLabelY>=gy ? 10 : -10); });
     ctx.font='9px Pretendard'; ctx.fillStyle=AVG_COLOR;
-    ctx.textAlign='right'; ctx.textBaseline='bottom';
-    ctx.fillText('평단 '+unitPriceStr(avgPrice, currency), cssW-PAD_R, avgY-2);
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText(unitPriceStr(avgPrice, currency)+' 평단', cssW-PAD_R+10, avgLabelY);
   }
 
   // 조회 기간 시작가 기준선 — 아래 가격 라인의 색(초록/빨강)이 이 값을 기준으로
@@ -1673,38 +1683,39 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   ctx.beginPath(); ctx.moveTo(PAD_L,baseY); ctx.lineTo(cssW-PAD_R,baseY); ctx.stroke();
   ctx.restore();
 
-  // 좌상단 기간수익률 헤더 — 야후 스타일 2줄. 기준선 위치(baseY)와 무관하게 캔버스
-  // 좌상단 고정 위치에 "현재가 변동가격(변동%) 기간라벨" 한 줄 + 그 아래 조회기간 날짜
-  // 범위 한 줄을 표시한다. headerBoxRight/Bottom은 아래 최고/최저 라벨이 이 헤더와
-  // 겹치지 않게 피하는 데 쓴다.
+  // 좌상단 헤더 — 야후 스타일 2줄, 좌상단에 고정 배치. 1줄: 현재가+변동가격(%)+기간,
+  // 2줄: 조회 날짜 범위. 최고/최저 문구는 (사용자 확인) 헤더가 아니라 그래프 위
+  // 해당 지점 바로 위/아래에 그대로 둔다 — headerBoxRight/Bottom은 그 문구가 이
+  // 헤더와 겹치지 않게 피하는 데 쓴다.
   let headerBoxRight = PAD_L, headerBoxBottom = 0;
   {
-    const PERIOD_LABELS = {'1D':'1일','5D':'5일','1M':'1개월','3M':'3개월','6M':'6개월','YTD':'연초 이후','1Y':'1년','3Y':'3년','5Y':'5년','10Y':'10년','ALL':'전체'};
+    // 야후처럼 영어 기간 라벨("Past year" 등)을 쓴다 — 한글 라벨 대신.
+    const PERIOD_LABELS = {'1D':'Past day','5D':'Past 5 days','1M':'Past month','3M':'Past 3 months','6M':'Past 6 months','YTD':'Year to date','1Y':'Past year','3Y':'Past 3 years','5Y':'Past 5 years','10Y':'Past 10 years','ALL':'All time'};
     let x = PAD_L, row1Right = PAD_L;
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
     const priceText = unitPriceStr(curPrice!=null ? curPrice : baselineVal, currency);
-    ctx.font = 'bold 12px Pretendard'; ctx.fillStyle = '#1c1c1e';
+    ctx.font = 'bold 14px Pretendard'; ctx.fillStyle = '#1c1c1e';
     ctx.fillText(priceText, x, 2);
-    x += ctx.measureText(priceText).width + 5;
+    x += ctx.measureText(priceText).width + 6;
     row1Right = x;
     if(curPrice!=null){
       const diff = curPrice-baselineVal, pct = diff/baselineVal*100;
       const changeText = `${diff>=0?'+':'-'}${unitPriceStr(Math.abs(diff), currency)} (${pct>=0?'+':''}${pct.toFixed(1)}%)`;
-      ctx.font = 'bold 10px Pretendard'; ctx.fillStyle = pct<0 ? DOWN_COLOR : UP_COLOR;
-      ctx.fillText(changeText, x, 4);
-      x += ctx.measureText(changeText).width + 5;
+      ctx.font = 'bold 11px Pretendard'; ctx.fillStyle = pct<0 ? DOWN_COLOR : UP_COLOR;
+      ctx.fillText(changeText, x, 5);
+      x += ctx.measureText(changeText).width + 6;
       const periodText = PERIOD_LABELS[period] || period;
-      ctx.font = '9px Pretendard'; ctx.fillStyle = '#8e8e93';
-      ctx.fillText(periodText, x, 5);
+      ctx.font = '10px Pretendard'; ctx.fillStyle = '#8e8e93';
+      ctx.fillText(periodText, x, 6);
       row1Right = x + ctx.measureText(periodText).width;
     }
     const fmtDate = ts => { const d=new Date(ts); return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`; };
     const dateRangeText = `${fmtDate(points[0].ts)} - ${fmtDate(points[points.length-1].ts)}, ${currency}`;
     ctx.font = '8px Pretendard'; ctx.fillStyle = '#8e8e93';
-    ctx.fillText(dateRangeText, PAD_L, 16);
+    ctx.fillText(dateRangeText, PAD_L, 20);
     const row2Right = PAD_L + ctx.measureText(dateRangeText).width;
     headerBoxRight = Math.max(row1Right, row2Right) + 6;
-    headerBoxBottom = 27;
+    headerBoxBottom = 29;
   }
 
   // 거래량 막대 — 야후 스타일 단일 회색, 상승/하락 색 구분 없음
@@ -1794,12 +1805,9 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     ctx.stroke();
   });
 
-  // 구간 최고/최저 지점 마커+라벨 — 그 지점 대비 현재가가 몇 %인지 표시해 그림만 보고도
-  // 현재가가 최고/최저 대비 어느 수준인지 바로 파악할 수 있게 한다.
-  const periodHigh = Math.max(...closes), periodLow = Math.min(...closes);
-  // 고점은 구간 전체에서 가장 높은 값이라 라벨을 "점 바로 위"에 두면 절대 가격
-  // 라인과 겹치지 않는다(그 위엔 아무 데이터도 없으므로). 저점은 반대로 "점 바로
-  // 아래"에 둔다 — 리더선 없이 점(마커)만 유지하고 라벨은 한 줄로 붙인다.
+  // 구간 최고/최저 지점 마커+라벨 — 고점은 구간 전체에서 가장 높은 값이라 라벨을
+  // "점 바로 위"에 두면 절대 가격 라인과 겹치지 않는다(그 위엔 아무 데이터도 없으므로).
+  // 저점은 반대로 "점 바로 아래"에 둔다. 그 지점 대비 현재가 변동율을 괄호에 표시.
   const drawExtremePoint = (pt, pct, wordLabel, above) => {
     if(!pt) return;
     const x=toX(pt.ts), y=toY(pt.close);
@@ -1811,7 +1819,8 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
       ? `${wordLabel} ${unitPriceStr(pt.close, currency)} (${pct>=0?'+':''}${pct.toFixed(1)}%)`
       : `${wordLabel} ${unitPriceStr(pt.close, currency)}`;
     ctx.font = 'bold 11px Pretendard';
-    const GAP = 6;
+    const GAP = 6, LINE_GAP = 14; // LINE_GAP은 GAP보다 뚜렷이 커야, 극점이 점선(평단·기준선)
+    // 위에 있는 경우에도 밀어낸 결과가 원래 위치와 눈에 띄게 달라진다.
     let labelY = above ? y-GAP : y+GAP;
     // 고점 라벨이 좌상단 헤더와 실제로 겹치는지는 점(x)이 아니라 라벨 텍스트 자체의
     // 가로 범위로 판단해야 한다 — 우측 정렬된 라벨이라도 폭이 넓으면(퍼센트가 커서
@@ -1820,8 +1829,16 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     if(above){
       const textW = ctx.measureText(label).width;
       const labelX0 = align==='left' ? x : (align==='right' ? x-textW : x-textW/2);
-      if(labelX0 < headerBoxRight && labelY-11 < headerBoxBottom) labelY = Math.max(labelY, headerBoxBottom+9);
+      if(labelX0 < headerBoxRight && labelY-11 < headerBoxBottom) labelY = Math.max(labelY, headerBoxBottom+LINE_GAP);
     }
+    // 평단선·기준선(둘 다 점선)과 라벨이 값이 같거나 가까워 겹쳐 보이면 그만큼 더 밀어낸다.
+    const clearFrom = refY => {
+      if(refY==null) return;
+      if(above && labelY < refY+LINE_GAP && labelY > refY-LINE_GAP) labelY = refY+LINE_GAP;
+      if(!above && labelY > refY-LINE_GAP && labelY < refY+LINE_GAP) labelY = refY-LINE_GAP;
+    };
+    clearFrom(avgY); clearFrom(baseY);
+    clearFrom(avgY); clearFrom(baseY); // 두 번째 패스: 첫 보정이 다른 기준선과 다시 겹치는 경우 재보정
     ctx.fillStyle = '#1c1c1e';
     ctx.textBaseline = above ? 'bottom' : 'top';
     ctx.fillText(label, x, labelY);
@@ -1844,7 +1861,9 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     points.forEach(p=>{ const d=Math.abs(p.ts-r.at); if(d<minD){minD=d; nearest=p;} });
     const x=toX(nearest.ts), baseY=toY(nearest.close);
     const isBuy = r.type==='buy'; // 매수=빨간 위쪽 화살표(▲)/매도=파란 아래쪽 화살표(▼)
-    const color = isBuy ? '#ff3b30' : '#0a84ff';
+    // 매매이력 탭 등 앱 전체는 원색(#ff3b30/#0a84ff)을 쓰지만, 이 차트는 세그먼트
+    // 라인·평단선이 톤다운된 팔레트라 마커도 톤다운 버전으로 맞춘다(DESIGN_GUIDELINES 참고)
+    const color = isBuy ? BUY_COLOR : SELL_COLOR;
     const key = x.toFixed(1)+'_'+baseY.toFixed(1)+'_'+isBuy;
     const idx = stackCount.get(key)||0;
     stackCount.set(key, idx+1);
@@ -1880,7 +1899,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     const r=nearest.entry, d=new Date(r.at), isBuy=r.type==='buy';
     tipEl.style.display='block';
     tipEl.classList.remove('below');
-    tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
+    tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?BUY_COLOR:SELL_COLOR};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
     // 클릭한 화살표 바로 위에 말풍선을 붙인다 — 뒤에 나올 표까지 밀어내는 일반 흐름 배치
     // 대신 캔버스 위에 절대좌표로 겹쳐서, 클릭 지점에서 눈을 뗄 필요 없이 바로 보이게 함.
     // 화살표가 차트 맨 위쪽이라 위 공간이 부족하면 대신 아래에 붙이고 꼬리도 위로 뒤집는다.
@@ -1973,10 +1992,10 @@ async function loadAndDrawStockChart(id){
   const yTicker = toYahooHistTicker(a.ticker);
   const cssW = canvas.parentElement.clientWidth||300;
   if(!yTicker){
-    canvas.width=cssW; canvas.height=232;
-    ctx.clearRect(0,0,cssW,232);
+    canvas.width=cssW; canvas.height=252;
+    ctx.clearRect(0,0,cssW,252);
     ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
-    ctx.fillText('티커 정보가 없어 시세를 불러올 수 없습니다', cssW/2, 116);
+    ctx.fillText('티커 정보가 없어 시세를 불러올 수 없습니다', cssW/2, 126);
     return;
   }
   const period = resolveStockChartPeriod(id);
@@ -1986,10 +2005,10 @@ async function loadAndDrawStockChart(id){
   if(chartDetailId!==id || !document.getElementById('stockChart_'+id)) return;
   const statsEl = document.getElementById('stockChartStats_'+id);
   if(!points || points.length<2){
-    canvas.width=cssW; canvas.height=232;
-    ctx.clearRect(0,0,cssW,232);
+    canvas.width=cssW; canvas.height=252;
+    ctx.clearRect(0,0,cssW,252);
     ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
-    ctx.fillText('시세 데이터를 불러올 수 없습니다', cssW/2, 116);
+    ctx.fillText('시세 데이터를 불러올 수 없습니다', cssW/2, 126);
     if(statsEl) statsEl.innerHTML='';
     return;
   }
@@ -2005,7 +2024,7 @@ async function loadAndDrawStockChart(id){
       const mfi = calcMFI(tfPoints);
       line2 = `RSI(14) ${rsi!=null?rsi.toFixed(1):'—'} · MFI(14) ${mfi!=null?mfi.toFixed(1):'—'} (${basis} 기준)`;
     }
-    statsEl.innerHTML = `<div>${line2}</div>`;
+    statsEl.innerHTML = `<div style="text-align:right;">${line2}</div>`;
   }
 }
 
@@ -3215,7 +3234,7 @@ function renderTable(){
           </div>
           <div id="stockChartStats_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-bottom:6px;"></div>
           <div class="chart-wrap" style="position:relative;">
-            <canvas id="stockChart_${a.id}" height="232"></canvas>
+            <canvas id="stockChart_${a.id}" height="252"></canvas>
             <div id="stockChartTip_${a.id}" class="chart-tip-bubble" style="display:none;"></div>
           </div>
           <div class="tbl-wrap" style="margin-top:12px;">
