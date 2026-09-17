@@ -1626,6 +1626,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   const BW=cssW-PAD_L-PAD_R, BH=cssH-PAD_T-PAD_B;
   const closes = points.map(p=>p.close);
   let vMin=Math.min(...closes), vMax=Math.max(...closes);
+  const rawMin=vMin, rawMax=vMax; // 패딩 적용 전 실제 구간최저/최고 — 마커 위치·라벨에 사용
   if(vMin===vMax){ vMin-=1; vMax+=1; }
   const pad=(vMax-vMin)*0.08; vMin-=pad; vMax+=pad;
   const t0=points[0].ts, t1=points[points.length-1].ts;
@@ -1641,6 +1642,26 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     ctx.fillText(unitPriceStr(v, currency), PAD_L-6, y);
   }
 
+  // 구간 최고/최저 지점 마커+라벨 — 텍스트 통계 줄과 별개로 그래프 자체에서 바로
+  // 어디가 최고/최저였는지(값+시점) 읽을 수 있게 점 + 금액 라벨을 그 지점에 직접 찍는다.
+  // 매수▲(빨강)/매도▼(파랑)와 헷갈리지 않도록 새 색을 쓰지 않고 그리드와 같은 회색을 쓴다.
+  const drawExtremeMarker = (pt, label) => {
+    if(!pt) return;
+    const x=toX(pt.ts), y=toY(pt.close);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.lineWidth=1.5; ctx.strokeStyle='#8e8e93'; ctx.stroke();
+    // 캔버스 가장자리에서 라벨이 잘리지 않도록: 위쪽 여백이 부족하면 점 아래에,
+    // 그 외(가운데·아래쪽 포함)에는 점 위에 표시(X축 날짜 라벨과 같은 가장자리 대응 방식)
+    const flipBelow = y < PAD_T+16;
+    ctx.font='9px Pretendard'; ctx.fillStyle='#8e8e93';
+    ctx.textAlign = x<PAD_L+40 ? 'left' : (x>cssW-PAD_R-40 ? 'right' : 'center');
+    ctx.textBaseline = flipBelow ? 'top' : 'bottom';
+    ctx.fillText(`${label} ${unitPriceStr(pt.close, currency)}`, x, flipBelow ? y+6 : y-6);
+  };
+  drawExtremeMarker(points.find(p=>p.close===rawMax), '최고');
+  drawExtremeMarker(points.find(p=>p.close===rawMin), '최저');
+
   // 평균매입단가 기준선 — 현재 y축 범위 안에 있을 때만 점선으로 표시
   if(avgPrice!=null && avgPrice>=vMin && avgPrice<=vMax){
     const y = toY(avgPrice);
@@ -1651,7 +1672,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     ctx.restore();
     ctx.font='9px Pretendard'; ctx.fillStyle='#8e8e93';
     ctx.textAlign='right'; ctx.textBaseline='bottom';
-    ctx.fillText('평단', cssW-PAD_R, y-2);
+    ctx.fillText('평단 '+unitPriceStr(avgPrice, currency), cssW-PAD_R, y-2);
   }
 
   // X축 날짜 — 기간이 바뀌어도 어느 구간을 보고 있는지 알 수 있도록 표시(겹침 방지)
