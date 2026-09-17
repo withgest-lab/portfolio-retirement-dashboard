@@ -1485,7 +1485,7 @@ async function fetchYahoo(ticker){
 /* ── 종목별 과거 시세 (기능 A: 종목 상세 차트 + 매수/매도 마커) ──
    fetchYahoo()와 동일한 v8/finance/chart 엔드포인트를 더 넓은 range로 조회.
    프록시 경유라 느리고 rate-limit 위험이 있어 localStorage에 캐시(TTL 6시간)한다. */
-const PXHIST_KEY = 'pf_pxhist_v1';
+const PXHIST_KEY = 'pf_pxhist_v2'; // v2: high/low/volume 추가(RSI/MFI 계산용) — 구버전 캐시와 필드가 달라 키를 올림
 const PXHIST_TTL = 6*3600000;
 function loadPxHistCache(){ try{ return JSON.parse(localStorage.getItem(PXHIST_KEY))||{}; }catch(e){ return {}; } }
 function savePxHistCache(cache){ try{ localStorage.setItem(PXHIST_KEY, JSON.stringify(cache)); }catch(e){} }
@@ -1514,9 +1514,13 @@ async function fetchYahooHistory(ticker, range){
     if(json?.contents) try{ json=JSON.parse(json.contents); }catch(e){}
     const result = json?.chart?.result?.[0];
     const timestamps = result?.timestamp;
-    const closes = result?.indicators?.quote?.[0]?.close;
+    const quote = result?.indicators?.quote?.[0];
+    const closes = quote?.close;
+    const highs = quote?.high, lows = quote?.low, volumes = quote?.volume;
     if(!timestamps?.length || !closes?.length) throw new Error('no data');
-    const points = timestamps.map((t,i)=>({ts:t*1000, close:closes[i]})).filter(p=>p.close!=null);
+    const points = timestamps.map((t,i)=>({
+      ts:t*1000, close:closes[i], high:highs?.[i], low:lows?.[i], volume:volumes?.[i]
+    })).filter(p=>p.close!=null);
     if(!points.length) throw new Error('empty');
     return points;
   };
@@ -1540,9 +1544,75 @@ async function getStockHistory(ticker, range){
   return cached ? cached.points : null; // 실패 시 만료된 캐시라도 폴백
 }
 
+// ── 종목 상세 RSI/MFI 지표 계산 (일/주/월봉 공용) ──
+// Wilder's RSI(14) — 마지막 값만 필요하므로 배열 전체를 순회한 뒤 마지막 스무딩값만 반환
+function calcRSI(closes, period=14){
+  if(!closes || closes.length < period+1) return null;
+  let avgGain=0, avgLoss=0;
+  for(let i=1;i<=period;i++){
+    const diff = closes[i]-closes[i-1];
+    if(diff>=0) avgGain+=diff; else avgLoss-=diff;
+  }
+  avgGain/=period; avgLoss/=period;
+  for(let i=period+1;i<closes.length;i++){
+    const diff = closes[i]-closes[i-1];
+    const gain = diff>0?diff:0, loss = diff<0?-diff:0;
+    avgGain = (avgGain*(period-1)+gain)/period;
+    avgLoss = (avgLoss*(period-1)+loss)/period;
+  }
+  if(avgLoss===0) return 100;
+  const rs = avgGain/avgLoss;
+  return 100 - 100/(1+rs);
+}
+// MFI(14) — typical price=(H+L+C)/3, money flow=typical×volume, 상승/하락 구간 합산
+function calcMFI(points, period=14){
+  if(!points || points.length < period+1) return null;
+  const tp = points.map(p=>(p.high!=null&&p.low!=null) ? (p.high+p.low+p.close)/3 : p.close);
+  if(points.some(p=>p.volume==null)) return null;
+  const start = points.length-period;
+  let posFlow=0, negFlow=0;
+  for(let i=Math.max(1,start);i<points.length;i++){
+    const flow = tp[i]*points[i].volume;
+    if(tp[i]>tp[i-1]) posFlow+=flow; else if(tp[i]<tp[i-1]) negFlow+=flow;
+  }
+  if(negFlow===0) return posFlow>0 ? 100 : 50;
+  const ratio = posFlow/negFlow;
+  return 100 - 100/(1+ratio);
+}
+// 이미 받아온 주봉 points를 월봉으로 묶는다(추가 API 호출 없음) — close=그룹 마지막 값,
+// high/low=구간 최대/최소, volume=합계. kis-buy-signal의 pandas resample("ME") 규칙과 동일한 개념.
+function resampleToMonthly(points){
+  const groups = new Map();
+  points.forEach(p=>{
+    const d = new Date(p.ts);
+    const key = d.getFullYear()+'-'+d.getMonth();
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  });
+  return [...groups.values()].map(g=>{
+    const last = g[g.length-1];
+    return {
+      ts:last.ts, close:last.close,
+      high: g.every(p=>p.high!=null) ? Math.max(...g.map(p=>p.high)) : null,
+      low:  g.every(p=>p.low!=null)  ? Math.min(...g.map(p=>p.low))  : null,
+      volume: g.every(p=>p.volume!=null) ? g.reduce((s,p)=>s+p.volume,0) : null,
+    };
+  });
+}
+// 기간탭 → RSI/MFI 계산 기준봉 매핑. 기존 yahooIntervalForRange()가 이미 1D/5D=5분봉,
+// 1M~1Y=일봉, 3Y~ALL=주봉으로 받아오므로 그 경계를 그대로 재사용한다(추가 fetch 없음).
+// 10Y/ALL만 이미 받은 주봉을 월봉으로 리샘플링해서 쓴다.
+function resolveIndicatorTimeframe(period, points){
+  if(period==='1D' || period==='5D') return {basis:null, points:null};
+  const usePoints = (period==='10Y' || period==='ALL') ? resampleToMonthly(points) : points;
+  const basis = (period==='10Y'||period==='ALL') ? '월봉' : (period==='3Y'||period==='5Y') ? '주봉' : '일봉';
+  if(usePoints.length < 15) return {basis:null, points:null};
+  return {basis, points:usePoints};
+}
+
 // 종목별 가격 차트 캔버스 그리기 — drawLineChart()의 DPR/그리드 관례를 따르되
 // 단일 종목 절대가격 라인이라 다중자산 %-오버레이 로직과는 별도 함수로 분리
-function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, period){
+function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, period, avgPrice){
   const wrap = canvas.parentElement;
   const cssW = wrap.clientWidth || 300, cssH = 200;
   const dpr = window.devicePixelRatio || 1;
@@ -1569,6 +1639,19 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     const v=vMin+(vMax-vMin)*i/3, y=toY(v);
     ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(cssW-PAD_R,y); ctx.stroke();
     ctx.fillText(unitPriceStr(v, currency), PAD_L-6, y);
+  }
+
+  // 평균매입단가 기준선 — 현재 y축 범위 안에 있을 때만 점선으로 표시
+  if(avgPrice!=null && avgPrice>=vMin && avgPrice<=vMax){
+    const y = toY(avgPrice);
+    ctx.save();
+    ctx.setLineDash([4,3]);
+    ctx.strokeStyle='#8e8e93'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(cssW-PAD_R,y); ctx.stroke();
+    ctx.restore();
+    ctx.font='9px Pretendard'; ctx.fillStyle='#8e8e93';
+    ctx.textAlign='right'; ctx.textBaseline='bottom';
+    ctx.fillText('평단', cssW-PAD_R, y-2);
   }
 
   // X축 날짜 — 기간이 바뀌어도 어느 구간을 보고 있는지 알 수 있도록 표시(겹침 방지)
@@ -1755,14 +1838,38 @@ async function loadAndDrawStockChart(id){
   const points = await getStockHistory(yTicker, range);
   // 요청 중 사용자가 패널을 닫았거나 다른 종목으로 바꿨으면 그리지 않음
   if(chartDetailId!==id || !document.getElementById('stockChart_'+id)) return;
+  const statsEl = document.getElementById('stockChartStats_'+id);
   if(!points || points.length<2){
     canvas.width=cssW; canvas.height=200;
     ctx.clearRect(0,0,cssW,200);
     ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
     ctx.fillText('시세 데이터를 불러올 수 없습니다', cssW/2, 100);
+    if(statsEl) statsEl.innerHTML='';
     return;
   }
-  drawStockPriceChart(canvas, points, tradeEntries, 'stockChartTip_'+id, a.currency, period);
+  drawStockPriceChart(canvas, points, tradeEntries, 'stockChartTip_'+id, a.currency, period, a.avgPrice);
+
+  if(statsEl){
+    const curPrice = a.regularPrice || a.currentPrice;
+    const closes = points.map(p=>p.close);
+    const periodHigh = Math.max(...closes), periodLow = Math.min(...closes);
+    const pctVsHigh = (curPrice-periodHigh)/periodHigh*100;
+    const pctVsLow = (curPrice-periodLow)/periodLow*100;
+    const pctVsAvg = a.avgPrice>0 ? (curPrice-a.avgPrice)/a.avgPrice*100 : null;
+    let line1 = `현재가 ${unitPriceStr(curPrice, a.currency)} · 구간최고 대비 <span class="${updn(pctVsHigh)}">${fmtPct(pctVsHigh)}</span> · 구간최저 대비 <span class="${updn(pctVsLow)}">${fmtPct(pctVsLow)}</span>`;
+    if(pctVsAvg!=null) line1 += ` · 평단 대비 <span class="${updn(pctVsAvg)}">${fmtPct(pctVsAvg)}</span>`;
+
+    const {basis, points:tfPoints} = resolveIndicatorTimeframe(period, points);
+    let line2;
+    if(!basis){
+      line2 = `RSI/MFI — 데이터 부족(기간을 1M 이상으로 선택하면 표시됩니다)`;
+    }else{
+      const rsi = calcRSI(tfPoints.map(p=>p.close));
+      const mfi = calcMFI(tfPoints);
+      line2 = `RSI(14) ${rsi!=null?rsi.toFixed(1):'—'} · MFI(14) ${mfi!=null?mfi.toFixed(1):'—'} (${basis} 기준)`;
+    }
+    statsEl.innerHTML = `<div>${line1}</div><div style="margin-top:2px;">${line2}</div>`;
+  }
 }
 
 // 종목 시세 조회: 한국 → 네이버 우선 → 야후 폴백 / 미국/일본 → 야후 프록시
@@ -2969,6 +3076,7 @@ function renderTable(){
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
             <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
           </div>
+          <div id="stockChartStats_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-bottom:6px;"></div>
           <div class="chart-wrap" style="position:relative;">
             <canvas id="stockChart_${a.id}" height="200"></canvas>
             <div id="stockChartTip_${a.id}" class="chart-tip-bubble" style="display:none;"></div>
