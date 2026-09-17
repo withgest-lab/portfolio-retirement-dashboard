@@ -1727,12 +1727,13 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   }
 
   // 가격 라인 — 조회 기간 시작가(baselineVal) 기준 위/아래 구간마다 초록/빨강으로
-  // 전환하고, 각 구간 아래를 차트 맨 아래까지 그라데이션으로 채운다(구글/야후 파이낸스
-  // 스타일). 교차 지점은 종가 기준 선형보간으로 구해 색이 정확히 기준선에서 바뀌게 한다.
-  const gradUp = ctx.createLinearGradient(0, PAD_T, 0, PAD_T+BH);
+  // 전환하고, 각 구간을 기준선까지만 그라데이션으로 채운다(구글/야후 파이낸스 스타일 —
+  // 기준선에서 색이 옅어지며 끊기고, 기준선에서 멀수록(고점/저점일수록) 진해진다).
+  // 교차 지점은 종가 기준 선형보간으로 구해 색이 정확히 기준선에서 바뀌게 한다.
+  const gradUp = ctx.createLinearGradient(0, PAD_T, 0, baseY);
   gradUp.addColorStop(0, 'rgba(30,142,90,0.20)'); gradUp.addColorStop(1, 'rgba(30,142,90,0)');
-  const gradDown = ctx.createLinearGradient(0, PAD_T, 0, PAD_T+BH);
-  gradDown.addColorStop(0, 'rgba(192,57,43,0.20)'); gradDown.addColorStop(1, 'rgba(192,57,43,0)');
+  const gradDown = ctx.createLinearGradient(0, baseY, 0, PAD_T+BH);
+  gradDown.addColorStop(0, 'rgba(192,57,43,0)'); gradDown.addColorStop(1, 'rgba(192,57,43,0.20)');
 
   const sideOf = c => c>=baselineVal ? 'up' : 'down';
   const segments = [];
@@ -1756,8 +1757,8 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     ctx.beginPath();
     ctx.moveTo(seg[0].x, seg[0].y);
     for(let i=1;i<seg.length;i++) ctx.lineTo(seg[i].x, seg[i].y);
-    ctx.lineTo(seg[seg.length-1].x, PAD_T+BH);
-    ctx.lineTo(seg[0].x, PAD_T+BH);
+    ctx.lineTo(seg[seg.length-1].x, baseY);
+    ctx.lineTo(seg[0].x, baseY);
     ctx.closePath();
     ctx.fillStyle = seg[0].side==='up' ? gradUp : gradDown;
     ctx.fill();
