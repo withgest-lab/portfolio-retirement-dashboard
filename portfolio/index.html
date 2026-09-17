@@ -14,7 +14,13 @@
   font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:52px;overflow-x:hidden;}
+/* 폴드 펼침 등 특정 폭/비율에서 터치 드래그가 페이지를 좌우로 미는 문제 방지.
+   overflow-x:hidden만으로는 스크롤 컨테이너가 html인 모바일 브라우저에서 안 잡혀서
+   html에도 걸고, touch-action:pan-y로 가로 팬 제스처 자체를 차단한다(세로 스크롤은
+   그대로 허용). 개별 가로 스크롤 컨테이너(.tabbar/.tbl-wrap/.vbar-scroll 등)는 각자
+   overflow-x:auto인 자체 스크롤 컨텍스트라 영향받지 않는다. */
+html{overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
+body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:52px;overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
 
 /* ── 헤더 ── */
 .topbar{background:var(--color-card);border-bottom:1px solid var(--color-border);
@@ -217,12 +223,16 @@ tr:last-child td{border-bottom:none;}
 .cat-badge{display:inline-flex;align-items:center;justify-content:center;
   border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700;}
 .up{color:var(--color-up);} .dn{color:var(--color-down);} .dim{color:var(--color-tertiary);}
-.edit-btn,.del-btn{border:none;cursor:pointer;background:transparent;font-size:16px;padding:5px 7px;border-radius:7px;transition:.15s;}
+.edit-btn,.del-btn{border:none;cursor:pointer;background:transparent;font-size:16px;padding:7px 9px;border-radius:7px;transition:.15s;}
 @media (hover: hover) { .edit-btn:hover,.del-btn:hover{background:var(--color-section-bg);} }
 .edit-btn:active,.del-btn:active{transform:scale(.85);}
 .btn-chart:active{background:#2a78d635;}
 .btn-editicon:active{background:#007aff35;}
 .del-btn:active{background:#ff3b3035;}
+/* :active만으로는 tap-highlight가 꺼진 터치 환경에서 손을 떼는 순간 바로 사라져
+   체감이 안 된다 — 클릭 시 JS(flashPress)로 씌우는 명시적 플래시 클래스. */
+.btn-chart.pressed-flash{background:#2a78d655;transform:scale(.85);}
+.btn-editicon.pressed-flash{background:#007aff55;transform:scale(.85);}
 .btn-icon{border:none;cursor:pointer;background:transparent;font-size:13px;padding:4px 6px;border-radius:6px;transition:.15s;}
 @media (hover: hover) { .btn-icon:hover{background:var(--color-section-bg);} }
 .btn-icon+.btn-icon{margin-left:4px;}
@@ -1625,7 +1635,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   const PAD_L=14, PAD_R=68, PAD_T=40, PAD_B=22; // PAD_T: 좌상단 헤더(2줄) 전용 여백 + 헤더 하단과 그래프 사이 실여백. PAD_R: "평단 " 접두어가 붙는 우측 라벨이 잘리지 않을 만큼 여유
   const VOL_H=26, VOL_GAP=4; // 하단 거래량 막대 밴드 높이·간격
   const UP_COLOR = '#1e8e5a', DOWN_COLOR = '#c0392b'; // 기준선 위/아래 축(4번째 색상 축) — 좌상단 헤더·가격 라인이 공유
-  const BUY_COLOR = '#d4695f', SELL_COLOR = '#4f83a3'; // 매수/매도 화살표 — 앱 전체 원색(#ff3b30/#0a84ff)의 톤다운 버전, 이 차트에서만 사용
+  const BUY_COLOR = '#e15b50', SELL_COLOR = '#3a83bf'; // 매수/매도 화살표 — 앱 전체 원색(#ff3b30/#0a84ff)의 톤다운 버전(사용자 확인 후 톤을 살짝 올림), 이 차트에서만 사용
   const BW=cssW-PAD_L-PAD_R, BH=cssH-PAD_T-VOL_H-VOL_GAP-PAD_B;
   const closes = points.map(p=>p.close);
   const periodHigh = Math.max(...closes), periodLow = Math.min(...closes);
@@ -1826,7 +1836,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   // 구간 최고/최저 지점 마커+라벨 — 고점은 구간 전체에서 가장 높은 값이라 라벨을
   // "점 바로 위"에 두면 절대 가격 라인과 겹치지 않는다(그 위엔 아무 데이터도 없으므로).
   // 저점은 반대로 "점 바로 아래"에 둔다. 그 지점 대비 현재가 변동율을 괄호에 표시.
-  const drawExtremePoint = (pt, pct, wordLabel, above) => {
+  const drawExtremePoint = (pt, pct, wordLabel, above, markerNearby) => {
     if(!pt) return;
     const x=toX(pt.ts), y=toY(pt.close);
     ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
@@ -1837,8 +1847,11 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
       ? `${wordLabel} ${unitPriceStr(pt.close, currency)} (${pct>=0?'+':''}${pct.toFixed(1)}%)`
       : `${wordLabel} ${unitPriceStr(pt.close, currency)}`;
     ctx.font = 'bold 11px Pretendard';
-    const GAP = 9, LINE_GAP = 18; // LINE_GAP은 GAP보다 뚜렷이 커야, 극점이 점선(평단·기준선)
-    // 위에 있는 경우에도 밀어낸 결과가 원래 위치와 눈에 띄게 달라진다.
+    // 이 지점에 매수/매도 마커(화살표)가 겹쳐 찍히는 경우(저점 매수·고점 매도 등 흔함)
+    // 기본 간격으로는 화살표와 라벨이 겹치므로 GAP을 훨씬 크게 잡는다 — 위/아래 관계
+    // 자체는 그대로, 점에서 떨어지는 거리만 늘어난다.
+    const GAP = markerNearby ? 20 : 9, LINE_GAP = 18; // LINE_GAP은 GAP보다 뚜렷이 커야, 극점이
+    // 점선(평단·기준선) 위에 있는 경우에도 밀어낸 결과가 원래 위치와 눈에 띄게 달라진다.
     let labelY = above ? y-GAP : y+GAP;
     // 고점 라벨이 좌상단 헤더와 실제로 겹치는지는 점(x)이 아니라 라벨 텍스트 자체의
     // 가로 범위로 판단해야 한다 — 우측 정렬된 라벨이라도 폭이 넓으면(퍼센트가 커서
@@ -1851,11 +1864,20 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     }
     // 평단선·기준선(둘 다 점선)과 라벨이 값이 같거나 가까워 겹쳐 보이면 그만큼 더 밀어낸다.
     // 저점은 추가로 그래프-거래량 경계(가격 플롯 하단 그리드라인, PAD_T+BH)와도 겹칠 수
-    // 있어 같은 방식으로 피한다.
+    // 있어 같은 방식으로 피한다. 단, 저점은 구조적으로 이 경계선 바로 근처에 있는 게
+    // 정상이라(vMin에 8% 패딩만 더한 자리) 무조건 밀어내면 라벨이 점보다 위로 뒤집혀버릴
+    // 수 있다 — "점 바로 아래/위" 원칙이 항상 우선이므로, 보정 결과가 점을 넘어서는
+    // 경우엔 그 보정을 적용하지 않는다(그 기준선과는 살짝 가까운 채로 남긴다).
     const clearFrom = refY => {
       if(refY==null) return;
-      if(above && labelY < refY+LINE_GAP && labelY > refY-LINE_GAP) labelY = refY+LINE_GAP;
-      if(!above && labelY > refY-LINE_GAP && labelY < refY+LINE_GAP) labelY = refY-LINE_GAP;
+      if(above && labelY < refY+LINE_GAP && labelY > refY-LINE_GAP){
+        const candidate = refY+LINE_GAP;
+        if(candidate < y) labelY = candidate;
+      }
+      if(!above && labelY > refY-LINE_GAP && labelY < refY+LINE_GAP){
+        const candidate = refY-LINE_GAP;
+        if(candidate > y) labelY = candidate;
+      }
     };
     clearFrom(avgY); clearFrom(baseY); clearFrom(PAD_T+BH);
     clearFrom(avgY); clearFrom(baseY); clearFrom(PAD_T+BH); // 두 번째 패스: 첫 보정이 다른 기준선과 다시 겹치는 경우 재보정
@@ -1865,8 +1887,13 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   };
   const highPt = points.find(p=>p.close===periodHigh);
   const lowPt = points.find(p=>p.close===periodLow);
-  drawExtremePoint(highPt, curPrice!=null ? (curPrice-periodHigh)/periodHigh*100 : null, '최고', true);
-  if(lowPt!==highPt) drawExtremePoint(lowPt, curPrice!=null ? (curPrice-periodLow)/periodLow*100 : null, '최저', false);
+  // 최고/최저 지점에 매수·매도 마커가 겹쳐 찍힐지 미리 확인(아래 마커 루프와 같은
+  // "가장 가까운 포인트 찾기" 로직 재사용) — 겹치면 라벨을 더 멀리 띄운다(GAP 확대).
+  const findNearest = ts => { let nearest=points[0], minD=Infinity; points.forEach(p=>{ const d=Math.abs(p.ts-ts); if(d<minD){minD=d; nearest=p;} }); return nearest; };
+  const highHasMarker = !!highPt && tradeEntries.some(r => findNearest(r.at)===highPt);
+  const lowHasMarker = !!lowPt && tradeEntries.some(r => findNearest(r.at)===lowPt);
+  drawExtremePoint(highPt, curPrice!=null ? (curPrice-periodHigh)/periodHigh*100 : null, '최고', true, highHasMarker);
+  if(lowPt!==highPt) drawExtremePoint(lowPt, curPrice!=null ? (curPrice-periodLow)/periodLow*100 : null, '최저', false, lowHasMarker);
 
   // 매수/매도 마커: 거래 건별로 각각 화살표를 하나씩 그린다(날짜·좌표가 같아 겹치더라도
   // 합치지 않음) — 화살표 개수가 실제 매매 횟수와 항상 일치해야 하므로, 예전처럼 같은 날짜
@@ -1967,13 +1994,18 @@ function renderStockChartPeriodTabs(id){
     `<button data-p="${p}" class="${p===current?'active':''}" onclick="setStockChartRange('${id}','${p}')">${p}</button>`
   ).join('');
 }
+// 클릭한 아이콘 버튼에 눌림 피드백을 즉시 준다 — 전역 tap-highlight를 꺼둔 상태라
+// (-webkit-tap-highlight-color:transparent) CSS :active만으로는 손을 떼는 순간
+// 바로 사라지고, 그 직후 재렌더링까지 겹치면 사용자가 누른 걸 전혀 체감 못 한다.
+// 재렌더링 시 버튼 자체가 새로 만들어지므로 클래스를 따로 지울 필요는 없다.
+function flashPress(el){ if(el) el.classList.add('pressed-flash'); }
 function toggleStockChart(id){
   quickTradeId = null; editingId = null;
   treemapForcedChartId = null; // 수동 조작 시점부터는 평소처럼 저장된 기간을 따름
   chartDetailId = chartDetailId===id ? null : id;
-  // 클릭한 버튼 자신을 즉시 재생성하면 터치 기기에서 탭 하이라이트가 해제될 대상을
-  // 잃어버려 회색 잔상이 남는다 — 한 틱 늦춰 터치 제스처가 먼저 끝나게 한다.
-  setTimeout(renderTable, 0);
+  // 클릭한 버튼 자신을 즉시 재생성하면 터치 기기에서 탭 하이라이트/눌림 피드백이
+  // 보일 틈도 없이 사라진다 — 사람이 인지할 수 있는 정도(160ms)까지 렌더를 늦춘다.
+  setTimeout(renderTable, 160);
 }
 const STOCK_CHART_PERIOD_TO_YAHOO_RANGE = {
   '1D':'1d','5D':'5d','1M':'1mo','3M':'3mo','6M':'6mo','YTD':'ytd',
@@ -3080,12 +3112,14 @@ function renderTable(){
         ${isCash ? na : `${pnl>=0?'+':''}${fmt(pnl)}<div style="font-size:10px;font-weight:700;margin-top:1px;">${fmtPct(rtn)}</div>`}
       </td>
       <td style="white-space:nowrap;" onclick="event.stopPropagation()">
+        <div style="display:inline-flex;gap:4px;">
         ${!isCash ? `<button class="edit-btn btn-chart fold-hide"
-          onclick="toggleStockChart('${a.id}')" title="종목별 가격 차트">📈</button>` : ''}
+          onclick="flashPress(this); toggleStockChart('${a.id}')" title="종목별 가격 차트">📈</button>` : ''}
         <button class="edit-btn btn-editicon"
-          onclick="toggleEdit('${a.id}')" title="수정">✏️</button>
+          onclick="flashPress(this); toggleEdit('${a.id}')" title="수정">✏️</button>
         <button class="del-btn fold-hide"
           onclick="confirmDelete('${a.id}','${a.name.replace(/'/g,'')}')" title="삭제">🗑</button>
+        </div>
       </td>
     </tr>`;
 
@@ -3631,8 +3665,8 @@ function toggleEdit(id){
   // 편집 클릭 시 빠른 매수/매도 패널 닫고 편집 패널 열기
   quickTradeId = null; chartDetailId = null;
   editingId = editingId===id ? null : id;
-  // toggleStockChart와 동일한 이유로 렌더를 한 틱 늦춰 터치 하이라이트 잔상을 방지
-  setTimeout(renderTable, 0);
+  // toggleStockChart와 동일한 이유로 렌더를 160ms 늦춰 눌림 피드백이 실제로 보이게 함
+  setTimeout(renderTable, 160);
 }
 function cancelEdit(){
   editingId=null;
