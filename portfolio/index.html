@@ -3159,6 +3159,7 @@ function renderSnaps(){
 ════════════════════════════════════════ */
 let editingId=null, quickTradeId=null, chartDetailId=null;
 let editingTradeLogId=null;
+let editingPrincipalLedgerId=null;
 
 // ── 자산 목록 필터/정렬 ──
 let assetFilter = {search:'', cat:'', subacct:'', attr:''};
@@ -4854,17 +4855,105 @@ function renderPrincipalLedger(){
     const badge = isIn
       ? `<span class="cat-badge" style="background:#34c75920;color:#34c759;">입금</span>`
       : `<span class="cat-badge" style="background:#ff3b3020;color:var(--color-up);">출금</span>`;
-    return `<tr>
+    const mainRow = `<tr>
       <td style="text-align:left;font-size:12px;color:var(--color-tertiary);">${dtStr}</td>
       <td style="text-align:left;font-size:12px;">${r.name||'현금'}</td>
       <td style="text-align:center;">${badge}</td>
       <td class="${isIn?'up':'dn'}" style="font-weight:600;">${isIn?'+':'-'}${fmt(r.totalKRW||0)}</td>
       <td style="font-weight:700;">${fmt(running)}</td>
-      <td><button class="del-btn" style="border-radius:6px;padding:3px 5px;" onclick="deletePrincipalLedgerEntry('${r.id}')" title="삭제">🗑</button></td>
+      <td style="white-space:nowrap;">
+        <button class="edit-btn btn-editicon" onclick="togglePrincipalLedgerEdit('${r.id}')" title="수정">✏️</button>
+        <button class="del-btn" style="border-radius:6px;padding:3px 5px;" onclick="deletePrincipalLedgerEntry('${r.id}')" title="삭제">🗑</button>
+      </td>
     </tr>`;
+    return mainRow + (editingPrincipalLedgerId===r.id ? renderPrincipalLedgerEditForm(r) : '');
   });
   el.innerHTML = rows.slice().reverse().join(''); // 최신순으로 표시(누적 잔액은 시간순으로 미리 계산해둔 값 그대로 사용)
   if(totalEl) totalEl.textContent = fmt(running);
+}
+
+function renderPrincipalLedgerEditForm(r){
+  const dt = new Date(r.at);
+  const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  const fxRate = r.currency==='USD'?FX.USD:r.currency==='JPY'?FX.JPY:1;
+  const amountVal = r.currency==='KRW' ? (r.totalKRW||0) : Math.round((r.totalKRW||0)/fxRate);
+  return `<tr class="tr-full" style="background:#f0fff4;">
+    <td colspan="6" style="padding:14px 16px;" onclick="event.stopPropagation()">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
+        ✏️ 원금 기록 수정
+        <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">날짜/구분/금액/통화를 수정합니다</span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          날짜
+          <input id="ple_date_${r.id}" type="date" value="${dateVal}"
+            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          구분
+          <select id="ple_type_${r.id}"
+            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="deposit"    ${r.type==='deposit'   ?'selected':''}>입금</option>
+            <option value="withdrawal" ${r.type==='withdrawal'?'selected':''}>출금</option>
+          </select>
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          금액
+          <input id="ple_amount_${r.id}" type="number" min="0" value="${amountVal}"
+            style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          통화
+          <select id="ple_cur_${r.id}"
+            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="KRW" ${r.currency==='KRW'?'selected':''}>KRW ₩</option>
+            <option value="USD" ${r.currency==='USD'?'selected':''}>USD $</option>
+            <option value="JPY" ${r.currency==='JPY'?'selected':''}>JPY ¥</option>
+          </select>
+        </label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn"
+            style="background:#34c759;color:#fff;padding:7px 16px;font-size:13px;box-shadow:0 2px 8px #34c75930;"
+            onclick="savePrincipalLedgerEdit('${r.id}')">✓ 수정저장</button>
+          <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
+            onclick="closePrincipalLedgerEdit()">✕ 닫기</button>
+        </div>
+      </div>
+    </td>
+  </tr>`;
+}
+
+function togglePrincipalLedgerEdit(id){
+  editingPrincipalLedgerId = editingPrincipalLedgerId===id ? null : id;
+  renderPrincipalLedger();
+}
+function closePrincipalLedgerEdit(){
+  editingPrincipalLedgerId = null;
+  renderPrincipalLedger();
+}
+function savePrincipalLedgerEdit(id){
+  const arr = loadTradeLog();
+  const r = arr.find(x=>x.id===id);
+  if(!r) return;
+  const dateV  = document.getElementById(`ple_date_${id}`).value;
+  const type   = document.getElementById(`ple_type_${id}`).value;
+  const amount = parseFloat(document.getElementById(`ple_amount_${id}`).value);
+  const cur    = document.getElementById(`ple_cur_${id}`).value || 'KRW';
+
+  if(!dateV){ alert('날짜를 입력해 주세요.'); return; }
+  if(isNaN(amount)||amount<=0){ alert('금액을 입력해 주세요.'); return; }
+
+  r.at = new Date(dateV+'T00:00:00').getTime();
+  r.type = type;
+  r.currency = cur;
+  const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
+  r.totalKRW = Math.round(amount*fxRate);
+
+  saveTradeLog(arr);
+  editingPrincipalLedgerId = null;
+  renderPrincipalLedger();
+  renderMonthlyTable();
+  drawPrincipalVsValueChart();
 }
 SUBPAGE_RENDER_HOOKS['returns_principal'] = renderPrincipalLedger;
 
