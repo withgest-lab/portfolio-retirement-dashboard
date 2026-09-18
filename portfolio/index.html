@@ -494,15 +494,14 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <section class="page active" id="page_dashboard">
 
 <nav class="subtabbar" id="subtabbar_dashboard">
-  <button class="active" data-sub="chart" onclick="switchSubPage('dashboard','chart')">변화추이</button>
-  <button data-sub="summary" onclick="switchSubPage('dashboard','summary')">트리맵</button>
+  <button class="active" data-sub="chart" onclick="switchSubPage('dashboard','chart')">변화추이 (그래프)</button>
+  <button data-sub="summary" onclick="switchSubPage('dashboard','summary')">변화추이 (트리맵)</button>
   <button data-sub="alloc" onclick="switchSubPage('dashboard','alloc')">비중현황</button>
   <button data-sub="indices" onclick="switchSubPage('dashboard','indices')">시장지표</button>
 </nav>
 
-<!-- 자산 Quick View: 축소 요약 + 트리맵이 메인 -->
+<!-- 변화추이 (트리맵): 종목 트리맵만 표시 (요약카드는 비중현황 탭 트리맵 뷰로 이동) -->
 <div class="subpage" data-sub="summary" id="qvSubpage">
-  <div class="summary-grid compact" id="summaryGrid"></div>
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
       <div class="section-label" style="margin:0">종목 트리맵</div>
@@ -647,6 +646,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
   </div>
   <div id="allocTreemapView" style="display:none;">
+    <div class="summary-grid compact" id="summaryGrid" style="margin-bottom:12px;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
       <div style="font-size:10px;font-weight:600;color:var(--color-tertiary);
                   text-transform:uppercase;letter-spacing:.06em;">종목별 평가금액(크기) · 선택 기간 수익률(색)</div>
@@ -3874,7 +3874,7 @@ function restorePageState(){
 }
 
 // 대시보드 탭 자체가 display:none → 다시 보일 때 캔버스가 0 크기였던 채로 그려져 있으므로 재렌더.
-// 서브탭(변화추이/트리맵/비중현황/시장지표)은 다른 탭과 동일하게 일반 switchSubPage()로 전환된다.
+// 서브탭(변화추이 (그래프)/변화추이 (트리맵)/비중현황/시장지표)은 다른 탭과 동일하게 일반 switchSubPage()로 전환된다.
 PAGE_RENDER_HOOKS['dashboard'] = function(){
   buildChartHistory();
   if(typeof renderDonuts==='function') renderDonuts();
