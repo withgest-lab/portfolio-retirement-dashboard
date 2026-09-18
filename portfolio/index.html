@@ -1237,7 +1237,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
           <th>구분</th>
           <th>금액</th>
           <th>누적 잔액</th>
-          <th>관리</th>
+          <th style="width:1%;white-space:nowrap;">관리</th>
         </tr></thead>
         <tbody id="principalLedgerBody"></tbody>
       </table>
@@ -4861,7 +4861,7 @@ function renderPrincipalLedger(){
       <td style="text-align:center;">${badge}</td>
       <td class="${isIn?'up':'dn'}" style="font-weight:600;">${isIn?'+':'-'}${fmt(r.totalKRW||0)}</td>
       <td style="font-weight:700;">${fmt(running)}</td>
-      <td style="white-space:nowrap;">
+      <td style="white-space:nowrap;text-align:right;">
         <button class="edit-btn btn-editicon" onclick="togglePrincipalLedgerEdit('${r.id}')" title="수정">✏️</button>
         <button class="del-btn" style="border-radius:6px;padding:3px 5px;" onclick="deletePrincipalLedgerEntry('${r.id}')" title="삭제">🗑</button>
       </td>
