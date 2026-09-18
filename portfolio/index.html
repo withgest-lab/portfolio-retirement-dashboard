@@ -6165,7 +6165,7 @@ function renderDonuts(){
   // ── 속성 도넛 ──
   const attrMap = {};
   assets.forEach(a=>{
-    const k = a.category==='cash' ? '현금' : (a.attribute || '미지정');
+    const k = a.attribute || (a.category==='cash' ? '현금' : '미지정');
     attrMap[k] = (attrMap[k]||0) + evKRW(a);
   });
   const attrTotal = Object.values(attrMap).reduce((s,v)=>s+v,0);
