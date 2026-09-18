@@ -817,13 +817,23 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </select>
       <input id="af_attr_custom" placeholder="속성명 입력" style="display:none;margin-top:3px;">
       </label>
-      <label>수량<input id="af_qty" type="number" placeholder="" style="width:80px"></label>
-      <label>단가<input id="af_price" type="number" placeholder="" style="width:100px"></label>
+      <label id="af_qty_label">수량<input id="af_qty" type="number" placeholder="" style="width:80px"></label>
+      <label id="af_price_label">단가<input id="af_price" type="number" placeholder="" style="width:100px"></label>
       <label>통화<select id="af_cur">
         <option value="KRW">KRW ₩</option>
         <option value="USD">USD $</option>
         <option value="JPY">JPY ¥</option>
       </select></label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-tertiary);white-space:nowrap;">
+        <input type="checkbox" id="af_bond_toggle" onchange="toggleBondFields()"> 확정금리 채권(복리)
+      </label>
+      <div id="af_bond_fields" style="display:none;flex:1 1 100%;gap:8px;flex-wrap:wrap;">
+        <label>매입원금<input id="af_bond_principal" type="number" placeholder="" style="width:120px"></label>
+        <label>표면금리(%)<input id="af_bond_coupon" type="number" step="0.001" placeholder="4.415" style="width:80px"></label>
+        <label>가산금리(%)<input id="af_bond_spread" type="number" step="0.001" placeholder="0.350" style="width:80px"></label>
+        <label>발행일<input id="af_bond_issue" type="date" style="width:135px"></label>
+        <label>만기일<input id="af_bond_maturity" type="date" style="width:135px"></label>
+      </div>
       <label style="flex:1;min-width:140px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
         <input id="af_reason" placeholder="매수 사유" style="width:100%">
       </label>
@@ -893,6 +903,18 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
             <option value="USD">USD $</option>
             <option value="JPY">JPY ¥</option>
           </select>
+        </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          계좌
+          <select id="cf_subacct" onchange="toggleCustomInput('cf_subacct','cf_subacct_custom')"
+            style="width:100px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="">-- 없음 --</option>
+            <option value="nh">농협</option>
+            <option value="mf">미래에셋</option>
+            <option value="__custom__">+ 직접입력</option>
+          </select>
+          <input id="cf_subacct_custom" placeholder="계좌명 입력" style="width:100px;display:none;margin-top:3px;
+                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
         </label>
       </div>
       <!-- 4가지 모드 선택 -->
@@ -1408,6 +1430,27 @@ let assets = (()=>{
   return JSON.parse(JSON.stringify(DEFAULT_ASSETS));
 })();
 function saveAssets(){localStorage.setItem(ASSETS_KEY,JSON.stringify(assets));}
+
+// 확정금리 채권(복리) 평가액 자동 갱신 — 시세 API가 없는 자산이라 렌더링마다(=방문할 때마다)
+// 발행일 대비 경과일수로 복리 계산해 currentPrice를 다시 계산한다. avgPrice(매입원금)는 그대로 두고
+// currentPrice만 갱신하므로 손익(evKRW-costKRW)이 자동으로 이자만큼 쌓인다.
+function recalcBondValuations(){
+  let changed = false;
+  const now = Date.now();
+  assets.forEach(a=>{
+    if(!a.isBond || !a.bondIssueDate) return;
+    const issueTs = new Date(a.bondIssueDate+'T00:00:00').getTime();
+    const elapsedDays = Math.max(0, (now - issueTs) / 86400000);
+    const rate = (a.bondCouponRate||0) + (a.bondSpreadRate||0);
+    const newVal = Math.round((a.bondPrincipal||0) * Math.pow(1+rate, elapsedDays/365) * 100) / 100;
+    if(a.currentPrice !== newVal){
+      if(!a.prevPrice) a.prevPrice = a.bondPrincipal;
+      a.currentPrice = newVal;
+      changed = true;
+    }
+  });
+  if(changed) saveAssets();
+}
 
 /* ════════════════════════════════════════
    야후 파이낸스 시세 조회
@@ -2471,11 +2514,13 @@ function migrateSoldHistory(){
 // 예전에는 조용히 아무 반영도 하지 않아 매매 대금이 통째로 유실됐음(매도만 되고 매수 차감이
 // 안 되거나 그 반대) -> 0원짜리 현금 행을 자동 생성한 뒤 반영하도록 수정.
 // 반환: 조정된 현금 자산 이름 또는 null(같은 통화 현금 행이 2개 이상이라 모호한 경우만)
-function adjustCashBalance(currency, amountInCurrency, sign){
-  let cashAssets = assets.filter(a=>a.category==='cash' && a.currency===currency);
+function adjustCashBalance(currency, amountInCurrency, sign, subAccount){
+  const acct = subAccount||null;
+  let cashAssets = assets.filter(a=>a.category==='cash' && a.currency===currency && (a.subAccount||null)===acct);
   if(cashAssets.length===0){
-    const created = {id:uid(), ticker:'—', name:`현금(${currency})`, category:'cash', quantity:1,
-      avgPrice:0, currentPrice:0, prevPrice:0, currency};
+    const acctLabel = acct ? (SUBACCT_LABELS[acct]||acct) : null;
+    const created = {id:uid(), ticker:'—', name: acctLabel?`현금(${acctLabel}·${currency})`:`현금(${currency})`,
+      category:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, subAccount:acct};
     assets.push(created);
     cashAssets = [created];
   }
@@ -2601,7 +2646,7 @@ function logSellTrade(a, qty, sellPrice, reason){
   const pnl = (sellPrice - a.avgPrice) * qty * fxRate;
   const pnlPct = a.avgPrice>0 ? ((sellPrice - a.avgPrice) / a.avgPrice) * 100 : null;
   const totalKRW = Math.round(sellPrice * qty * fxRate);
-  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, sellPrice*qty, +1) : null;
+  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, sellPrice*qty, +1, a.subAccount||null) : null;
   addTradeLog({
     name: a.name, ticker: a.ticker, type: 'sell', at: Date.now(),
     category: a.category||null, attribute: a.attribute||null, subAccount: a.subAccount||null,
@@ -2616,7 +2661,7 @@ function logSellTrade(a, qty, sellPrice, reason){
 function logBuyTrade(a, qty, buyPrice, reason){
   const fxRate = a.currency==='USD'?FX.USD:a.currency==='JPY'?FX.JPY:1;
   const totalKRW = Math.round(buyPrice * qty * fxRate);
-  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, buyPrice*qty, -1) : null;
+  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, buyPrice*qty, -1, a.subAccount||null) : null;
   addTradeLog({
     name: a.name, ticker: a.ticker||'—', type: 'buy', at: Date.now(),
     category: a.category||null, attribute: a.attribute||null, subAccount: a.subAccount||null,
@@ -3273,6 +3318,24 @@ function renderTable(){
                 ${a.name} · 현재 ${sym}${a.avgPrice.toLocaleString()}
               </span>
             </div>
+            <!-- 계좌 -->
+            <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;">
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                계좌
+                <select id="ep_subacct_${a.id}" onchange="toggleCustomInput('ep_subacct_${a.id}','ep_subacct_custom_${a.id}')"
+                  style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
+                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+                  <option value=""   ${!a.subAccount?'selected':''}>-- 없음 --</option>
+                  <option value="nh" ${a.subAccount==='nh'?'selected':''}>농협</option>
+                  <option value="mf" ${a.subAccount==='mf'?'selected':''}>미래에셋</option>
+                  <option value="__custom__" ${a.subAccount && !['nh','mf'].includes(a.subAccount)?'selected':''}>+ 직접입력</option>
+                </select>
+                <input id="ep_subacct_custom_${a.id}" placeholder="계좌명 입력"
+                  value="${a.subAccount && !['nh','mf'].includes(a.subAccount)?a.subAccount.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${a.subAccount && !['nh','mf'].includes(a.subAccount)?'inline-block':'none'};margin-top:3px;
+                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>
+            </div>
             <!-- 모드 버튼 -->
             <div style="display:flex;gap:6px;margin-bottom:10px;max-width:320px;">
               <button id="ep_mode_set_${a.id}" onclick="setEditCashMode('${a.id}','set')"
@@ -3305,17 +3368,39 @@ function renderTable(){
           </td>
         </tr>`;
       } else {
-        // ── 일반 종목: 수량 / 평균단가 / 계좌 / 구분 / 속성 ──
+        // ── 일반 종목: 수량 / 평균단가 / 계좌 / 구분 / 속성 (확정금리 채권은 원금·금리·발행/만기일로 대체) ──
         const tpSubacctCustom = a.subAccount && !['nh','mf'].includes(a.subAccount);
-        rows+=`<tr class="tr-full" style="background:#f0fff4;">
-          <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
-            <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
-              ✏️ 종목 수정
-              <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-                ${a.name} · 수량, 평균단가, 계좌, 구분, 속성을 수정합니다
-              </span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        const bondEditFields = a.isBond ? `
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                매입원금 (${a.currency})
+                <input id="tp_bond_principal_${a.id}" type="number" value="${a.bondPrincipal||0}"
+                  style="width:110px;border:1px solid #34c75960;border-radius:8px;
+                         padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                표면금리(%)
+                <input id="tp_bond_coupon_${a.id}" type="number" step="0.001" value="${((a.bondCouponRate||0)*100).toFixed(3)}"
+                  style="width:80px;border:1px solid #34c75960;border-radius:8px;
+                         padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                가산금리(%)
+                <input id="tp_bond_spread_${a.id}" type="number" step="0.001" value="${((a.bondSpreadRate||0)*100).toFixed(3)}"
+                  style="width:80px;border:1px solid #34c75960;border-radius:8px;
+                         padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                발행일
+                <input id="tp_bond_issue_${a.id}" type="date" value="${a.bondIssueDate||''}"
+                  style="width:135px;border:1px solid #34c75960;border-radius:8px;
+                         padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                만기일
+                <input id="tp_bond_maturity_${a.id}" type="date" value="${a.bondMaturityDate||''}"
+                  style="width:135px;border:1px solid #34c75960;border-radius:8px;
+                         padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>` : `
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
                 수량
                 <input id="tp_qty_${a.id}" type="number" value="${a.quantity}"
@@ -3327,7 +3412,17 @@ function renderTable(){
                 <input id="tp_price_${a.id}" type="number" value="${a.avgPrice}"
                   style="width:110px;border:1px solid #34c75960;border-radius:8px;
                          padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
+              </label>`;
+        rows+=`<tr class="tr-full" style="background:#f0fff4;">
+          <td colspan="9" style="padding:14px 16px;" onclick="event.stopPropagation()">
+            <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
+              ✏️ 종목 수정
+              <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
+                ${a.name} · ${a.isBond?'원금, 금리, 발행/만기일, 계좌, 구분, 속성을 수정합니다':'수량, 평균단가, 계좌, 구분, 속성을 수정합니다'}
+              </span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+              ${bondEditFields}
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
                 계좌
                 <select id="tp_subacct_${a.id}" onchange="toggleCustomInput('tp_subacct_${a.id}','tp_subacct_custom_${a.id}')"
@@ -3533,6 +3628,7 @@ function executeTrade(){
   if(mode==='edit_cash'){
     const a=assets.find(x=>x.id===id); if(!a) return;
     a.avgPrice=trade.newAmt; a.currentPrice=trade.newAmt; a.prevPrice=trade.newAmt;
+    if(trade.subacct !== undefined) a.subAccount = trade.subacct || null;
     editingId=null;
     saveAssets();renderAll();
     return;
@@ -3546,8 +3642,13 @@ function executeTrade(){
     // 매칭되던 기존 매매이력의 계좌·구분을 새 값으로 함께 갱신해야 이력이 고아가 되지 않는다.
     const oldSubacct = a.subAccount || null;
     const oldCategory = a.category || null;
-    if(!isNaN(qty)&&qty>=0)    a.quantity = qty;
-    if(!isNaN(price)&&price>0) a.avgPrice = price;
+    if(trade.bondFields){
+      Object.assign(a, trade.bondFields);
+      a.avgPrice = a.bondPrincipal; // costKRW 기준 = 매입원금
+    } else {
+      if(!isNaN(qty)&&qty>=0)    a.quantity = qty;
+      if(!isNaN(price)&&price>0) a.avgPrice = price;
+    }
     if(trade.cat)              a.category = trade.cat;
     if(trade.attr !== undefined) a.attribute = trade.attr || null;
     const newSubacct = trade.subacct !== undefined ? (trade.subacct || null) : oldSubacct;
@@ -3570,7 +3671,7 @@ function executeTrade(){
 
   // 매수 폼
   if(mode==='form_buy'){
-    const {name, ticker, cat, qty:fQty, price:fPrice, cur, attr, subacct} = trade;
+    const {name, ticker, cat, qty:fQty, price:fPrice, cur, attr, subacct, isBond, bondFields} = trade;
     const tickerVal = ticker||'—';
     // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
     // → 계좌가 다르면(예: 개인연금 vs IRP) 별도 자산 항목으로 분리됨
@@ -3579,7 +3680,11 @@ function executeTrade(){
       ? (a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat)
       : (a=>a.name===name && a.currency===cur && a.category===cat);
     let existing;
-    if(!subacct){
+    // 확정금리 채권은 복리 평가액이라 수량·평균단가 방식의 병합(합산)이 성립하지 않으므로
+    // 기존 종목과 절대 합치지 않고 항상 새 자산으로 등록한다.
+    if(isBond){
+      existing = undefined;
+    } else if(!subacct){
       // 계좌 미지정 시, 후보가 여러 계좌에 걸쳐 나뉘어 있으면 어느 쪽에 합칠지 모호하므로
       // 병합하지 않고 새 자산으로 분리 생성한다(잘못된 계좌로 조용히 합쳐지는 것 방지).
       const candidates = assets.filter(a=>nameTickerCatMatch(a) && attrOk(a));
@@ -3596,12 +3701,12 @@ function executeTrade(){
       existing.quantity = totalQty;
       if(attr) existing.attribute = attr; // 속성 입력 시 갱신
       if(subacct) existing.subAccount = subacct; // 계좌 입력 시 갱신
-      cashName = existing.category!=='cash' ? adjustCashBalance(existing.currency, fPrice*fQty, -1) : null;
+      cashName = existing.category!=='cash' ? adjustCashBalance(existing.currency, fPrice*fQty, -1, existing.subAccount||null) : null;
       if(st){ st.textContent=`✅ ${existing.name} ${fQty.toLocaleString()}주 매수 → 총 ${totalQty.toLocaleString()}주${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
-      assets.push({id:uid(),ticker:tickerVal,name,category:cat,quantity:fQty,avgPrice:fPrice,currentPrice:fPrice,prevPrice:fPrice,currency:cur,attribute:attr||null,subAccount:subacct||null});
-      cashName = cat!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1) : null;
-      if(st){ st.textContent=`✅ ${name} 추가 완료 — 🔄 시세 갱신으로 현재가를 불러오세요.${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
+      assets.push({id:uid(),ticker:tickerVal,name,category:cat,quantity:fQty,avgPrice:fPrice,currentPrice:fPrice,prevPrice:fPrice,currency:cur,attribute:attr||null,subAccount:subacct||null,...(bondFields||{})});
+      cashName = cat!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1, subacct||null) : null;
+      if(st){ st.textContent=`✅ ${name} 추가 완료${isBond?'':' — 🔄 시세 갱신으로 현재가를 불러오세요.'}${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     }
     // 계좌 미선택 시(빈칸) 기존 보유분의 계좌를 그대로 사용 — 안 그러면 재매수 시 계좌가 null로 찍혀
     // 원래 보유분(예: 미래에셋)과 매매이력의 계좌가 어긋나 종목 상세 차트에서 해당 거래가 안 보이게 됨.
@@ -3640,20 +3745,21 @@ function executeTrade(){
 
   // 현금 폼
   if(mode==='form_cash'){
-    const {name:cName, amount, cur, isDividend, divAmount, divSource, cashMode:trCashMode, rawAmount} = trade;
-    const existing = assets.find(a=>a.category==='cash'&&a.name===cName&&a.currency===cur);
+    const {name:cName, amount, cur, isDividend, divAmount, divSource, cashMode:trCashMode, rawAmount, subacct} = trade;
+    const acct = subacct||null;
+    const existing = assets.find(a=>a.category==='cash'&&a.name===cName&&a.currency===cur&&(a.subAccount||null)===acct);
     if(existing){
       existing.avgPrice=amount; existing.currentPrice=amount; existing.prevPrice=amount; existing.quantity=1;
       if(st){ st.textContent=`✅ ${cName} ${CUR_SYM[cur]}${amount.toLocaleString()} 으로 업데이트`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
-      assets.push({id:uid(),ticker:'—',name:cName,category:'cash',quantity:1,avgPrice:amount,currentPrice:amount,prevPrice:amount,currency:cur});
+      assets.push({id:uid(),ticker:'—',name:cName,category:'cash',quantity:1,avgPrice:amount,currentPrice:amount,prevPrice:amount,currency:cur,subAccount:acct});
       if(st){ st.textContent=`✅ ${cName} ${CUR_SYM[cur]}${amount.toLocaleString()} 추가 완료`; setTimeout(()=>{st.textContent='';},3000); }
     }
     if(isDividend){
       const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
       addTradeLog({
         name: divSource, ticker:'—', type:'dividend', at: Date.now(),
-        category: 'cash', attribute: null,
+        category: 'cash', attribute: null, subAccount: acct,
         price: null, quantity: null, currency: cur,
         totalKRW: Math.round(divAmount*fxRate), pnl: Math.round(divAmount*fxRate), pnlPct: null,
         reason: '', cashAdjusted: null
@@ -3664,7 +3770,7 @@ function executeTrade(){
       const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
       addTradeLog({
         name: cName, ticker:'—', type: trCashMode==='in'?'deposit':'withdrawal', at: Date.now(),
-        category: 'cash', attribute: null,
+        category: 'cash', attribute: null, subAccount: acct,
         price: null, quantity: null, currency: cur,
         totalKRW: Math.round(rawAmount*fxRate), pnl: null, pnlPct: null,
         reason: '', cashAdjusted: null
@@ -3673,6 +3779,9 @@ function executeTrade(){
     document.getElementById('cf_name').value='';
     document.getElementById('cf_amount').value='';
     document.getElementById('cf_cur').value='KRW';
+    document.getElementById('cf_subacct').value='';
+    document.getElementById('cf_subacct_custom').value='';
+    document.getElementById('cf_subacct_custom').style.display='none';
     if(document.getElementById('cf_div_source')) document.getElementById('cf_div_source').value='';
     saveAssets();renderAll();
     return;
@@ -3732,7 +3841,22 @@ function confirmSaveEdit(id){
   const attr  = document.getElementById(`tp_attr_${id}`)?.value ?? a.attribute ?? '';
   const subacct = readSelectOrCustom(`tp_subacct_${id}`, `tp_subacct_custom_${id}`, false);
   if(subacct===null) return;
-  pendingTrade = {id, mode:'edit', qty, price, cat, attr, subacct};
+  let bondFields = null;
+  if(a.isBond){
+    const principal = parseFloat(document.getElementById(`tp_bond_principal_${id}`)?.value);
+    const coupon    = parseFloat(document.getElementById(`tp_bond_coupon_${id}`)?.value);
+    const spread    = parseFloat(document.getElementById(`tp_bond_spread_${id}`)?.value);
+    const issueDate = document.getElementById(`tp_bond_issue_${id}`)?.value;
+    const maturityDate = document.getElementById(`tp_bond_maturity_${id}`)?.value;
+    bondFields = {
+      bondPrincipal: !isNaN(principal) ? principal : a.bondPrincipal,
+      bondCouponRate: !isNaN(coupon) ? coupon/100 : a.bondCouponRate,
+      bondSpreadRate: !isNaN(spread) ? spread/100 : a.bondSpreadRate,
+      bondIssueDate: issueDate || a.bondIssueDate,
+      bondMaturityDate: maturityDate || a.bondMaturityDate,
+    };
+  }
+  pendingTrade = {id, mode:'edit', qty, price, cat, attr, subacct, bondFields};
   const sym = CUR_SYM[a.currency];
   const catChanged = cat !== a.category;
   const attrChanged = attr !== (a.attribute||'');
@@ -3741,7 +3865,12 @@ function confirmSaveEdit(id){
   const detailEl  = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
   titleEl.innerHTML = `<span style="color:#34c759">✓ 수정 저장</span>`;
-  detailEl.innerHTML = `
+  detailEl.innerHTML = a.isBond ? `
+    <b>${a.name}</b><br>
+    매입원금: ${sym}${bondFields.bondPrincipal.toLocaleString()} · 표면 ${(bondFields.bondCouponRate*100).toFixed(3)}% + 가산 ${(bondFields.bondSpreadRate*100).toFixed(3)}%<br>
+    계좌: ${subacctChanged?`${SUBACCT_LABELS[a.subAccount]||a.subAccount||'없음'} → <b>${SUBACCT_LABELS[subacct]||subacct||'없음'}</b>`:'변경없음'}<br>
+    구분: ${catChanged?`${CAT_LABELS[a.category]||a.category} → <b>${CAT_LABELS[cat]||cat}</b>`:'변경없음'}<br>
+    <span style="color:var(--color-tertiary);font-size:11px;">위 내용으로 저장하시겠습니까?</span>` : `
     <b>${a.name}</b><br>
     수량: ${!isNaN(qty)?qty.toLocaleString():'변경없음'}<br>
     평균단가: ${!isNaN(price)?sym+price.toLocaleString():'변경없음'}<br>
@@ -4164,6 +4293,16 @@ function resetBuyForm(){
   document.getElementById('af_subacct').value='';
   ['af_cat_custom','af_attr_custom','af_subacct_custom'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('af_suggestions').style.display='none';
+  ['af_bond_principal','af_bond_coupon','af_bond_spread','af_bond_issue','af_bond_maturity'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('af_bond_toggle').checked=false;
+  toggleBondFields();
+}
+// 확정금리 채권 체크박스 토글 — 켜면 수량/단가 입력을 채권 전용 필드(원금·금리·발행/만기일)로 교체
+function toggleBondFields(){
+  const on = document.getElementById('af_bond_toggle').checked;
+  document.getElementById('af_bond_fields').style.display = on ? 'flex' : 'none';
+  document.getElementById('af_qty_label').style.display = on ? 'none' : 'inline-block';
+  document.getElementById('af_price_label').style.display = on ? 'none' : 'inline-block';
 }
 // 예약된 구분(카테고리) 키와 충돌하는 커스텀 값 입력 방지
 const RESERVED_CAT_KEYS = ['stock_kr','stock_us','stock_jp','pension_personal','pension_retirement','irp','isa','crypto','cash'];
@@ -4206,17 +4345,33 @@ function addAsset(){
   const name   = document.getElementById('af_name').value.trim();
   const ticker = document.getElementById('af_ticker').value.trim().toUpperCase();
   const cat    = readSelectOrCustom('af_cat','af_cat_custom', true);
-  const qty    = parseFloat(document.getElementById('af_qty').value);
-  const price  = parseFloat(document.getElementById('af_price').value);
   const cur    = document.getElementById('af_cur').value;
   const attr   = readSelectOrCustom('af_attr','af_attr_custom', false);
   const subacct= readSelectOrCustom('af_subacct','af_subacct_custom', false);
   const st     = document.getElementById('formStatus');
+  const isBond = document.getElementById('af_bond_toggle').checked;
   if(cat===null || attr===null || subacct===null) return; // 예약어 충돌 등으로 readSelectOrCustom이 이미 경고함
   if(!name)                   { st.textContent='❌ 종목명을 입력해 주세요.'; return; }
   if(!cat)                    { st.textContent='❌ 구분을 선택해 주세요.'; return; }
-  if(isNaN(qty)||qty<=0)      { st.textContent='❌ 수량을 입력해 주세요.'; return; }
-  if(isNaN(price)||price<=0)  { st.textContent='❌ 단가를 입력해 주세요.'; return; }
+
+  let qty, price, bondFields = null;
+  if(isBond){
+    const principal = parseFloat(document.getElementById('af_bond_principal').value);
+    const coupon    = parseFloat(document.getElementById('af_bond_coupon').value);
+    const spread    = parseFloat(document.getElementById('af_bond_spread').value) || 0;
+    const issueDate = document.getElementById('af_bond_issue').value;
+    const maturityDate = document.getElementById('af_bond_maturity').value;
+    if(isNaN(principal)||principal<=0){ st.textContent='❌ 매입원금을 입력해 주세요.'; return; }
+    if(isNaN(coupon))                 { st.textContent='❌ 표면금리를 입력해 주세요.'; return; }
+    if(!issueDate)                    { st.textContent='❌ 발행일을 입력해 주세요.'; return; }
+    qty = 1; price = principal;
+    bondFields = {isBond:true, bondPrincipal:principal, bondCouponRate:coupon/100, bondSpreadRate:spread/100, bondIssueDate:issueDate, bondMaturityDate:maturityDate||null};
+  } else {
+    qty   = parseFloat(document.getElementById('af_qty').value);
+    price = parseFloat(document.getElementById('af_price').value);
+    if(isNaN(qty)||qty<=0)      { st.textContent='❌ 수량을 입력해 주세요.'; return; }
+    if(isNaN(price)||price<=0)  { st.textContent='❌ 단가를 입력해 주세요.'; return; }
+  }
   const sym = CUR_SYM[cur];
   const tickerVal = ticker||'—';
   // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
@@ -4225,7 +4380,10 @@ function addAsset(){
     ? (a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.category===cat)
     : (a=>a.name===name && a.currency===cur && a.category===cat);
   let existing;
-  if(!subacct){
+  // 확정금리 채권은 복리 평가액이라 수량·평균단가 병합이 성립하지 않으므로 항상 신규 등록
+  if(isBond){
+    existing = undefined;
+  } else if(!subacct){
     // executeTrade(form_buy)와 동일한 규칙: 계좌 미지정 시 후보가 여러 계좌에 걸쳐 있으면 병합 미리보기도 생략
     const candidates = assets.filter(a=>nameTickerCatMatch(a) && attrOk(a));
     const distinctAccts = new Set(candidates.map(a=>a.subAccount||null));
@@ -4237,12 +4395,15 @@ function addAsset(){
   const totalQty  = existing ? existing.quantity+qty : qty;
 
   // 확인 팝업
-  pendingTrade = {mode:'form_buy', name, ticker:tickerVal, cat, qty, price, cur, attr, subacct};
+  pendingTrade = {mode:'form_buy', name, ticker:tickerVal, cat, qty, price, cur, attr, subacct, isBond, bondFields};
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
   titleEl.innerHTML = `<span style="color:#007aff">+ 매수 확인</span>`;
-  detailEl.innerHTML = `
+  detailEl.innerHTML = isBond ? `
+    <b>${name}</b><br>
+    매입원금 <b>${sym}${Math.round(price).toLocaleString()}</b> · 표면 ${(bondFields.bondCouponRate*100).toFixed(3)}% + 가산 ${(bondFields.bondSpreadRate*100).toFixed(3)}%<br>
+    <span style="color:var(--color-tertiary)">확정금리 채권 신규 등록 — 평가액은 매일 자동 복리 계산됩니다.</span>` : `
     <b>${name}</b>${ticker?` (${ticker})`:''}<br>
     ${qty.toLocaleString()}주 × ${sym}${price.toLocaleString()}<br>
     총 <b>${sym}${Math.round(price*qty).toLocaleString()}</b><br>
@@ -4318,6 +4479,8 @@ function confirmEditCash(id){
   const amt=parseFloat(document.getElementById(`ep_cash_amt_${id}`)?.value);
   const st=document.getElementById('formStatus');
   if(isNaN(amt)||amt<0){ if(st) st.textContent='❌ 금액을 입력해 주세요.'; return; }
+  const subacct = readSelectOrCustom(`ep_subacct_${id}`, `ep_subacct_custom_${id}`, false);
+  if(subacct===null) return;
   const sym=CUR_SYM[a.currency];
   let newAmt, changeStr;
   if(mode==='set'){
@@ -4332,12 +4495,14 @@ function confirmEditCash(id){
   }
   const modeColors={set:'#34c759',in:'#007aff',out:'#ff3b30'};
   const modeLabels={set:'잔액 설정',in:'입금',out:'출금'};
-  pendingTrade={id, mode:'edit_cash', newAmt};
+  pendingTrade={id, mode:'edit_cash', newAmt, subacct};
+  const acctChanged = subacct !== (a.subAccount||'');
   const titleEl=document.getElementById('tc_title');
   const detailEl=document.getElementById('tc_detail');
   const confirmBtn=document.getElementById('tc_confirm');
   titleEl.innerHTML=`<span style="color:${modeColors[mode]}">💵 현금 ${modeLabels[mode]} 확인</span>`;
   detailEl.innerHTML=`<b>${a.name}</b><br>${changeStr}<br>
+    ${acctChanged?`계좌: ${SUBACCT_LABELS[a.subAccount]||a.subAccount||'없음'} → <b>${SUBACCT_LABELS[subacct]||subacct||'없음'}</b><br>`:''}
     <span style="color:var(--color-tertiary);font-size:11px;">저장 후 잔액: ${sym}${newAmt.toLocaleString()}</span>`;
   confirmBtn.style.background=modeColors[mode];
   confirmBtn.textContent='확인';
@@ -4375,10 +4540,13 @@ function addCash(){
   const cur    = document.getElementById('cf_cur').value;
   const st     = document.getElementById('formStatus');
   if(isNaN(amount)||amount<=0){ st.textContent='❌ 금액을 입력해 주세요.'; return; }
+  const subacct = readSelectOrCustom('cf_subacct','cf_subacct_custom', false);
+  if(subacct===null) return;
+  const acct = subacct||null;
   const sym = CUR_SYM[cur];
 
   // 기존 현금 찾기
-  const existing = assets.find(a=>a.category==='cash'&&a.name===name&&a.currency===cur);
+  const existing = assets.find(a=>a.category==='cash'&&a.name===name&&a.currency===cur&&(a.subAccount||null)===acct);
   let newAmount = amount;
   let modeLabel = '잔액 설정';
   let changeStr = '';
@@ -4405,14 +4573,14 @@ function addCash(){
   }
 
   const divSource = cashMode==='div' ? (document.getElementById('cf_div_source').value.trim() || name) : null;
-  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur, isDividend: cashMode==='div', divAmount: amount, divSource, cashMode, rawAmount: amount};
+  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur, isDividend: cashMode==='div', divAmount: amount, divSource, cashMode, rawAmount: amount, subacct};
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
   const modeColors = {set:'#34c759', in:'#007aff', out:'#ff3b30', div:'#ff9500'};
   titleEl.innerHTML = `<span style="color:${modeColors[cashMode]}">💵 현금 ${modeLabel} 확인</span>`;
   detailEl.innerHTML = `
-    <b>${name}</b> (${cur})<br>
+    <b>${name}</b> (${cur})${acct?` · ${SUBACCT_LABELS[acct]||acct}`:''}<br>
     ${changeStr}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">저장 후 잔액: ${sym}${newAmount.toLocaleString()}</span>`;
   confirmBtn.style.background = modeColors[cashMode];
@@ -7415,6 +7583,7 @@ setInterval(async()=>{
    전체 렌더
 ════════════════════════════════════════ */
 function renderAll(){
+  recalcBondValuations();
   renderTable();renderSummary();renderDonuts();
   buildChartHistory();renderToggles();
   // 환율 표시 갱신
