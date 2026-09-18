@@ -380,7 +380,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
    퍼센트 기반이라 실제 폭이 이 범위 안 어디든(세로/가로 어느 쪽이든) 항상 뷰포트를
    넘지 않는다. 하한을 600이 아니라 481로 낮춘 이유: 480~600px 사이에 아무 규칙도
    없으면 그 폭의 기기는 규칙 사각지대에 빠져 같은 버그가 재발할 수 있다. */
-@media(min-width:481px)and(max-width:960px){
+@media(min-width:481px) and (max-width:960px){
   .summary-grid{grid-template-columns:repeat(4,1fr);}
   table{font-size:11px;}
   th,td{padding:7px 4px;}
@@ -398,13 +398,18 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit .del-btn{padding:6px 5px;}
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:19%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:21%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7%;}
+  /* 평단(6번째)은 이 구간에서 .fold-hide-narrow로 숨기지만, table-layout:fixed는
+     숨긴 셀에도 폭이 지정 안 돼 있으면 남는 폭을 나눠가지려 해 표 전체가 그만큼
+     더 넓어져(.tbl-wrap 자체 스크롤로 미세하게 남는 좌우 유동의 원인) 0으로 못박는다. */
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(6),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(6){width:0;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(5),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(7),
@@ -412,7 +417,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:13%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:18%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:21%;}
   /* 종목 차트를 펼쳤을 때 그 안에 중첩되는 매매이력 미니 표(날짜/구분/단가/수량/메모,
      table-auto) — 매매이력 탭의 table-auto와는 #page_portfolio로 스코프가 분리되어
      서로 영향 없음. */
