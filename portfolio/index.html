@@ -226,6 +226,12 @@ table.table-auto th,table.table-auto td{padding-left:14px;padding-right:14px;}
 table.table-auto th:first-child,table.table-auto td:first-child{padding-left:4px;}
 table.table-fit{width:100%;table-layout:auto;}
 table.table-fit th,table.table-fit td{padding-left:8px;padding-right:8px;white-space:nowrap;}
+/* 구분/계좌/속성(2~4번째 칼럼)은 짧은 배지 하나가 내용의 전부라 숫자처럼 오른쪽
+   정렬할 이유가 없다 — 헤더와 배지 모두 가운데 정렬해 헤더 글자와 배지가 서로
+   다른 위치에 떠 있지 않고 시각적으로 한 축에 맞도록 한다. */
+table.table-fit th:nth-child(2),table.table-fit td:nth-child(2),
+table.table-fit th:nth-child(3),table.table-fit td:nth-child(3),
+table.table-fit th:nth-child(4),table.table-fit td:nth-child(4){text-align:center;}
 tr:last-child td{border-bottom:none;}
 /* hover 스타일은 실제 마우스 등 포인팅 장치가 있는 기기에서만 적용 — 터치 기기는
    탭을 hover로 흉내내고 나서 mouseleave가 오지 않아 다른 곳을 눌러야만 풀리는
@@ -239,7 +245,8 @@ tr:last-child td{border-bottom:none;}
 .name-sub{font-size:10px;color:var(--color-tertiary);margin-top:1px;}
 .ticker-badge{font-size:10px;color:var(--color-tertiary);margin-left:3px;}
 .cat-badge{display:inline-flex;align-items:center;justify-content:center;
-  border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700;}
+  border-radius:5px;padding:1px 6px;font-size:11px;font-weight:700;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;}
 .up{color:var(--color-up);} .dn{color:var(--color-down);} .dim{color:var(--color-tertiary);}
 .edit-btn,.del-btn{border:none;cursor:pointer;background:transparent;font-size:16px;padding:7px 9px;border-radius:7px;transition:.15s;}
 @media (hover: hover) { .edit-btn:hover,.del-btn:hover{background:var(--color-section-bg);} }
@@ -398,13 +405,17 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit .del-btn{padding:6px 5px;}
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:21%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:17%;}
+  /* 구분/계좌/속성 배지("개인연금","IRP 개인" 등 4~6자)가 헤더 글자("구분" 2자)
+     기준으로 잡았던 예전 폭보다 실제로 더 넓어 서로 겹쳐 보이던 문제 — 배지가
+     실제로 필요한 만큼 폭을 늘려준다(부족분은 종목/현재가/평가금액에서 조금씩
+     덜어옴, 편집 칼럼은 아이콘 3개가 다시 잘리지 않도록 21%를 그대로 유지). */
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:8.5%;}
   /* 평단(6번째)은 이 구간에서 .fold-hide-narrow로 숨기지만, table-layout:fixed는
      숨긴 셀에도 폭이 지정 안 돼 있으면 남는 폭을 나눠가지려 해 표 전체가 그만큼
      더 넓어져(.tbl-wrap 자체 스크롤로 미세하게 남는 좌우 유동의 원인) 0으로 못박는다. */
@@ -413,7 +424,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(5),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(7),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:12%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:11.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:13%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
