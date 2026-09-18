@@ -3206,7 +3206,7 @@ function renderTable(){
       const q=assetFilter.search.trim().toLowerCase();
       if(q && !(a.name.toLowerCase().includes(q) || (a.ticker&&a.ticker.toLowerCase().includes(q)))) return false;
     }
-    if(assetFilter.cat && a.category!==assetFilter.cat) return false;
+    if(assetFilter.cat && a.category!==assetFilter.cat && !(a.category==='cash' && a.subCategory===assetFilter.cat)) return false;
     if(assetFilter.subacct && a.subAccount!==assetFilter.subacct) return false;
     if(assetFilter.attr && a.attribute!==assetFilter.attr) return false;
     return true;
@@ -3852,7 +3852,7 @@ function executeTrade(){
     const existing = assets.find(a=>a.category==='cash'&&a.name===cName&&a.currency===cur&&(a.subAccount||null)===acct&&(a.subCategory||null)===scat);
     if(existing){
       existing.avgPrice=amount; existing.currentPrice=amount; existing.prevPrice=amount; existing.quantity=1;
-      existing.attribute=attr||null;
+      if(attr) existing.attribute=attr; // 폼에서 속성을 비워도 기존 속성(안전자산 등)을 지우지 않음
       if(st){ st.textContent=`✅ ${cName} ${CUR_SYM[cur]}${amount.toLocaleString()} 으로 업데이트`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
       assets.push({id:uid(),ticker:'—',name:cName,category:'cash',quantity:1,avgPrice:amount,currentPrice:amount,prevPrice:amount,currency:cur,subAccount:acct,subCategory:scat,attribute:attr||null});
