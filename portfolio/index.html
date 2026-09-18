@@ -185,7 +185,6 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 #assetTbody{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 canvas#lineChart{width:100%!important;display:block;}
 .stat-bar{margin-top:12px;}
-@media(min-width:481px) and (max-width:960px){ .stat-bar{margin-top:4px;} }
 .stat-item{min-width:110px;}
 .stat-item .stat-lbl{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--color-secondary);}
 .stat-item .stat-lbl .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
@@ -6587,11 +6586,7 @@ function drawLineChart(){
   const LINE_H = 18; // 레전드 줄 간격
   const visibleGroupCount = groupAssetsByName().filter(g=>g.ids.some(id=>selectedAssets.has(id))).length;
   const visibleCount = visibleGroupCount + (showSum?1:0);
-  // 폭이 좁은 화면(폴드 펼침 등)에서는 그래프 아래 종목별 변화량(statBar) 두 줄이
-  // 같은 화면 안에 다 들어와야 하는데, 최소 높이가 400px로 고정돼 있으면 상단바·탭바·
-  // 서브탭바·토글 행까지 합쳐 화면 높이를 넘겨버린다 — 좁은 화면에서는 최소 높이를
-  // 낮춰 그만큼 아래 목록이 보일 여유를 준다(데스크톱 등 넓은 화면은 기존 400 유지).
-  const minH = Math.max(W<960?300:400, visibleCount * LINE_H + 120);
+  const minH = Math.max(400, visibleCount * LINE_H + 120);
   const H = Math.min(minH, 700); // 최대 700px
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
   cv.style.width=W+'px'; cv.style.height=H+'px';
@@ -6600,8 +6595,8 @@ function drawLineChart(){
   // ── 레이아웃 ──
   const LNUM=52;
   const RNUM=12; // 오른쪽 Y축 없음, 최소 여백
-  const TOP=W<960?16:24;
-  const BOT=W<960?44:54;
+  const TOP=24;
+  const BOT=54;
   const PAD_IN=16;
   const RLABEL=Math.round(Math.min(160, W*0.38));
   const LBL_FONT=W<450?8:9;
