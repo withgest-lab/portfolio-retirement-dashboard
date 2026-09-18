@@ -19,19 +19,23 @@
    html에도 걸고, touch-action:pan-y로 가로 팬 제스처 자체를 차단한다(세로 스크롤은
    그대로 허용). 개별 가로 스크롤 컨테이너(.tabbar/.tbl-wrap/.vbar-scroll 등)는 각자
    overflow-x:auto인 자체 스크롤 컨텍스트라 영향받지 않는다.
-   body에 overflow-y:hidden을 명시하는 이유: CSS 스펙상 overflow-x를 visible이
-   아닌 값으로 주면 overflow-y도 visible일 수 없어 자동으로 auto로 강제된다(가만히
-   둬도 마찬가지라 overflow-y:visible을 명시해도 효과가 없다) — 그 결과 html과 body
-   둘 다 독립적으로 세로 스크롤 가능한 컨테이너가 되어버려, 모바일 브라우저에 따라
-   실제 터치 스크롤이 html/body 중 어느 쪽에서 일어나는지가 갈리고 position:sticky
-   기준점과 window.scrollTo()가 서로 다른 컨테이너를 가리켜 .topbar(fixed)와
-   .tabbar(sticky) 사이에 회색 여백이 벌어지는 원인이 됐다. body는 원래 내용물
-   높이만큼 자연스럽게 늘어나는 요소라 자체적으로 스크롤할 필요가 없으므로,
-   overflow-y를 명시적으로 hidden까지 내려 body가 독립 스크롤 컨테이너가 되는
-   경우 자체를 없앤다 — 스크롤 가능한 컨테이너는 html 하나로 확정된다(표준 모드에서
-   document.scrollingElement도 이 상태에서 항상 html이 된다). */
+   실측(Playwright)으로 확정한 회색 여백의 진짜 원인: overflow-x:hidden을 body에
+   걸면(overflow-y도 spec상 auto로 강제됨) body가 CSS position:sticky의 "가장
+   가까운 스크롤 컨테이너"가 되어버린다. body의 자식인 #tabbar(sticky top:52px)는
+   원래 뷰포트를 기준으로 52px 지점에 붙어야 하는데, 이제는 "body의 콘텐츠 박스
+   시작점(=body 자신의 padding-top:52px만큼 이미 밀린 지점)"을 기준으로 52px를
+   더 밀어내 52+52=104px 지점에 붙어버렸다 — 그 사이 52px가 정확히 사용자가 본
+   회색 여백이었다(실측: topbar bottom=52, tabbar top=104). 같은 이유로
+   .subtabbar(top:100px)도 실제로는 100+52=152px 지점에 붙어, clipSubpageUnderSubtabbar()가
+   서브페이지 상단(요약카드/토글)을 훨씬 많이 잘라내 보이지 않게 만든 원인이기도
+   했다 — 즉 이번 라운드까지의 "회색 갭"과 "요약카드/토글 소실"은 같은 뿌리였다.
+   해결책: body의 padding-top을 없애고, 그만큼의 공간은 body의 sticky 컨테이너화와
+   무관한 일반 흐름 스페이서 엘리먼트(.topbar-spacer)로 대신 확보한다 — 그러면
+   body 자신의 콘텐츠 박스 시작점이 다시 0이 되어 sticky 자식들의 top 계산이
+   원래 의도대로 뷰포트 기준 값과 일치한다. */
 html{overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
-body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:52px;overflow-x:hidden;overflow-y:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
+body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;overflow-x:hidden;overflow-y:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
+.topbar-spacer{height:52px;}
 
 /* ── 헤더 ── */
 .topbar{background:var(--color-card);border-bottom:1px solid var(--color-border);
@@ -472,6 +476,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <button class="btn btn-green" onclick="openBackupModal()">💾 백업 / 복원</button>
   </div>
 </div>
+<div class="topbar-spacer" aria-hidden="true"></div>
 
 <nav class="tabbar" id="tabbar">
   <div class="tabbar-scroll">
