@@ -812,7 +812,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <option value="주도주">주도주</option>
         <option value="유망주">유망주</option>
         <option value="원자재">원자재</option>
-        <option value="현금">현금</option>
         <option value="안전자산">안전자산</option>
         <option value="__custom__">+ 직접입력</option>
       </select>
@@ -875,7 +874,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <option value="주도주">주도주</option>
         <option value="유망주">유망주</option>
         <option value="원자재">원자재</option>
-        <option value="현금">현금</option>
         <option value="안전자산">안전자산</option>
         <option value="__custom__">+ 직접입력</option>
       </select>
@@ -895,8 +893,14 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
         <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
           이름
-          <input id="cf_name" placeholder="현금·CMA·예금 등"
-            style="width:120px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+          <select id="cf_name" onchange="toggleCustomInput('cf_name','cf_name_custom')"
+            style="width:120px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="현금">현금</option>
+            <option value="예금">예금</option>
+            <option value="__custom__">+ 직접입력</option>
+          </select>
+          <input id="cf_name_custom" placeholder="이름 입력" style="width:120px;display:none;margin-top:3px;
+                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
         </label>
         <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
           통화
@@ -945,7 +949,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
             <option value="주도주">주도주</option>
             <option value="유망주">유망주</option>
             <option value="원자재">원자재</option>
-            <option value="현금" selected>현금</option>
             <option value="안전자산">안전자산</option>
             <option value="__custom__">+ 직접입력</option>
           </select>
@@ -1388,7 +1391,7 @@ const LINE_COLS = [
 const CAT_COLS   = {stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',pension_personal:'#af52de',pension_retirement:'#34c759',irp:'#5856d6',isa:'#00b5ad',crypto:'#ff3b30',cash:'#8e8e93'};
 const ASSET_COLS = ['#5ac8fa','#ffd60a','#30d158','#bf5af2','#ff6961','#32ade6','#ff375f','#6ac4dc','#c8a96e','#aeaeb2'];
 const CAT_LABELS = {stock_kr:'국내주식',stock_us:'미국주식',stock_jp:'일본주식',pension_personal:'개인연금',pension_retirement:'퇴직연금',irp:'IRP 개인',isa:'ISA',crypto:'가상자산',cash:'현금'};
-const ATTR_OPTIONS = ['Core','주도주','유망주','원자재','현금','안전자산'];
+const ATTR_OPTIONS = ['Core','주도주','유망주','원자재','안전자산'];
 // 개인연금(pension_personal) 세부계좌 구분 — 은퇴 대시보드의 nh(농협)/mf(미래에셋) 잔액 자동 연동에 사용
 const SUBACCT_LABELS = {nh:'농협',mf:'미래에셋'};
 const ATTR_COLS = {'Core':'#0a84ff','주도주':'#ff9500','유망주':'#34c759','원자재':'#a2845e','현금':'#8e8e93','안전자산':'#5ac8fa','미지정':'#c7c7cc'};
@@ -3288,11 +3291,11 @@ function renderTable(){
         <div class="name-main">${a.name}</div>
         <div class="name-sub">${a.ticker==='—'?'현금':a.ticker}</div>
       </td>
-      <td class="fold-hide"><span class="cat-badge" style="background:${cc}20;color:${cc}">${tableBadge(a)}</span></td>
+      <td class="fold-hide">${isCash && a.subCategory
+        ? `<span class="cat-badge" style="background:${CAT_COLS[a.subCategory]||'#8e8e93'}20;color:${CAT_COLS[a.subCategory]||'#8e8e93'}">${CAT_LABELS[a.subCategory]||a.subCategory}</span>`
+        : `<span class="cat-badge" style="background:${cc}20;color:${cc}">${tableBadge(a)}</span>`}</td>
       <td class="fold-hide">${a.subAccount?`<span class="cat-badge" style="background:${sac}20;color:${sac}">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:na}</td>
-      <td class="fold-hide">${isCash
-        ? (a.subCategory?`<span class="cat-badge" style="background:${CAT_COLS[a.subCategory]||'#8e8e93'}20;color:${CAT_COLS[a.subCategory]||'#8e8e93'}">${CAT_LABELS[a.subCategory]||a.subCategory}</span>`:na)
-        : (a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na)}</td>
+      <td class="fold-hide">${a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na}</td>
       <td style="font-size:11px;">
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
@@ -3415,13 +3418,12 @@ function renderTable(){
                   <option value="주도주" ${a.attribute==='주도주'?'selected':''}>주도주</option>
                   <option value="유망주" ${a.attribute==='유망주'?'selected':''}>유망주</option>
                   <option value="원자재" ${a.attribute==='원자재'?'selected':''}>원자재</option>
-                  <option value="현금"   ${a.attribute==='현금'  ?'selected':''}>현금</option>
                   <option value="안전자산" ${a.attribute==='안전자산'?'selected':''}>안전자산</option>
-                  <option value="__custom__" ${a.attribute && !['Core','주도주','유망주','원자재','현금','안전자산'].includes(a.attribute)?'selected':''}>+ 직접입력</option>
+                  <option value="__custom__" ${a.attribute && !['Core','주도주','유망주','원자재','안전자산'].includes(a.attribute)?'selected':''}>+ 직접입력</option>
                 </select>
                 <input id="ep_attr_custom_${a.id}" placeholder="속성명 입력"
-                  value="${a.attribute && !['Core','주도주','유망주','원자재','현금','안전자산'].includes(a.attribute)?a.attribute.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.attribute && !['Core','주도주','유망주','원자재','현금','안전자산'].includes(a.attribute)?'inline-block':'none'};margin-top:3px;
+                  value="${a.attribute && !['Core','주도주','유망주','원자재','안전자산'].includes(a.attribute)?a.attribute.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${a.attribute && !['Core','주도주','유망주','원자재','안전자산'].includes(a.attribute)?'inline-block':'none'};margin-top:3px;
                          border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
             </div>
@@ -3551,13 +3553,12 @@ function renderTable(){
                   <option value="주도주" ${a.attribute==='주도주'?'selected':''}>주도주</option>
                   <option value="유망주" ${a.attribute==='유망주'?'selected':''}>유망주</option>
                   <option value="원자재" ${a.attribute==='원자재'?'selected':''}>원자재</option>
-                  <option value="현금"   ${a.attribute==='현금'  ?'selected':''}>현금</option>
                   <option value="안전자산" ${a.attribute==='안전자산'?'selected':''}>안전자산</option>
-                  <option value="__custom__" ${a.attribute && !['Core','주도주','유망주','원자재','현금','안전자산'].includes(a.attribute)?'selected':''}>+ 직접입력</option>
+                  <option value="__custom__" ${a.attribute && !['Core','주도주','유망주','원자재','안전자산'].includes(a.attribute)?'selected':''}>+ 직접입력</option>
                 </select>
                 <input id="tp_attr_custom_${a.id}" placeholder="속성명 입력"
-                  value="${a.attribute && !['Core','주도주','유망주','원자재','현금','안전자산'].includes(a.attribute)?a.attribute.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.attribute && !['Core','주도주','유망주','원자재','현금','안전자산'].includes(a.attribute)?'inline-block':'none'};margin-top:3px;
+                  value="${a.attribute && !['Core','주도주','유망주','원자재','안전자산'].includes(a.attribute)?a.attribute.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${a.attribute && !['Core','주도주','유망주','원자재','안전자산'].includes(a.attribute)?'inline-block':'none'};margin-top:3px;
                          border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -3875,7 +3876,9 @@ function executeTrade(){
         reason: '', cashAdjusted: null
       });
     }
-    document.getElementById('cf_name').value='';
+    document.getElementById('cf_name').value='현금';
+    document.getElementById('cf_name_custom').value='';
+    document.getElementById('cf_name_custom').style.display='none';
     document.getElementById('cf_amount').value='';
     document.getElementById('cf_cur').value='KRW';
     document.getElementById('cf_subacct').value='';
@@ -3884,7 +3887,7 @@ function executeTrade(){
     document.getElementById('cf_subcat').value='';
     document.getElementById('cf_subcat_custom').value='';
     document.getElementById('cf_subcat_custom').style.display='none';
-    document.getElementById('cf_attr').value='현금';
+    document.getElementById('cf_attr').value='';
     document.getElementById('cf_attr_custom').value='';
     document.getElementById('cf_attr_custom').style.display='none';
     if(document.getElementById('cf_div_source')) document.getElementById('cf_div_source').value='';
@@ -4139,7 +4142,9 @@ SUBPAGE_RENDER_HOOKS['dashboard_indices'] = function(){ renderIndices(); drawMar
 function switchTab(tab){
   resetBuyForm();
   resetSellForm();
-  document.getElementById('cf_name').value='';
+  document.getElementById('cf_name').value='현금';
+  document.getElementById('cf_name_custom').value='';
+  document.getElementById('cf_name_custom').style.display='none';
   document.getElementById('cf_amount').value='';
   document.getElementById('cf_cur').value='KRW';
   document.getElementById('formStatus').textContent='';
@@ -4649,7 +4654,9 @@ function setCashMode(mode){
 }
 
 function addCash(){
-  const name   = document.getElementById('cf_name').value.trim() || '현금';
+  const nameRaw = readSelectOrCustom('cf_name','cf_name_custom', false);
+  if(nameRaw===null) return;
+  const name   = nameRaw || '현금';
   const amount = parseFloat(document.getElementById('cf_amount').value);
   const cur    = document.getElementById('cf_cur').value;
   const st     = document.getElementById('formStatus');
