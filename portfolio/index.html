@@ -18,9 +18,20 @@
    overflow-x:hidden만으로는 스크롤 컨테이너가 html인 모바일 브라우저에서 안 잡혀서
    html에도 걸고, touch-action:pan-y로 가로 팬 제스처 자체를 차단한다(세로 스크롤은
    그대로 허용). 개별 가로 스크롤 컨테이너(.tabbar/.tbl-wrap/.vbar-scroll 등)는 각자
-   overflow-x:auto인 자체 스크롤 컨텍스트라 영향받지 않는다. */
+   overflow-x:auto인 자체 스크롤 컨텍스트라 영향받지 않는다.
+   body에 overflow-y:hidden을 명시하는 이유: CSS 스펙상 overflow-x를 visible이
+   아닌 값으로 주면 overflow-y도 visible일 수 없어 자동으로 auto로 강제된다(가만히
+   둬도 마찬가지라 overflow-y:visible을 명시해도 효과가 없다) — 그 결과 html과 body
+   둘 다 독립적으로 세로 스크롤 가능한 컨테이너가 되어버려, 모바일 브라우저에 따라
+   실제 터치 스크롤이 html/body 중 어느 쪽에서 일어나는지가 갈리고 position:sticky
+   기준점과 window.scrollTo()가 서로 다른 컨테이너를 가리켜 .topbar(fixed)와
+   .tabbar(sticky) 사이에 회색 여백이 벌어지는 원인이 됐다. body는 원래 내용물
+   높이만큼 자연스럽게 늘어나는 요소라 자체적으로 스크롤할 필요가 없으므로,
+   overflow-y를 명시적으로 hidden까지 내려 body가 독립 스크롤 컨테이너가 되는
+   경우 자체를 없앤다 — 스크롤 가능한 컨테이너는 html 하나로 확정된다(표준 모드에서
+   document.scrollingElement도 이 상태에서 항상 html이 된다). */
 html{overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
-body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:52px;overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
+body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;line-height:1.5;padding-top:52px;overflow-x:hidden;overflow-y:hidden;touch-action:pan-y;overscroll-behavior-x:none;}
 
 /* ── 헤더 ── */
 .topbar{background:var(--color-card);border-bottom:1px solid var(--color-border);
@@ -378,23 +389,41 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
    숨겨 여유를 만든다. */
 @media(min-width:600px)and(max-width:760px){
   .fold-hide-narrow{display:none;}
+  /* 편집 칼럼(📈/✏️/🗑 최대 3개)이 실제로 들어갈 폭을 확보하려면 아이콘 버튼 자체도
+     좀 더 좁혀야 한다 — 터치 타겟이 과하게 작아지지 않는 선에서 좌우 패딩만 축소. */
+  #page_portfolio .tbl-wrap table.table-fit .edit-btn,
+  #page_portfolio .tbl-wrap table.table-fit .del-btn{padding:6px 5px;}
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:20%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:19%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:9%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(5),
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(7),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:13%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:12%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:14%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:13%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:9%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:18%;}
+  /* 종목 차트를 펼쳤을 때 그 안에 중첩되는 매매이력 미니 표(날짜/구분/단가/수량/메모,
+     table-auto) — 매매이력 탭의 table-auto와는 #page_portfolio로 스코프가 분리되어
+     서로 영향 없음. */
+  #page_portfolio .tbl-wrap table.table-auto{table-layout:fixed;}
+  #page_portfolio .tbl-wrap table.table-auto th:nth-child(1),
+  #page_portfolio .tbl-wrap table.table-auto td:nth-child(1){width:16%;}
+  #page_portfolio .tbl-wrap table.table-auto th:nth-child(2),
+  #page_portfolio .tbl-wrap table.table-auto td:nth-child(2){width:14%;}
+  #page_portfolio .tbl-wrap table.table-auto th:nth-child(3),
+  #page_portfolio .tbl-wrap table.table-auto td:nth-child(3){width:18%;}
+  #page_portfolio .tbl-wrap table.table-auto th:nth-child(4),
+  #page_portfolio .tbl-wrap table.table-auto td:nth-child(4){width:14%;}
+  #page_portfolio .tbl-wrap table.table-auto th:nth-child(5),
+  #page_portfolio .tbl-wrap table.table-auto td:nth-child(5){width:36%;}
   #page_tradelog .tbl-wrap table.table-auto{table-layout:fixed;}
   #page_tradelog .tbl-wrap table.table-auto th:nth-child(1),
   #page_tradelog .tbl-wrap table.table-auto td:nth-child(1){width:14%;}
@@ -3757,9 +3786,17 @@ function switchPage(pageId){
   // 있는데 스크롤 위치는 그대로라 clipSubpageUnderSubtabbar()가 서브탭바 바로
   // 아래 콘텐츠(요약카드, 토글 등)를 실제보다 훨씬 많이 잘라내 버린다 — 탭 전환 시
   // 맨 위로 스크롤을 리셋해 항상 올바른 기준(스크롤 0)에서 다시 그려지게 한다.
-  window.scrollTo(0, 0);
+  resetScrollTop();
   if(typeof PAGE_RENDER_HOOKS[pageId]==='function') PAGE_RENDER_HOOKS[pageId]();
   scheduleSubtabbarClip();
+}
+// window.scrollTo(0,0)만으로는 안 되는 경우가 있어(overflow-x:hidden을 html/body에
+// 걸면서 두 요소 모두 auto 스크롤 컨테이너가 될 수 있음 — 위 body{overflow-y:hidden}로
+// 대부분 막았지만, 혹시 남아있는 브라우저별 예외에 대비해 세 가지를 모두 0으로 맞춘다.
+function resetScrollTop(){
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
 }
 // 서브탭이 있는 페이지(대시보드/세금관리/배당금관리/월별성과)에서 사용.
 // subRenderHooks: {subId: fn} — 해당 서브페이지가 보여질 때 다시 그려야 하는 렌더 함수(캔버스 등)
@@ -3775,7 +3812,7 @@ function switchSubPage(pageId, subId){
   });
   localStorage.setItem('currentSubPage_'+pageId, subId);
   // switchPage()와 동일한 이유로, 서브탭 전환 시에도 스크롤을 맨 위로 리셋한다.
-  window.scrollTo(0, 0);
+  resetScrollTop();
   const hook = SUBPAGE_RENDER_HOOKS[pageId+'_'+subId];
   if(typeof hook==='function') hook();
   scheduleSubtabbarClip();
