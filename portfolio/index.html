@@ -916,6 +916,24 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
           <input id="cf_subacct_custom" placeholder="계좌명 입력" style="width:100px;display:none;margin-top:3px;
                  border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
         </label>
+        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+          구분<span style="font-size:9px;margin-left:2px;">(선택)</span>
+          <select id="cf_subcat" onchange="toggleCustomInput('cf_subcat','cf_subcat_custom')"
+            style="width:100px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+            <option value="">-- 없음 --</option>
+            <option value="pension_personal">개인연금</option>
+            <option value="pension_retirement">퇴직연금</option>
+            <option value="irp">IRP 개인</option>
+            <option value="isa">ISA</option>
+            <option value="stock_kr">국내주식</option>
+            <option value="stock_us">미국주식</option>
+            <option value="stock_jp">일본주식</option>
+            <option value="crypto">가상자산</option>
+            <option value="__custom__">+ 직접입력</option>
+          </select>
+          <input id="cf_subcat_custom" placeholder="구분명 입력" style="width:100px;display:none;margin-top:3px;
+                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+        </label>
       </div>
       <!-- 4가지 모드 선택 -->
       <div style="display:flex;gap:6px;margin-bottom:10px;flex:1 1 100%;flex-wrap:wrap;">
@@ -2514,21 +2532,32 @@ function migrateSoldHistory(){
 // 예전에는 조용히 아무 반영도 하지 않아 매매 대금이 통째로 유실됐음(매도만 되고 매수 차감이
 // 안 되거나 그 반대) -> 0원짜리 현금 행을 자동 생성한 뒤 반영하도록 수정.
 // 반환: 조정된 현금 자산 이름 또는 null(같은 통화 현금 행이 2개 이상이라 모호한 경우만)
-function adjustCashBalance(currency, amountInCurrency, sign, subAccount){
+// subCategory: 매매 종목의 구분(개인연금/퇴직연금/IRP 등) — 계좌 안에 구분별로 현금이 나뉘어
+// 있으면(예: 농협 개인연금 현금 vs 농협 퇴직연금 현금) 정확히 그 구분의 현금만 조정한다.
+// 구분이 일치하는 현금이 없지만 그 계좌·통화에 현금이 하나뿐이면(기존 방식) 하위호환으로 그걸 사용.
+function adjustCashBalance(currency, amountInCurrency, sign, subAccount, subCategory){
   const acct = subAccount||null;
-  let cashAssets = assets.filter(a=>a.category==='cash' && a.currency===currency && (a.subAccount||null)===acct);
-  if(cashAssets.length===0){
+  const wantCat = subCategory||null;
+  const pool = assets.filter(a=>a.category==='cash' && a.currency===currency && (a.subAccount||null)===acct);
+  const exactMatches = pool.filter(a=>(a.subCategory||null)===wantCat);
+
+  let cash;
+  if(exactMatches.length===1){
+    cash = exactMatches[0];
+  } else if(exactMatches.length===0 && pool.length===1){
+    cash = pool[0];
+  } else if(exactMatches.length===0 && pool.length===0){
     const acctLabel = acct ? (SUBACCT_LABELS[acct]||acct) : null;
-    const created = {id:uid(), ticker:'—', name: acctLabel?`현금(${acctLabel}·${currency})`:`현금(${currency})`,
-      category:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, subAccount:acct};
+    const catLabel = wantCat ? (CAT_LABELS[wantCat]||wantCat) : null;
+    const labelParts = [acctLabel, catLabel].filter(Boolean).join('·');
+    const created = {id:uid(), ticker:'—', name: labelParts?`현금(${labelParts}·${currency})`:`현금(${currency})`,
+      category:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, subAccount:acct, subCategory:wantCat};
     assets.push(created);
-    cashAssets = [created];
-  }
-  if(cashAssets.length>1){
-    console.warn(`[현금 자동반영 건너뜀] ${currency} 현금 행이 ${cashAssets.length}개 있어 어느 것을 조정할지 모호합니다. 수동으로 확인해 주세요.`);
+    cash = created;
+  } else {
+    console.warn(`[현금 자동반영 건너뜀] ${currency} 현금 행이 ${pool.length}개 있어 어느 것을 조정할지 모호합니다. 수동으로 확인해 주세요.`);
     return null;
   }
-  const cash = cashAssets[0];
   const newAmt = (cash.avgPrice||0) + sign*amountInCurrency;
   cash.avgPrice = newAmt; cash.currentPrice = newAmt; cash.prevPrice = newAmt;
   return cash.name;
@@ -2646,7 +2675,7 @@ function logSellTrade(a, qty, sellPrice, reason){
   const pnl = (sellPrice - a.avgPrice) * qty * fxRate;
   const pnlPct = a.avgPrice>0 ? ((sellPrice - a.avgPrice) / a.avgPrice) * 100 : null;
   const totalKRW = Math.round(sellPrice * qty * fxRate);
-  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, sellPrice*qty, +1, a.subAccount||null) : null;
+  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, sellPrice*qty, +1, a.subAccount||null, a.category||null) : null;
   addTradeLog({
     name: a.name, ticker: a.ticker, type: 'sell', at: Date.now(),
     category: a.category||null, attribute: a.attribute||null, subAccount: a.subAccount||null,
@@ -2661,7 +2690,7 @@ function logSellTrade(a, qty, sellPrice, reason){
 function logBuyTrade(a, qty, buyPrice, reason){
   const fxRate = a.currency==='USD'?FX.USD:a.currency==='JPY'?FX.JPY:1;
   const totalKRW = Math.round(buyPrice * qty * fxRate);
-  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, buyPrice*qty, -1, a.subAccount||null) : null;
+  const cashName = a.category!=='cash' ? adjustCashBalance(a.currency, buyPrice*qty, -1, a.subAccount||null, a.category||null) : null;
   addTradeLog({
     name: a.name, ticker: a.ticker||'—', type: 'buy', at: Date.now(),
     category: a.category||null, attribute: a.attribute||null, subAccount: a.subAccount||null,
@@ -3243,7 +3272,9 @@ function renderTable(){
       </td>
       <td class="fold-hide"><span class="cat-badge" style="background:${cc}20;color:${cc}">${tableBadge(a)}</span></td>
       <td class="fold-hide">${a.subAccount?`<span class="cat-badge" style="background:${sac}20;color:${sac}">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:na}</td>
-      <td class="fold-hide">${isCash ? na : (a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na)}</td>
+      <td class="fold-hide">${isCash
+        ? (a.subCategory?`<span class="cat-badge" style="background:${CAT_COLS[a.subCategory]||'#8e8e93'}20;color:${CAT_COLS[a.subCategory]||'#8e8e93'}">${CAT_LABELS[a.subCategory]||a.subCategory}</span>`:na)
+        : (a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na)}</td>
       <td style="font-size:11px;">
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
@@ -3333,6 +3364,27 @@ function renderTable(){
                 <input id="ep_subacct_custom_${a.id}" placeholder="계좌명 입력"
                   value="${a.subAccount && !['nh','mf'].includes(a.subAccount)?a.subAccount.replace(/"/g,'&quot;'):''}"
                   style="width:100px;display:${a.subAccount && !['nh','mf'].includes(a.subAccount)?'inline-block':'none'};margin-top:3px;
+                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
+              </label>
+              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
+                구분
+                <select id="ep_subcat_${a.id}" onchange="toggleCustomInput('ep_subcat_${a.id}','ep_subcat_custom_${a.id}')"
+                  style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
+                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
+                  <option value=""   ${!a.subCategory?'selected':''}>-- 없음 --</option>
+                  <option value="pension_personal"   ${a.subCategory==='pension_personal'?'selected':''}>개인연금</option>
+                  <option value="pension_retirement" ${a.subCategory==='pension_retirement'?'selected':''}>퇴직연금</option>
+                  <option value="irp"       ${a.subCategory==='irp'      ?'selected':''}>IRP 개인</option>
+                  <option value="isa"       ${a.subCategory==='isa'      ?'selected':''}>ISA</option>
+                  <option value="stock_kr"  ${a.subCategory==='stock_kr' ?'selected':''}>국내주식</option>
+                  <option value="stock_us"  ${a.subCategory==='stock_us' ?'selected':''}>미국주식</option>
+                  <option value="stock_jp"  ${a.subCategory==='stock_jp' ?'selected':''}>일본주식</option>
+                  <option value="crypto"    ${a.subCategory==='crypto'   ?'selected':''}>가상자산</option>
+                  <option value="__custom__" ${a.subCategory && !['pension_personal','pension_retirement','irp','isa','stock_kr','stock_us','stock_jp','crypto'].includes(a.subCategory)?'selected':''}>+ 직접입력</option>
+                </select>
+                <input id="ep_subcat_custom_${a.id}" placeholder="구분명 입력"
+                  value="${a.subCategory && !['pension_personal','pension_retirement','irp','isa','stock_kr','stock_us','stock_jp','crypto'].includes(a.subCategory)?a.subCategory.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${a.subCategory && !['pension_personal','pension_retirement','irp','isa','stock_kr','stock_us','stock_jp','crypto'].includes(a.subCategory)?'inline-block':'none'};margin-top:3px;
                          border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
             </div>
@@ -3629,6 +3681,7 @@ function executeTrade(){
     const a=assets.find(x=>x.id===id); if(!a) return;
     a.avgPrice=trade.newAmt; a.currentPrice=trade.newAmt; a.prevPrice=trade.newAmt;
     if(trade.subacct !== undefined) a.subAccount = trade.subacct || null;
+    if(trade.subcat !== undefined) a.subCategory = trade.subcat || null;
     editingId=null;
     saveAssets();renderAll();
     return;
@@ -3701,11 +3754,11 @@ function executeTrade(){
       existing.quantity = totalQty;
       if(attr) existing.attribute = attr; // 속성 입력 시 갱신
       if(subacct) existing.subAccount = subacct; // 계좌 입력 시 갱신
-      cashName = existing.category!=='cash' ? adjustCashBalance(existing.currency, fPrice*fQty, -1, existing.subAccount||null) : null;
+      cashName = existing.category!=='cash' ? adjustCashBalance(existing.currency, fPrice*fQty, -1, existing.subAccount||null, existing.category||null) : null;
       if(st){ st.textContent=`✅ ${existing.name} ${fQty.toLocaleString()}주 매수 → 총 ${totalQty.toLocaleString()}주${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
       assets.push({id:uid(),ticker:tickerVal,name,category:cat,quantity:fQty,avgPrice:fPrice,currentPrice:fPrice,prevPrice:fPrice,currency:cur,attribute:attr||null,subAccount:subacct||null,...(bondFields||{})});
-      cashName = cat!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1, subacct||null) : null;
+      cashName = cat!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1, subacct||null, cat||null) : null;
       if(st){ st.textContent=`✅ ${name} 추가 완료${isBond?'':' — 🔄 시세 갱신으로 현재가를 불러오세요.'}${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     }
     // 계좌 미선택 시(빈칸) 기존 보유분의 계좌를 그대로 사용 — 안 그러면 재매수 시 계좌가 null로 찍혀
@@ -3745,14 +3798,15 @@ function executeTrade(){
 
   // 현금 폼
   if(mode==='form_cash'){
-    const {name:cName, amount, cur, isDividend, divAmount, divSource, cashMode:trCashMode, rawAmount, subacct} = trade;
+    const {name:cName, amount, cur, isDividend, divAmount, divSource, cashMode:trCashMode, rawAmount, subacct, subcat} = trade;
     const acct = subacct||null;
-    const existing = assets.find(a=>a.category==='cash'&&a.name===cName&&a.currency===cur&&(a.subAccount||null)===acct);
+    const scat = subcat||null;
+    const existing = assets.find(a=>a.category==='cash'&&a.name===cName&&a.currency===cur&&(a.subAccount||null)===acct&&(a.subCategory||null)===scat);
     if(existing){
       existing.avgPrice=amount; existing.currentPrice=amount; existing.prevPrice=amount; existing.quantity=1;
       if(st){ st.textContent=`✅ ${cName} ${CUR_SYM[cur]}${amount.toLocaleString()} 으로 업데이트`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
-      assets.push({id:uid(),ticker:'—',name:cName,category:'cash',quantity:1,avgPrice:amount,currentPrice:amount,prevPrice:amount,currency:cur,subAccount:acct});
+      assets.push({id:uid(),ticker:'—',name:cName,category:'cash',quantity:1,avgPrice:amount,currentPrice:amount,prevPrice:amount,currency:cur,subAccount:acct,subCategory:scat});
       if(st){ st.textContent=`✅ ${cName} ${CUR_SYM[cur]}${amount.toLocaleString()} 추가 완료`; setTimeout(()=>{st.textContent='';},3000); }
     }
     if(isDividend){
@@ -3782,6 +3836,9 @@ function executeTrade(){
     document.getElementById('cf_subacct').value='';
     document.getElementById('cf_subacct_custom').value='';
     document.getElementById('cf_subacct_custom').style.display='none';
+    document.getElementById('cf_subcat').value='';
+    document.getElementById('cf_subcat_custom').value='';
+    document.getElementById('cf_subcat_custom').style.display='none';
     if(document.getElementById('cf_div_source')) document.getElementById('cf_div_source').value='';
     saveAssets();renderAll();
     return;
@@ -4481,6 +4538,8 @@ function confirmEditCash(id){
   if(isNaN(amt)||amt<0){ if(st) st.textContent='❌ 금액을 입력해 주세요.'; return; }
   const subacct = readSelectOrCustom(`ep_subacct_${id}`, `ep_subacct_custom_${id}`, false);
   if(subacct===null) return;
+  const subcat = readSelectOrCustom(`ep_subcat_${id}`, `ep_subcat_custom_${id}`, false);
+  if(subcat===null) return;
   const sym=CUR_SYM[a.currency];
   let newAmt, changeStr;
   if(mode==='set'){
@@ -4495,14 +4554,16 @@ function confirmEditCash(id){
   }
   const modeColors={set:'#34c759',in:'#007aff',out:'#ff3b30'};
   const modeLabels={set:'잔액 설정',in:'입금',out:'출금'};
-  pendingTrade={id, mode:'edit_cash', newAmt, subacct};
+  pendingTrade={id, mode:'edit_cash', newAmt, subacct, subcat};
   const acctChanged = subacct !== (a.subAccount||'');
+  const catChanged = subcat !== (a.subCategory||'');
   const titleEl=document.getElementById('tc_title');
   const detailEl=document.getElementById('tc_detail');
   const confirmBtn=document.getElementById('tc_confirm');
   titleEl.innerHTML=`<span style="color:${modeColors[mode]}">💵 현금 ${modeLabels[mode]} 확인</span>`;
   detailEl.innerHTML=`<b>${a.name}</b><br>${changeStr}<br>
     ${acctChanged?`계좌: ${SUBACCT_LABELS[a.subAccount]||a.subAccount||'없음'} → <b>${SUBACCT_LABELS[subacct]||subacct||'없음'}</b><br>`:''}
+    ${catChanged?`구분: ${CAT_LABELS[a.subCategory]||a.subCategory||'없음'} → <b>${CAT_LABELS[subcat]||subcat||'없음'}</b><br>`:''}
     <span style="color:var(--color-tertiary);font-size:11px;">저장 후 잔액: ${sym}${newAmt.toLocaleString()}</span>`;
   confirmBtn.style.background=modeColors[mode];
   confirmBtn.textContent='확인';
@@ -4542,11 +4603,14 @@ function addCash(){
   if(isNaN(amount)||amount<=0){ st.textContent='❌ 금액을 입력해 주세요.'; return; }
   const subacct = readSelectOrCustom('cf_subacct','cf_subacct_custom', false);
   if(subacct===null) return;
+  const subcat = readSelectOrCustom('cf_subcat','cf_subcat_custom', false);
+  if(subcat===null) return;
   const acct = subacct||null;
+  const scat = subcat||null;
   const sym = CUR_SYM[cur];
 
-  // 기존 현금 찾기
-  const existing = assets.find(a=>a.category==='cash'&&a.name===name&&a.currency===cur&&(a.subAccount||null)===acct);
+  // 기존 현금 찾기 (이름·통화·계좌·구분이 모두 같아야 같은 현금으로 취급)
+  const existing = assets.find(a=>a.category==='cash'&&a.name===name&&a.currency===cur&&(a.subAccount||null)===acct&&(a.subCategory||null)===scat);
   let newAmount = amount;
   let modeLabel = '잔액 설정';
   let changeStr = '';
@@ -4573,14 +4637,14 @@ function addCash(){
   }
 
   const divSource = cashMode==='div' ? (document.getElementById('cf_div_source').value.trim() || name) : null;
-  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur, isDividend: cashMode==='div', divAmount: amount, divSource, cashMode, rawAmount: amount, subacct};
+  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur, isDividend: cashMode==='div', divAmount: amount, divSource, cashMode, rawAmount: amount, subacct, subcat};
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
   const modeColors = {set:'#34c759', in:'#007aff', out:'#ff3b30', div:'#ff9500'};
   titleEl.innerHTML = `<span style="color:${modeColors[cashMode]}">💵 현금 ${modeLabel} 확인</span>`;
   detailEl.innerHTML = `
-    <b>${name}</b> (${cur})${acct?` · ${SUBACCT_LABELS[acct]||acct}`:''}<br>
+    <b>${name}</b> (${cur})${acct?` · ${SUBACCT_LABELS[acct]||acct}`:''}${scat?` · ${CAT_LABELS[scat]||scat}`:''}<br>
     ${changeStr}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">저장 후 잔액: ${sym}${newAmount.toLocaleString()}</span>`;
   confirmBtn.style.background = modeColors[cashMode];
