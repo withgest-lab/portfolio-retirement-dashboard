@@ -1422,8 +1422,8 @@ const DONUT_CAT_COLS = {
   irp:CAT_COLS.irp, isa:CAT_COLS.isa, crypto:CAT_COLS.crypto, cash:CAT_COLS.cash,
 };
 function donutCatKey(a){
-  if(a.category==='cash' && a.subCategory && CAT_LABELS[a.subCategory] && a.subCategory!=='cash')
-    return donutCatKey({category:a.subCategory, name:a.name});
+  if(a.category==='cash' && a.subCategory && a.subCategory!=='cash')
+    return CAT_LABELS[a.subCategory] ? donutCatKey({category:a.subCategory, name:a.name}) : a.subCategory;
   if(a.category==='stock_us'||a.category==='stock_jp') return 'overseas';
   if(a.category==='stock_kr'&&isETF(a)) return 'etf';
   if(a.category==='stock_kr') return 'domestic';
@@ -2573,8 +2573,11 @@ function adjustCashBalance(currency, amountInCurrency, sign, subAccount, subCate
     const acctLabel = acct ? (SUBACCT_LABELS[acct]||acct) : null;
     const catLabel = wantCat ? (CAT_LABELS[wantCat]||wantCat) : null;
     const labelParts = [acctLabel, catLabel].filter(Boolean).join('·');
+    // 같은 계좌·구분의 다른 통화 현금이 있으면 그 속성(안전자산 등)을 이어받는다
+    const sibling = assets.find(a=>a.category==='cash' && (a.subAccount||null)===acct && (a.subCategory||null)===wantCat && a.attribute);
     const created = {id:uid(), ticker:'—', name: labelParts?`현금(${labelParts}·${currency})`:`현금(${currency})`,
-      category:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, subAccount:acct, subCategory:wantCat};
+      category:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, subAccount:acct, subCategory:wantCat,
+      attribute: sibling ? sibling.attribute : null};
     assets.push(created);
     cash = created;
   } else {
@@ -3298,7 +3301,7 @@ function renderTable(){
         ? `<span class="cat-badge" style="background:${CAT_COLS[a.subCategory]||'#8e8e93'}20;color:${CAT_COLS[a.subCategory]||'#8e8e93'}">${CAT_LABELS[a.subCategory]||a.subCategory}</span>`
         : `<span class="cat-badge" style="background:${cc}20;color:${cc}">${tableBadge(a)}</span>`}</td>
       <td class="fold-hide">${a.subAccount?`<span class="cat-badge" style="background:${sac}20;color:${sac}">${SUBACCT_LABELS[a.subAccount]||a.subAccount}</span>`:na}</td>
-      <td class="fold-hide">${a.attribute?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute]||'#8e8e93'}20;color:${ATTR_COLS[a.attribute]||'#8e8e93'}">${a.attribute}</span>`:na}</td>
+      <td class="fold-hide">${(a.attribute||(isCash?'현금':''))?`<span class="cat-badge" style="background:${ATTR_COLS[a.attribute||'현금']||'#8e8e93'}20;color:${ATTR_COLS[a.attribute||'현금']||'#8e8e93'}">${a.attribute||'현금'}</span>`:na}</td>
       <td style="font-size:11px;">
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
