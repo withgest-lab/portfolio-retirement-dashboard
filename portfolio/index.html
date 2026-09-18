@@ -1422,6 +1422,8 @@ const DONUT_CAT_COLS = {
   irp:CAT_COLS.irp, isa:CAT_COLS.isa, crypto:CAT_COLS.crypto, cash:CAT_COLS.cash,
 };
 function donutCatKey(a){
+  if(a.category==='cash' && a.subCategory && CAT_LABELS[a.subCategory] && a.subCategory!=='cash')
+    return donutCatKey({category:a.subCategory, name:a.name});
   if(a.category==='stock_us'||a.category==='stock_jp') return 'overseas';
   if(a.category==='stock_kr'&&isETF(a)) return 'etf';
   if(a.category==='stock_kr') return 'domestic';
