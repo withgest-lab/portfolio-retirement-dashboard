@@ -371,7 +371,16 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 @media(max-width:900px){
   .topbar-actions .status-wrap span{display:none;}
 }
-@media(min-width:600px)and(max-width:960px){
+/* ── Z Fold7 펼침(세로/가로 모두, ~481~960px) ──
+   이 구간 안에서 실제 세로 폭이 정확히 몇 px인지(기기·브라우저·글자 크기 설정에
+   따라 달라짐)를 추측해서 별도 좁은 서브 브레이크포인트(600~760px 등)로 나눠봤지만,
+   추측이 틀리면(예: 실제 폭이 그 서브 구간 경계를 살짝 벗어나면) 적용 자체가 안 돼
+   버그가 재발했다. 그래서 폭을 더 잘게 추측하는 대신, table-layout:fixed +
+   퍼센트 열 폭 배분을 폴드 접힘(≤480px) 바로 위부터 960px까지 통째로 적용한다 —
+   퍼센트 기반이라 실제 폭이 이 범위 안 어디든(세로/가로 어느 쪽이든) 항상 뷰포트를
+   넘지 않는다. 하한을 600이 아니라 481로 낮춘 이유: 480~600px 사이에 아무 규칙도
+   없으면 그 폭의 기기는 규칙 사각지대에 빠져 같은 버그가 재발할 수 있다. */
+@media(min-width:481px)and(max-width:960px){
   .summary-grid{grid-template-columns:repeat(4,1fr);}
   table{font-size:11px;}
   th,td{padding:7px 4px;}
@@ -379,19 +388,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #soldTbody td{padding:4px 3px!important;line-height:1.2!important;font-size:10px!important;}
   .card .tbl-wrap table.table-auto th,
   .card .tbl-wrap table.table-auto td{padding-left:4px;padding-right:4px;}
-  /* 자산 목록: 9열 한 화면 */
   .card .tbl-wrap table.table-fit th,
-  .card .tbl-wrap table.table-fit td{padding-left:5px;padding-right:5px;font-size:11px;}
+  .card .tbl-wrap table.table-fit td{padding-left:4px;padding-right:4px;font-size:11px;}
   .card .tbl-wrap table.table-fit th{font-size:9px;}
-}
-/* ── Z Fold7 펼침 세로(폭이 좁은 쪽, ~600~760px) ──
-   위 600~960 구간은 가로로 넓은 쪽(펼침 가로 ~904px)에서만 검증되어 있어, 세로로
-   세운 상태(폭이 더 좁음)에서는 9열/6열 표가 padding을 줄여도 여전히 뷰포트 폭을
-   살짝 넘어(.tbl-wrap의 overflow-x:auto가 의도한 대로 작동해) 좌우로 드래그되는
-   여유가 남는다. table-layout:fixed로 열 폭을 뷰포트 폭 안에 확정 배분하고, 그래도
-   부족한 만큼은 비핵심 열(평단) 하나를 폴드 접힘(≤480px)과 별개로 이 구간에서도
-   숨겨 여유를 만든다. */
-@media(min-width:600px)and(max-width:760px){
   .fold-hide-narrow{display:none;}
   /* 편집 칼럼(📈/✏️/🗑 최대 3개)이 실제로 들어갈 폭을 확보하려면 아이콘 버튼 자체도
      좀 더 좁혀야 한다 — 터치 타겟이 과하게 작아지지 않는 선에서 좌우 패딩만 축소. */
