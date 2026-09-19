@@ -1540,6 +1540,7 @@ const DEFAULT_ASSETS = [
 ════════════════════════════════════════ */
 const LEGACY_STOCK_ACCTTYPES = ['stock_kr','stock_us','stock_jp','crypto'];
 const CRYPTO_FIX_KEY = 'pf_fix_crypto_frame_v1'; // 가상자산 프레임 1회 보정 완료 표시
+const CRYPTO_LOG_FIX_KEY = 'pf_fix_crypto_log_v1'; // 매매이력 쪽 1회 보정 완료 표시
 // 가상자산 판별 — 자산유형이 '가상자산'이거나, (다른 역할을 이미 지정한 경우를 대비해) 티커가 BTC-USD 형태
 function isCryptoAsset(a){
   return !!a && a.acctType!=='cash' && (a.assetType==='가상자산' || /-USD$/i.test(a.ticker||''));
@@ -2763,6 +2764,24 @@ function loadTradeLog(){
     if(Array.isArray(arr)){
       let changed=false;
       arr.forEach(r=>{ if(migrateRecordFields(r)) changed=true; });
+      // 1회 보정: 코인 거래 기록에 남은 Core 등 옛 자산유형 → '가상자산', 자동 추정된 투자시장 '미국' → '글로벌'
+      // (보유종목의 CRYPTO_FIX_KEY 보정과 같은 기준. 플래그로 1회만 실행해 이후 수동 수정은 존중)
+      if(localStorage.getItem(CRYPTO_LOG_FIX_KEY)===null){
+        const cryptoNames = new Set((Array.isArray(assets)?assets:[]).filter(isCryptoAsset).map(a=>a.name));
+        const before = localStorage.getItem(TRADE_KEY);
+        let fixed=false;
+        arr.forEach(r=>{
+          if(!r || r.acctType==='cash') return;
+          if(!(/-USD$/i.test(r.ticker||'') || cryptoNames.has(r.name))) return;
+          if(r.assetType!=='가상자산'){ r.assetType='가상자산'; fixed=true; }
+          if(!r.market || r.market==='us'){ r.market='global'; fixed=true; }
+        });
+        if(fixed){
+          try{ if(localStorage.getItem(TRADE_KEY+'_premigration_crypto')===null) localStorage.setItem(TRADE_KEY+'_premigration_crypto', before); }catch(e){}
+          changed=true;
+        }
+        try{ localStorage.setItem(CRYPTO_LOG_FIX_KEY,'1'); }catch(e){}
+      }
       if(changed){ try{ localStorage.setItem(TRADE_KEY, JSON.stringify(arr)); }catch(e){} }
     }
     return arr;
