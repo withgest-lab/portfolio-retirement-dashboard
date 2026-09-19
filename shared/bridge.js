@@ -65,10 +65,17 @@
       var krw = assetValueKRW(a, fx);
       if (krw === 0) continue;
 
-      switch (a.category) {
+      // 2026-09 리네이밍: 포트폴리오 대시보드의 category→acctType, subAccount→company로
+      // 필드명이 바뀌었다. 이 브릿지는 값(코드) 자체가 아니라 필드명에 의존하고 있었으므로
+      // 그대로 두면 은퇴 대시보드 자동연동이 조용히 끊긴다 — 반드시 함께 갱신해야 한다.
+      // (마이그레이션 이전의 구버전 데이터가 남아있을 가능성에도 대비해 a.category/
+      //  a.subAccount로도 한 번 더 폴백한다.)
+      var acctType = a.acctType !== undefined ? a.acctType : a.category;
+      var company  = a.company  !== undefined ? a.company  : a.subAccount;
+      switch (acctType) {
         case 'pension_personal':
-          if (a.subAccount === 'nh') sums.nh += krw;
-          else if (a.subAccount === 'mf') sums.mf += krw;
+          if (company === 'nh') sums.nh += krw;
+          else if (company === 'mf') sums.mf += krw;
           else sums.unclassifiedPersonalPension += krw;
           break;
         case 'irp':
