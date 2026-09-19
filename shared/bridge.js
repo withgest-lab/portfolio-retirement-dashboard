@@ -72,6 +72,13 @@
       //  a.subAccount로도 한 번 더 폴백한다.)
       var acctType = a.acctType !== undefined ? a.acctType : a.category;
       var company  = a.company  !== undefined ? a.company  : a.subAccount;
+      // 현금은 acctType이 'cash'이고 그 현금이 속한 계좌(개인연금/퇴직연금/IRP/ISA/일반)는 cashAcctType에
+      // 따로 저장된다(포트폴리오의 donutAcctTypeKey와 같은 규칙). acctType만 보면 계좌 안 현금이
+      // 통째로 빠져 연동 잔액이 실제보다 적게 나온다 — 소속 계좌로 환원해서 종목과 똑같이 합산한다.
+      if (acctType === 'cash') {
+        var cashAcct = a.cashAcctType !== undefined ? a.cashAcctType : a.subCategory;
+        if (cashAcct && cashAcct !== 'cash') acctType = cashAcct;
+      }
       switch (acctType) {
         case 'pension_personal':
           if (company === 'nh') sums.nh += krw;
@@ -88,7 +95,7 @@
           sums.isa += krw;
           break;
         default:
-          break; // 국내/미국/일본주식, 가상자산, 현금은 은퇴 계좌 잔액과 무관
+          break; // 일반계좌 종목·현금, 계좌유형이 없는 현금은 은퇴 계좌 잔액과 무관
       }
     }
 
