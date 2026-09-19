@@ -1478,8 +1478,10 @@ const LINE_COLS = [
   '#4a3aa7', // 바이올렛
   '#e34948', // 레드
 ];
-const ACCTTYPE_COLS   = {general:'#ff9500',pension_personal:'#af52de',pension_retirement:'#34c759',irp:'#5856d6',isa:'#00b5ad',cash:'#8e8e93'};
-const ASSET_COLS = ['#5ac8fa','#ffd60a','#30d158','#bf5af2','#ff6961','#32ade6','#ff375f','#6ac4dc','#c8a96e','#aeaeb2'];
+/* 색 팔레트 "뮤트 에디토리얼" — 채도를 낮춘 스틸블루·테라코타·세이지·더스티로즈 계열. 자산유형·투자시장·계좌유형·종목 막대가
+   같은 계열을 공유하고, 세부 종목은 부모색의 명암(donutShade)으로만 변주한다. 현금·미지정은 의도적으로 무채색. */
+const ACCTTYPE_COLS   = {general:'#4a6fa5',pension_personal:'#8a7fc0',pension_retirement:'#5fa38a',irp:'#c9a45c',isa:'#c4607a',cash:'#9ba3af'};
+const ASSET_COLS = ['#4a6fa5','#e58e5a','#5fa38a','#8a7fc0','#c9a45c','#c4607a','#6aa3b8','#9aa66a','#b58a72','#aab2be'];
 const ACCTTYPE_LABELS = {general:'일반계좌',pension_personal:'개인연금',pension_retirement:'퇴직연금',irp:'IRP 개인',isa:'ISA',cash:'현금'};
 /* 데이터 프레임: 금융회사(company)=증권사·플랫폼 / 계좌유형(acctType)=법적 계좌·절세제도 /
    투자시장(market)=실제 투자 대상 지역 / 자산유형(assetType)=포트폴리오 내 역할·자산군.
@@ -1490,12 +1492,12 @@ const LEGACY_ACCTTYPE_LABELS = {'국내주식':'general','미국주식':'general
 const ASSETTYPE_OPTIONS = ['Core','주도주','유망주','원자재','안전자산','가상자산'];
 // 개인연금(pension_personal) 세부계좌 구분 — 은퇴 대시보드의 nh(농협)/mf(미래에셋) 잔액 자동 연동에 사용
 const COMPANY_LABELS = {nh:'농협',mf:'미래에셋'};
-const ASSETTYPE_COLS = {'Core':'#0a84ff','주도주':'#ff9500','유망주':'#34c759','원자재':'#a2845e','현금':'#8e8e93','안전자산':'#5ac8fa','가상자산':'#ff3b30','미지정':'#c7c7cc'};
+const ASSETTYPE_COLS = {'Core':'#4a6fa5','주도주':'#e58e5a','유망주':'#5fa38a','원자재':'#c9a45c','현금':'#9ba3af','안전자산':'#8a7fc0','가상자산':'#c4607a','미지정':'#cfd4db'};
 /* 투자시장(market) — "상장 거래소"가 아니라 "실제 투자 대상 지역" 기준.
    예) TIGER S&P500은 한국거래소 상장이지만 투자 대상은 미국이므로 'us'.
    여러 나라에 분산 투자하는 상품(글로벌·선진국·신흥국 등)은 'global'. */
 const MARKET_LABELS = {kr:'한국', us:'미국', jp:'일본', global:'글로벌'};
-const MARKET_COLS   = {kr:'#007aff', us:'#ff9500', jp:'#ff3b30', global:'#34c759', 미지정:'#c7c7cc'};
+const MARKET_COLS   = {kr:'#4a6fa5', us:'#e58e5a', jp:'#c4607a', global:'#5fa38a', 미지정:'#cfd4db'};
 const MARKET_OPTIONS = ['kr','us','jp','global'];
 const CUR_SYM    = {KRW:'₩',USD:'$',JPY:'¥'};
 const SNAP_KEY    = 'pf_snaps_v5';
@@ -1510,7 +1512,7 @@ const FX_KEY      = 'pf_fx_v1';
    국내·해외 같은 지역 구분은 계좌유형이 아니라 투자시장(market) 도넛이 담당한다.
    pension_retirement는 라벨만 동일하고 색상은 도넛 차트에서 의도적으로 다른 값을 사용(기존값 유지). */
 const DONUT_ACCTTYPE_LABELS = ACCTTYPE_LABELS;
-const DONUT_ACCTTYPE_COLS = Object.assign({}, ACCTTYPE_COLS, {pension_retirement:'#30b0c7'});
+const DONUT_ACCTTYPE_COLS = Object.assign({}, ACCTTYPE_COLS, {pension_retirement:'#6aa3b8'});
 function donutAcctTypeKey(a){
   // 계좌유형이 지정된 현금은 그 계좌 소속으로 집계
   if(a.acctType==='cash' && a.cashAcctType && a.cashAcctType!=='cash') return a.cashAcctType;
@@ -6601,11 +6603,12 @@ function drawDonut(canvasId,data,size){
 }
 
 // 부모색을 흰색 쪽으로 섞어 자식(세부 종목)색을 만든다 — 부모-자식 관계가 색으로 보이게
+// 가장 큰 종목은 부모색보다 살짝 진하게, 작아질수록 밝게 — 파스텔로 뿌옇게 바래지 않고 같은 색 계열의 깊이로 읽힌다
 function donutShade(hex, j, n){
   const m = /^#([0-9a-f]{6})$/i.exec(hex||'');
   if(!m) return hex||'#8e8e93';
-  const t = n>1 ? 0.08 + 0.42*(j/(n-1)) : 0.18;
-  const ch = k=>{ const v=parseInt(m[1].slice(k,k+2),16); return Math.round(v+(255-v)*t); };
+  const t = n>1 ? -0.08 + 0.5*(j/(n-1)) : 0.06;   // <0: 검정 쪽, >0: 흰색 쪽
+  const ch = k=>{ const v=parseInt(m[1].slice(k,k+2),16); return Math.round(t<0 ? v*(1+t) : v+(255-v)*t); };
   return `rgb(${ch(0)},${ch(2)},${ch(4)})`;
 }
 // 비중 % 표기 — 0.05% 미만은 "0.0%" 대신 "<0.1%"로(아주 작은 종목이 0으로 오해되지 않게)
@@ -7241,8 +7244,8 @@ function drawQuickViewTreemap(){
 const distAssetTypeKey = a => a.assetType || (a.acctType==='cash' ? '현금' : '미지정');
 const distMarketKey    = a => a.market || '미지정';
 const distMarketLabel  = k => MARKET_LABELS[k] || k;
-const distMarketColor  = (k,i) => k==='미지정' ? '#9a9aa0' : (MARKET_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
-const distTypeColor    = (k,i) => k==='미지정' ? '#9a9aa0' : (ASSETTYPE_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
+const distMarketColor  = (k,i) => k==='미지정' ? '#cfd4db' : (MARKET_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
+const distTypeColor    = (k,i) => k==='미지정' ? '#cfd4db' : (ASSETTYPE_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
 // 그룹 합산 → 트리맵 아이템(크기 내림차순). 그룹이 자산 1개면 클릭 시 그 종목 상세로 이동한다.
 function distBuildItems(assetList, keyFn, labelFn, colorFn, denom){
   const sums = new Map();
