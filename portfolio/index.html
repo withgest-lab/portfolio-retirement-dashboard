@@ -43,6 +43,10 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
   height:52px;gap:8px;position:fixed;top:0;left:0;right:0;z-index:100;}
 .logo{font-size:17px;font-weight:700;letter-spacing:-.04em;flex-shrink:0;}
 .logo span{color:var(--color-accent);}
+.topbar-left{display:flex;align-items:baseline;gap:8px;flex-shrink:0;}
+.logo-fx{font-size:10.5px;color:var(--color-tertiary);white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .2s;}
+.logo-fx b{font-weight:700;color:var(--color-secondary);}
+@media(max-width:480px){ .logo-fx .fx-lbl{display:none;} .logo-fx::before{content:'$ ';} }
 .topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
   overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .topbar-actions::-webkit-scrollbar{display:none;}
@@ -124,14 +128,21 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 /* ── 글로벌시장: 보유종목 시장별 트리맵 2x2 ── */
 /* 자산군 분포(비중현황 > 트리맵): ①② 2열, ③ 세부 자산 작은 트리맵 2열 — 좁은 화면은 1열 */
 .dist-top-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-.dist-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.type-chips{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;margin:0 0 10px;}
+.type-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--color-text);white-space:nowrap;}
+.type-chip i{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.type-chip b{font-weight:800;color:var(--color-secondary);}
+.dist-info{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-height:34px;margin-top:8px;padding:6px 10px;background:var(--color-section-bg);border-radius:var(--radius-sm);font-size:12px;}
+.dist-info .di-sw{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.dist-info .di-sub{color:var(--color-secondary);font-size:11.5px;}
+.dist-info .di-go{padding:2px 8px;font-size:11px;margin-left:auto;}
+.dist-info .di-tiny{flex-basis:100%;font-size:10.5px;color:var(--color-tertiary);}
 .dist-cell{background:var(--color-section-bg);border-radius:var(--radius-sm);padding:8px;min-width:0;}
 .dist-canvas-wrap{min-width:0;}
 .dist-canvas-wrap canvas{display:block;max-width:100%;}
 .dist-cell .mt-label{font-size:10px;font-weight:700;color:var(--color-tertiary);text-align:center;margin-bottom:4px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 @media(max-width:700px){ .dist-top-grid{grid-template-columns:minmax(0,1fr);} }
-@media(max-width:480px){ .dist-detail-grid{grid-template-columns:minmax(0,1fr);} }
 
 /* ── 버튼 ── */
 .btn{border:none;cursor:pointer;border-radius:var(--radius-sm);font-family:inherit;
@@ -327,11 +338,20 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .lg-child .lg-name{font-weight:600;}
 .lg-more{font-size:9px;color:var(--color-tertiary);height:16px;line-height:16px;}
 .alloc-detail-cell{grid-column:1/-1;}
-.alloc-detail-legend{max-width:260px;}
+.alloc-detail-row{flex-direction:column;gap:6px;width:100%;}
+.alloc-detail-cell .type-chips{width:100%;}
+.alloc-detail-legend{width:100%;max-width:460px;flex:none;}
+.alloc-detail-legend .lg-head{height:24px;margin-top:6px;border-bottom:1px solid var(--color-border);}
+.alloc-detail-legend .lg-head .lg-name{font-size:12px;}
+.alloc-detail-legend .lg-head .lg-pct{font-size:12px;}
+.alloc-detail-legend .lg-child .lg-name{font-size:11.5px;}
+.alloc-detail-legend .lg-child .lg-pct{font-size:11px;}
+.alloc-detail-legend .lg-amt{font-size:10px;min-width:44px;}
 /* 좁은 화면(접힘·반분할, JS가 폭<600px일 때 data-mode=narrow 지정): 범례는 도넛 아래, 막대는 금액 숨김 */
 .alloc-grid[data-mode="narrow"] .alloc-donut-row{flex-direction:column;gap:6px;}
 .alloc-grid[data-mode="narrow"] .alloc-legend{width:100%;max-width:none;flex:none;}
 .alloc-grid[data-mode="narrow"] .lg-amt{display:none;}
+.alloc-grid[data-mode="narrow"] .alloc-detail-legend .lg-amt{display:block;}
 .alloc-grid[data-mode="narrow"] .alloc-bars .bar-label{width:58px;}
 .alloc-grid[data-mode="narrow"] .alloc-bars .bar-pct{width:40px;}
 .alloc-grid[data-mode="narrow"] .alloc-bars .bar-pct span:nth-child(2){display:none;}
@@ -363,15 +383,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 /* ── 지수 ── */
 .index-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;}
-/* 미국 카드는 왼쪽에 세로로 길게, 오른쪽엔 한국(위)·환율(아래)을 쌓아서 전체 카드
-   가로폭을 크게 줄인다 — 예전엔 미국 카드가 혼자 한 줄 전체를 차지해 불필요하게 넓었음 */
-.index-market-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"us kr" "us fx";gap:8px;max-width:440px;}
-.index-market-us{grid-area:us;}
-.index-market-kr{grid-area:kr;}
-.index-market-fx{grid-area:fx;}
-@media (max-width:480px){
-  .index-market-grid{grid-template-columns:1fr;grid-template-areas:"us" "kr" "fx";max-width:none;}
-}
+/* 시장 지표 카드는 미국 → 한국 → 환율 순서로 수평 3열(접힘 화면 포함, 항상 한 줄) */
+.index-market-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"us kr fx";gap:8px;align-items:start;}
+.index-market-us{grid-area:us;min-width:0;}
+.index-market-kr{grid-area:kr;min-width:0;}
+.index-market-fx{grid-area:fx;min-width:0;}
 .index-val{font-size:14px;font-weight:800;letter-spacing:-.03em;margin-top:3px;}
 .index-chg{font-size:11px;font-weight:600;margin-top:2px;}
 /* 시장 그룹(미국/한국/환율)별로 한 카드에 종목을 나란히 표시 — 카드가 너무 커 보인다는
@@ -384,6 +400,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .index-row-vals{display:flex;align-items:baseline;gap:6px;flex-shrink:0;}
 .index-row-vals .index-val{font-size:11px;margin-top:0;}
 .index-row-vals .index-chg{font-size:9px;margin-top:0;white-space:nowrap;}
+/* 좁은 폭(접힘): 카드가 약 110px라 한 줄에 이름·값·등락이 안 들어간다 → 카드 안에서 세로로 쌓는다 */
+@media (max-width:600px){
+  .index-group-card{padding:6px 7px;}
+  .index-row{flex-direction:column;align-items:flex-start;gap:1px;padding:4px 0;}
+  .index-row-name{font-size:10px;}
+  .index-row-vals{flex-direction:column;align-items:flex-start;gap:0;}
+  .index-row-vals .index-val{font-size:11.5px;}
+  .index-row-vals .index-chg{font-size:9.5px;}
+}
 
 /* ── 스냅샷 ── */
 .snap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
@@ -519,7 +544,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <body>
 
 <div class="topbar">
-  <div class="logo"><span>포트폴리오</span></div>
+  <div class="topbar-left"><div class="logo"><span>포트폴리오</span></div><span id="logoFx" class="logo-fx" title="USD/KRW"></span></div>
   <div class="topbar-actions">
     <div class="status-wrap">
       <div class="dot" id="statusDot"></div>
@@ -709,9 +734,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <div class="alloc-title">종목 비중</div>
       <div id="barChart" class="alloc-bars"></div>
     </div>
-    <!-- 자산유형별 세부 종목: 2중 링(안쪽=자산유형, 바깥=세부 종목) 대형 도넛 — 기존 3개 도넛·막대 아래 전체 폭 -->
+    <!-- 자산유형별 세부 종목 비중: 2중 링(안쪽=자산유형, 바깥=실제 종목) 대형 도넛 — 첫 화면(2×2) 아래 전체 폭 -->
     <div class="alloc-cell alloc-detail-cell">
-      <div class="alloc-title">자산유형별 세부 종목</div>
+      <div class="alloc-title">자산유형별 세부 종목 비중</div>
+      <div id="assetDetailChips" class="type-chips"></div>
       <div class="alloc-donut-row alloc-detail-row">
         <div class="donut-canvas-wrap">
           <canvas id="assetDetailDonut" width="260" height="260"></canvas>
@@ -738,16 +764,18 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <div class="dist-canvas-wrap"><canvas id="distAssetTypeCanvas" height="220"></canvas></div>
       </div>
     </div>
-    <div class="section-label" style="margin:18px 0 10px;">③ 자산유형별 세부 자산 분포</div>
-    <div class="dist-detail-grid" id="distDetailGrid"></div>
-    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 표시 %=총 자산 대비(③은 해당 자산유형 대비). 색은 투자시장·자산유형 고유색이며, ③의 세부 자산은 투자시장·채권 여부·현금 통화를 우선 기준으로 하고 지수 ETF는 이름·티커 키워드로 근사 분류합니다(실제 지수 편입과 다를 수 있음).</div>
+    <div class="section-label" style="margin:18px 0 10px;">③ 자산유형별 세부 종목 비중</div>
+    <div id="distDetailChips" class="type-chips"></div>
+    <div class="dist-canvas-wrap"><canvas id="distDetailCanvas" height="400"></canvas></div>
+    <div id="distDetailInfo" class="dist-info"></div>
+    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 표시 %=총 자산 대비. ①②는 투자시장·자산유형 고유색, ③은 전체 사각형이 총 자산 100%이고 자산유형 블록 안에 실제 종목이 크기순으로 나뉩니다(같은 이름은 계좌가 달라도 합산).</div>
   </div>
 </div>
 </div>
 
 <!-- 글로벌 시장 -->
 <div class="subpage" data-sub="indices">
-<div class="card" style="max-width:440px;">
+<div class="card" style="max-width:760px;">
   <div class="section-label">글로벌 시장</div>
   <div class="index-market-grid">
     <div class="index-market-us" id="indexGridUS"></div>
@@ -2545,12 +2573,39 @@ async function fetchFXRate(pair){
   return null;
 }
 
+/* 헤더 "포트폴리오" 옆 USD/KRW 실시간 표시 — 전체 시세 갱신(5분)과 별개로 이 한 종목만 30초마다 조회한다.
+   표시 전용: 평가 환산에 쓰는 FX.USD는 기존 갱신 흐름에서만 바뀐다(30초마다 renderAll로 캔버스가 깜빡이는 것 방지). */
+let liveFx = {val:null, chg:null, at:0, ok:true};
+function renderLogoFx(){
+  const el = document.getElementById('logoFx'); if(!el) return;
+  const v = liveFx.val!=null ? liveFx.val : FX.USD;
+  const chg = liveFx.chg!=null ? ` <span class="${updn(liveFx.chg)}">${liveFx.chg>=0?'▲':'▼'}${Math.abs(liveFx.chg).toFixed(2)}%</span>` : '';
+  el.innerHTML = `<span class="fx-lbl">USD/KRW</span> <b>${v.toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1})}</b>${chg}`;
+  el.style.opacity = liveFx.ok ? '' : '.5';
+  el.title = liveFx.at ? `USD/KRW 실시간 · ${new Date(liveFx.at).toLocaleTimeString('ko-KR')} 기준${liveFx.ok?'':' (갱신 실패 — 마지막 값)'}` : 'USD/KRW (저장된 값 — 실시간 조회 중)';
+}
+async function refreshLiveUsdKrw(){
+  try{
+    let meta=null;
+    for(const host of ['query1','query2']){
+      const json = await yahooFetch(`https://${host}.finance.yahoo.com/v8/finance/chart/USDKRW=X?interval=1d&range=1d`);
+      meta = json?.chart?.result?.[0]?.meta;
+      if(meta?.regularMarketPrice>0) break;
+    }
+    const val = meta?.regularMarketPrice;
+    if(!(val>1000 && val<2000)) throw new Error('bad fx');
+    const prev = meta.chartPreviousClose || meta.previousClose || val;
+    liveFx = {val, chg: prev>0 ? (val-prev)/prev*100 : 0, at:Date.now(), ok:true};
+  }catch(e){ liveFx.ok=false; }
+  renderLogoFx();
+}
+
 function setStatus(state,text){
   document.getElementById('statusDot').className='dot '+state;
   document.getElementById('statusText').textContent=text;
   // 환율 항상 표시
   const fx = document.getElementById('fxDisplay');
-  if(fx) fx.textContent = `$1=₩${FX.USD.toLocaleString('ko-KR',{maximumFractionDigits:1})} · ¥1=₩${FX.JPY.toFixed(2)}`;
+  if(fx) fx.textContent = `¥1=₩${FX.JPY.toFixed(2)}`;
 }
 
 // "시세 갱신"/"스냅샷" 버튼 클릭 피드백 — 상태 표시줄(statusDot/statusText)만으로는
@@ -6553,34 +6608,30 @@ function donutShade(hex, j, n){
   const ch = k=>{ const v=parseInt(m[1].slice(k,k+2),16); return Math.round(v+(255-v)*t); };
   return `rgb(${ch(0)},${ch(2)},${ch(4)})`;
 }
-// 2중 링 도넛: 안쪽 링=자산유형, 바깥 링=세부 종목(그룹). tree는 buildAssetClassTree() 결과
-function drawDonutRings(canvasId, tree, size){
-  const cv=document.getElementById(canvasId); if(!cv) return;
-  const ctx=cv.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  const R=size/2, cx=R, cy=R;
-  cv.width=Math.round(size*dpr); cv.height=Math.round(size*dpr);
-  cv.style.width=size+'px'; cv.style.height=size+'px';
-  ctx.scale(dpr,dpr); ctx.clearRect(0,0,size,size);
-  const total = tree.reduce((s,t)=>s+t.value,0); if(!total) return;
+// 비중 % 표기 — 0.05% 미만은 "0.0%" 대신 "<0.1%"로(아주 작은 종목이 0으로 오해되지 않게)
+function sharePctText(v, total){
+  const p = total>0 ? v/total*100 : 0;
+  return p>0 && p<0.05 ? '<0.1%' : p.toFixed(1)+'%';
+}
+// 2중 링을 (cx,cy) 중심·반지름 R로 그린다: 안쪽 링=자산유형, 바깥 링=종목(실제 종목명 단위, 유형색을 명암만 달리해 부모-자식이 색으로 보임).
+// 바깥 링 조각 정보를 돌려줘 콜아웃 라벨이 쓴다. opt.start=시작각(기본 12시), opt.outerPct=바깥 링 조각 안에 % 표시,
+// opt.typeNames=안쪽 링에 유형 이름·% 표시(서로 겹치거나 조각을 벗어나면 %만, 그래도 안 되면 생략 — 유형 %는 위 칩 줄에 항상 있음)
+function paintDonutRings(ctx, cx, cy, R, tree, opt){
+  const total = tree.reduce((s,t)=>s+t.value,0); if(!total) return [];
   const IR=R*0.34, IOR=R*0.62, OIR=R*0.65, OOR=R*0.96;
-  const fs=donutClamp(Math.round(size*0.042),8,11);
+  const fs=donutClamp(Math.round(R*0.085),8,12);
+  const FONT=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
   const arc=(r1,r2,a0,a1,color)=>{
     ctx.beginPath(); ctx.arc(cx,cy,r2,a0,a1); ctx.arc(cx,cy,r1,a1,a0,true); ctx.closePath();
     ctx.fillStyle=color; ctx.fill();
   };
-  const label=(r,a0,a1,text,color)=>{
-    const mid=(a0+a1)/2;
-    ctx.font=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
-    ctx.fillStyle=color; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(text, cx+Math.cos(mid)*r, cy+Math.sin(mid)*r);
-  };
-  let angle=-Math.PI/2; const GAP=0.014;
+  const outer=[], inner=[];
+  let angle=(opt.start!=null?opt.start:-Math.PI/2); const GAP=0.014;
   tree.forEach(t=>{
     const sw=(t.value/total)*2*Math.PI;
     if(sw>=GAP*2+0.001){
       arc(IR,IOR,angle+GAP,angle+sw-GAP,t.color);
-      if(sw>0.34) label((IR+IOR)/2,angle,angle+sw,(t.value/total*100).toFixed(1)+'%',treemapTextColor(t.color));
+      inner.push({t, a0:angle+GAP, a1:angle+sw-GAP, sw});
     }
     let a=angle; const n=t.children.length;
     t.children.forEach((c,j)=>{
@@ -6588,19 +6639,147 @@ function drawDonutRings(canvasId, tree, size){
       const col=donutShade(t.color,j,n);
       if(cs>=0.012){
         arc(OIR,OOR,a+0.006,a+cs-0.006,col);
-        if(cs>0.24) label((OIR+OOR)/2,a,a+cs,(c.value/total*100).toFixed(1)+'%',treemapTextColor(col));
+        if(opt.outerPct && cs>0.24){
+          const m=a+cs/2, r=(OIR+OOR)/2;
+          ctx.font=FONT; ctx.fillStyle=treemapTextColor(col); ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(sharePctText(c.value,total), cx+Math.cos(m)*r, cy+Math.sin(m)*r);
+        }
       }
+      outer.push({label:c.label, value:c.value, color:col, typeColor:t.color, mid:a+cs/2});
       a+=cs;
     });
     angle+=sw;
   });
+  // 안쪽 링 라벨: 큰 조각부터 배치, 조각 안에 완전히 들어가고 이미 놓인 라벨과 겹치지 않을 때만 그린다
+  ctx.font=FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+  const placed=[], rm=(IR+IOR)/2, lh=Math.round(fs*1.25);
+  const inSlice=(px,py,s)=>{
+    const d=Math.hypot(px-cx,py-cy); if(d<IR+1||d>IOR-1) return false;
+    const rel=((Math.atan2(py-cy,px-cx)-s.a0)%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+    return rel<=s.a1-s.a0;
+  };
+  const boxOk=(x,y,w,h,s)=>{
+    if(![[-1,-1],[1,-1],[-1,1],[1,1]].every(([dx,dy])=>inSlice(x+dx*w/2,y+dy*h/2,s))) return false;
+    return !placed.some(p=>Math.abs(p.x-x)<(p.w+w)/2+2 && Math.abs(p.y-y)<(p.h+h)/2+1);
+  };
+  inner.slice().sort((a,b)=>b.sw-a.sw).forEach(s=>{
+    const mid=(s.a0+s.a1)/2, x=cx+Math.cos(mid)*rm, y=cy+Math.sin(mid)*rm;
+    const pct=sharePctText(s.t.value,total), fg=treemapTextColor(s.t.color);
+    const nameW=ctx.measureText(s.t.key).width, pctW=ctx.measureText(pct).width;
+    const variants = opt.typeNames ? [[Math.max(nameW,pctW)+6,lh*2,2],[pctW+6,lh,1]] : [[pctW+6,lh,1]];
+    for(const [w,h,lines] of variants){
+      if(!boxOk(x,y,w,h,s)) continue;
+      ctx.fillStyle=fg;
+      if(lines===2){ ctx.fillText(s.t.key,x,y-lh/2+1); ctx.fillText(pct,x,y+lh/2); }
+      else ctx.fillText(pct,x,y+0.5);
+      placed.push({x,y,w,h}); break;
+    }
+  });
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  return outer;
+}
+function donutSetCenterFont(cv, R){
   const center = cv.parentElement && cv.parentElement.querySelector('.donut-center');
-  if(center){
-    const v = center.querySelector('.dc-val'), l = center.querySelector('.dc-lbl');
-    if(v) v.style.fontSize = donutClamp(Math.round(size*0.06),11,17)+'px';
-    if(l) l.style.fontSize = donutClamp(Math.round(size*0.045),8,11)+'px';
+  if(!center) return;
+  const v = center.querySelector('.dc-val'), l = center.querySelector('.dc-lbl');
+  if(v) v.style.fontSize = donutClamp(Math.round(R*0.13),11,18)+'px';
+  if(l) l.style.fontSize = donutClamp(Math.round(R*0.09),8,11)+'px';
+}
+// 좁은 화면용: 도넛만(조각 안에 %) — 이름은 아래 그룹 범례가 전부 보여준다
+function drawDonutRings(canvasId, tree, size){
+  const cv=document.getElementById(canvasId); if(!cv) return;
+  const ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const R=size/2;
+  cv.width=Math.round(size*dpr); cv.height=Math.round(size*dpr);
+  cv.style.width=size+'px'; cv.style.height=size+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,size,size);
+  paintDonutRings(ctx,R,R,R,tree,{outerPct:true,typeNames:false});
+  donutSetCenterFont(cv,R);
+}
+// 콜아웃 라벨 세로 배치: 라벨은 조각 각도 순서(=세로 순서)를 지키면서 최소 간격 LINE을 두고, 각자 조각의 높이(ay)에 가장 가깝게 놓는다.
+// (간격 제약이 있는 최소제곱 = 등단조 회귀(PAV). 몰려 있는 라벨은 한쪽으로 밀리지 않고 몰린 자리 중심으로 고르게 퍼진다)
+function layoutCallouts(vals, total, start, cy, OOR, H, PADV, LINE){
+  const items=[]; let ang=start;
+  vals.forEach(v=>{ const s=v/total*2*Math.PI, mid=ang+s/2; items.push({mid, side:Math.cos(mid)>=0?1:-1, ay:cy+Math.sin(mid)*OOR}); ang+=s; });
+  const y0=PADV+LINE/2-3, y1=H-PADV-LINE/2+3; let cost=0, maxSide=0;
+  [1,-1].forEach(side=>{
+    const arr=items.filter(x=>x.side===side).sort((a,b)=>a.ay-b.ay), n=arr.length;
+    maxSide=Math.max(maxSide,n); if(!n) return;
+    const blocks=[];
+    arr.forEach((it,i)=>{
+      blocks.push({sum:it.ay-i*LINE,cnt:1});
+      while(blocks.length>1){
+        const b=blocks[blocks.length-1], a=blocks[blocks.length-2];
+        if(a.sum/a.cnt<=b.sum/b.cnt) break;
+        a.sum+=b.sum; a.cnt+=b.cnt; blocks.pop();
+      }
+    });
+    let k=0; blocks.forEach(b=>{ const z=b.sum/b.cnt; for(let j=0;j<b.cnt;j++,k++) arr[k].z=z; });
+    const zmax=Math.max(y0,y1-(n-1)*LINE);
+    arr.forEach((it,i)=>{ it.ly=Math.min(Math.max(it.z,y0),zmax)+i*LINE; cost+=Math.abs(it.ly-it.ay); });
+  });
+  return {items,cost,maxSide};
+}
+// 넓은 화면용: 큰 도넛 + 바깥 링 각 조각에서 좌/우로 리더라인을 빼 "종목명 12.3%" 라벨을 양옆에 세로 정렬.
+// 작은 조각이 한 곳에 몰리면 라벨이 길게 퍼지므로, 시작각을 돌려 가며(기본 12시 우선) 리더라인이 가장 짧아지는 각도를 고른다.
+function drawDonutCallouts(canvasId, tree, W){
+  const cv=document.getElementById(canvasId); if(!cv) return;
+  const total=tree.reduce((s,t)=>s+t.value,0);
+  const LINE=18, PADV=26;
+  const vals=tree.flatMap(t=>t.children.map(c=>c.value));
+  // 라벨 글자 영역(약 165px)을 먼저 확보하고 남는 폭으로 도넛 반지름을 정한다 — 긴 종목명이 잘리지 않게
+  const R=donutClamp(W/2-206,100,250);
+  const H=Math.round(Math.max(2*R+2*PADV, Math.ceil(vals.length*0.65)*LINE+2*PADV));
+  const cy=H/2, OOR=R*0.96;
+  let best=null;
+  if(total>0){
+    for(let deg=-90; deg<270; deg+=10){
+      const start=deg*Math.PI/180;
+      const L=layoutCallouts(vals,total,start,cy,OOR,H,PADV,LINE);
+      if(L.maxSide*LINE > H-2*PADV+LINE) continue;
+      const dev=Math.min(Math.abs(deg+90),360-Math.abs(deg+90));
+      const score=L.cost + 60*dev/180;   // 12시에서 벗어날수록 약간의 불이익
+      if(!best || score<best.score) best={score,start,L};
+    }
   }
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  const ctx=cv.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const cx=W/2;
+  const start = best ? best.start : -Math.PI/2;
+  const outer=paintDonutRings(ctx,cx,cy,R,tree,{start,outerPct:false,typeNames:true});
+  donutSetCenterFont(cv,R);
+  if(!best) return;
+  const FONT=`600 12px Pretendard,-apple-system,sans-serif`, FONT_B=`800 12px Pretendard,-apple-system,sans-serif`;
+  const maxTextW=W/2-R-41;
+  best.L.items.forEach((it,i)=>{
+    const o=outer[i], side=it.side, ca=Math.cos(o.mid), sa=Math.sin(o.mid);
+    const ex=cx+side*(R+20);
+    const px=cx+ca*(OOR-2), py=cy+sa*(OOR-2), mx=cx+ca*(R+10), my=cy+sa*(R+10);
+    ctx.strokeStyle='#b4b4bb'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(mx,my); ctx.lineTo(ex,it.ly); ctx.lineTo(ex+side*4,it.ly); ctx.stroke();
+    ctx.fillStyle='#8e8e93'; ctx.beginPath(); ctx.arc(px,py,2,0,Math.PI*2); ctx.fill();
+    // 색 견본 + "이름  %" (오른쪽 라벨은 왼쪽 정렬, 왼쪽 라벨은 오른쪽 정렬 — 읽는 순서는 항상 이름→%)
+    const pctStr=sharePctText(o.value,total);
+    ctx.font=FONT_B; const pw=ctx.measureText(pctStr).width;
+    ctx.font=FONT; const nm=fitCanvasText(ctx,o.label,Math.max(20,maxTextW-pw-6)), nw=ctx.measureText(nm).width;
+    const sx=ex+side*6;
+    ctx.fillStyle=o.color; ctx.fillRect(side===1?sx:sx-9, it.ly-4.5, 9, 9);
+    ctx.textBaseline='middle';
+    if(side===1){
+      const tx=sx+13;
+      ctx.textAlign='left'; ctx.font=FONT; ctx.fillStyle='#1c1c1e'; ctx.fillText(nm,tx,it.ly+0.5);
+      ctx.font=FONT_B; ctx.fillStyle=o.typeColor; ctx.fillText(pctStr,tx+nw+6,it.ly+0.5);
+    }else{
+      const tx=sx-13;
+      ctx.textAlign='right'; ctx.font=FONT_B; ctx.fillStyle=o.typeColor; ctx.fillText(pctStr,tx,it.ly+0.5);
+      ctx.font=FONT; ctx.fillStyle='#1c1c1e'; ctx.fillText(nm,tx-pw-6,it.ly+0.5);
+    }
+  });
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
 }
 
 // 컴팩트 1줄형 범례(색 막대 | 이름 | % | 금액). maxRows 초과분은 "기타 n"으로 합침
@@ -6615,27 +6794,24 @@ function donutLegendHtml(data, total, maxRows){
     return `<div class="lg-row"><span class="lg-bar" style="background:${d.color};"></span><span class="lg-name" title="${String(d.label).replace(/"/g,'&quot;')}">${d.label}</span><span class="lg-pct" style="color:${d.color};">${pct.toFixed(1)}%</span><span class="lg-amt">${fmt(d.value)}</span></div>`;
   }).join('');
 }
-// 세부 종목 도넛 범례: 자산유형 헤더 ▸ 세부 종목(총 자산 대비 %). 줄 수 한도를 넘으면 "외 n개"
-function donutDetailLegendHtml(tree, total, maxRows){
+// 세부 종목 비중 범례(좁은 화면): 자산유형 헤더 ▸ 실제 종목, 잘림 없이 전부. 종목 %는 총자산 대비
+function donutDetailLegendHtml(tree, total){
   const rows=[];
   tree.forEach(t=>{
-    rows.push({head:true, label:t.key, value:t.value, color:t.color});
-    t.children.forEach((c,j)=>rows.push({head:false, label:c.label, value:c.value, color:donutShade(t.color,j,t.children.length)}));
+    rows.push({head:true, label:t.key, value:t.value, color:t.color, tcolor:t.color});
+    t.children.forEach((c,j)=>rows.push({head:false, label:c.label, value:c.value, color:donutShade(t.color,j,t.children.length), tcolor:t.color}));
   });
-  let shown = rows, hidden = 0;
-  if(rows.length > maxRows){ shown = rows.slice(0,Math.max(1,maxRows-1)); hidden = rows.length-shown.length; }
-  const html = shown.map(r=>{
-    const pct = total>0 ? r.value/total*100 : 0;
-    return `<div class="lg-row${r.head?'':' lg-child'}"><span class="lg-bar" style="background:${r.color};"></span><span class="lg-name" title="${String(r.label).replace(/"/g,'&quot;')}" style="${r.head?'':'font-weight:600;'}">${r.label}</span><span class="lg-pct" style="color:${r.color};">${pct.toFixed(1)}%</span><span class="lg-amt">${fmt(r.value)}</span></div>`;
+  return rows.map(r=>{
+    return `<div class="lg-row${r.head?' lg-head':' lg-child'}"><span class="lg-bar" style="background:${r.color};"></span><span class="lg-name" title="${String(r.label).replace(/"/g,'&quot;')}">${r.label}</span><span class="lg-pct" style="color:${r.tcolor};">${sharePctText(r.value,total)}</span><span class="lg-amt">${fmt(r.value)}</span></div>`;
   }).join('');
-  return html + (hidden>0 ? `<div class="lg-more">… 외 ${hidden}개</div>` : '');
 }
 
-/* 한 화면 맞춤: 가용 높이·폭에서 도넛 지름을 계산한다(폴드7 접힘/펼침 세로/펼침 가로, 데스크톱 공통).
-   높이 예산: 2·D1 + D2 ≤ H − (제목 23×3 + 행 간격 14×2) — 좁은 화면은 범례가 도넛 아래로 가서 그만큼 더 뺀다.
+/* 한 화면 맞춤: 가용 높이·폭에서 첫 화면(2×2: 투자시장·계좌유형 / 자산유형·종목 비중)의 도넛 지름을 계산한다
+   (폴드7 접힘/펼침 세로/펼침 가로, 데스크톱 공통). 세부 종목 비중 도넛은 그 아래 별도 화면이라 높이 예산에 넣지 않는다.
+   높이 예산: 2·D1 ≤ H − (제목 23×2 + 행 간격 14) — 좁은 화면은 범례가 도넛 아래로 가서 그만큼 더 뺀다.
    숨겨진 상태(다른 서브탭)면 측정 불가 → 기본값을 돌려주고, 탭이 보일 때 훅이 다시 호출한다. */
 function fitAllocDonutLayout(){
-  const def = {mode:'wide', d1:200, d2:280, leg1:6, legD:12, barN:10};
+  const def = {mode:'wide', d1:200, d2:280, leg1:6, barN:10, callout:false, detailW:0};
   const grid = document.querySelector('#allocDonutView .alloc-grid');
   if(!grid || grid.offsetParent===null) return def;
   const W = grid.clientWidth; if(!(W>0)) return def;
@@ -6643,22 +6819,21 @@ function fitAllocDonutLayout(){
   const H = Math.max(300, window.innerHeight - (grid.getBoundingClientRect().top + window.scrollY) - 20); // 20 = 카드 하단 패딩 16 + 여유
   const TITLE=23, GAP=14, ROW=20, BAR_ROW=22;
   const legBelow1 = narrow ? 3*ROW+6 : 0;   // 좁은 화면: 작은 도넛 범례 3줄이 도넛 아래로
-  const legBelow2 = narrow ? 5*ROW+6 : 0;   // 좁은 화면: 세부 도넛 범례 5줄
-  const S = H - 3*TITLE - 2*GAP - 2*legBelow1 - legBelow2; // = 2·D1 + D2
-  let d1 = donutClamp(Math.round(S/3.6), 100, 200);
-  let d2 = donutClamp(S - 2*d1, 130, 320);
+  const S = H - 2*TITLE - GAP - 2*legBelow1; // = 2·D1
+  let d1 = donutClamp(Math.floor(S/2), 100, 220);
   const cellW = (W-16)/2;
   if(narrow){
-    // 접힘 화면은 5개 블록이 읽을 만한 크기로는 한 화면에 안 들어간다 → 가독성 하한(D1 110/D2 170)을 우선하고
+    // 접힘 화면은 4개 블록이 읽을 만한 크기로는 한 화면에 안 들어간다 → 가독성 하한(D1 110)을 우선하고
     // 이 경우에만 세로 스크롤을 허용한다(가로 스크롤은 없음)
-    d1 = Math.min(Math.max(d1,110), Math.floor(cellW-4)); d2 = Math.min(Math.max(d2,170), W-8);
+    d1 = Math.min(Math.max(d1,110), Math.floor(cellW-4));
   }
-  else      { d1 = Math.min(d1, Math.floor(cellW-112)); d2 = Math.min(d2, W-250); }
-  d1 = Math.max(100,d1); d2 = Math.max(130,d2);
+  else d1 = Math.min(d1, Math.floor(cellW-112));
+  d1 = Math.max(100,d1);
   return {
-    mode: narrow?'narrow':'wide', d1, d2,
+    mode: narrow?'narrow':'wide', d1,
+    d2: donutClamp(W-8,170,320),                 // 좁은 화면 세부 도넛 지름
+    callout: W >= 680, detailW: W,               // 넓은 화면은 리더라인 콜아웃 도넛(폭 전체 사용)
     leg1: narrow ? 3 : Math.max(3, Math.floor(d1/ROW)),
-    legD: narrow ? 5 : Math.max(5, Math.floor(d2/ROW)),
     barN: Math.max(3, Math.floor((d1+legBelow1)/BAR_ROW) - 1),
   };
 }
@@ -6706,12 +6881,19 @@ function renderDonuts(){
   document.getElementById('marketCenter').textContent=fmt(marketTotal);
   document.getElementById('marketLegend').innerHTML=donutLegendHtml(marketData,marketTotal,fit.leg1);
 
-  // ── 자산유형별 세부 종목 도넛(대형 2중 링) ──
+  // ── 자산유형별 세부 종목 비중(대형 2중 링, 실제 종목명) ──
   const tree = buildAssetClassTree(assets);
   const treeTotal = tree.reduce((s,t)=>s+t.value,0);
-  drawDonutRings('assetDetailDonut', tree, fit.d2);
   document.getElementById('assetDetailCenter').textContent=fmt(treeTotal);
-  document.getElementById('assetDetailLegend').innerHTML=donutDetailLegendHtml(tree,treeTotal,fit.legD);
+  document.getElementById('assetDetailChips').innerHTML=assetTypeChipsHtml(tree,treeTotal);
+  const detailLegend = document.getElementById('assetDetailLegend');
+  if(fit.callout){
+    drawDonutCallouts('assetDetailDonut', tree, fit.detailW);
+    detailLegend.style.display='none'; detailLegend.innerHTML='';
+  }else{
+    drawDonutRings('assetDetailDonut', tree, fit.d2);
+    detailLegend.style.display=''; detailLegend.innerHTML=donutDetailLegendHtml(tree,treeTotal);
+  }
 
   // 막대 그래프: 총자산 대비 % (음수면 막대 없이 텍스트만 표시)
   // 계좌별로 나뉜 같은 종목명 자산도 종목 비중에서는 하나로 합쳐서 표시
@@ -7051,80 +7233,11 @@ function drawQuickViewTreemap(){
   renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), 280, goToStockDetail);
 }
 
-// 글로벌시장: 보유종목을 4개 시장(S&P500/나스닥/코스피/코스닥)으로 근사 분류한 트리맵
-// 이름/티커 기반 휴리스틱이라 실제 지수 편입 여부와 다를 수 있음(화면에 안내 문구로 명시)
-/* 보유종목 시장별 비중 트리맵 — 그룹 분류.
-   ★ 예전 버전의 한계(사용자 확인으로 발견):
-     - 일본주식이 어느 그룹에도 안 걸려 트리맵에서 통째로 빠짐
-     - 개별 미국주식을 전부 "나스닥"으로 근사해 부정확
-     - 채권·현금이 처음부터 제외 대상(category==='cash'면 무조건 null)
-   ★ 개선: 현금은 통화, 채권은 투자시장(market) 필드로 먼저 확정 분류하고, 지수 ETF는
-     이름/티커 키워드로, 나머지는 투자시장(market) 기준 "개별종목" 버킷으로 보낸다.
-     맨 마지막 '기타'가 안전장치라 어떤 자산도 트리맵에서 조용히 사라지지 않는다. */
-const MARKET_TREEMAP_GROUPS = [
-  {key:'cash_krw', label:'현금(KRW)'},
-  {key:'cash_usd', label:'현금(USD)'},
-  {key:'cash_jpy', label:'현금(JPY)'},
-  {key:'bond_kr',  label:'채권(한국)'},
-  {key:'bond_us',  label:'채권(미국)'},
-  {key:'bond_jp',  label:'채권(일본)'},
-  {key:'sp500',    label:'S&P500'},
-  {key:'nasdaq',   label:'나스닥'},
-  {key:'kospi',    label:'코스피'},
-  {key:'kosdaq',   label:'코스닥'},
-  {key:'us_stock', label:'미국 개별종목'},
-  {key:'kr_stock', label:'한국 개별종목'},
-  {key:'jp',       label:'일본'},
-  {key:'crypto',   label:'가상자산'},
-  {key:'other',    label:'기타'},
-];
-function classifyMarketGroup(asset){
-  const acctType = asset.acctType;
-  // 1) 현금 — 통화가 곧 시장 (원화/달러/엔화 구분이 국가 판정보다 훨씬 확실함)
-  if(acctType==='cash'){
-    if(asset.currency==='USD') return 'cash_usd';
-    if(asset.currency==='JPY') return 'cash_jpy';
-    return 'cash_krw';
-  }
-  // 2) 채권 — 투자시장(market) 기준으로 시장별 분리
-  if(asset.isBond){
-    if(asset.market==='us') return 'bond_us';
-    if(asset.market==='jp') return 'bond_jp';
-    return 'bond_kr';
-  }
-  // 3) 가상자산 — 국가 개념이 없어 단일 버킷
-  if(isCryptoAsset(asset)) return 'crypto';
-
-  const name=asset.name||'', ticker=(asset.ticker||'').toUpperCase();
-  // 4) 지수 ETF 이름/티커 키워드로 먼저 세밀 분류
-  if(/S&P\s*500|S&P500|SPX\b/i.test(name)) return 'sp500';
-  if(/나스닥|NASDAQ|QQQ/i.test(name)) return 'nasdaq';
-  if(/코스닥|KOSDAQ/i.test(name) || /\.KQ$/i.test(ticker)) return 'kosdaq';
-  // "TIGER 200", "KODEX 200" 같은 KOSPI200 추종 ETF는 이름에 "코스피" 단어가 없는 경우가
-  // 많아 브랜드+"200" 패턴을 별도로 잡는다. .KS 티커 접미사는 KRX 상장 전체에 공통이라
-  // (삼성전자·TIGER테크TOP10도 전부 .KS) 이걸로 코스피를 판정하면 개별종목까지 다 섞여
-  // 버리므로 더 이상 근거로 쓰지 않는다 — 여기 안 걸리는 국내종목은 kr_stock으로 내려간다.
-  if(/코스피|KOSPI/i.test(name) || /^(TIGER|KODEX|KINDEX|ARIRANG|HANARO|KBSTAR|ACE|SOL|TIMEFOLIO)\s*200\b/i.test(name)) return 'kospi';
-
-  // 5) 위 키워드에 안 걸리면 투자시장(market) 기준 "개별종목" 버킷으로
-  if(asset.market==='jp') return 'jp';
-  if(asset.market==='us') return 'us_stock';
-  if(asset.market==='kr') return 'kr_stock';
-
-  // 6) 안전장치 — market이 'global'이거나 미지정인 자산(글로벌 테마 ETF 등)
-  return 'other';
-}
 /* ── 자산군 분포 (비중현황 > 트리맵) ─────────────────────────────────
    ① 투자시장 분포 → ② 자산유형 분포 → ③ 자산유형별 세부 자산 분포(예: Core 안의 S&P500·나스닥·코스피200 점유)
    전부 "구성비"를 보는 트리맵이다: 크기=평가금액, 색=카테고리 고유색, 표시 %=총 자산 대비
    (③은 해당 자산유형 대비). 수익률 색·기간 탭은 변화추이(트리맵) 탭의 종목 트리맵이 담당한다.
    현금·채권·가상자산도 모두 포함하므로 세 단계의 합계는 도넛의 총 자산과 같다. */
-const DIST_GROUP_COLS = {
-  cash_krw:'#8e8e93', cash_usd:'#7c7c80', cash_jpy:'#9a9aa0',
-  bond_kr:'#2b9fd6', bond_us:'#1a7fb5', bond_jp:'#3aa6c9',
-  sp500:'#0a84ff', nasdaq:'#af52de', kospi:'#34c759', kosdaq:'#248a3d',
-  us_stock:'#ff9500', kr_stock:'#c98a00', jp:'#ff3b30', crypto:'#ff2d55', other:'#a2845e',
-};
 const distAssetTypeKey = a => a.assetType || (a.acctType==='cash' ? '현금' : '미지정');
 const distMarketKey    = a => a.market || '미지정';
 const distMarketLabel  = k => MARKET_LABELS[k] || k;
@@ -7144,23 +7257,170 @@ function distBuildItems(assetList, keyFn, labelFn, colorFn, denom){
     sub: (denom>0 ? e.value/denom*100 : 0).toFixed(1)+'%', rtn: 0,
   }));
 }
-// 자산유형 → 세부 그룹(classifyMarketGroup) 트리 — 트리맵 ③과 세부 종목 도넛이 같은 분류를 공유한다
+// 자산유형 → 종목(이름 기준 합산) 트리 — 세부 종목 도넛과 트리맵 ③이 같은 트리를 공유한다.
+// 같은 종목명은 계좌가 달라도 하나로 합친다(종목 비중 막대와 동일 규칙). 현금·채권·코인도 각자의 이름 그대로.
 function buildAssetClassTree(assetList){
-  const groupLabel = Object.fromEntries(MARKET_TREEMAP_GROUPS.map(g=>[g.key,g.label]));
   const byType = new Map();
   assetList.forEach(a=>{
     const v = evKRW(a); if(!(v>0)) return;
     const tk = distAssetTypeKey(a);
     if(!byType.has(tk)) byType.set(tk, {key:tk, value:0, children:new Map(), list:[]});
     const t = byType.get(tk); t.value += v; t.list.push(a);
-    const gk = classifyMarketGroup(a);
-    const c = t.children.get(gk) || {key:gk, label:groupLabel[gk]||gk, value:0};
-    c.value += v; t.children.set(gk, c);
+    const nm = a.name || a.ticker || '(이름 없음)';
+    const c = t.children.get(nm) || {key:nm, label:nm, value:0, ids:[]};
+    c.value += v; c.ids.push(a.id); t.children.set(nm, c);
   });
   return [...byType.values()]
     .sort((x,y)=>y.value-x.value)
     .map((t,i)=>({key:t.key, value:t.value, list:t.list, color:distTypeColor(t.key,i),
       children:[...t.children.values()].sort((x,y)=>y.value-x.value)}));
+}
+// 자산유형 요약 칩 줄 — "● Core 45.2%  ● 주도주 20.1% …" (도넛·트리맵 ③ 공용)
+function assetTypeChipsHtml(tree, total){
+  return tree.map(t=>{
+    const pct = total>0 ? (t.value/total*100).toFixed(1) : '0.0';
+    return `<span class="type-chip"><i style="background:${t.color};"></i>${t.key}<b>${pct}%</b></span>`;
+  }).join('');
+}
+
+// 캔버스 텍스트 줄바꿈: 공백 단위로 채우고, 한 단어가 넘치면 글자 단위로 자른다. maxLines 초과분은 마지막 줄을 …로 마감
+function wrapCanvasText(ctx, text, maxW, maxLines){
+  const fits = s=>ctx.measureText(s).width<=maxW;
+  const lines=[]; let cur='';
+  const flush=()=>{ if(cur){ lines.push(cur); cur=''; } };
+  for(const word of String(text).split(/\s+/).filter(Boolean)){
+    if(cur && fits(cur+' '+word)){ cur+=' '+word; continue; }
+    flush();
+    let w=word;
+    while(w && !fits(w)){
+      let k=Math.max(1,w.length-1); while(k>1 && !fits(w.slice(0,k))) k--;
+      lines.push(w.slice(0,k)); w=w.slice(k);
+    }
+    cur=w;
+    if(lines.length>maxLines) break;
+  }
+  flush();
+  if(lines.length>maxLines){
+    const kept=lines.slice(0,maxLines); let last=kept[maxLines-1];
+    while(last.length>1 && !fits(last+'…')) last=last.slice(0,-1);
+    kept[maxLines-1]=last+'…'; return kept;
+  }
+  return lines;
+}
+function fitCanvasText(ctx, text, maxW){
+  if(ctx.measureText(text).width<=maxW) return text;
+  let s=String(text);
+  while(s.length>1 && ctx.measureText(s+'…').width>maxW) s=s.slice(0,-1);
+  return s+'…';
+}
+
+// 트리맵 셀 라벨: 종목명(여러 줄) + 총자산 대비 %. 셀 크기에 맞춰 글자 크기를 3단계로 줄이고, 그래도 안 들어가면 %만/생략
+function drawTreemapCellLabel(ctx, name, pctStr, x, y, w, h, fg){
+  const PAD=5, iw=w-PAD*2, ih=h-PAD*2;
+  if(iw<20 || ih<10) return;
+  const fs = (w>=130&&h>=70)?13 : (w>=84&&h>=46)?11.5 : 10;
+  const font = wt=>`${wt} ${fs}px Pretendard,-apple-system,sans-serif`;
+  const lineH = Math.round(fs*1.25), pctH = fs+2;
+  const maxLines = Math.floor((ih-pctH)/lineH);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x+2,y+2,w-4,h-4); ctx.clip();
+  ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='top';
+  if(maxLines>=1){
+    ctx.font=font(700);
+    const lines=wrapCanvasText(ctx,name,iw,Math.min(maxLines,3));
+    lines.forEach((ln,i)=>ctx.fillText(ln,x+PAD,y+PAD+i*lineH));
+    ctx.font=font(500);
+    ctx.fillText(pctStr,x+PAD,y+PAD+lines.length*lineH+1);
+  }else{
+    // 세로가 얕은 셀: 이름이 두 글자 이상 들어가면 "이름 %" 한 줄, 아니면 %만
+    ctx.font=font(700);
+    const both=fitCanvasText(ctx,name+' '+pctStr,iw);
+    if(ih>=fs && iw>=44 && both.length>pctStr.length+2) ctx.fillText(both,x+PAD,y+Math.max(2,(h-fs)/2));
+    else if(ih>=fs-1 && iw>=26) ctx.fillText(pctStr,x+PAD,y+Math.max(2,(h-fs)/2));
+  }
+  ctx.restore();
+}
+
+/* ③ 자산유형별 세부 종목 비중 — 전체 사각형 = 총자산 100%, 안쪽에 자산유형 블록(헤더 띠), 그 안에 실제 종목명 셀.
+   셀 크기 = 평가금액. 작은 셀은 라벨이 생략될 수 있으므로 셀을 누르면(마우스는 올리면) 아래 정보 줄에 이름·금액·비중이 뜬다. */
+let detailTmSel = null;      // 선택된 셀 키 "유형|종목명"
+let detailTmCells = [];      // 히트테스트용
+function detailTreemapHeight(W){ return W<560 ? donutClamp(Math.round(W*1.35),440,640) : donutClamp(Math.round(W*0.6),340,620); }
+function drawDetailTreemap(){
+  const canvas = document.getElementById('distDetailCanvas');
+  if(!canvas || canvas.offsetParent===null) return;
+  const chipsEl = document.getElementById('distDetailChips'), infoEl = document.getElementById('distDetailInfo');
+  const positive = assets.filter(a=>evKRW(a)>0);
+  const tree = buildAssetClassTree(positive);
+  const total = tree.reduce((s,t)=>s+t.value,0);
+  if(chipsEl) chipsEl.innerHTML = assetTypeChipsHtml(tree,total);
+  const wrap = canvas.parentElement;
+  const W = Math.max(200, wrap.clientWidth||300), H = detailTreemapHeight(W);
+  const dpr = window.devicePixelRatio||1;
+  canvas.width = Math.round(W*dpr); canvas.height = Math.round(H*dpr);
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  detailTmCells = [];
+  const tinyCells = [];   // 면적이 너무 작아 사각형으로 못 그린 종목(아래 안내 줄에 이름으로 표시)
+  if(!tree.length){
+    ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
+    ctx.fillText('보유종목이 없습니다', W/2, H/2);
+    canvas.onclick = canvas.onpointermove = null;
+    if(infoEl) infoEl.textContent='';
+    return;
+  }
+  const rr = (x,y,w,h,r)=>{
+    r=Math.min(r,w/2,h/2);
+    ctx.beginPath(); ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+  };
+  const blocks = computeTreemapLayout(tree.map(t=>({t, value:t.value})), 0, 0, W, H);
+  blocks.forEach(b=>{
+    const t=b.t, bx=b.x+1.5, by=b.y+1.5, bw=b.w-3, bh=b.h-3;
+    if(bw<=0||bh<=0) return;
+    // 블록 바탕 = 자산유형 색(셀 사이 틈이 같은 색이라 "한 묶음"으로 보임)
+    rr(bx,by,bw,bh,6); ctx.fillStyle=t.color; ctx.fill();
+    const hasHead = bw>=60 && bh>=44, HEAD = hasHead?20:0;
+    if(hasHead){
+      const fg=treemapTextColor(t.color);
+      ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='middle';
+      const pct=(total>0?t.value/total*100:0).toFixed(1)+'%';
+      ctx.font='800 11.5px Pretendard,-apple-system,sans-serif';
+      const pw=ctx.measureText(pct).width;
+      ctx.fillText(fitCanvasText(ctx,t.key,Math.max(10,bw-pw-22)), bx+7, by+HEAD/2+1);
+      ctx.textAlign='right'; ctx.fillText(pct, bx+bw-7, by+HEAD/2+1);
+    }
+    const ix=bx+2, iy=by+HEAD+2, iw=bw-4, ih=bh-HEAD-4;
+    if(iw<=0||ih<=0) return;
+    const n=t.children.length;
+    computeTreemapLayout(t.children.map(c=>({c, value:c.value})), ix, iy, iw, ih).forEach(cell=>{
+      const j=t.children.indexOf(cell.c);
+      const cx=cell.x+1, cy=cell.y+1, cw=cell.w-2, ch=cell.h-2;
+      if(cw<2||ch<2){ tinyCells.push(cell.c); return; }
+      const col=donutShade(t.color,j,n), key=t.key+'|'+cell.c.key;
+      rr(cx,cy,cw,ch,4); ctx.fillStyle=col; ctx.fill();
+      const pctStr=sharePctText(cell.c.value,total);
+      drawTreemapCellLabel(ctx, cell.c.label, pctStr, cx, cy, cw, ch, treemapTextColor(col));
+      if(key===detailTmSel){ rr(cx+1,cy+1,cw-2,ch-2,4); ctx.lineWidth=2.5; ctx.strokeStyle='#1c1c1e'; ctx.stroke(); }
+      detailTmCells.push({x:cell.x,y:cell.y,w:cell.w,h:cell.h,key,type:t,child:cell.c,pct:pctStr,col});
+    });
+  });
+  const hit = e=>{
+    const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+    return detailTmCells.find(c=>mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h);
+  };
+  const select = c=>{ if(c && c.key!==detailTmSel){ detailTmSel=c.key; drawDetailTreemap(); } };
+  canvas.style.cursor='pointer';
+  canvas.onclick = e=>select(hit(e));
+  canvas.onpointermove = e=>{ if(e.pointerType==='mouse') select(hit(e)); };
+  const sel = detailTmCells.find(c=>c.key===detailTmSel);
+  if(infoEl){
+    infoEl.innerHTML = sel
+      ? `<span class="di-sw" style="background:${sel.col};"></span><b>${sel.child.label}</b> <span class="di-sub">${sel.type.key} · ${fmt(sel.child.value)} · 총자산의 ${sel.pct}</span> <button class="btn btn-ghost di-go" onclick="goToStockDetail('${sel.child.ids[0]}')">상세 ›</button>`
+      : '<span class="di-sub">사각형을 누르면(마우스는 올리면) 종목 이름·금액·비중이 여기에 표시됩니다</span>';
+    if(tinyCells.length) infoEl.innerHTML += `<span class="di-tiny">※ 너무 작아 그리지 못한 종목: ${tinyCells.map(c=>`${c.label} ${sharePctText(c.value,total)}`).join(', ')}</span>`;
+  }
 }
 function drawAssetClassDistribution(){
   const positive = assets.filter(a=>evKRW(a)>0);
@@ -7171,27 +7431,8 @@ function drawAssetClassDistribution(){
   // ① 투자시장 ② 자산유형
   renderTreemapCanvas('distMarketCanvas',    distBuildItems(positive, distMarketKey,    distMarketLabel, distMarketColor, total), 220, onClick, empty);
   renderTreemapCanvas('distAssetTypeCanvas', distBuildItems(positive, distAssetTypeKey, k=>k,            distTypeColor,   total), 220, onClick, empty);
-
-  // ③ 자산유형별 세부 자산 — 자산유형마다 작은 트리맵(빈 유형은 만들지 않음)
-  const grid = document.getElementById('distDetailGrid');
-  if(!grid) return;
-  const tree = buildAssetClassTree(positive);
-  // 구성(유형 목록)이 지난번과 같으면 DOM을 다시 만들지 않는다 — renderAll 주기마다 캔버스가 깜빡이는 것 방지
-  const keys = tree.map(t=>t.key).join('|');
-  if(grid.dataset.keys !== keys){
-    grid.innerHTML = tree.map((t,i)=>
-      `<div class="dist-cell"><div class="mt-label" id="distDetailLabel_${i}"></div><div class="dist-canvas-wrap"><canvas id="distDetail_${i}" height="170"></canvas></div></div>`
-    ).join('') || `<div class="notice" style="text-align:center;grid-column:1/-1;">보유종목이 없습니다.</div>`;
-    grid.dataset.keys = keys;
-  }
-  const groupLabel = Object.fromEntries(MARKET_TREEMAP_GROUPS.map(g=>[g.key,g.label]));
-  tree.forEach((t,i)=>{
-    const lab = document.getElementById('distDetailLabel_'+i);
-    if(lab) lab.textContent = `${t.key} · ${fmt(t.value)} (${total>0?(t.value/total*100).toFixed(1):'0.0'}%)`;
-    renderTreemapCanvas('distDetail_'+i,
-      distBuildItems(t.list, classifyMarketGroup, k=>groupLabel[k]||k, k=>DIST_GROUP_COLS[k]||'#8e8e93', t.value),
-      170, onClick, t.key+' 없음');
-  });
+  // ③ 자산유형별 세부 종목 비중
+  drawDetailTreemap();
 }
 
 /* ════════════════════════════════════════
@@ -7241,7 +7482,7 @@ function renderIndexGroupCard(group){
       ${items.map(renderIndexRow).join('')}
     </div>`;
 }
-// 왼쪽 = 미국 카드(세로로 김), 오른쪽 위 = 한국, 오른쪽 아래 = 환율 — .index-market-grid의
+// 수평 3열 = 미국 · 한국 · 환율 — .index-market-grid의
 // grid-template-areas로 배치되므로 여기서는 각자의 컨테이너에 채우기만 하면 된다.
 function renderIndices(){
   document.getElementById('indexGridUS').innerHTML = renderIndexGroupCard('us');
@@ -8446,7 +8687,7 @@ function renderAll(){
   buildChartHistory();renderToggles();
   // 환율 표시 갱신
   const fx = document.getElementById('fxDisplay');
-  if(fx) fx.textContent = `$1=₩${FX.USD.toLocaleString('ko-KR',{maximumFractionDigits:1})} · ¥1=₩${FX.JPY.toFixed(2)}`;
+  if(fx) fx.textContent = `¥1=₩${FX.JPY.toFixed(2)}`;
   refreshActiveViewCanvases();
 }
 
@@ -8480,6 +8721,12 @@ window.addEventListener('resize',()=>{
     drawLineChart();
     refreshActiveViewCanvases();
   }, 150);
+});
+
+// 회전(orientationchange)은 폭이 거의 같은 폴드 펼침 화면에서도 높이가 바뀌므로, 폭 필터 없이 항상 다시 맞춰 그린다
+window.addEventListener('orientationchange',()=>{
+  clearTimeout(resizeRedrawTimer);
+  resizeRedrawTimer = setTimeout(()=>{ lastResizeWidth = window.innerWidth; drawLineChart(); refreshActiveViewCanvases(); }, 300);
 });
 
 (async function init(){
@@ -8560,6 +8807,12 @@ setInterval(async()=>{
 
 // 5분마다 지수 갱신
 setInterval(fetchIndices,5*60*1000);
+
+// 헤더 USD/KRW: 저장값을 먼저 보여주고 즉시 1회 조회, 이후 30초마다(탭이 숨겨진 동안은 건너뛰고 다시 보이면 즉시)
+renderLogoFx();
+refreshLiveUsdKrw();
+setInterval(()=>{ if(!document.hidden) refreshLiveUsdKrw(); }, 30*1000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshLiveUsdKrw(); });
 </script>
 </body>
 </html>
