@@ -1539,6 +1539,7 @@ const DEFAULT_ASSETS = [
    ⚠️ 원본 값을 지우거나 덮어쓰지 않는다 — 신 필드가 이미 있으면 그 값을 우선한다.
 ════════════════════════════════════════ */
 const LEGACY_STOCK_ACCTTYPES = ['stock_kr','stock_us','stock_jp','crypto'];
+const CRYPTO_FIX_KEY = 'pf_fix_crypto_frame_v1'; // 가상자산 프레임 1회 보정 완료 표시
 // 가상자산 판별 — 자산유형이 '가상자산'이거나, (다른 역할을 이미 지정한 경우를 대비해) 티커가 BTC-USD 형태
 function isCryptoAsset(a){
   return !!a && a.acctType!=='cash' && (a.assetType==='가상자산' || /-USD$/i.test(a.ticker||''));
@@ -1568,7 +1569,9 @@ function migrateRecordFields(r){
     if(legacy === 'crypto'){
       // 가상자산은 나라가 없다 — 통화(USD)로 자동 추정돼 있던 '미국'은 글로벌로 바로잡는다
       if(!r.market || r.market === 'us') r.market = 'global';
-      if(!r.assetType) r.assetType = '가상자산';
+      // Core/주도주 같은 역할은 주요 지수 ETF·주식용이다 — 가상자산은 항상 자산유형 '가상자산'.
+      // (변환 전 값은 pf_assets_v1_premigration_acct 백업에 남아 있다)
+      r.assetType = '가상자산';
     } else if(!r.market){
       const m = legacy === 'stock_us' ? 'us' : legacy === 'stock_jp' ? 'jp' : inferMarket(r);
       if(m) r.market = m;
@@ -1672,12 +1675,33 @@ let assets = (()=>{
         if(s.some(x=>LEGACY_STOCK_ACCTTYPES.includes(x.acctType) || LEGACY_STOCK_ACCTTYPES.includes(x.cashAcctType) || LEGACY_STOCK_ACCTTYPES.includes(x.category)) && localStorage.getItem(ASSETS_KEY+'_premigration_acct')===null)
           localStorage.setItem(ASSETS_KEY+'_premigration_acct', raw);
       }catch(e){}
-      if(migrateAssets(s)){
+      let changed = migrateAssets(s);
+      // 1회 보정: 이미 변환된 데이터(코인에 Core 등이 남았거나 투자시장이 '미국'으로 추정된 경우)를
+      // 가상자산 프레임(자산유형=가상자산, 투자시장=글로벌)으로 맞춘다. 플래그로 1회만 실행하므로
+      // 이후 사용자가 직접 바꾼 값은 다시 덮어쓰지 않는다.
+      try{
+        if(localStorage.getItem(CRYPTO_FIX_KEY)===null){
+          const raw = localStorage.getItem(ASSETS_KEY);
+          let fixed = false;
+          s.forEach(a=>{
+            if(a.acctType==='cash' || !/-USD$/i.test(a.ticker||'')) return;
+            if(a.assetType!=='가상자산'){ a.assetType='가상자산'; fixed=true; }
+            if(!a.market || a.market==='us'){ a.market='global'; fixed=true; }
+          });
+          if(fixed){
+            if(localStorage.getItem(ASSETS_KEY+'_premigration_crypto')===null) localStorage.setItem(ASSETS_KEY+'_premigration_crypto', raw);
+            changed = true;
+          }
+          localStorage.setItem(CRYPTO_FIX_KEY,'1');
+        }
+      }catch(e){}
+      if(changed){
         try{ localStorage.setItem(ASSETS_KEY, JSON.stringify(s)); }catch(e){}
       }
       return s;
     }
   }catch(e){}
+  try{ localStorage.setItem(CRYPTO_FIX_KEY,'1'); }catch(e){} // 처음 쓰는 사용자는 보정 대상 없음
   const defaults = JSON.parse(JSON.stringify(DEFAULT_ASSETS));
   migrateAssets(defaults); // DEFAULT_ASSETS에도 market 필드를 채워 최초 진입 시부터 일관되게 동작
   return defaults;
