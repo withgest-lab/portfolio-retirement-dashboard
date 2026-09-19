@@ -1108,7 +1108,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <thead><tr>
         <th style="text-align:left">날짜</th>
         <th style="text-align:left">종목</th>
-        <th style="text-align:center">유형<br><span style="font-weight:400;text-transform:none;">구분·속성</span></th>
+        <th style="text-align:center">유형<br><span style="font-weight:400;text-transform:none;">금융회사·계좌유형·자산유형</span></th>
         <th>체결단가 × 수량<br><span style="font-weight:400;text-transform:none;">총금액</span></th>
         <th>실현손익</th>
         <th>관리</th>
@@ -4145,11 +4145,10 @@ function executeTrade(){
   // 수정저장
   if(mode==='edit'){
     const a = assets.find(x=>x.id===id); if(!a) return;
-    // 금융회사·계좌유형을 바꾸기 전에 옛 값을 먼저 기억해둔다 — tradeMatchesAsset이 금융회사+계좌유형
-    // 조합으로 보유분을 구분하므로(둘 중 하나만 바뀌어도 매칭이 어긋날 수 있음), 바뀌기 전 옛 조합으로
-    // 매칭되던 기존 매매이력의 금융회사·계좌유형을 새 값으로 함께 갱신해야 이력이 고아가 되지 않는다.
-    const oldCompany = a.company || null;
-    const oldAcctType = a.acctType || null;
+    // 금융회사·계좌유형·속성·투자시장을 바꾸기 전에 옛 값을 먼저 기억해둔다 — tradeMatchesAsset이 금융회사+계좌유형
+    // 조합으로 보유분을 구분하므로, 바뀌기 전 옛 조합으로 매칭되던 기존 매매이력에 새 값을 함께 반영해야
+    // 이력이 고아가 되지 않고 배지(금융회사·계좌유형·자산유형)도 현재 보유종목과 같아진다.
+    const attrBefore = holdingAttrSnapshot(a);
     if(trade.bondFields){
       Object.assign(a, trade.bondFields);
       a.avgPrice = a.bondPrincipal; // costKRW 기준 = 매입원금
@@ -4160,19 +4159,8 @@ function executeTrade(){
     if(trade.acctType)              a.acctType = trade.acctType;
     if(trade.assetType !== undefined) a.assetType = trade.assetType || null;
     if(trade.market !== undefined)    a.market = trade.market || null;
-    const newCompany = trade.company !== undefined ? (trade.company || null) : oldCompany;
-    if(newCompany !== oldCompany || a.acctType !== oldAcctType){
-      const before = {...a, company: oldCompany, acctType: oldAcctType};
-      const log = loadTradeLog();
-      let changed = false;
-      log.forEach(r=>{
-        if((r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, before)){
-          r.company = newCompany; r.acctType = a.acctType; changed = true;
-        }
-      });
-      if(changed) saveTradeLog(log);
-    }
-    if(trade.company !== undefined) a.company = newCompany;
+    if(trade.company !== undefined) a.company = trade.company || null;
+    propagateHoldingAttrsToTradeLog(attrBefore, a);
     editingId=null; quickTradeId=null;
     saveAssets();renderAll();
     return;
@@ -4204,6 +4192,7 @@ function executeTrade(){
     }
     let cashName = null;
     if(existing){
+      const attrBefore = holdingAttrSnapshot(existing);
       const prevQty  = existing.quantity;
       const totalQty = prevQty + fQty;
       existing.avgPrice = Math.round(((existing.avgPrice*prevQty)+(fPrice*fQty))/totalQty*100)/100;
@@ -4211,6 +4200,7 @@ function executeTrade(){
       if(assetType) existing.assetType = assetType; // 자산유형 입력 시 갱신
       if(company) existing.company = company; // 금융회사 입력 시 갱신
       if(market) existing.market = market; // 투자시장 입력 시 갱신
+      propagateHoldingAttrsToTradeLog(attrBefore, existing); // 바뀐 속성은 기존 매매이력에도 반영
       cashName = existing.acctType!=='cash' ? adjustCashBalance(existing.currency, fPrice*fQty, -1, existing.company||null, existing.acctType||null) : null;
       if(st){ st.textContent=`✅ ${existing.name} ${fQty.toLocaleString()}주 매수 → 총 ${totalQty.toLocaleString()}주${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
@@ -4234,10 +4224,12 @@ function executeTrade(){
     const {assetId, sellQty, sellPrice, assetType, sellAcctType, sellCompany, sellMarket} = trade;
     const a = assets.find(x=>x.id===assetId); if(!a) return;
     // 매도 폼에서 지정한 계좌유형/자산유형/금융회사/투자시장을 먼저 반영 (매매이력에도 기록되도록)
+    const attrBefore = holdingAttrSnapshot(a);
     if(sellAcctType) a.acctType = sellAcctType;
     if(assetType) a.assetType = assetType;
     if(sellCompany) a.company = sellCompany;
     if(sellMarket) a.market = sellMarket;
+    propagateHoldingAttrsToTradeLog(attrBefore, a); // 바뀐 값은 이 종목의 기존 이력에도 반영
     const pnl = Math.round((sellPrice - a.avgPrice) * sellQty);
     const sym = CUR_SYM[a.currency];
     saveSnap(true); // 매도 직전 스냅샷 먼저 (종목 제거 전)
@@ -6998,6 +6990,55 @@ function tradeMatchesAsset(r, asset){
   return (r.company||null) === (asset.company||null) && (r.acctType||null) === (asset.acctType||null);
 }
 
+/* 보유종목의 금융회사·계좌유형·자산유형(속성)·투자시장을 바꾸면 그 종목의 기존 매수/매도 이력도 같은 값으로 따라간다.
+   이력 행은 매수 당시 값을 스냅샷으로 저장하므로, 예전에는 금융회사·계좌유형만 따라 바뀌고 속성·투자시장은 옛 값이
+   남아 같은 종목의 행마다 배지가 달랐다(예: 개인용국채 → 국채로 고쳐도 옛 행은 개인용국채).
+   before = 변경 전 holdingAttrSnapshot(a), asset = 변경 후 자산. "바뀐 필드만" 덮어써서, 이력 행을 직접 수정해 둔 값이
+   있어도 이번에 바뀌지 않은 필드는 그대로 보존한다. 매칭은 옛 금융회사+계좌유형 조합으로 해야 이력이 고아가 되지 않는다. */
+const HOLDING_ATTR_FIELDS = ['company','acctType','assetType','market'];
+function holdingAttrSnapshot(a){
+  return {company:a.company||null, acctType:a.acctType||null, assetType:a.assetType||null, market:a.market||null};
+}
+function propagateHoldingAttrsToTradeLog(before, asset){
+  const after = holdingAttrSnapshot(asset);
+  const fields = HOLDING_ATTR_FIELDS.filter(f=>before[f]!==after[f]);
+  if(!fields.length) return;
+  const matchAsset = {...asset, company:before.company, acctType:before.acctType};
+  const log = loadTradeLog();
+  let changed = false;
+  log.forEach(r=>{
+    if((r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, matchAsset)){
+      fields.forEach(f=>{ if((r[f]||null)!==after[f]){ r[f]=after[f]; changed=true; } });
+    }
+  });
+  if(changed){ saveTradeLog(log); renderSoldHistory(); } // 매매이력 탭은 열려 있지 않아도 다시 그려 둬야 돌아왔을 때 옛 값이 안 보인다
+}
+// 이미 어긋나 있는 기존 이력을 현재 보유종목 기준으로 1회 맞춘다(속성·투자시장). 이름이 같은 현재 보유종목이 있고
+// 그 종목들의 값이 서로 일치할 때만 — 모호하거나 이미 정리·매도된 종목은 건드리지 않는다. 실행 전 원본을 백업해 둔다.
+const TRADELOG_ATTRSYNC_KEY = 'pf_tradelog_attrsync_v1';
+function reconcileTradeLogAttrs(){
+  try{
+    if(localStorage.getItem(TRADELOG_ATTRSYNC_KEY)) return;
+    const raw = localStorage.getItem(TRADE_KEY);
+    const log = loadTradeLog();
+    let changed = false;
+    log.forEach(r=>{
+      if(r.type!=='buy' && r.type!=='sell') return;
+      const matched = assets.filter(a=>a.acctType!=='cash' && tradeMatchesAsset(r, a));
+      if(!matched.length) return;
+      const at = matched[0].assetType||null, mk = matched[0].market||null;
+      if(matched.some(a=>(a.assetType||null)!==at || (a.market||null)!==mk)) return;
+      if((r.assetType||null)!==at){ r.assetType = at; changed = true; }
+      if((r.market||null)!==mk){ r.market = mk; changed = true; }
+    });
+    if(changed){
+      if(raw!==null) localStorage.setItem(TRADE_KEY+'_preattrsync', raw);
+      saveTradeLog(log);
+    }
+    localStorage.setItem(TRADELOG_ATTRSYNC_KEY, '1');
+  }catch(e){}
+}
+
 // 매매이력이 자산의 "현재 보유수량"을 다 설명하지 못하면(초기 보유분을 매매이력 없이,
 // 예: 수정 폼으로 수량만 직접 입력해 들여온 경우) 그 차이만큼을 "가상 매수"로 보충해
 // 기간별 계산이 항상 가능하도록 한다. 값은 실제 이력과 합쳤을 때 정확히 지금의
@@ -8735,6 +8776,7 @@ window.addEventListener('orientationchange',()=>{
 
 (async function init(){
   migrateSoldHistory();
+  reconcileTradeLogAttrs();
   // 기존 데이터에 음수 현금이 있으면 0으로 보정
   let cashFixed = false;
   assets.forEach(a=>{
