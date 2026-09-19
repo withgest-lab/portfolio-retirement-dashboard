@@ -305,6 +305,19 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .donut-center .dc-lbl{font-size:11px;color:var(--color-tertiary);}
 .donut-center .dc-val{font-size:15px;font-weight:800;letter-spacing:-.03em;}
 .donut-legend{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;margin-top:12px;max-width:320px;}
+/* 비중현황: 2열 그리드(윗줄 투자시장·계좌유형 / 아랫줄 자산유형·종목 비중). minmax(0,1fr)+min-width:0으로 가로 스크롤 방지 */
+.alloc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px;align-items:start;}
+.alloc-cell{min-width:0;display:flex;flex-direction:column;align-items:center;}
+.alloc-title{font-size:10px;font-weight:600;color:var(--color-tertiary);text-align:center;
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.alloc-donut-row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%;}
+.alloc-legend{display:flex;flex-direction:column;gap:5px;justify-content:center;min-width:0;}
+.alloc-bar-cell{align-items:stretch;}
+.alloc-bars .bar-row{margin-bottom:5px;gap:6px;}
+.alloc-bars .bar-label{width:84px;font-size:11px;}
+.alloc-bars .bar-track{height:14px;}
+.alloc-bars .bar-pct{width:100px;font-size:11px;}
+@media(max-width:700px){.alloc-grid{grid-template-columns:minmax(0,1fr);}}
 .bar-side{flex:1;min-width:260px;}
 .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .bar-label{width:120px;font-size:12px;font-weight:600;text-align:right;overflow:hidden;
@@ -655,42 +668,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </div>
   </div>
   <div id="allocDonutView">
-  <div style="display:flex;gap:16px;flex-wrap:wrap;">
-    <!-- 왼쪽: 계좌유형 도넛 -->
-    <div style="flex:1;min-width:260px;display:flex;flex-direction:column;align-items:center;">
-      <div style="font-size:10px;font-weight:600;color:var(--color-tertiary);text-align:center;
-                  text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">계좌유형</div>
-      <div style="display:flex;gap:12px;align-items:center;justify-content:center;">
-        <div class="donut-canvas-wrap">
-          <canvas id="acctTypeDonut" width="200" height="200"></canvas>
-          <div class="donut-center">
-            <div class="dc-lbl">총 자산</div>
-            <div class="dc-val" id="acctTypeCenter">—</div>
-          </div>
-        </div>
-        <div id="acctTypeLegend" style="display:flex;flex-direction:column;gap:6px;justify-content:center;"></div>
-      </div>
-    </div>
-    <!-- 가운데: 자산유형 도넛 -->
-    <div style="flex:1;min-width:260px;display:flex;flex-direction:column;align-items:center;">
-      <div style="font-size:10px;font-weight:600;color:var(--color-tertiary);text-align:center;
-                  text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">자산유형</div>
-      <div style="display:flex;gap:12px;align-items:center;justify-content:center;">
-        <div class="donut-canvas-wrap">
-          <canvas id="assetTypeDonut" width="200" height="200"></canvas>
-          <div class="donut-center">
-            <div class="dc-lbl">총 자산</div>
-            <div class="dc-val" id="assetTypeCenter">—</div>
-          </div>
-        </div>
-        <div id="assetTypeLegend" style="display:flex;flex-direction:column;gap:6px;justify-content:center;"></div>
-      </div>
-    </div>
-    <!-- 오른쪽: 투자시장 도넛 -->
-    <div style="flex:1;min-width:260px;display:flex;flex-direction:column;align-items:center;">
-      <div style="font-size:10px;font-weight:600;color:var(--color-tertiary);text-align:center;
-                  text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">투자시장</div>
-      <div style="display:flex;gap:12px;align-items:center;justify-content:center;">
+  <!-- 배치: 윗줄 [투자시장][계좌유형] / 아랫줄 [자산유형][종목 비중 막대] — 좁은 화면(≤700px)은 1열 -->
+  <div class="alloc-grid">
+    <div class="alloc-cell">
+      <div class="alloc-title">투자시장</div>
+      <div class="alloc-donut-row">
         <div class="donut-canvas-wrap">
           <canvas id="marketDonut" width="200" height="200"></canvas>
           <div class="donut-center">
@@ -698,15 +680,39 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
             <div class="dc-val" id="marketCenter">—</div>
           </div>
         </div>
-        <div id="marketLegend" style="display:flex;flex-direction:column;gap:6px;justify-content:center;"></div>
+        <div id="marketLegend" class="alloc-legend"></div>
       </div>
     </div>
-  </div>
-  <!-- 하단: 종목 비중 (가로 전체) -->
-  <div style="margin-top:20px;">
-    <div style="font-size:10px;font-weight:600;color:var(--color-tertiary);text-align:center;
-                text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">종목 비중</div>
-    <div id="barChart"></div>
+    <div class="alloc-cell">
+      <div class="alloc-title">계좌유형</div>
+      <div class="alloc-donut-row">
+        <div class="donut-canvas-wrap">
+          <canvas id="acctTypeDonut" width="200" height="200"></canvas>
+          <div class="donut-center">
+            <div class="dc-lbl">총 자산</div>
+            <div class="dc-val" id="acctTypeCenter">—</div>
+          </div>
+        </div>
+        <div id="acctTypeLegend" class="alloc-legend"></div>
+      </div>
+    </div>
+    <div class="alloc-cell">
+      <div class="alloc-title">자산유형</div>
+      <div class="alloc-donut-row">
+        <div class="donut-canvas-wrap">
+          <canvas id="assetTypeDonut" width="200" height="200"></canvas>
+          <div class="donut-center">
+            <div class="dc-lbl">총 자산</div>
+            <div class="dc-val" id="assetTypeCenter">—</div>
+          </div>
+        </div>
+        <div id="assetTypeLegend" class="alloc-legend"></div>
+      </div>
+    </div>
+    <div class="alloc-cell alloc-bar-cell">
+      <div class="alloc-title">종목 비중</div>
+      <div id="barChart" class="alloc-bars"></div>
+    </div>
   </div>
   </div>
   <div id="allocTreemapView" style="display:none;">
@@ -823,14 +829,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </label>
       <label>계좌유형<select id="af_accttype" onchange="toggleCustomInput('af_accttype','af_accttype_custom')">
         <option value="">-- 선택 --</option>
-        <option value="stock_kr">국내주식</option>
-        <option value="stock_us">미국주식</option>
-        <option value="stock_jp">일본주식</option>
+        <option value="general">일반계좌</option>
         <option value="pension_personal">개인연금</option>
         <option value="pension_retirement">퇴직연금</option>
         <option value="irp">IRP 개인</option>
         <option value="isa">ISA</option>
-        <option value="crypto">가상자산</option>
         <option value="__custom__">+ 직접입력</option>
       </select>
       <input id="af_accttype_custom" placeholder="계좌유형명 입력" style="display:none;margin-top:3px;">
@@ -842,6 +845,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <option value="유망주">유망주</option>
         <option value="원자재">원자재</option>
         <option value="안전자산">안전자산</option>
+        <option value="가상자산">가상자산</option>
         <option value="__custom__">+ 직접입력</option>
       </select>
       <input id="af_assettype_custom" placeholder="자산유형명 입력" style="display:none;margin-top:3px;">
@@ -895,14 +899,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </label>
       <label>계좌유형<select id="sf_accttype" onchange="toggleCustomInput('sf_accttype','sf_accttype_custom')">
         <option value="">-- 선택 --</option>
-        <option value="stock_kr">국내주식</option>
-        <option value="stock_us">미국주식</option>
-        <option value="stock_jp">일본주식</option>
+        <option value="general">일반계좌</option>
         <option value="pension_personal">개인연금</option>
         <option value="pension_retirement">퇴직연금</option>
         <option value="irp">IRP 개인</option>
         <option value="isa">ISA</option>
-        <option value="crypto">가상자산</option>
         <option value="__custom__">+ 직접입력</option>
       </select>
       <input id="sf_accttype_custom" placeholder="계좌유형명 입력" style="display:none;margin-top:3px;">
@@ -914,6 +915,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <option value="유망주">유망주</option>
         <option value="원자재">원자재</option>
         <option value="안전자산">안전자산</option>
+        <option value="가상자산">가상자산</option>
         <option value="__custom__">+ 직접입력</option>
       </select>
       <input id="sf_assettype_custom" placeholder="자산유형명 입력" style="display:none;margin-top:3px;">
@@ -984,10 +986,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
             <option value="pension_retirement">퇴직연금</option>
             <option value="irp">IRP 개인</option>
             <option value="isa">ISA</option>
-            <option value="stock_kr">국내주식</option>
-            <option value="stock_us">미국주식</option>
-            <option value="stock_jp">일본주식</option>
-            <option value="crypto">가상자산</option>
+            <option value="general">일반계좌</option>
             <option value="__custom__">+ 직접입력</option>
           </select>
           <input id="cf_cashaccttype_custom" placeholder="계좌유형명 입력" style="width:100px;display:none;margin-top:3px;
@@ -1003,6 +1002,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
             <option value="유망주">유망주</option>
             <option value="원자재">원자재</option>
             <option value="안전자산">안전자산</option>
+        <option value="가상자산">가상자산</option>
             <option value="__custom__">+ 직접입력</option>
           </select>
           <input id="cf_assettype_custom" placeholder="자산유형명 입력" style="width:100px;display:none;margin-top:3px;
@@ -1125,14 +1125,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </select></label>
     <label>계좌유형<select id="tl_accttype" onchange="toggleCustomInput('tl_accttype','tl_accttype_custom')">
       <option value="">-- 선택 --</option>
-      <option value="stock_kr">국내주식</option>
-      <option value="stock_us">미국주식</option>
-      <option value="stock_jp">일본주식</option>
+      <option value="general">일반계좌</option>
       <option value="pension_personal">개인연금</option>
       <option value="pension_retirement">퇴직연금</option>
       <option value="irp">IRP 개인</option>
       <option value="isa">ISA</option>
-      <option value="crypto">가상자산</option>
       <option value="cash">현금</option>
       <option value="__custom__">+ 직접입력</option>
     </select>
@@ -1144,6 +1141,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <option value="주도주">주도주</option>
       <option value="유망주">유망주</option>
       <option value="원자재">원자재</option>
+      <option value="안전자산">안전자산</option>
+      <option value="가상자산">가상자산</option>
       <option value="__custom__">+ 직접입력</option>
     </select>
     <input id="tl_assettype_custom" placeholder="자산유형명" style="display:none;margin-top:3px;">
@@ -1452,13 +1451,19 @@ const LINE_COLS = [
   '#4a3aa7', // 바이올렛
   '#e34948', // 레드
 ];
-const ACCTTYPE_COLS   = {stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',pension_personal:'#af52de',pension_retirement:'#34c759',irp:'#5856d6',isa:'#00b5ad',crypto:'#ff3b30',cash:'#8e8e93'};
+const ACCTTYPE_COLS   = {general:'#ff9500',pension_personal:'#af52de',pension_retirement:'#34c759',irp:'#5856d6',isa:'#00b5ad',cash:'#8e8e93'};
 const ASSET_COLS = ['#5ac8fa','#ffd60a','#30d158','#bf5af2','#ff6961','#32ade6','#ff375f','#6ac4dc','#c8a96e','#aeaeb2'];
-const ACCTTYPE_LABELS = {stock_kr:'국내주식',stock_us:'미국주식',stock_jp:'일본주식',pension_personal:'개인연금',pension_retirement:'퇴직연금',irp:'IRP 개인',isa:'ISA',crypto:'가상자산',cash:'현금'};
-const ASSETTYPE_OPTIONS = ['Core','주도주','유망주','원자재','안전자산'];
+const ACCTTYPE_LABELS = {general:'일반계좌',pension_personal:'개인연금',pension_retirement:'퇴직연금',irp:'IRP 개인',isa:'ISA',cash:'현금'};
+/* 데이터 프레임: 금융회사(company)=증권사·플랫폼 / 계좌유형(acctType)=법적 계좌·절세제도 /
+   투자시장(market)=실제 투자 대상 지역 / 자산유형(assetType)=포트폴리오 내 역할·자산군.
+   과거 계좌유형이던 국내주식·미국주식·일본주식·가상자산은 종목 성격이므로 더 이상 계좌유형이 아니다
+   (기존 데이터는 migrateRecordFields에서 일반계좌로 자동 변환). cash는 현금 행의 내부 표식. */
+const ACCTTYPE_PRESETS = ['general','pension_personal','pension_retirement','irp','isa']; // 드롭다운 프리셋(이 외의 값은 직접입력)
+const LEGACY_ACCTTYPE_LABELS = {'국내주식':'general','미국주식':'general','일본주식':'general','가상자산':'general'};
+const ASSETTYPE_OPTIONS = ['Core','주도주','유망주','원자재','안전자산','가상자산'];
 // 개인연금(pension_personal) 세부계좌 구분 — 은퇴 대시보드의 nh(농협)/mf(미래에셋) 잔액 자동 연동에 사용
 const COMPANY_LABELS = {nh:'농협',mf:'미래에셋'};
-const ASSETTYPE_COLS = {'Core':'#0a84ff','주도주':'#ff9500','유망주':'#34c759','원자재':'#a2845e','현금':'#8e8e93','안전자산':'#5ac8fa','미지정':'#c7c7cc'};
+const ASSETTYPE_COLS = {'Core':'#0a84ff','주도주':'#ff9500','유망주':'#34c759','원자재':'#a2845e','현금':'#8e8e93','안전자산':'#5ac8fa','가상자산':'#ff3b30','미지정':'#c7c7cc'};
 /* 투자시장(market) — "상장 거래소"가 아니라 "실제 투자 대상 지역" 기준.
    예) TIGER S&P500은 한국거래소 상장이지만 투자 대상은 미국이므로 'us'.
    여러 나라에 분산 투자하는 상품(글로벌·선진국·신흥국 등)은 'global'. */
@@ -1474,36 +1479,18 @@ const FX_KEY      = 'pf_fx_v1';
 // Google Sheets 동기화 제거됨 - 드라이브 직접 백업으로 대체
 
 
-/* ETF 브랜드 판별 */
-const ETF_BRANDS = /^(TIGER|KODEX|KINDEX|ARIRANG|HANARO|KBSTAR|ACE|SOL|TIMEFOLIO)/i;
-function isETF(a){return ETF_BRANDS.test(a.name);}
-
-/* 도넛 카테고리 그룹 — 국내주식을 ETF/일반으로 세분화, 미국·일본주식은 "해외주식"으로 통합.
-   pension_personal/irp/isa/crypto/cash 는 ACCTTYPE_LABELS·ACCTTYPE_COLS 값을 그대로 재사용(중복 정의 제거).
+/* 도넛(계좌유형) 그룹 — acctType 그대로 표시한다(일반계좌/개인연금/퇴직연금/IRP/ISA/현금/직접입력).
+   국내·해외 같은 지역 구분은 계좌유형이 아니라 투자시장(market) 도넛이 담당한다.
    pension_retirement는 라벨만 동일하고 색상은 도넛 차트에서 의도적으로 다른 값을 사용(기존값 유지). */
-const DONUT_ACCTTYPE_LABELS = {
-  etf:'ETF(개인연금)', overseas:'해외주식', domestic:'국내주식',
-  pension_personal:ACCTTYPE_LABELS.pension_personal, pension_retirement:ACCTTYPE_LABELS.pension_retirement,
-  irp:ACCTTYPE_LABELS.irp, isa:ACCTTYPE_LABELS.isa, crypto:ACCTTYPE_LABELS.crypto, cash:ACCTTYPE_LABELS.cash,
-};
-const DONUT_ACCTTYPE_COLS = {
-  etf:'#34c759', overseas:'#007aff', domestic:'#ff9500',
-  pension_personal:ACCTTYPE_COLS.pension_personal, pension_retirement:'#30b0c7',
-  irp:ACCTTYPE_COLS.irp, isa:ACCTTYPE_COLS.isa, crypto:ACCTTYPE_COLS.crypto, cash:ACCTTYPE_COLS.cash,
-};
+const DONUT_ACCTTYPE_LABELS = ACCTTYPE_LABELS;
+const DONUT_ACCTTYPE_COLS = Object.assign({}, ACCTTYPE_COLS, {pension_retirement:'#30b0c7'});
 function donutAcctTypeKey(a){
-  if(a.acctType==='cash' && a.cashAcctType && a.cashAcctType!=='cash')
-    return ACCTTYPE_LABELS[a.cashAcctType] ? donutAcctTypeKey({acctType:a.cashAcctType, name:a.name}) : a.cashAcctType;
-  if(a.acctType==='stock_us'||a.acctType==='stock_jp') return 'overseas';
-  if(a.acctType==='stock_kr'&&isETF(a)) return 'etf';
-  if(a.acctType==='stock_kr') return 'domestic';
+  // 계좌유형이 지정된 현금은 그 계좌 소속으로 집계
+  if(a.acctType==='cash' && a.cashAcctType && a.cashAcctType!=='cash') return a.cashAcctType;
   return a.acctType;
 }
 // 계좌유형 배지는 순수하게 acctType만 표시 — 금융회사(세부계좌)는 별도 "금융회사" 컬럼에서 표시
 function acctTypeBadge(a){
-  if(a.acctType==='stock_us') return '미';
-  if(a.acctType==='stock_jp') return '일';
-  if(a.acctType==='stock_kr') return '한';
   return ACCTTYPE_LABELS[a.acctType]||a.acctType;
 }
 
@@ -1524,16 +1511,16 @@ let FX = loadFX();
    자산 데이터
 ════════════════════════════════════════ */
 const DEFAULT_ASSETS = [
-  {id:'1', ticker:'GOOGL',     name:'알파벳 A',               acctType:'stock_us',         quantity:172,  avgPrice:313,    currentPrice:382.97, prevPrice:387.68, currency:'USD'},
-  {id:'2', ticker:'6268.T',    name:'나부테스코',              acctType:'stock_jp',         quantity:400,  avgPrice:3767,   currentPrice:5495,   prevPrice:5312,   currency:'JPY'},
-  {id:'3', ticker:'360750.KS', name:'TIGER S&P500',           acctType:'stock_kr',         quantity:3235, avgPrice:25088,  currentPrice:28100,  prevPrice:27744,  currency:'KRW'},
-  {id:'4', ticker:'379800.KS', name:'KODEX S&P500',           acctType:'stock_kr',         quantity:3137, avgPrice:23427,  currentPrice:25615,  prevPrice:25293,  currency:'KRW'},
-  {id:'5', ticker:'133690.KS', name:'TIGER 나스닥100',        acctType:'stock_kr',         quantity:57,   avgPrice:178300, currentPrice:197990, prevPrice:195248, currency:'KRW'},
-  {id:'6', ticker:'381170.KS', name:'TIGER 테크TOP10',        acctType:'stock_kr',         quantity:352,  avgPrice:31789,  currentPrice:34980,  prevPrice:34611,  currency:'KRW'},
-  {id:'7', ticker:'487230.KS', name:'KODEX 미국AI전력핵심인프라',acctType:'stock_kr',      quantity:800,  avgPrice:18941,  currentPrice:26535,  prevPrice:25711,  currency:'KRW'},
-  {id:'8', ticker:'276990.KS', name:'KODEX 글로벌로봇',       acctType:'stock_kr',         quantity:300,  avgPrice:22935,  currentPrice:29545,  prevPrice:28899,  currency:'KRW'},
-  {id:'9', ticker:'005930.KS', name:'삼성전자',               acctType:'stock_kr',         quantity:136,  avgPrice:220000, currentPrice:292500, prevPrice:299500, currency:'KRW'},
-  {id:'10',ticker:'396500.KS', name:'TIGER 반도체TOP10',      acctType:'stock_kr',         quantity:308,  avgPrice:37291,  currentPrice:48000,  prevPrice:48397,  currency:'KRW'},
+  {id:'1', ticker:'GOOGL',     name:'알파벳 A',               acctType:'general', market:'us', quantity:172,  avgPrice:313,    currentPrice:382.97, prevPrice:387.68, currency:'USD'},
+  {id:'2', ticker:'6268.T',    name:'나부테스코',              acctType:'general', market:'jp', quantity:400,  avgPrice:3767,   currentPrice:5495,   prevPrice:5312,   currency:'JPY'},
+  {id:'3', ticker:'360750.KS', name:'TIGER S&P500',           acctType:'general',         quantity:3235, avgPrice:25088,  currentPrice:28100,  prevPrice:27744,  currency:'KRW'},
+  {id:'4', ticker:'379800.KS', name:'KODEX S&P500',           acctType:'general',         quantity:3137, avgPrice:23427,  currentPrice:25615,  prevPrice:25293,  currency:'KRW'},
+  {id:'5', ticker:'133690.KS', name:'TIGER 나스닥100',        acctType:'general',         quantity:57,   avgPrice:178300, currentPrice:197990, prevPrice:195248, currency:'KRW'},
+  {id:'6', ticker:'381170.KS', name:'TIGER 테크TOP10',        acctType:'general',         quantity:352,  avgPrice:31789,  currentPrice:34980,  prevPrice:34611,  currency:'KRW'},
+  {id:'7', ticker:'487230.KS', name:'KODEX 미국AI전력핵심인프라',acctType:'general',      quantity:800,  avgPrice:18941,  currentPrice:26535,  prevPrice:25711,  currency:'KRW'},
+  {id:'8', ticker:'276990.KS', name:'KODEX 글로벌로봇',       acctType:'general',         quantity:300,  avgPrice:22935,  currentPrice:29545,  prevPrice:28899,  currency:'KRW'},
+  {id:'9', ticker:'005930.KS', name:'삼성전자',               acctType:'general',         quantity:136,  avgPrice:220000, currentPrice:292500, prevPrice:299500, currency:'KRW'},
+  {id:'10',ticker:'396500.KS', name:'TIGER 반도체TOP10',      acctType:'general',         quantity:308,  avgPrice:37291,  currentPrice:48000,  prevPrice:48397,  currency:'KRW'},
 ];
 
 /* ════════════════════════════════════════
@@ -1551,6 +1538,11 @@ const DEFAULT_ASSETS = [
    삭제하므로, 이미 변환된 데이터를 다시 통과시켜도 안전하다(멱등).
    ⚠️ 원본 값을 지우거나 덮어쓰지 않는다 — 신 필드가 이미 있으면 그 값을 우선한다.
 ════════════════════════════════════════ */
+const LEGACY_STOCK_ACCTTYPES = ['stock_kr','stock_us','stock_jp','crypto'];
+// 가상자산 판별 — 자산유형이 '가상자산'이거나, (다른 역할을 이미 지정한 경우를 대비해) 티커가 BTC-USD 형태
+function isCryptoAsset(a){
+  return !!a && a.acctType!=='cash' && (a.assetType==='가상자산' || /-USD$/i.test(a.ticker||''));
+}
 const FIELD_MIGRATION_MAP = {
   category:    'acctType',
   subCategory: 'cashAcctType',
@@ -1568,6 +1560,25 @@ function migrateRecordFields(r){
       delete r[oldKey];
       changed = true;
     }
+  }
+  // 구 계좌유형(국내/미국/일본주식·가상자산)은 계좌가 아니라 종목 성격이므로 일반계좌로 옮긴다.
+  // ★ 정보가 사라지지 않도록 변환 "전에" 투자시장(market)·자산유형(assetType)에 먼저 보존한다.
+  if(LEGACY_STOCK_ACCTTYPES.includes(r.acctType)){
+    const legacy = r.acctType;
+    if(legacy === 'crypto'){
+      // 가상자산은 나라가 없다 — 통화(USD)로 자동 추정돼 있던 '미국'은 글로벌로 바로잡는다
+      if(!r.market || r.market === 'us') r.market = 'global';
+      if(!r.assetType) r.assetType = '가상자산';
+    } else if(!r.market){
+      const m = legacy === 'stock_us' ? 'us' : legacy === 'stock_jp' ? 'jp' : inferMarket(r);
+      if(m) r.market = m;
+    }
+    r.acctType = 'general';
+    changed = true;
+  }
+  if(LEGACY_STOCK_ACCTTYPES.includes(r.cashAcctType)){
+    r.cashAcctType = 'general'; // 현금이 속한 계좌: 종목 성격이 아닌 일반계좌로
+    changed = true;
   }
   return changed;
 }
@@ -1592,6 +1603,9 @@ function inferMarket(a){
     return null;
   }
 
+  // 0.5) 가상자산 — 나라가 없으므로 글로벌 (티커가 BTC-USD 형태)
+  if(acctType === 'crypto' || /-USD$/.test(ticker)) return 'global';
+
   // 1) 직접 보유한 해외 개별주식 — 계좌유형이 곧 투자 대상 (stock_kr은 국내상장 해외ETF일 수
   //    있으므로 여기서 단정하지 않고 아래 종목명 판별로 내려보낸다)
   if(acctType === 'stock_us') return 'us';
@@ -1604,7 +1618,10 @@ function inferMarket(a){
   //    일본
   if(/일본|닛케이|니케이|NIKKEI|TOPIX|JPX/i.test(name)) return 'jp';
   //    미국
-  if(/S&P\s*500|S&P500|SPX|나스닥|NASDAQ|QQQ|다우|DOW|러셀|RUSSELL|필라델피아|미국|US\s|U\.S\.|테크TOP10|FANG/i.test(name)) return 'us';
+  //    ※ "US"는 대문자 단독 단어일 때만 본다 — 대소문자 무시로 "us "를 찾으면 "PLUS 고배당주" 같은
+  //      국내 ETF가 미국으로 잘못 분류된다.
+  if(/S&P\s*500|S&P500|SPX|나스닥|NASDAQ|QQQ|다우|DOW|러셀|RUSSELL|필라델피아|미국|U\.S\.|테크TOP10|FANG|엔비디아|테슬라|애플|마이크로소프트|아마존|구글|메타플랫폼|팔란티어|브로드컴|빅테크|매그니피센트|사이버보안|CYBER|SOX|M7/i.test(name)
+     || /(^|[^A-Za-z])US([^A-Za-z]|$)/.test(name)) return 'us';
   //    여러 나라에 걸친 상품 — 특정 국가로 몰아넣으면 왜곡되므로 별도 분류
   if(/글로벌|GLOBAL|선진국|신흥국|월드|WORLD|아시아|ASIA|유럽|EUROPE|중국|CHINA|인도|INDIA|베트남|VIETNAM|신재생|친환경/i.test(name)) return 'global';
 
@@ -1645,13 +1662,16 @@ let assets = (()=>{
     if(Array.isArray(s)) s = s.filter(x=>x && typeof x==='object'); // null/깨진 원소만 제거(정상 자산은 그대로)
     if(s&&s.length){
       // 마이그레이션 후 곧바로 저장 — 변환된 형태가 확정되어 다음 로드부터는 통과만 한다
-      // 변환 직전 원본을 1회 보존해 문제가 생겨도 되돌릴 수 있게 한다(이미 있으면 덮어쓰지 않음)
-      if(s.some(x=>x && Object.keys(FIELD_MIGRATION_MAP).some(k=>k in x))){
-        try{
-          if(localStorage.getItem(ASSETS_KEY+'_premigration')===null)
-            localStorage.setItem(ASSETS_KEY+'_premigration', localStorage.getItem(ASSETS_KEY));
-        }catch(e){}
-      }
+      // 변환 직전 원본을 단계별로 1회 보존해 문제가 생겨도 되돌릴 수 있게 한다(이미 있으면 덮어쓰지 않음)
+      //   _premigration      : 필드명 변경(category→acctType 등) 이전 형태
+      //   _premigration_acct : 계좌유형 정리(국내/미국/일본주식·가상자산 → 일반계좌) 이전 형태
+      try{
+        const raw = localStorage.getItem(ASSETS_KEY);
+        if(s.some(x=>Object.keys(FIELD_MIGRATION_MAP).some(k=>k in x)) && localStorage.getItem(ASSETS_KEY+'_premigration')===null)
+          localStorage.setItem(ASSETS_KEY+'_premigration', raw);
+        if(s.some(x=>LEGACY_STOCK_ACCTTYPES.includes(x.acctType) || LEGACY_STOCK_ACCTTYPES.includes(x.cashAcctType) || LEGACY_STOCK_ACCTTYPES.includes(x.category)) && localStorage.getItem(ASSETS_KEY+'_premigration_acct')===null)
+          localStorage.setItem(ASSETS_KEY+'_premigration_acct', raw);
+      }catch(e){}
       if(migrateAssets(s)){
         try{ localStorage.setItem(ASSETS_KEY, JSON.stringify(s)); }catch(e){}
       }
@@ -2849,7 +2869,8 @@ function saveTradeLogEdit(id){
   if(company===null) return;
   const market = readSelectOrCustom(`tle_market_${id}`, `tle_market_custom_${id}`, false);
   if(market===null) return;
-  const acctType   = document.getElementById(`tle_accttype_${id}`)?.value || '';
+  const acctType   = readSelectOrCustom(`tle_accttype_${id}`, `tle_accttype_custom_${id}`, true) ?? null;
+  if(acctType===null) return;
   const assetType  = document.getElementById(`tle_assettype_${id}`)?.value || '';
   const price = parseFloat(document.getElementById(`tle_price_${id}`).value);
   const qty   = parseFloat(document.getElementById(`tle_qty_${id}`).value);
@@ -3213,6 +3234,7 @@ function renderTradeLogEditForm(r, colspan){
   const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
   const tleCompanyCustom = r.company && !['nh','mf'].includes(r.company);
   const tleMarketCustom  = r.market && !MARKET_OPTIONS.includes(r.market);
+  const tleAcctTypeCustom = r.acctType && ![...ACCTTYPE_PRESETS,'cash'].includes(r.acctType);
   return `<tr class="tr-full" style="background:#f0fff4;">
     <td colspan="${colspan}" style="padding:14px 16px;" onclick="event.stopPropagation()">
       <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
@@ -3275,29 +3297,28 @@ function renderTradeLogEditForm(r, colspan){
         </label>
         <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
           계좌유형
-          <select id="tle_accttype_${r.id}"
+          <select id="tle_accttype_${r.id}" onchange="toggleCustomInput('tle_accttype_${r.id}','tle_accttype_custom_${r.id}')"
             style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
             <option value=""                  ${!r.acctType?'selected':''}>-- 선택 --</option>
-            <option value="stock_kr"          ${r.acctType==='stock_kr'?'selected':''}>국내주식</option>
-            <option value="stock_us"          ${r.acctType==='stock_us'?'selected':''}>미국주식</option>
-            <option value="stock_jp"          ${r.acctType==='stock_jp'?'selected':''}>일본주식</option>
+            <option value="general"           ${r.acctType==='general'?'selected':''}>일반계좌</option>
             <option value="pension_personal"  ${r.acctType==='pension_personal'?'selected':''}>개인연금</option>
             <option value="pension_retirement"${r.acctType==='pension_retirement'?'selected':''}>퇴직연금</option>
             <option value="irp"               ${r.acctType==='irp'?'selected':''}>IRP 개인</option>
             <option value="isa"               ${r.acctType==='isa'?'selected':''}>ISA</option>
-            <option value="crypto"            ${r.acctType==='crypto'?'selected':''}>가상자산</option>
             <option value="cash"              ${r.acctType==='cash'?'selected':''}>현금</option>
+            <option value="__custom__"        ${tleAcctTypeCustom?'selected':''}>+ 직접입력</option>
           </select>
+          <input id="tle_accttype_custom_${r.id}" placeholder="계좌유형명 입력" value="${tleAcctTypeCustom?r.acctType.replace(/"/g,'&quot;'):''}"
+            style="width:100px;display:${tleAcctTypeCustom?'inline-block':'none'};margin-top:3px;
+                   border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
         </label>
         <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
           자산유형
           <select id="tle_assettype_${r.id}"
             style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
             <option value=""       ${!r.assetType?'selected':''}>— 없음 —</option>
-            <option value="Core"   ${r.assetType==='Core'?'selected':''}>Core</option>
-            <option value="주도주" ${r.assetType==='주도주'?'selected':''}>주도주</option>
-            <option value="유망주" ${r.assetType==='유망주'?'selected':''}>유망주</option>
-            <option value="원자재" ${r.assetType==='원자재'?'selected':''}>원자재</option>
+            ${[...ASSETTYPE_OPTIONS, ...(r.assetType && !ASSETTYPE_OPTIONS.includes(r.assetType) ? [r.assetType] : [])]
+              .map(v=>`<option value="${String(v).replace(/"/g,'&quot;')}" ${r.assetType===v?'selected':''}>${v}</option>`).join('')}
           </select>
         </label>
         <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
@@ -3667,15 +3688,12 @@ function renderTable(){
                   <option value="pension_retirement" ${a.cashAcctType==='pension_retirement'?'selected':''}>퇴직연금</option>
                   <option value="irp"       ${a.cashAcctType==='irp'      ?'selected':''}>IRP 개인</option>
                   <option value="isa"       ${a.cashAcctType==='isa'      ?'selected':''}>ISA</option>
-                  <option value="stock_kr"  ${a.cashAcctType==='stock_kr' ?'selected':''}>국내주식</option>
-                  <option value="stock_us"  ${a.cashAcctType==='stock_us' ?'selected':''}>미국주식</option>
-                  <option value="stock_jp"  ${a.cashAcctType==='stock_jp' ?'selected':''}>일본주식</option>
-                  <option value="crypto"    ${a.cashAcctType==='crypto'   ?'selected':''}>가상자산</option>
-                  <option value="__custom__" ${a.cashAcctType && !['pension_personal','pension_retirement','irp','isa','stock_kr','stock_us','stock_jp','crypto'].includes(a.cashAcctType)?'selected':''}>+ 직접입력</option>
+                  <option value="general"   ${a.cashAcctType==='general'  ?'selected':''}>일반계좌</option>
+                  <option value="__custom__" ${a.cashAcctType && !ACCTTYPE_PRESETS.includes(a.cashAcctType)?'selected':''}>+ 직접입력</option>
                 </select>
                 <input id="ep_cashaccttype_custom_${a.id}" placeholder="계좌유형명 입력"
-                  value="${a.cashAcctType && !['pension_personal','pension_retirement','irp','isa','stock_kr','stock_us','stock_jp','crypto'].includes(a.cashAcctType)?a.cashAcctType.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.cashAcctType && !['pension_personal','pension_retirement','irp','isa','stock_kr','stock_us','stock_jp','crypto'].includes(a.cashAcctType)?'inline-block':'none'};margin-top:3px;
+                  value="${a.cashAcctType && !ACCTTYPE_PRESETS.includes(a.cashAcctType)?a.cashAcctType.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${a.cashAcctType && !ACCTTYPE_PRESETS.includes(a.cashAcctType)?'inline-block':'none'};margin-top:3px;
                          border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
@@ -3689,11 +3707,12 @@ function renderTable(){
                   <option value="유망주" ${a.assetType==='유망주'?'selected':''}>유망주</option>
                   <option value="원자재" ${a.assetType==='원자재'?'selected':''}>원자재</option>
                   <option value="안전자산" ${a.assetType==='안전자산'?'selected':''}>안전자산</option>
-                  <option value="__custom__" ${a.assetType && !['Core','주도주','유망주','원자재','안전자산'].includes(a.assetType)?'selected':''}>+ 직접입력</option>
+                  <option value="가상자산" ${a.assetType==='가상자산'?'selected':''}>가상자산</option>
+                  <option value="__custom__" ${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'selected':''}>+ 직접입력</option>
                 </select>
                 <input id="ep_assettype_custom_${a.id}" placeholder="자산유형명 입력"
-                  value="${a.assetType && !['Core','주도주','유망주','원자재','안전자산'].includes(a.assetType)?a.assetType.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.assetType && !['Core','주도주','유망주','원자재','안전자산'].includes(a.assetType)?'inline-block':'none'};margin-top:3px;
+                  value="${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?a.assetType.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'inline-block':'none'};margin-top:3px;
                          border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
             </div>
@@ -3732,6 +3751,7 @@ function renderTable(){
         // ── 일반 종목: 수량 / 평균단가 / 계좌 / 구분 / 속성 (확정금리 채권은 원금·금리·발행/만기일로 대체) ──
         const tpCompanyCustom = a.company && !['nh','mf'].includes(a.company);
         const tpMarketCustom  = a.market && !MARKET_OPTIONS.includes(a.market);
+        const tpAcctTypeCustom = a.acctType && !ACCTTYPE_PRESETS.includes(a.acctType);
         const bondEditFields = a.isBond ? `
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
                 매입원금 (${a.currency})
@@ -3817,18 +3837,19 @@ function renderTable(){
               </label>
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
                 계좌유형
-                <select id="tp_accttype_${a.id}"
+                <select id="tp_accttype_${a.id}" onchange="toggleCustomInput('tp_accttype_${a.id}','tp_accttype_custom_${a.id}')"
                   style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
                          font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value="stock_kr"  ${a.acctType==='stock_kr' ?'selected':''}>국내주식</option>
-                  <option value="stock_us"  ${a.acctType==='stock_us' ?'selected':''}>미국주식</option>
-                  <option value="stock_jp"  ${a.acctType==='stock_jp' ?'selected':''}>일본주식</option>
+                  <option value="general"   ${a.acctType==='general'  ?'selected':''}>일반계좌</option>
                   <option value="pension_personal"   ${a.acctType==='pension_personal'  ?'selected':''}>개인연금</option>
                   <option value="pension_retirement" ${a.acctType==='pension_retirement'?'selected':''}>퇴직연금</option>
                   <option value="irp"       ${a.acctType==='irp'      ?'selected':''}>IRP 개인</option>
                   <option value="isa"       ${a.acctType==='isa'      ?'selected':''}>ISA</option>
-                  <option value="crypto"    ${a.acctType==='crypto'   ?'selected':''}>가상자산</option>
+                  <option value="__custom__" ${tpAcctTypeCustom?'selected':''}>+ 직접입력</option>
                 </select>
+                <input id="tp_accttype_custom_${a.id}" placeholder="계좌유형명 입력" value="${tpAcctTypeCustom?a.acctType.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${tpAcctTypeCustom?'inline-block':'none'};margin-top:3px;
+                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
               <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
                 자산유형
@@ -3841,11 +3862,12 @@ function renderTable(){
                   <option value="유망주" ${a.assetType==='유망주'?'selected':''}>유망주</option>
                   <option value="원자재" ${a.assetType==='원자재'?'selected':''}>원자재</option>
                   <option value="안전자산" ${a.assetType==='안전자산'?'selected':''}>안전자산</option>
-                  <option value="__custom__" ${a.assetType && !['Core','주도주','유망주','원자재','안전자산'].includes(a.assetType)?'selected':''}>+ 직접입력</option>
+                  <option value="가상자산" ${a.assetType==='가상자산'?'selected':''}>가상자산</option>
+                  <option value="__custom__" ${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'selected':''}>+ 직접입력</option>
                 </select>
                 <input id="tp_assettype_custom_${a.id}" placeholder="자산유형명 입력"
-                  value="${a.assetType && !['Core','주도주','유망주','원자재','안전자산'].includes(a.assetType)?a.assetType.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.assetType && !['Core','주도주','유망주','원자재','안전자산'].includes(a.assetType)?'inline-block':'none'};margin-top:3px;
+                  value="${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?a.assetType.replace(/"/g,'&quot;'):''}"
+                  style="width:100px;display:${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'inline-block':'none'};margin-top:3px;
                          border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -4241,7 +4263,9 @@ function confirmSaveEdit(id){
   const a = assets.find(x=>x.id===id); if(!a) return;
   const qty   = parseFloat(document.getElementById(`tp_qty_${id}`)?.value);
   const price = parseFloat(document.getElementById(`tp_price_${id}`)?.value);
-  const acctType   = document.getElementById(`tp_accttype_${id}`)?.value || a.acctType;
+  const acctTypeRaw = readSelectOrCustom(`tp_accttype_${id}`, `tp_accttype_custom_${id}`, true);
+  if(acctTypeRaw===null) return;
+  const acctType   = acctTypeRaw || a.acctType;
   const assetType  = readSelectOrCustom(`tp_assettype_${id}`, `tp_assettype_custom_${id}`, false);
   if(assetType===null) return;
   const company = readSelectOrCustom(`tp_company_${id}`, `tp_company_custom_${id}`, false);
@@ -4545,7 +4569,7 @@ function searchTicker(query){
     const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
     box.innerHTML=results.map(s=>{
       const cc=acctTypeColor[s.c]||'#8e8e93';
-      const cl=acctTypeLabel[s.c]||s.c;
+      const cl=acctTypeLabel[s.c]||ACCTTYPE_LABELS[s.c]||s.c;
       const hl=s.n.replace(re,'<b style="color:var(--color-accent)">$1</b>');
       return`<div class="suggest-item" onclick="selectTicker('${s.t}','${s.n.replace(/'/g,"\\'")}','${s.c}','${s.cur}')">
         <span style="background:${cc}20;color:${cc};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;flex-shrink:0;">${cl}</span>
@@ -4556,10 +4580,23 @@ function searchTicker(query){
     box.style.display='block';
   },150);
 }
+// stocks.csv의 category(stock_kr/stock_us/stock_jp/crypto)는 "종목 성격"이라 계좌유형에 그대로 넣지 않는다.
+// 계좌유형은 일반계좌로, 성격은 투자시장(market)/자산유형(assetType)으로 옮겨 채운다.
+// (그 외 값 — 이미 보유 중인 자산에서 온 계좌유형 — 은 그대로 채운다)
+function applyTickerPick(prefix, sym, name, c, cur){
+  let acct = c, market = null, assetType = null;
+  if(c==='stock_us'){ acct='general'; market='us'; }
+  else if(c==='stock_jp'){ acct='general'; market='jp'; }
+  else if(c==='stock_kr'){ acct='general'; market=inferMarket({ticker:sym, name, currency:cur, acctType:'stock_kr'}); }
+  else if(c==='crypto'){ acct='general'; market='global'; assetType='가상자산'; }
+  fillSelectOrCustom(prefix+'_accttype', prefix+'_accttype_custom', acct);
+  if(market) fillSelectOrCustom(prefix+'_market', prefix+'_market_custom', market);
+  if(assetType) fillSelectOrCustom(prefix+'_assettype', prefix+'_assettype_custom', assetType);
+}
 function selectTicker(sym,name,acctType,cur){
   document.getElementById('af_name').value=name;
   document.getElementById('af_ticker').value=sym;
-  document.getElementById('af_accttype').value=acctType;
+  applyTickerPick('af', sym, name, acctType, cur);
   document.getElementById('af_cur').value=cur;
   document.getElementById('af_suggestions').style.display='none';
   document.getElementById('af_qty').focus();
@@ -4580,7 +4617,7 @@ function searchTickerTL(query){
     const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
     box.innerHTML=results.map(s=>{
       const cc=acctTypeColor[s.c]||'#8e8e93';
-      const cl=acctTypeLabel[s.c]||s.c;
+      const cl=acctTypeLabel[s.c]||ACCTTYPE_LABELS[s.c]||s.c;
       const hl=s.n.replace(re,'<b style="color:var(--color-accent)">$1</b>');
       return`<div class="suggest-item" onclick="selectTickerTL('${s.t}','${s.n.replace(/'/g,"\\'")}','${s.c}','${s.cur}')">
         <span style="background:${cc}20;color:${cc};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;flex-shrink:0;">${cl}</span>
@@ -4594,7 +4631,7 @@ function searchTickerTL(query){
 function selectTickerTL(sym,name,acctType,cur){
   document.getElementById('tl_name').value=name;
   document.getElementById('tl_ticker').value=sym;
-  document.getElementById('tl_accttype').value=acctType;
+  applyTickerPick('tl', sym, name, acctType, cur);
   document.getElementById('tl_cur').value=cur;
   document.getElementById('tl_suggestions').style.display='none';
   document.getElementById('tl_qty').focus();
@@ -4619,7 +4656,7 @@ function searchTickerDiv(ctx, query){
     const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
     box.innerHTML=results.map(s=>{
       const cc=acctTypeColor[s.c]||'#8e8e93';
-      const cl=acctTypeLabel[s.c]||s.c;
+      const cl=acctTypeLabel[s.c]||ACCTTYPE_LABELS[s.c]||s.c;
       const hl=s.n.replace(re,'<b style="color:var(--color-accent)">$1</b>');
       return`<div class="suggest-item" onclick="selectTickerDiv('${ctx}','${s.n.replace(/'/g,"\\'")}','${s.cur}')">
         <span style="background:${cc}20;color:${cc};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;flex-shrink:0;">${cl}</span>
@@ -4719,7 +4756,7 @@ function toggleBondFields(){
   document.getElementById('af_price_label').style.display = on ? 'none' : 'inline-block';
 }
 // 예약된 구분(카테고리) 키와 충돌하는 커스텀 값 입력 방지
-const RESERVED_ACCTTYPE_KEYS = ['stock_kr','stock_us','stock_jp','pension_personal','pension_retirement','irp','isa','crypto','cash'];
+const RESERVED_ACCTTYPE_KEYS = ['general','stock_kr','stock_us','stock_jp','pension_personal','pension_retirement','irp','isa','crypto','cash'];
 // selectId의 값이 '__custom__'이면 customInputId를 보여주고, 아니면 숨김 (계좌/구분/속성 공용)
 function toggleCustomInput(selectId, customInputId){
   const sel = document.getElementById(selectId);
@@ -4735,9 +4772,16 @@ function readSelectOrCustom(selectId, customInputId, isAcctType){
   if(!sel) return '';
   if(sel.value === '__custom__'){
     const v = (document.getElementById(customInputId)?.value||'').trim();
-    if(isAcctType && v && RESERVED_ACCTTYPE_KEYS.includes(v.toLowerCase())){
-      alert(`"${v}"는 시스템 예약어와 겹쳐 계좌유형명으로 쓸 수 없습니다. 다른 이름을 입력해 주세요.`);
-      return null;
+    if(isAcctType && v){
+      // 이미 있는 계좌유형 이름(일반계좌·개인연금 등, 옛 명칭 국내주식·미국주식 등)을 직접 입력하면
+      // 같은 뜻의 별도 값이 생겨 분류가 갈라지므로 정식 값으로 매핑한다.
+      const byLabel = Object.keys(ACCTTYPE_LABELS).find(k=>k!=='cash' && ACCTTYPE_LABELS[k]===v);
+      if(byLabel) return byLabel;
+      if(LEGACY_ACCTTYPE_LABELS[v]) return LEGACY_ACCTTYPE_LABELS[v];
+      if(RESERVED_ACCTTYPE_KEYS.includes(v.toLowerCase()) || v === ACCTTYPE_LABELS.cash){
+        alert(`"${v}"는 시스템 예약어와 겹쳐 계좌유형명으로 쓸 수 없습니다. 다른 이름을 입력해 주세요.`);
+        return null;
+      }
     }
     return v;
   }
@@ -6525,15 +6569,23 @@ function renderDonuts(){
   // 계좌별로 나뉜 같은 종목명 자산도 종목 비중에서는 하나로 합쳐서 표시
   const byName = {};
   assets.forEach(a=>{ byName[a.name] = (byName[a.name]||0) + evKRW(a); });
-  const assetData = Object.entries(byName)
+  let assetData = Object.entries(byName)
     .map(([name,value],i)=>({label:name, value, color:ASSET_COLS[i%ASSET_COLS.length]}))
     .sort((a,b)=>b.value-a.value);
+  // 도넛 칸 높이 안에 한 화면으로 들어오도록 상위 BAR_TOP_N개만 그리고 나머지는 "기타"로 합산
+  const BAR_TOP_N = 10;
+  if(assetData.length > BAR_TOP_N + 1){
+    const rest = assetData.slice(BAR_TOP_N);
+    assetData = assetData.slice(0, BAR_TOP_N).concat({
+      label:`기타 ${rest.length}종목`, value:rest.reduce((sum,d)=>sum+d.value,0), color:'#aeaeb2'
+    });
+  }
   document.getElementById('barChart').innerHTML=assetData.map(d=>{
     const pct = total>0 ? (d.value/total)*100 : 0;
     const barW = Math.max(0, pct); // 음수면 막대 없음
     const isNeg = d.value < 0;
     return`<div class="bar-row">
-      <div class="bar-label">${d.label}</div>
+      <div class="bar-label" title="${String(d.label).replace(/"/g,'&quot;')}">${d.label}</div>
       <div class="bar-track">
         <div class="bar-fill" style="width:${barW}%;background:${d.color};"></div>
       </div>
@@ -6902,7 +6954,7 @@ function classifyMarketGroup(asset){
     return 'bond_kr';
   }
   // 3) 가상자산 — 국가 개념이 없어 단일 버킷
-  if(acctType==='crypto') return 'crypto';
+  if(isCryptoAsset(asset)) return 'crypto';
 
   const name=asset.name||'', ticker=(asset.ticker||'').toUpperCase();
   // 4) 지수 ETF 이름/티커 키워드로 먼저 세밀 분류
