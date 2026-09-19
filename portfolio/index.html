@@ -1478,10 +1478,12 @@ const LINE_COLS = [
   '#4a3aa7', // 바이올렛
   '#e34948', // 레드
 ];
-/* 색 팔레트 "뮤트 에디토리얼" — 채도를 낮춘 스틸블루·테라코타·세이지·더스티로즈 계열. 자산유형·투자시장·계좌유형·종목 막대가
-   같은 계열을 공유하고, 세부 종목은 부모색의 명암(donutShade)으로만 변주한다. 현금·미지정은 의도적으로 무채색. */
-const ACCTTYPE_COLS   = {general:'#4a6fa5',pension_personal:'#8a7fc0',pension_retirement:'#5fa38a',irp:'#c9a45c',isa:'#c4607a',cash:'#9ba3af'};
-const ASSET_COLS = ['#4a6fa5','#e58e5a','#5fa38a','#8a7fc0','#c9a45c','#c4607a','#6aa3b8','#9aa66a','#b58a72','#aab2be'];
+/* 색 팔레트 "Observable 10" — 데이터 시각화 플랫폼 Observable이 기본값으로 만든 밝고 또렷하면서 거칠지 않은 범주 팔레트
+   (블루 #4269d0 · 그린 #3ca951 · 민트 #6cc5b0 · 라이트블루 #97bbf5 · 옐로 #efb118 · 코랄 #ff725c · 회색 #9498a0).
+   자산유형·투자시장·계좌유형·종목 막대가 같은 계열을 공유하고, 세부 종목은 부모색의 명암(donutShade)으로만 변주한다.
+   현금·미지정은 의도적으로 무채색. */
+const ACCTTYPE_COLS   = {general:'#4269d0',pension_personal:'#97bbf5',pension_retirement:'#6cc5b0',irp:'#efb118',isa:'#ff725c',cash:'#9498a0'};
+const ASSET_COLS = ['#4269d0','#3ca951','#6cc5b0','#97bbf5','#efb118','#ff725c','#ff8ab7','#a463f2','#9c6b4e','#9498a0'];
 const ACCTTYPE_LABELS = {general:'일반계좌',pension_personal:'개인연금',pension_retirement:'퇴직연금',irp:'IRP 개인',isa:'ISA',cash:'현금'};
 /* 데이터 프레임: 금융회사(company)=증권사·플랫폼 / 계좌유형(acctType)=법적 계좌·절세제도 /
    투자시장(market)=실제 투자 대상 지역 / 자산유형(assetType)=포트폴리오 내 역할·자산군.
@@ -1492,12 +1494,12 @@ const LEGACY_ACCTTYPE_LABELS = {'국내주식':'general','미국주식':'general
 const ASSETTYPE_OPTIONS = ['Core','주도주','유망주','원자재','안전자산','가상자산'];
 // 개인연금(pension_personal) 세부계좌 구분 — 은퇴 대시보드의 nh(농협)/mf(미래에셋) 잔액 자동 연동에 사용
 const COMPANY_LABELS = {nh:'농협',mf:'미래에셋'};
-const ASSETTYPE_COLS = {'Core':'#4a6fa5','주도주':'#e58e5a','유망주':'#5fa38a','원자재':'#c9a45c','현금':'#9ba3af','안전자산':'#8a7fc0','가상자산':'#c4607a','미지정':'#cfd4db'};
+const ASSETTYPE_COLS = {'Core':'#4269d0','주도주':'#3ca951','유망주':'#6cc5b0','원자재':'#efb118','현금':'#9498a0','안전자산':'#97bbf5','가상자산':'#ff725c','미지정':'#d5d8dc'};
 /* 투자시장(market) — "상장 거래소"가 아니라 "실제 투자 대상 지역" 기준.
    예) TIGER S&P500은 한국거래소 상장이지만 투자 대상은 미국이므로 'us'.
    여러 나라에 분산 투자하는 상품(글로벌·선진국·신흥국 등)은 'global'. */
 const MARKET_LABELS = {kr:'한국', us:'미국', jp:'일본', global:'글로벌'};
-const MARKET_COLS   = {kr:'#4a6fa5', us:'#e58e5a', jp:'#c4607a', global:'#5fa38a', 미지정:'#cfd4db'};
+const MARKET_COLS   = {kr:'#4269d0', us:'#3ca951', jp:'#ff725c', global:'#6cc5b0', 미지정:'#d5d8dc'};
 const MARKET_OPTIONS = ['kr','us','jp','global'];
 const CUR_SYM    = {KRW:'₩',USD:'$',JPY:'¥'};
 const SNAP_KEY    = 'pf_snaps_v5';
@@ -1512,7 +1514,7 @@ const FX_KEY      = 'pf_fx_v1';
    국내·해외 같은 지역 구분은 계좌유형이 아니라 투자시장(market) 도넛이 담당한다.
    pension_retirement는 라벨만 동일하고 색상은 도넛 차트에서 의도적으로 다른 값을 사용(기존값 유지). */
 const DONUT_ACCTTYPE_LABELS = ACCTTYPE_LABELS;
-const DONUT_ACCTTYPE_COLS = Object.assign({}, ACCTTYPE_COLS, {pension_retirement:'#6aa3b8'});
+const DONUT_ACCTTYPE_COLS = Object.assign({}, ACCTTYPE_COLS, {pension_retirement:'#3ca951'});
 function donutAcctTypeKey(a){
   // 계좌유형이 지정된 현금은 그 계좌 소속으로 집계
   if(a.acctType==='cash' && a.cashAcctType && a.cashAcctType!=='cash') return a.cashAcctType;
@@ -7244,8 +7246,8 @@ function drawQuickViewTreemap(){
 const distAssetTypeKey = a => a.assetType || (a.acctType==='cash' ? '현금' : '미지정');
 const distMarketKey    = a => a.market || '미지정';
 const distMarketLabel  = k => MARKET_LABELS[k] || k;
-const distMarketColor  = (k,i) => k==='미지정' ? '#cfd4db' : (MARKET_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
-const distTypeColor    = (k,i) => k==='미지정' ? '#cfd4db' : (ASSETTYPE_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
+const distMarketColor  = (k,i) => k==='미지정' ? '#d5d8dc' : (MARKET_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
+const distTypeColor    = (k,i) => k==='미지정' ? '#d5d8dc' : (ASSETTYPE_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
 // 그룹 합산 → 트리맵 아이템(크기 내림차순). 그룹이 자산 1개면 클릭 시 그 종목 상세로 이동한다.
 function distBuildItems(assetList, keyFn, labelFn, colorFn, denom){
   const sums = new Map();
