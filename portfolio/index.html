@@ -6899,18 +6899,67 @@ function drawDonutRings(canvasId, tree, size){
   paintDonutRings(ctx,R,R,R,tree,{outerPct:true,typeNames:false});
   donutSetCenterFont(cv,R);
 }
-// 콜아웃 라벨 세로 배치: 라벨은 각도 순서(=세로 순서)를 지키면서 최소 간격 LINE을 두고, 각자 앵커의 높이(ay)에 가장 가깝게 놓는다.
+// 콜아웃 리더선의 앵커 뒤 경로(꺾임점 목록). 반대편으로 옮긴 라벨(viaW)은 링 바깥(반경 it.rW)을 따라 12·6시까지 돌아 나온다 —
+// 여러 개면 반경을 달리해 겹치지 않는 동심 경로가 되고, 호를 잘게 나눠 그려 링 안쪽을 지나지 않는다.
+function calloutPath(it, cx, cy, R){
+  const ca=Math.cos(it.mid), sa=Math.sin(it.mid), side=it.side, ex=cx+side*(R+20);
+  if(!it.viaW) return [[cx+ca*(R+10),cy+sa*(R+10)],[ex,it.ly],[ex+side*4,it.ly]];
+  const r=it.rW, sy=sa<0?-1:1, A=sy*Math.PI/2, n=Math.max(1,Math.ceil(Math.abs(A-it.th)/0.25)), P=[];
+  for(let k=0;k<=n;k++){ const a=it.th+(A-it.th)*k/n; P.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]); }
+  P.push([ex,it.ly],[ex+side*4,it.ly]);
+  return P;
+}
+// 점 (cx,cy)에서 선분 a→b까지의 최단 거리
+function segDistToPoint(a, b, cx, cy){
+  const dx=b[0]-a[0], dy=b[1]-a[1], l2=dx*dx+dy*dy;
+  const t=l2 ? donutClamp(((cx-a[0])*dx+(cy-a[1])*dy)/l2,0,1) : 0;
+  return Math.hypot(a[0]+t*dx-cx, a[1]+t*dy-cy);
+}
+// 콜아웃 라벨 배치: ① 같은 자산군 라벨은 한쪽 옆에 모은다(12·6시 ±60° 안쪽 종목만 반대편으로 옮김) ② 세로는 라벨끼리 최소 간격 LINE을 두고
+// 각자 목표 높이에 가장 가깝게 놓되, 목표는 "자기 앵커 높이"와 "같은 자산군 라벨 평균 높이"의 절반씩(자산군이 흩어지지 않게).
 // (간격 제약이 있는 최소제곱 = 등단조 회귀(PAV). 몰려 있는 라벨은 한쪽으로 밀리지 않고 몰린 자리 중심으로 고르게 퍼진다)
-// mids: 각 라벨이 가리키는 각도(바깥 링 종목 라벨들 뒤에 리더라인으로 뺀 안쪽 링 유형 라벨들을 이어 붙인다)
-function layoutCallouts(mids, cy, OOR, H, PADV, LINE){
-  const items=mids.map(mid=>({mid, side:Math.cos(mid)>=0?1:-1, ay:cy+Math.sin(mid)*OOR}));
-  const y0=PADV+LINE/2-3, y1=H-PADV-LINE/2+3; let cost=0, maxSide=0;
+// pts: {mid: 각 라벨이 가리키는 각도, g: 자산군 번호, w: 호 각도(안쪽 링 유형 라벨은 0)} — 바깥 링 종목들 뒤에 리더라인으로 뺀 안쪽 링 유형이 이어진다
+function layoutCallouts(pts, cx, cy, R, H, PADV, LINE){
+  const OOR=R*0.96, TAU=2*Math.PI, PULL=0.5;
+  const items=pts.map(p=>{
+    const th=((p.mid+Math.PI)%TAU+TAU)%TAU-Math.PI;
+    return {mid:p.mid, g:p.g, w:p.w, th, side:Math.cos(th)>=0?1:-1, viaW:false, ay:cy+Math.sin(th)*OOR};
+  });
+  // ① 자산군 응집 — 양쪽에 걸친 자산군은 호가 더 큰 쪽으로, 세로축 근처 종목만 옮긴다
+  const groups=new Map();
+  items.forEach(it=>{ if(!groups.has(it.g)) groups.set(it.g,[]); groups.get(it.g).push(it); });
+  let split=0, splitN=0;   // 흩어진 호 각도 합 / 흩어진 라벨 수
+  groups.forEach(arr=>{
+    // 호가 반원보다 큰 자산군은 어차피 양쪽에 걸친다 — 억지로 모으지 않고 조각 위치대로 둔다(이동·분할 벌점·세로 끌어당김 없음)
+    const span=arr.reduce((s,it)=>s+it.w,0);
+    arr.forEach(it=>{ it.pull = span<=Math.PI ? PULL : 0; });
+    if(span>Math.PI) return;
+    let wr=0, wl=0; arr.forEach(it=>{ if(it.side===1) wr+=it.w; else wl+=it.w; });
+    if(!wr||!wl) return;
+    const maj=wr>=wl?1:-1;
+    arr.forEach(it=>{ if(it.side!==maj && Math.abs(Math.cos(it.th))<0.5){ it.side=maj; it.moved=true; } });
+    let r=0, l=0, nr=0, nl=0; arr.forEach(it=>{ if(it.side===1){ r+=it.w; nr++; } else { l+=it.w; nl++; } });
+    if(r<l){ split+=r; splitN+=nr; } else { split+=l; splitN+=nl; }
+  });
+  // 옮긴 라벨의 우회 경로: 같은 쪽(12시/6시)으로 도는 라벨끼리 세로축에 가까운 것이 안쪽 반경, 먼 것이 바깥 반경
+  [1,-1].forEach(side=>[-1,1].forEach(sy=>{
+    items.filter(it=>it.moved&&it.side===side&&(it.th<0?-1:1)===sy).sort((a,b)=>Math.abs(a.th-sy*Math.PI/2)-Math.abs(b.th-sy*Math.PI/2))
+      .forEach((it,i)=>{ it.viaW=true; it.rW=R+22+9*i; });
+  }));
+  // 옮긴 라벨이 있어도 라벨 열의 위→아래 순서는 링을 도는 순서와 같아야 리더선이 엇갈리지 않는다
+  items.forEach(it=>{ it.key = it.side===1 ? it.th : (((-it.th)%TAU+TAU)%TAU)-Math.PI/2; });
+  const y0=PADV+LINE/2-3, y1=H-PADV-LINE/2+3; let cost=split/TAU*8000+splitN*150, maxSide=0;
+  const cnt={1:0,'-1':0};
   [1,-1].forEach(side=>{
-    const arr=items.filter(x=>x.side===side).sort((a,b)=>a.ay-b.ay), n=arr.length;
-    maxSide=Math.max(maxSide,n); if(!n) return;
+    const arr=items.filter(x=>x.side===side).sort((a,b)=>a.key-b.key), n=arr.length;
+    cnt[side]=n; maxSide=Math.max(maxSide,n); if(!n) return;
+    // ② 목표 높이 = 앵커와 같은 자산군 평균의 중간
+    const gs=new Map(), gn=new Map();
+    arr.forEach(it=>{ gs.set(it.g,(gs.get(it.g)||0)+it.ay); gn.set(it.g,(gn.get(it.g)||0)+1); });
+    arr.forEach(it=>{ it.t=(1-it.pull)*it.ay+it.pull*gs.get(it.g)/gn.get(it.g); });
     const blocks=[];
     arr.forEach((it,i)=>{
-      blocks.push({sum:it.ay-i*LINE,cnt:1});
+      blocks.push({sum:it.t-i*LINE,cnt:1});
       while(blocks.length>1){
         const b=blocks[blocks.length-1], a=blocks[blocks.length-2];
         if(a.sum/a.cnt<=b.sum/b.cnt) break;
@@ -6919,8 +6968,16 @@ function layoutCallouts(mids, cy, OOR, H, PADV, LINE){
     });
     let k=0; blocks.forEach(b=>{ const z=b.sum/b.cnt; for(let j=0;j<b.cnt;j++,k++) arr[k].z=z; });
     const zmax=Math.max(y0,y1-(n-1)*LINE);
-    arr.forEach((it,i)=>{ it.ly=Math.min(Math.max(it.z,y0),zmax)+i*LINE; cost+=Math.abs(it.ly-it.ay); });
+    arr.forEach((it,i)=>{
+      it.ly=Math.min(Math.max(it.z,y0),zmax)+i*LINE; cost+=Math.abs(it.ly-it.ay);
+      if(it.viaW) cost+=25+Math.abs(Math.abs(it.th)-Math.PI/2)*R*0.5;   // 돌아 나오는 리더선은 길이만큼 감점
+      // 리더선이 도넛 링을 파고들면 감점
+      const minD=P=>{ let d=1e9; for(let q=0;q<P.length-1;q++) d=Math.min(d,segDistToPoint(P[q],P[q+1],cx,cy)); return d; };
+      const d=minD(calloutPath(it,cx,cy,R));
+      if(d<R+3) cost+=(R+3-d)*6;
+    });
   });
+  cost+=Math.abs(cnt[1]-cnt[-1])*3;
   return {items,cost,maxSide};
 }
 // 넓은 화면용: 큰 도넛 + 바깥 링 각 조각에서 좌/우로 리더라인을 빼 "종목명 12.3%" 라벨을 양옆에 세로 정렬.
@@ -6929,21 +6986,21 @@ function layoutCallouts(mids, cy, OOR, H, PADV, LINE){
 function drawDonutCallouts(canvasId, tree, W){
   const cv=document.getElementById(canvasId); if(!cv) return;
   const total=tree.reduce((s,t)=>s+t.value,0);
-  const LINE=18, PADV=26;
+  const LINE=18, PADV=44;
   const vals=tree.flatMap(t=>t.children.map(c=>c.value));
   // 라벨 글자 영역(약 165px)을 먼저 확보하고 남는 폭으로 도넛 반지름을 정한다 — 긴 종목명이 잘리지 않게
   const R=donutClamp(W/2-206,100,250);
   const H=Math.round(Math.max(2*R+2*PADV, Math.ceil((vals.length+tree.length)*0.65)*LINE+2*PADV));
   const cx=W/2, cy=H/2, OOR=R*0.96, RM=R*0.48; // RM = 안쪽 링 중간 반지름
   const mctx=cv.getContext('2d'); // 글자 폭 측정용(캔버스 크기 조정 전이어도 측정은 동일)
-  const outerMids=start=>{ const m=[]; let ang=start; vals.forEach(v=>{ const s=v/total*2*Math.PI; m.push(ang+s/2); ang+=s; }); return m; };
+  const outerPts=start=>{ const m=[]; let ang=start; tree.forEach((t,ti)=>t.children.forEach(c=>{ const s=c.value/total*2*Math.PI; m.push({mid:ang+s/2,g:ti,w:s}); ang+=s; })); return m; };
   let best=null;
   if(total>0){
     for(let deg=-90; deg<270; deg+=10){
       const start=deg*Math.PI/180;
       const plan=planInnerLabels(mctx,cx,cy,R,tree,total,start,true);
       const unplaced=plan.filter(s=>!s.label);
-      const L=layoutCallouts(outerMids(start).concat(unplaced.map(s=>s.mid)),cy,OOR,H,PADV,LINE);
+      const L=layoutCallouts(outerPts(start).concat(unplaced.map(s=>({mid:s.mid,g:tree.indexOf(s.t),w:0}))),cx,cy,R,H,PADV,LINE);
       if(L.maxSide*LINE > H-2*PADV+LINE) continue;
       const dev=Math.min(Math.abs(deg+90),360-Math.abs(deg+90));
       const score=L.cost + 60*dev/180;   // 12시에서 벗어날수록 약간의 불이익
@@ -6966,12 +7023,12 @@ function drawDonutCallouts(canvasId, tree, W){
     const isType = i>=vals.length;
     const o = isType ? null : outer[i], u = isType ? best.unplaced[i-vals.length] : null;
     const mid = isType ? u.mid : o.mid, side=it.side, ca=Math.cos(mid), sa=Math.sin(mid);
-    const ex=cx+side*(R+20);
-    const mx=cx+ca*(R+10), my=cy+sa*(R+10);
+    const ex=cx+side*(R+20), P=calloutPath(it,cx,cy,R);   // 반대편으로 옮긴 라벨은 도넛 위/아래 바깥을 돌아 나온다
+    const trace=(px,py)=>{ ctx.beginPath(); ctx.moveTo(px,py); P.forEach(q=>ctx.lineTo(q[0],q[1])); };
     if(isType){
       // 안쪽 링 유형 라벨: 조각 중심에서 바깥 링을 가로질러 나온다 — 흰 테두리를 먼저 깔아 바깥 링 조각 위에서도 선이 또렷하다
       const px=cx+ca*RM, py=cy+sa*RM;
-      const path=()=>{ ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(mx,my); ctx.lineTo(ex,it.ly); ctx.lineTo(ex+side*4,it.ly); };
+      const path=()=>trace(px,py);
       ctx.lineJoin='round';
       path(); ctx.strokeStyle='#fff'; ctx.lineWidth=3.4; ctx.stroke();
       path(); ctx.strokeStyle='#8e8e93'; ctx.lineWidth=1; ctx.stroke();
@@ -6996,7 +7053,7 @@ function drawDonutCallouts(canvasId, tree, W){
     }
     const px=cx+ca*(OOR-2), py=cy+sa*(OOR-2);
     ctx.strokeStyle='#b4b4bb'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(mx,my); ctx.lineTo(ex,it.ly); ctx.lineTo(ex+side*4,it.ly); ctx.stroke();
+    trace(px,py); ctx.stroke();
     ctx.fillStyle='#8e8e93'; ctx.beginPath(); ctx.arc(px,py,2,0,Math.PI*2); ctx.fill();
     // 색 견본 + "이름  %" (오른쪽 라벨은 왼쪽 정렬, 왼쪽 라벨은 오른쪽 정렬 — 읽는 순서는 항상 이름→%)
     const pctStr=sharePctText(o.value,total);
