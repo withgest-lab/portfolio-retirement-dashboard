@@ -524,6 +524,9 @@ button{font-family:inherit;cursor:pointer;}
   .fv-row{gap:2px;}
   .collapsible summary{padding:2px 0;font-size:11px;}
 }
+/* 개인정보 숨기기(html.privacy-on, 포트폴리오 앱 토글을 따름): 설계 화면에 기입한 값과 슬라이더 손잡이를 가린다(입력·수정은 가능) */
+.privacy-on .ival-input,.privacy-on .hir-input,.privacy-on .ymon-select{color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
+.privacy-on input[type=range]{visibility:hidden;}
 </style>
 </head>
 <body>
@@ -2950,14 +2953,21 @@ const HIDE_AMOUNTS_KEY = 'pf_hide_amounts_v1';
 const AMOUNT_MASK = '••••';
 let hideAmounts = false;
 try{ hideAmounts = localStorage.getItem(HIDE_AMOUNTS_KEY)==='1'; }catch(e){}
+document.documentElement.classList.toggle('privacy-on', hideAmounts);
 const AMT_RE = /[+\-−]?\d[\d,]*(?:\.\d+)?\s*(?:천만|억원|억|만원|만)/g;
 const AMT_SKIP = 'input,textarea,select,script,style,#taxGuidePanel,.hir-hint,.unit-tag,.note,#subtitle';
 const maskedOriginals = new Map();
 function maskTextNode(n){
   if(!hideAmounts || n.nodeType!==3) return;
   const el = n.parentElement;
-  if(!el || el.closest(AMT_SKIP)) return;
+  if(!el) return;
   const v = n.nodeValue;
+  // 상단 자막(나이 표시)은 입력값을 그대로 옮겨 적은 글자라 통째로 가린다
+  if(el.closest('#subtitle')){
+    if(v!==AMOUNT_MASK){ if(!maskedOriginals.has(n)) maskedOriginals.set(n, v); n.nodeValue = AMOUNT_MASK; }
+    return;
+  }
+  if(el.closest(AMT_SKIP)) return;
   const nv = el.closest('[data-amt]') ? (/\d/.test(v) ? AMOUNT_MASK : v) : v.replace(AMT_RE, AMOUNT_MASK);
   if(nv===v) return;
   if(maskedOriginals.size>3000) maskedOriginals.forEach((o,k)=>{ if(!k.isConnected) maskedOriginals.delete(k); });
@@ -2980,6 +2990,7 @@ new MutationObserver(recs=>{
 }).observe(document.body, {childList:true, subtree:true, characterData:true});
 function applyHideAmounts(on){
   hideAmounts = !!on;
+  document.documentElement.classList.toggle('privacy-on', hideAmounts);
   if(hideAmounts){ maskSubtree(document.body); }
   else{
     maskedOriginals.forEach((orig,n)=>{ if(n.isConnected) n.nodeValue = orig; });

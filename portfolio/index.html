@@ -87,6 +87,12 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .hide-amt-btn.on .sw{background:var(--color-accent);}
 .hide-amt-btn.on .sw::after{left:13px;}
 @media (max-width:480px){ .hide-amt-btn .hide-amt-ico{display:none;} }
+/* 개인정보 숨기기(html.privacy-on): 수익률로 정해지는 색은 회색으로, 폼에 채워진 값은 가린다(입력·수정은 가능) */
+.privacy-on .up,.privacy-on .dn{color:var(--color-secondary)!important;}
+.privacy-on .index-row .up,.privacy-on #logoFx .up{color:var(--color-up)!important;}
+.privacy-on .index-row .dn,.privacy-on #logoFx .dn{color:var(--color-down)!important;}
+.privacy-on :is(#page_dashboard,#page_portfolio,#page_tradelog,#page_returns,#page_dividend,#page_tax) :is(input:not([type=checkbox],[type=radio],[type=file],[type=date],[type=button]),textarea){
+  color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
 /* tabbar와 동일하게 position:sticky. tabbar의 스크롤-고정 위치(top:52px) 바로 아래
@@ -581,7 +587,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-page="dividend" onclick="switchPage('dividend')">💰 배당금관리</button>
   <button data-page="tax" onclick="switchPage('tax')">🧾 세금관리</button>
   </div>
-  <button type="button" class="hide-amt-btn" id="hideAmtBtn" role="switch" aria-checked="false" onclick="setHideAmounts(!hideAmounts)" title="금액·단가·수량을 ••••로 가립니다(퍼센트는 그대로)"><span class="hide-amt-ico">👁</span>금액 숨기기<span class="sw"></span></button>
+  <button type="button" class="hide-amt-btn" id="hideAmtBtn" role="switch" aria-checked="false" onclick="setHideAmounts(!hideAmounts)" title="금액·%·종목명·티커·금융회사·메모를 가리고 손익 색을 회색으로 바꿉니다"><span class="hide-amt-ico">👁</span>개인정보 숨기기<span class="sw"></span></button>
 </nav>
 
 <div class="main">
@@ -2095,7 +2101,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
 
   const PAD_L=14, PAD_R=68, PAD_T=40, PAD_B=22; // PAD_T: 좌상단 헤더(2줄) 전용 여백 + 헤더 하단과 그래프 사이 실여백. PAD_R: "평단 " 접두어가 붙는 우측 라벨이 잘리지 않을 만큼 여유
   const VOL_H=26, VOL_GAP=4; // 하단 거래량 막대 밴드 높이·간격
-  const UP_COLOR = '#1e8e5a', DOWN_COLOR = '#c0392b'; // 기준선 위/아래 축(4번째 색상 축) — 좌상단 헤더·가격 라인이 공유
+  const UP_COLOR = hideAmounts ? '#8e8e93' : '#1e8e5a', DOWN_COLOR = hideAmounts ? '#8e8e93' : '#c0392b'; // 숨김 중에는 수익 방향이 드러나지 않게 회색 // 기준선 위/아래 축(4번째 색상 축) — 좌상단 헤더·가격 라인이 공유
   const BUY_COLOR = '#e15b50', SELL_COLOR = '#3a83bf'; // 매수/매도 화살표 — 앱 전체 원색(#ff3b30/#0a84ff)의 톤다운 버전(사용자 확인 후 톤을 살짝 올림), 이 차트에서만 사용
   const BW=cssW-PAD_L-PAD_R, BH=cssH-PAD_T-VOL_H-VOL_GAP-PAD_B;
   const closes = points.map(p=>p.close);
@@ -2171,7 +2177,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     row1Right = x;
     if(curPrice!=null){
       const diff = curPrice-baselineVal, pct = diff/baselineVal*100;
-      const changeText = `${diff>=0?'+':'-'}${unitPriceStr(Math.abs(diff), currency)} (${pct>=0?'+':''}${pct.toFixed(1)}%)`;
+      const changeText = `${diff>=0?'+':'-'}${unitPriceStr(Math.abs(diff), currency)} (${maskAmt((pct>=0?'+':'')+pct.toFixed(1)+'%')})`;
       ctx.font = 'bold 12px Pretendard'; ctx.fillStyle = pct<0 ? DOWN_COLOR : UP_COLOR;
       ctx.fillText(changeText, x, 6);
       x += ctx.measureText(changeText).width + 6;
@@ -2252,9 +2258,10 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   // 기준선에서 색이 옅어지며 끊기고, 기준선에서 멀수록(고점/저점일수록) 진해진다).
   // 교차 지점은 종가 기준 선형보간으로 구해 색이 정확히 기준선에서 바뀌게 한다.
   const gradUp = ctx.createLinearGradient(0, PAD_T, 0, baseY);
-  gradUp.addColorStop(0, 'rgba(30,142,90,0.20)'); gradUp.addColorStop(1, 'rgba(30,142,90,0)');
+  const UP_RGB = hideAmounts ? '142,142,147' : '30,142,90', DOWN_RGB = hideAmounts ? '142,142,147' : '192,57,43';
+  gradUp.addColorStop(0, `rgba(${UP_RGB},0.20)`); gradUp.addColorStop(1, `rgba(${UP_RGB},0)`);
   const gradDown = ctx.createLinearGradient(0, baseY, 0, PAD_T+BH);
-  gradDown.addColorStop(0, 'rgba(192,57,43,0)'); gradDown.addColorStop(1, 'rgba(192,57,43,0.20)');
+  gradDown.addColorStop(0, `rgba(${DOWN_RGB},0)`); gradDown.addColorStop(1, `rgba(${DOWN_RGB},0.20)`);
 
   const sideOf = c => c>=baselineVal ? 'up' : 'down';
   const segments = [];
@@ -2305,7 +2312,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     const align = x<PAD_L+40 ? 'left' : (x>cssW-PAD_R-40 ? 'right' : 'center');
     ctx.textAlign = align;
     const label = pct!=null
-      ? `${wordLabel} ${unitPriceStr(pt.close, currency)} (${pct>=0?'+':''}${pct.toFixed(1)}%)`
+      ? `${wordLabel} ${unitPriceStr(pt.close, currency)} (${maskAmt((pct>=0?'+':'')+pct.toFixed(1)+'%')})`
       : `${wordLabel} ${unitPriceStr(pt.close, currency)}`;
     ctx.font = 'bold 11px Pretendard';
     // 이 지점에 매수/매도 마커(화살표)가 겹쳐 찍히는 경우(저점 매수·고점 매도 등 흔함)
@@ -2779,22 +2786,117 @@ function evKRW(a){
 }
 function costKRW(a){return toKRW(a,a.avgPrice)*a.quantity;}
 function totalEv(){return assets.reduce((s,a)=>s+evKRW(a),0);}
-// 평가 금액 숨기기 — 포트폴리오·현금흐름 앱이 같은 키로 상태를 공유한다. 퍼센트는 그대로 두고 금액·단가·수량·평단만 가린다.
-// 거래/현금 입력 폼과 확인 미리보기(사용자가 방금 입력한 값)는 대상에서 제외한다.
+// 개인정보 숨기기 — 포트폴리오·현금흐름 앱이 같은 키로 상태를 공유한다.
+// 금액·단가·수량·평단, 모든 %, 종목명("종목 N")·티커·금융회사("계좌 N")·매매 메모, 폼에 채워진 값을 가리고 수익률 색을 회색으로 바꾼다.
+// 시장지표·환율 등락률과 자산유형·투자시장·계좌유형 이름은 대상이 아니다. 거래 확인 미리보기(방금 입력한 값)도 제외한다.
 const HIDE_AMOUNTS_KEY = 'pf_hide_amounts_v1';
 const AMOUNT_MASK = '••••';
 let hideAmounts = false;
 try{ hideAmounts = localStorage.getItem(HIDE_AMOUNTS_KEY)==='1'; }catch(e){}
+document.documentElement.classList.toggle('privacy-on', hideAmounts);
 function maskAmt(s){ return hideAmounts ? AMOUNT_MASK : s; }
+
+// ── 종목명·티커·금융회사·메모 별칭 사전 ──
+let _privDict = null;
+function privDictReset(){ _privDict = null; }
+function privDict(){
+  if(_privDict) return _privDict;
+  // 분류 이름(자산유형·투자시장·계좌유형)과 겹치는 문자열은 별칭 대상에서 뺀다 — 화면의 고정 용어가 바뀌면 안 된다
+  const VOCAB = new Set([...Object.values(ACCTTYPE_LABELS), ...Object.values(MARKET_LABELS), ...Object.keys(ASSETTYPE_COLS), '현금','미지정','합계']);
+  const map = new Map(), tick = new Set(), memo = new Set();
+  let ni=0, ci=0;
+  const addName = nm=>{ nm=String(nm||'').trim(); if(nm.length>=2 && !VOCAB.has(nm) && !map.has(nm)) map.set(nm,'종목 '+(++ni)); };
+  const addTick = t=>{ t=String(t||'').trim(); if(t.length>=3 && t!=='—') tick.add(t); };
+  const addComp = c=>{ c=String(c||'').trim(); if(!c) return; c=COMPANY_LABELS[c]||c; if(c.length>=2 && !VOCAB.has(c) && !map.has(c)) map.set(c,'계좌 '+(++ci)); };
+  Object.values(COMPANY_LABELS).forEach(addComp);
+  assets.forEach(a=>{ if(a.acctType!=='cash') addName(a.name); addTick(a.ticker); addComp(a.company); });
+  let log=[]; try{ log = loadTradeLog(); }catch(e){}
+  log.forEach(r=>{
+    if(r.type==='buy'||r.type==='sell'||r.type==='dividend') addName(r.name);
+    addTick(r.ticker); addComp(r.company);
+    [r.reason, r.memo].forEach(x=>{ x=String(x||'').trim(); if(x.length>=3 && !VOCAB.has(x)) memo.add(x); });
+  });
+  const esc = s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const keys = [...map.keys(), ...memo].sort((a,b)=>b.length-a.length);
+  const ticks = [...tick].sort((a,b)=>b.length-a.length);
+  _privDict = {
+    map, memo,
+    reNames: keys.length ? new RegExp(keys.map(esc).join('|'),'g') : null,
+    reTick: ticks.length ? new RegExp('(?<![A-Za-z0-9])(?:'+ticks.map(esc).join('|')+')(?![A-Za-z0-9])','g') : null,
+  };
+  return _privDict;
+}
+// 표시용 종목명 — 숨김 중에는 "종목 N"
+function dispName(nm){ return hideAmounts ? (privDict().map.get(String(nm))||nm) : nm; }
+// 글자에서 종목명·티커·금융회사·메모를 치환하고, 가려진 금액/% 앞에 남은 부호(+/-)를 지운다(방향이 드러나지 않게)
+function privScrub(s){
+  if(!hideAmounts || !s) return s;
+  const d = privDict();
+  let t = String(s);
+  if(d.reNames) t = t.replace(d.reNames, m=>d.memo.has(m) ? AMOUNT_MASK : (d.map.get(m)||m));
+  if(d.reTick) t = t.replace(d.reTick, AMOUNT_MASK);
+  return t.replace(/[+\-−]\s*(?=••••)/g,'');
+}
+const _privText = new Map(), _privAttr = new Map();   // 원문 보관(숨김 해제 시 복원)
+function privMaskTextNode(n){
+  if(!hideAmounts || n.nodeType!==3) return;
+  const el = n.parentElement; if(!el || el.closest('script,style,textarea')) return;
+  const v = n.nodeValue; if(!v || v.length<2) return;
+  const nv = privScrub(v); if(nv===v) return;
+  if(_privText.size>4000) _privText.forEach((o,k)=>{ if(!k.isConnected) _privText.delete(k); });
+  if(!_privText.has(n)) _privText.set(n, v);
+  n.nodeValue = nv;
+}
+function privMaskTitle(el){
+  const t = el.getAttribute('title'); if(!t) return;
+  const nv = privScrub(t); if(nv===t) return;
+  if(!_privAttr.has(el)) _privAttr.set(el, t);
+  el.setAttribute('title', nv);
+}
+function privMaskSubtree(root){
+  if(!hideAmounts || !root) return;
+  if(root.nodeType===3){ privMaskTextNode(root); return; }
+  if(root.nodeType!==1) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+  while((n=w.nextNode())) privMaskTextNode(n);
+  if(root.hasAttribute('title')) privMaskTitle(root);
+  root.querySelectorAll('[title]').forEach(privMaskTitle);
+}
+function privRestore(){
+  _privText.forEach((o,n)=>{ if(n.isConnected) n.nodeValue = o; }); _privText.clear();
+  _privAttr.forEach((o,e)=>{ if(e.isConnected) e.setAttribute('title', o); }); _privAttr.clear();
+}
+new MutationObserver(recs=>{
+  if(!hideAmounts) return;
+  recs.forEach(r=>{
+    if(r.type==='characterData') privMaskTextNode(r.target);
+    else if(r.type==='attributes') privMaskTitle(r.target);
+    else r.addedNodes.forEach(privMaskSubtree);
+  });
+}).observe(document.body, {childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['title']});
+// 캔버스 글자에서도 종목명·티커 등을 치환하는 안전망(라벨을 만드는 곳에서 이미 별칭을 쓰지만, 놓친 곳이 새지 않게)
+(function(){
+  const orig = CanvasRenderingContext2D.prototype.fillText;
+  CanvasRenderingContext2D.prototype.fillText = function(t, ...a){ return orig.call(this, hideAmounts ? privScrub(String(t)) : t, ...a); };
+})();
+
 function applyHideAmountsUI(){
   const b = document.getElementById('hideAmtBtn');
   if(b){ b.classList.toggle('on', hideAmounts); b.setAttribute('aria-checked', hideAmounts?'true':'false'); }
+  document.documentElement.classList.toggle('privacy-on', hideAmounts);
 }
 function setHideAmounts(on){
   hideAmounts = !!on;
   try{ localStorage.setItem(HIDE_AMOUNTS_KEY, hideAmounts?'1':'0'); }catch(e){}
+  applyHideAmountsState();
+}
+// 상태가 바뀌면(이 화면의 토글, 현금흐름 앱·다른 탭의 변경) 사전·표시를 새로 맞춘다
+function applyHideAmountsState(){
   applyHideAmountsUI();
+  privDictReset();
+  if(!hideAmounts) privRestore();
   rerenderForHideAmounts();
+  if(hideAmounts) privMaskSubtree(document.body);
 }
 function rerenderForHideAmounts(){
   renderAll(); renderSnaps(); renderSoldHistory();
@@ -2804,8 +2906,7 @@ function rerenderForHideAmounts(){
 window.addEventListener('storage', e=>{
   if(e.key!==HIDE_AMOUNTS_KEY) return;
   hideAmounts = e.newValue==='1';
-  applyHideAmountsUI();
-  rerenderForHideAmounts();
+  applyHideAmountsState();
 });
 function fmt(n){
   if(hideAmounts) return AMOUNT_MASK;
@@ -2821,7 +2922,7 @@ function fmtEval(n){
   if(abs>=1e4) return (n/1e4).toFixed(1)+'만';
   return Math.round(n).toLocaleString('ko-KR')+'원';
 }
-function fmtPct(n){return(n>=0?'+':'')+n.toFixed(2)+'%';}
+function fmtPct(n){ if(hideAmounts) return AMOUNT_MASK; return(n>=0?'+':'')+n.toFixed(2)+'%'; }
 // 종목 1주당 단가 표시 — fmt()와 달리 만/억으로 뭉개지 않고 원 단위까지 그대로 표시
 function unitPriceStr(price, currency){
   if(hideAmounts) return AMOUNT_MASK;
@@ -2851,6 +2952,21 @@ function loadSnaps(){
   }catch(e){return[];}
 }
 function saveSnaps(arr){localStorage.setItem(SNAP_KEY,JSON.stringify(arr));}
+// 시세 오류 등으로 앞뒤와 크게 어긋나 혼자 튀는 스냅샷 — 지우지 않고(백업·스냅샷 표에는 그대로 남는다) 그래프·수익률 계산에서만 뺀다.
+// 앞뒤 스냅샷 모두보다 50% 이상 크거나 작을 때만 해당하므로, 자산이 서서히 크게 늘어난 옛 기록은 영향이 없다(처음/마지막은 판정하지 않음).
+function snapSpikes(snaps){
+  const sorted = snaps.slice().sort((a,b)=>a.timestamp-b.timestamp), bad = new Set();
+  for(let i=1;i<sorted.length-1;i++){
+    const v=sorted[i].totalValue, p=sorted[i-1].totalValue, n=sorted[i+1].totalValue;
+    if(!(v>0 && p>0 && n>0)) continue;
+    if((v>p*1.5 && v>n*1.5) || (v<p*0.5 && v<n*0.5)) bad.add(sorted[i]);
+  }
+  return bad;
+}
+function loadSnapsForAnalysis(){
+  const all = loadSnaps(), bad = snapSpikes(all);
+  return bad.size ? all.filter(s=>!bad.has(s)) : all;
+}
 // 최초 스냅샷 기록일 — 수익률(%) 계산이 가능한 시작 시점을 안내하는 데 사용
 function firstSnapDateStr(){
   const snaps = loadSnaps();
@@ -3272,6 +3388,7 @@ function renderTradeLogFilterOptions(arr){
   }
 }
 function renderSoldHistory(){
+  privDictReset();
   const el = document.getElementById('soldTbody');
   if(!el) return;
   let arr = loadTradeLog().filter(r=>r.type==='buy'||r.type==='sell').slice().sort((a,b)=>b.at-a.at); // 최신순 정렬
@@ -3321,7 +3438,7 @@ function renderSoldHistory(){
     if(isDiv && r.pnl!==null && r.pnl!==undefined){
       pnlCell = `<span class="up" style="font-weight:600;">+${fmt(r.pnl)}</span>`;
     } else if(!isBuy && r.pnl!==null && r.pnl!==undefined){
-      const pctStr = (r.pnlPct===null||r.pnlPct===undefined) ? '' : ` (${r.pnlPct>=0?'+':''}${r.pnlPct.toFixed(2)}%)`;
+      const pctStr = (r.pnlPct===null||r.pnlPct===undefined) ? '' : ` (${maskAmt((r.pnlPct>=0?'+':'')+r.pnlPct.toFixed(2)+'%')})`;
       pnlCell = `<span class="${r.pnl>=0?'color-up':'color-dn'}" style="font-weight:600;">${r.pnl>=0?'+':''}${fmt(r.pnl)}${pctStr}</span>`;
     }
     const reasonStr = r.reason ? r.reason : '';
@@ -3535,13 +3652,14 @@ function renderSnaps(){
     return;
   }
   const twoDaysAgo = Date.now() - 2*24*60*60*1000;
+  const spikes = snapSpikes(snaps);
   tb.innerHTML=snaps.map((s,i)=>{
     const prev=snaps[i+1];
     const diff=prev?s.totalValue-prev.totalValue:null;
     const pct=prev&&prev.totalValue>0?(diff/prev.totalValue)*100:null;
     const isRecent = s.timestamp >= twoDaysAgo;
     return`<tr data-recent="${isRecent}">
-      <td style="text-align:left">${new Date(s.timestamp).toLocaleString('ko-KR')}${s.manual?'<span style="font-size:9px;color:#007aff;margin-left:4px;">수동</span>':''}</td>
+      <td style="text-align:left">${new Date(s.timestamp).toLocaleString('ko-KR')}${s.manual?'<span style="font-size:9px;color:#007aff;margin-left:4px;">수동</span>':''}${spikes.has(s)?'<span title="앞뒤 스냅샷과 크게 어긋나 그래프·수익률 계산에서 제외됩니다(삭제되지 않음)" style="font-size:9px;color:#ff9500;margin-left:4px;">계산 제외</span>':''}</td>
       <td>${fmt(s.totalValue)}</td>
       <td class="col-hide ${diff===null?'':(diff>=0?'up':'dn')}">${diff===null?'—':(diff>=0?'+':'')+fmt(diff)}</td>
       <td class="${pct===null?'':(pct>=0?'up':'dn')}">${pct===null?'—':fmtPct(pct)}</td>
@@ -3686,7 +3804,7 @@ function renderTable(){
         priceDisplay = priceStr(regPrice);
         const afterPct = a.postMarketPct;
         const afterStr = (afterPct != null)
-          ? `<span style="font-size:9px;color:${afterPct>=0?'var(--color-up)':'var(--color-down)'};margin-left:3px;">(A ${afterPct>=0?'+':''}${afterPct.toFixed(2)}%)</span>`
+          ? `<span style="font-size:9px;color:${hideAmounts?'var(--color-secondary)':(afterPct>=0?'var(--color-up)':'var(--color-down)')};margin-left:3px;">(A ${maskAmt((afterPct>=0?'+':'')+afterPct.toFixed(2)+'%')})</span>`
           : '';
         dayChgCell = `<span class="${updn(regChg)}">${fmtPct(regChg)}</span>${afterStr}`;
       } else {
@@ -4442,7 +4560,7 @@ function confirmSaveEdit(id){
   titleEl.innerHTML = `<span style="color:#34c759">✓ 수정 저장</span>`;
   detailEl.innerHTML = a.isBond ? `
     <b>${a.name}</b><br>
-    매입원금: ${sym}${bondFields.bondPrincipal.toLocaleString()} · 표면 ${(bondFields.bondCouponRate*100).toFixed(3)}% + 가산 ${(bondFields.bondSpreadRate*100).toFixed(3)}%<br>
+    매입원금: ${sym}${bondFields.bondPrincipal.toLocaleString()} · 표면 ${maskAmt((bondFields.bondCouponRate*100).toFixed(3)+'%')} + 가산 ${maskAmt((bondFields.bondSpreadRate*100).toFixed(3)+'%')}<br>
     투자시장: ${marketChanged?`${MARKET_LABELS[a.market]||a.market||'없음'} → <b>${MARKET_LABELS[market]||market||'없음'}</b>`:'변경없음'}<br>
     금융회사: ${companyChanged?`${COMPANY_LABELS[a.company]||a.company||'없음'} → <b>${COMPANY_LABELS[company]||company||'없음'}</b>`:'변경없음'}<br>
     계좌유형: ${acctTypeChanged?`${ACCTTYPE_LABELS[a.acctType]||a.acctType} → <b>${ACCTTYPE_LABELS[acctType]||acctType}</b>`:'변경없음'}<br>
@@ -5004,7 +5122,7 @@ function addAsset(){
   titleEl.innerHTML = `<span style="color:#007aff">+ 매수 확인</span>`;
   detailEl.innerHTML = isBond ? `
     <b>${name}</b><br>
-    매입원금 <b>${sym}${Math.round(price).toLocaleString()}</b> · 표면 ${(bondFields.bondCouponRate*100).toFixed(3)}% + 가산 ${(bondFields.bondSpreadRate*100).toFixed(3)}%<br>
+    매입원금 <b>${sym}${Math.round(price).toLocaleString()}</b> · 표면 ${maskAmt((bondFields.bondCouponRate*100).toFixed(3)+'%')} + 가산 ${maskAmt((bondFields.bondSpreadRate*100).toFixed(3)+'%')}<br>
     <span style="color:var(--color-tertiary)">확정금리 채권 신규 등록 — 평가액은 매일 자동 복리 계산됩니다.</span>` : `
     <b>${name}</b>${ticker?` (${ticker})`:''}<br>
     ${qty.toLocaleString()}주 × ${sym}${price.toLocaleString()}<br>
@@ -5494,7 +5612,7 @@ function deletePrincipalLedgerEntry(id){
    월별 성과 — 월별 테이블 + 기능(B) 원금 vs 자산가치 추이
 ════════════════════════════════════════ */
 function buildMonthlyPerformance(){
-  const snaps = loadSnaps().slice().sort((a,b)=>a.timestamp-b.timestamp);
+  const snaps = loadSnapsForAnalysis().slice().sort((a,b)=>a.timestamp-b.timestamp);
   if(!snaps.length) return [];
   const cashEvents = loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal').slice().sort((a,b)=>a.at-b.at);
   const firstCashAt = cashEvents.length ? cashEvents[0].at : null;
@@ -5626,7 +5744,7 @@ function renderMonthlyPerfBars(rows){
   }
   const items = rows.map(r=>({
     label: monthlyPerfLabel(r),
-    segments: r.pnl==null ? [] : [{value:r.pnl, color: r.pnl>=0?'var(--color-up)':'var(--color-down)'}],
+    segments: r.pnl==null ? [] : [{value:r.pnl, color: hideAmounts ? '#8e8e93' : (r.pnl>=0?'var(--color-up)':'var(--color-down)')}],
     valueLabel: r.pnl==null ? '—' : `${r.pnl>=0?'+':''}${fmt(r.pnl)}`,
     valueClass: r.pnl==null ? 'dim' : (r.pnl>=0?'up':'dn')
   }));
@@ -5669,7 +5787,7 @@ function renderMonthlyTable(){
     const label = monthlyPerfLabel(r);
     const flowStr = r.hasFlowData ? `${r.netFlow>=0?'+':''}${fmt(r.netFlow)}` : '—';
     const pnlStr = r.pnl!=null ? `<span class="${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</span>` : '—';
-    const rtnStr = r.rtn!=null ? `<span class="${r.rtn>=0?'up':'dn'}" style="font-size:10px;">${r.rtn>=0?'+':''}${r.rtn.toFixed(2)}%</span>` : '';
+    const rtnStr = r.rtn!=null ? `<span class="${r.rtn>=0?'up':'dn'}" style="font-size:10px;">${maskAmt((r.rtn>=0?'+':'')+r.rtn.toFixed(2)+'%')}</span>` : '';
     return `<tr>
       <td style="text-align:left;font-weight:600;">${label}</td>
       <td>${r.startVal!=null?fmt(r.startVal):'—'}</td>
@@ -5693,7 +5811,7 @@ function renderMonthlyTable(){
 // 늘어난 것처럼 보이는 착시가 있었다 — principalPath는 이 착시 없이 입출금이 발생한
 // "그 날" 정확히 꺾이도록 하고, 그 지점에 입금/출금 마커도 찍을 수 있게 한다.
 function buildPrincipalVsValueSeries(){
-  const snaps = loadSnaps().slice().sort((a,b)=>a.timestamp-b.timestamp);
+  const snaps = loadSnapsForAnalysis().slice().sort((a,b)=>a.timestamp-b.timestamp);
   const cashEvents = loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal').slice().sort((a,b)=>a.at-b.at);
   if(!snaps.length && !cashEvents.length) return {series:[], principalPath:[]};
 
@@ -5827,8 +5945,8 @@ function drawPrincipalVsValueChart(){
   const lastGain = lastValued ? lastValued.value >= lastValued.principal : false;
   // 종목 가격추이 차트(drawStockPriceChart의 UP_COLOR/DOWN_COLOR)와 같은 색 — 이익=초록, 손실=빨강.
   // 채움 투명도만 이 차트용으로 유지한다.
-  const GAIN_FILL = 'rgba(30,142,90,0.12)';   // 원금 대비 수익 구간 — 초록(#1e8e5a)
-  const LOSS_FILL = 'rgba(192,57,43,0.10)';   // 원금 대비 손실 구간 — 빨강(#c0392b)
+  const GAIN_FILL = hideAmounts ? 'rgba(142,142,147,0.14)' : 'rgba(30,142,90,0.12)';   // 원금 대비 수익 구간 — 초록(#1e8e5a), 숨김 중엔 회색
+  const LOSS_FILL = hideAmounts ? 'rgba(142,142,147,0.14)' : 'rgba(192,57,43,0.10)';   // 원금 대비 손실 구간 — 빨강(#c0392b), 숨김 중엔 회색
 
   // 손익 구간 채움 (자산가치선과 원금선 사이) — 구간별로 원금 대비 수익/손실이 갈리면
   // 교차 지점을 선형보간해 그 지점에서 색을 나눠 칠한다(구간 전체를 마지막 시점 기준
@@ -6000,7 +6118,7 @@ function renderPvDetail(idx, series){
     <div class="pd-title">📅 ${dateStr}</div>
     <div class="pd-value">${fmt(p.value)}</div>
     <div class="pd-row"><span>투입원금</span><b>${fmt(p.principal)}</b></div>
-    <div class="pd-row"><span>손익</span><b style="color:${pnl>=0?'#1e8e5a':'#c0392b'};">${pnl>=0?'+':''}${fmt(pnl)} (${pnl>=0?'+':''}${pnlPct.toFixed(1)}%)</b></div>
+    <div class="pd-row"><span>손익</span><b style="color:${hideAmounts?'var(--color-secondary)':(pnl>=0?'#1e8e5a':'#c0392b')};">${pnl>=0?'+':''}${fmt(pnl)} (${maskAmt((pnl>=0?'+':'')+pnlPct.toFixed(1)+'%')})</b></div>
   `;
 }
 
@@ -6510,7 +6628,7 @@ function renderYearlyReturns(){
   if(isChart){
     const items = rows.slice().reverse().map(r=>({
       label: tradeReturnsLabel(r),
-      segments: [{value:r.total, color: r.total>=0?'var(--color-up)':'var(--color-down)'}],
+      segments: [{value:r.total, color: hideAmounts ? '#8e8e93' : (r.total>=0?'var(--color-up)':'var(--color-down)')}],
       valueLabel: `${r.total>=0?'+':''}${fmt(r.total)}`,
       valueClass: r.total>=0?'up':'dn'
     }));
@@ -6583,7 +6701,7 @@ function drawDonut(canvasId,data,size){
       ctx.fillStyle='rgba(255,255,255,0.95)';
       ctx.textAlign='center';
       ctx.textBaseline='middle';
-      ctx.fillText(((d.value/total)*100).toFixed(1)+'%',tx,ty);
+      ctx.fillText(maskAmt(((d.value/total)*100).toFixed(1)+'%'),tx,ty);
     }
     angle+=sw;
   });
@@ -6610,6 +6728,7 @@ function donutShade(hex, j, n){
 }
 // 비중 % 표기 — 0.05% 미만은 "0.0%" 대신 "<0.1%"로(아주 작은 종목이 0으로 오해되지 않게)
 function sharePctText(v, total){
+  if(hideAmounts) return AMOUNT_MASK;
   const p = total>0 ? v/total*100 : 0;
   return p>0 && p<0.05 ? '<0.1%' : p.toFixed(1)+'%';
 }
@@ -6865,7 +6984,7 @@ function donutLegendHtml(data, total, maxRows){
   }
   return rows.map(d=>{
     const pct = total>0 ? d.value/total*100 : 0;
-    return `<div class="lg-row"><span class="lg-bar" style="background:${d.color};"></span><span class="lg-name" title="${String(d.label).replace(/"/g,'&quot;')}">${d.label}</span><span class="lg-pct" style="color:${d.color};">${pct.toFixed(1)}%</span><span class="lg-amt">${fmt(d.value)}</span></div>`;
+    return `<div class="lg-row"><span class="lg-bar" style="background:${d.color};"></span><span class="lg-name" title="${String(d.label).replace(/"/g,'&quot;')}">${d.label}</span><span class="lg-pct" style="color:${d.color};">${maskAmt(pct.toFixed(1)+'%')}</span><span class="lg-amt">${fmt(d.value)}</span></div>`;
   }).join('');
 }
 // 세부 종목 비중 범례(좁은 화면): 자산유형 헤더 ▸ 실제 종목, 잘림 없이 전부. 종목 %는 총자산 대비
@@ -6973,7 +7092,7 @@ function renderDonuts(){
   const byName = {};
   assets.forEach(a=>{ byName[a.name] = (byName[a.name]||0) + evKRW(a); });
   const assetData = Object.entries(byName)
-    .map(([name,value],i)=>({label:name, value, color:ASSET_COLS[i%ASSET_COLS.length]}))
+    .map(([name,value],i)=>({label:dispName(name), value, color:ASSET_COLS[i%ASSET_COLS.length]}))
     .sort((a,b)=>b.value-a.value);
   // 보유 종목 전부 표시한다(예전에는 옆 도넛 칸 높이에 맞추려고 상위 몇 개만 그리고 나머지를 "기타 n종목"으로 합쳤다).
   // 세로 스크롤은 허용되므로 합치지 않는다.
@@ -6984,10 +7103,10 @@ function renderDonuts(){
     return`<div class="bar-row">
       <div class="bar-label" title="${String(d.label).replace(/"/g,'&quot;')}">${d.label}</div>
       <div class="bar-track">
-        <div class="bar-fill" style="width:${barW}%;background:${d.color};"></div>
+        <div class="bar-fill" style="width:${hideAmounts?0:barW}%;background:${d.color};"></div>
       </div>
       <div class="bar-pct" style="color:${isNeg?'#ff3b30':d.color}">
-        <span style="font-weight:700;">${pct.toFixed(1)}%</span>
+        <span style="font-weight:700;">${maskAmt(pct.toFixed(1)+'%')}</span>
         <span style="font-size:10px;color:var(--color-tertiary);margin-left:4px;">${fmt(d.value)}</span>
       </div>
     </div>`;
@@ -7034,6 +7153,7 @@ function computeTreemapLayout(items, x, y, w, h){
 // 수익률 -30%~+30%를 클램프해 회색(중립)→빨강(상승)/파랑(하락)으로 보간 — 앱 기존 상승/하락 색만 사용
 // 미국식: 이익=초록(앱 기존 #34c759), 손실=빨강(앱 기존 #ff3b30) — 중립(0% 근처)은 회색
 function treemapColor(returnPct){
+  if(hideAmounts) return 'rgb(199,199,204)'; // 숨김 중에는 수익률 색을 쓰지 않는다(전부 중립 회색)
   const t = Math.max(-1, Math.min(1, returnPct/30));
   const neutral=[199,199,204];
   const base = t>=0 ? [52,199,89] : [255,59,48];
@@ -7125,7 +7245,7 @@ function assetReturnForPeriod(asset, mode, period){
     if(!(asset.prevPrice>0)) return 0;
     return (asset.currentPrice-asset.prevPrice)/asset.prevPrice*100;
   }
-  const validSnaps = loadSnaps().filter(s=>s.byAsset && s.byAsset[asset.id]!=null && s.byQty && s.byQty[asset.id]>0);
+  const validSnaps = loadSnapsForAnalysis().filter(s=>s.byAsset && s.byAsset[asset.id]!=null && s.byQty && s.byQty[asset.id]>0);
   const earliestSnap = validSnaps.slice().sort((a,b)=>a.timestamp-b.timestamp)[0];
   let startSnap;
   if(period==='ALL'){
@@ -7150,7 +7270,7 @@ function assetReturnForPeriod(asset, mode, period){
 
 function buildTreemapItems(assetList, mode, period){
   return assetList.filter(a=>a.acctType!=='cash').map(a=>({
-    id:a.id, name:a.name, value:evKRW(a), rtn:assetReturnForPeriod(a,mode,period)
+    id:a.id, name:dispName(a.name), value:evKRW(a), rtn:assetReturnForPeriod(a,mode,period)
   })).filter(i=>i.value>0).sort((a,b)=>b.value-a.value);
 }
 
@@ -7192,10 +7312,10 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg){
     ctx.fill();
 
     if(cw>44 && ch>28){ // 너무 작은 셀은 라벨 생략(겹침 방지, drawDonut()의 소형 섹터 라벨 생략과 동일한 원칙)
-      const pctStr = cell.sub!==undefined ? cell.sub : (cell.rtn>=0?'+':'')+cell.rtn.toFixed(1)+'%'; // 기본은 손익률, 분포 트리맵은 sub(비중 %)
+      const pctStr = maskAmt(cell.sub!==undefined ? cell.sub : (cell.rtn>=0?'+':'')+cell.rtn.toFixed(1)+'%'); // 기본은 손익률, 분포 트리맵은 sub(비중 %)
       ctx.save();
       ctx.beginPath(); ctx.rect(cx+4,cy+4,cw-8,ch-8); ctx.clip();
-      ctx.fillStyle = cell.color ? treemapTextColor(cell.color) : '#fff'; ctx.textAlign='left'; ctx.textBaseline='top';
+      ctx.fillStyle = cell.color ? treemapTextColor(cell.color) : (hideAmounts ? '#3a3a3c' : '#fff'); ctx.textAlign='left'; ctx.textBaseline='top';
       const fontSize = (cw>90 && ch>60) ? 12 : 10;
       ctx.font=`700 ${fontSize}px Pretendard`;
       const maxChars = Math.max(1, Math.floor((cw-8)/(fontSize*0.62)));
@@ -7312,7 +7432,7 @@ function buildAssetClassTree(assetList){
     if(!byType.has(tk)) byType.set(tk, {key:tk, value:0, children:new Map(), list:[]});
     const t = byType.get(tk); t.value += v; t.list.push(a);
     const nm = a.name || a.ticker || '(이름 없음)';
-    const c = t.children.get(nm) || {key:nm, label:nm, value:0, ids:[]};
+    const c = t.children.get(nm) || {key:nm, label:dispName(nm), value:0, ids:[]};
     c.value += v; c.ids.push(a.id); t.children.set(nm, c);
   });
   return [...byType.values()]
@@ -7324,7 +7444,7 @@ function buildAssetClassTree(assetList){
 function assetTypeChipsHtml(tree, total){
   return tree.map(t=>{
     const pct = total>0 ? (t.value/total*100).toFixed(1) : '0.0';
-    return `<span class="type-chip"><i style="background:${t.color};"></i>${t.key}<b>${pct}%</b></span>`;
+    return `<span class="type-chip"><i style="background:${t.color};"></i>${t.key}<b>${maskAmt(pct+'%')}</b></span>`;
   }).join('');
 }
 
@@ -7434,7 +7554,7 @@ function drawDetailTreemap(){
     if(hasHead){
       const fg=treemapTextColor(t.color);
       ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='middle';
-      const pct0=(total>0?t.value/total*100:0).toFixed(1)+'%';
+      const pct0=maskAmt((total>0?t.value/total*100:0).toFixed(1)+'%');
       const pct = bw>=170 ? fmt(t.value)+' · '+pct0 : pct0;
       ctx.font='800 11.5px Pretendard,-apple-system,sans-serif';
       const pw=ctx.measureText(pct).width;
@@ -7663,7 +7783,7 @@ let _base1DSnap = null; // 1D 시작 직전 스냅샷 (기준가용)
 // 그 시점까지 한 번이라도 기록된 적 있는 종목이면 "기존 보유"로 인정한다.
 function _getExistingIds(){
   const startTs = getPeriodStart('1D').getTime();
-  const priorSnaps = loadSnaps().filter(s=>s.timestamp<=startTs);
+  const priorSnaps = loadSnapsForAnalysis().filter(s=>s.timestamp<=startTs);
   if(!priorSnaps.length) return null;
   const ids = new Set();
   priorSnaps.forEach(s=>{ Object.keys(s.byAsset||{}).forEach(id=>ids.add(id)); });
@@ -7672,7 +7792,7 @@ function _getExistingIds(){
 // 1D 기준 스냅샷 설정: 1D 시작 시각(오늘 국내장 개장 09:00, 주말이면 최근 평일 09:00) 직전의 마지막 스냅샷
 function setBase1DSnap(){
   const startTs = getPeriodStart('1D').getTime(); // 국내장 개장(09:00, 주말이면 최근 평일 09:00)
-  const snaps = loadSnaps().sort((a,b)=>a.timestamp-b.timestamp);
+  const snaps = loadSnapsForAnalysis().sort((a,b)=>a.timestamp-b.timestamp);
   if(!snaps.length){ _base1DSnap = null; return; }
   // startTs(오늘 국내장 개장 09:00, 주말이면 최근 평일 09:00) 직전 마지막 스냅샷을 기준으로
   // → 그 날의 국장+미장 전체를 포함한 하루 기준
@@ -7755,7 +7875,7 @@ function isMarketPreOpen(a){
 
 function buildSnapshotHistory(period){
   const startTs = getPeriodStart(period).getTime();
-  const allSnaps = loadSnaps().sort((a,b)=>a.timestamp-b.timestamp);
+  const allSnaps = loadSnapsForAnalysis().sort((a,b)=>a.timestamp-b.timestamp);
   let   periodSnaps = allSnaps.filter(s=>s.timestamp>=startTs && s.totalValue>0);
   
   // 현재 보유 자산 (현금 제외)
@@ -8003,7 +8123,7 @@ function drawLineChart(){
     }
     const col = LINE_COLS[gi%LINE_COLS.length];
     const lastValidIdx = vals.reduce((acc,v,i)=>v!=null?i:acc, -1);
-    lines.push({label:g.name, vals, absVals,
+    lines.push({label:dispName(g.name), vals, absVals,
       color:col, lw:1.2, assetIds:g.ids, events, lastValidIdx});
   });
 
@@ -8073,7 +8193,7 @@ function drawLineChart(){
     // tick 선 (박스 왼쪽 벽에서 왼쪽으로)
     ctx.beginPath(); ctx.moveTo(BL,y); ctx.lineTo(BL-TICK,y); ctx.stroke();
     ctx.textAlign='right';
-    ctx.fillText((v>=0?'+':'')+v.toFixed(2)+'%', BL-TICK-3, y+4);
+    ctx.fillText(maskAmt((v>=0?'+':'')+v.toFixed(2)+'%'), BL-TICK-3, y+4);
   }
 
   // 오른쪽 Y축 제거 (단일 Y축, 왼쪽만 표시)
@@ -8186,12 +8306,12 @@ function drawLineChart(){
     // 0단계: 겹침 계산 전에 라벨 텍스트와 한 줄/두 줄 여부를 먼저 확정
     // (긴 종목명은 두 줄로 그려지므로, 한 줄 기준 간격만으로 밀어내면 옆 라벨과 겹친다)
     labeled.forEach(l=>{
-      l._pctStr = (l._lp>=0?'+':'') + l._lp.toFixed(2) + '%';
+      l._pctStr = maskAmt((l._lp>=0?'+':'') + l._lp.toFixed(2) + '%');
       // 애프터장 % (USD 종목에 한해, 계좌 병합 없이 단독 종목인 경우만)
       const asset = (l.assetIds && l.assetIds.length===1) ? assets.find(a=>a.id===l.assetIds[0]) : null;
       const afterPct = asset?.postMarketPct;
       l._afterStr = (afterPct != null)
-        ? ` (A ${afterPct>=0?'+':''}${afterPct.toFixed(2)}%)`
+        ? ` (A ${maskAmt((afterPct>=0?'+':'')+afterPct.toFixed(2)+'%')})`
         : '';
       l._twoLine = ctx.measureText(l.label + ' ' + l._pctStr + l._afterStr).width > maxW;
     });
@@ -8869,6 +8989,7 @@ setInterval(async()=>{
    전체 렌더
 ════════════════════════════════════════ */
 function renderAll(){
+  privDictReset();
   recalcBondValuations();
   renderTable();renderSummary();renderDonuts();
   buildChartHistory();renderToggles();
@@ -8919,6 +9040,7 @@ window.addEventListener('orientationchange',()=>{
 (async function init(){
   applyHideAmountsUI();
   migrateSoldHistory();
+  setTimeout(()=>privMaskSubtree(document.body), 0);
   reconcileTradeLogAttrs();
   // 기존 데이터에 음수 현금이 있으면 0으로 보정
   let cashFixed = false;
@@ -8949,15 +9071,12 @@ window.addEventListener('orientationchange',()=>{
   // ★ 누락 스냅샷 보완 (페이지 닫혀있던 동안 못 찍은 스냅샷)
   setTimeout(catchUpSnaps, 3000);
 
-  // 시세 갱신 + 스냅샷 자동 저장 + 이상 스냅샷 정리
+  // 시세 갱신 + 스냅샷 자동 저장
+  // (예전에는 여기서 현재 총자산의 30%~300%를 벗어난 스냅샷을 영구 삭제했지만, 자산이 크게 늘면 정상 기록도 지워져서 없앴다.
+  //  튀는 값은 삭제 대신 loadSnapsForAnalysis()가 계산에서만 제외한다)
   fetchAllPrices(false).then(()=>{
     const current=totalEv();
     if(current>1000000){
-      // 이상 스냅샷 정리
-      const all=loadSnaps();
-      const cleaned=all.filter(s=>{const r=s.totalValue/current;return r>0.3&&r<3.0;});
-      if(cleaned.length!==all.length){saveSnaps(cleaned);renderSnaps();}
-
       // ★ 페이지 열 때 자동 스냅샷
       // 최근 30분 이내 스냅샷이 없으면 저장 (중복 방지)
       const recentSnaps = loadSnaps().sort((a,b)=>b.timestamp-a.timestamp);
