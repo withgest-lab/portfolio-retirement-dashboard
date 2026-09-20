@@ -172,6 +172,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn-green{background:rgba(0,122,255,.12);color:var(--color-accent);}
 .btn-red{background:rgba(255,59,48,.12);color:var(--color-up);}
 /* 종목 차트의 "트리맵으로 가기" — 기간 탭과 겹쳐 누르기 어렵지 않게 넉넉한 높이의 틴트 캡슐 */
+.stock-trades thead th{position:sticky;top:0;z-index:1;background:var(--color-card);}
 .btn-return{background:rgba(0,122,255,.12);color:var(--color-accent);min-height:34px;padding:7px 14px;font-size:12px;font-weight:600;border-radius:999px;}
 
 /* ── 레이아웃 ── */
@@ -2097,7 +2098,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   // .tbl-wrap(overflow-x:auto)이 항상 정확히 뷰포트 폭으로 감싸주므로, 그 폭을 기준으로
   // 삼으면 표가 넘치는 상태에서도 차트만은 항상 실제 보이는 폭에 맞게 그려진다.
   const scrollWrap = wrap.closest('.tbl-wrap');
-  const cssW = (scrollWrap ? scrollWrap.clientWidth - 32 : wrap.clientWidth) || 300, cssH = 260;
+  const cssW = (scrollWrap ? scrollWrap.clientWidth - 32 : wrap.clientWidth) || 300, cssH = parseInt(canvas.dataset.h,10) || 260;
   const dpr = window.devicePixelRatio || 1;
   canvas.width = cssW*dpr; canvas.height = cssH*dpr;
   canvas.style.width = cssW+'px'; canvas.style.height = cssH+'px';
@@ -2481,7 +2482,32 @@ function toggleStockChart(id){
   chartDetailId = chartDetailId===id ? null : id;
   // 클릭한 버튼 자신을 즉시 재생성하면 터치 기기에서 탭 하이라이트/눌림 피드백이
   // 보일 틈도 없이 사라진다 — 사람이 인지할 수 있는 정도(160ms)까지 렌더를 늦춘다.
-  setTimeout(renderTable, 160);
+  setTimeout(()=>{ renderTable(); if(chartDetailId===id) focusStockRow(id); }, 160);
+}
+// 종목 상세(종목 행 + 차트 + 매매 이력)를 한 화면에 보이게 하는 배치 계산.
+// 사용 가능 높이(뷰포트 − 상단바 52 − 탭바 40 − 여백)에서 행·패널 여백·헤더 2줄·통계 줄을 빼고, 매매 이력에 최소 130px을 남긴 나머지를
+// 차트에 준다(200~340px로 제한). 매매 이력 표는 남는 높이만큼만 보이고 표 안에서 스크롤한다.
+// 스크롤했을 때 화면 위를 가리는 높이: 상단바(fixed 52px)는 항상, 탭바(40px)는 sticky가 실제로 동작할 때만(body가 overflow:hidden 스크롤 컨테이너면 sticky가
+// 뷰포트에 붙지 않고 함께 스크롤돼 사라진다) — 그 경우엔 상단바 아래 8px만 비운다.
+function stickyTop(){
+  const ov = getComputedStyle(document.body).overflowY;
+  return (ov==='visible' || ov==='clip') ? 98 : 60;
+}
+function stockChartLayout(){
+  const A = window.innerHeight - stickyTop();
+  const FIXED = 58 + 28 + 80 + 18 + 12; // 종목 행 + 패널 패딩 + 헤더(2줄) + 통계 줄 + 표 위 여백
+  const chartH = Math.max(200, Math.min(340, A - FIXED - 130));
+  const tradeH = Math.max(120, A - FIXED - chartH);
+  return {chartH:Math.round(chartH), tradeH:Math.round(tradeH)};
+}
+// 선택 종목 행을 상단 바 바로 아래에 맞춘다 — 그 아래 차트·매매 이력이 스크롤 없이 한 화면에 들어오게
+function focusStockRow(id){
+  // 버튼 onclick이 "flashPress(this); toggleStockChart('id')" 형태라 부분 일치(*=)로 찾는다
+  const btn = document.querySelector(`button[onclick*="toggleStockChart('${id}')"]`);
+  const row = btn && btn.closest('tr'); if(!row) return;
+  // scrollIntoView는 쓰지 않는다 — body가 overflow-y:hidden 스크롤 컨테이너라 body까지 같이 스크롤돼 sticky 탭바가 사라진다(문서 스크롤 리셋 코드 resetScrollTop 참고)
+  const y = row.getBoundingClientRect().top + window.scrollY - stickyTop();
+  window.scrollTo({top:Math.max(0,y), behavior:'smooth'});
 }
 const STOCK_CHART_PERIOD_TO_YAHOO_RANGE = {
   '1D':'1d','5D':'5d','1M':'1mo','3M':'3mo','6M':'6mo','YTD':'ytd',
@@ -2519,11 +2545,12 @@ async function loadAndDrawStockChart(id){
 
   const yTicker = toYahooHistTicker(a.ticker);
   const cssW = canvas.parentElement.clientWidth||300;
+  const boxH = parseInt(canvas.dataset.h,10) || 260;
   if(!yTicker){
-    canvas.width=cssW; canvas.height=260;
-    ctx.clearRect(0,0,cssW,260);
+    canvas.width=cssW; canvas.height=boxH;
+    ctx.clearRect(0,0,cssW,boxH);
     ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
-    ctx.fillText('티커 정보가 없어 시세를 불러올 수 없습니다', cssW/2, 130);
+    ctx.fillText('티커 정보가 없어 시세를 불러올 수 없습니다', cssW/2, boxH/2);
     return;
   }
   const period = resolveStockChartPeriod(id);
@@ -2533,10 +2560,10 @@ async function loadAndDrawStockChart(id){
   if(chartDetailId!==id || !document.getElementById('stockChart_'+id)) return;
   const statsEl = document.getElementById('stockChartStats_'+id);
   if(!points || points.length<2){
-    canvas.width=cssW; canvas.height=260;
-    ctx.clearRect(0,0,cssW,260);
+    canvas.width=cssW; canvas.height=boxH;
+    ctx.clearRect(0,0,cssW,boxH);
     ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
-    ctx.fillText('시세 데이터를 불러올 수 없습니다', cssW/2, 130);
+    ctx.fillText('시세 데이터를 불러올 수 없습니다', cssW/2, boxH/2);
     if(statsEl) statsEl.innerHTML='';
     return;
   }
@@ -4155,21 +4182,22 @@ function renderTable(){
 
     // 종목별 가격 차트 (기능 A: 매수/매도 마커 오버레이) — 행 확장, 캔버스는 renderTable() 이후 비동기로 그려짐
     if(chartDetailId===a.id){
+      const SL = stockChartLayout();
       rows+=`<tr class="tr-full" style="background:var(--color-card);">
         <td colspan="10" style="padding:14px 16px;" onclick="event.stopPropagation()">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:14px;">
-              <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
-              <button class="btn btn-return" onclick="returnToTreemap('${a.id}')">← 트리맵으로 가기</button>
-            </div>
+            <button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">← 트리맵으로 가기</button>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+            <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
           </div>
           <div class="chart-wrap" style="position:relative;">
-            <canvas id="stockChart_${a.id}" height="260"></canvas>
+            <canvas id="stockChart_${a.id}" height="${SL.chartH}" data-h="${SL.chartH}"></canvas>
             <div id="stockChartTip_${a.id}" class="chart-tip-bubble" style="display:none;"></div>
           </div>
           <div id="stockChartStats_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-top:6px;"></div>
-          <div class="tbl-wrap" style="margin-top:12px;">
+          <div class="tbl-wrap stock-trades" style="margin-top:12px;max-height:${SL.tradeH}px;overflow-y:auto;">
             <table class="table-auto">
               <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -7385,10 +7413,7 @@ function goToStockDetail(assetId){
   quickTradeId=null; editingId=null; chartDetailId=assetId;
   treemapForcedChartId = assetId; // 이 종목에 저장된 기간과 무관하게 이번엔 ALL로 보여줌
   renderTable();
-  setTimeout(()=>{
-    const btn = document.querySelector(`button[onclick="toggleStockChart('${assetId}')"]`);
-    if(btn) btn.closest('tr').scrollIntoView({behavior:'smooth', block:'center'});
-  }, 100);
+  setTimeout(()=>focusStockRow(assetId), 100);
 }
 
 // 종목 차트에서 "트리맵으로 가기" — 어디서 열었든 차트를 닫고 변화추이(트리맵)로 가서 그 종목 셀을 강조한다
@@ -9032,7 +9057,7 @@ function renderAll(){
 function refreshActiveViewCanvases(){
   const activePage = localStorage.getItem('currentPage') || 'dashboard';
   if(typeof PAGE_RENDER_HOOKS[activePage]==='function') PAGE_RENDER_HOOKS[activePage]();
-  if(activePage==='portfolio' && chartDetailId) loadAndDrawStockChart(chartDetailId);
+  if(activePage==='portfolio' && chartDetailId) renderTable(); // 회전·크기 변경 시 차트 높이/이력 표 높이를 다시 계산(차트 로딩은 renderTable이 다시 걸어 준다)
 }
 
 /* ════════════════════════════════════════
