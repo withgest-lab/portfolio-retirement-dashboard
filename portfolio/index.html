@@ -70,13 +70,23 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
    충돌해 화면이 불안정하게 흔들리는 경우가 있어, 포지셔닝 담당과 스크롤 담당을 분리한다. */
 .tabbar{position:sticky;top:52px;z-index:99;background:var(--color-card);
   border-bottom:1px solid var(--color-border);}
-.tabbar-scroll{display:flex;gap:4px;
+.tabbar{display:flex;align-items:center;}
+.tabbar-scroll{display:flex;gap:4px;flex:1;min-width:0;
   overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 10px;scrollbar-width:none;}
 .tabbar-scroll::-webkit-scrollbar{display:none;}
 .tabbar button{flex-shrink:0;border:none;cursor:pointer;background:transparent;
   color:var(--color-tertiary);font-family:inherit;font-size:11px;font-weight:600;
   padding:6px 10px;border-radius:var(--radius-sm);transition:.15s;white-space:nowrap;}
 .tabbar button.active{background:var(--color-accent);color:#fff;}
+/* 평가 금액 숨기기 토글 — 탭이 가로 스크롤돼도 탭바 오른쪽 끝에 고정 */
+.tabbar .hide-amt-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;margin:0 10px 0 2px;padding:5px 9px;
+  border:1px solid var(--color-border);background:var(--color-card);color:var(--color-secondary);border-radius:999px;font-size:11px;font-weight:600;}
+.hide-amt-btn .sw{width:26px;height:15px;border-radius:999px;background:#c7c7cc;position:relative;transition:.15s;flex-shrink:0;}
+.hide-amt-btn .sw::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:.15s;}
+.tabbar .hide-amt-btn.on{color:var(--color-accent);border-color:var(--color-accent);}
+.hide-amt-btn.on .sw{background:var(--color-accent);}
+.hide-amt-btn.on .sw::after{left:13px;}
+@media (max-width:480px){ .hide-amt-btn .hide-amt-ico{display:none;} }
 
 /* ── 서브탭바 (탭 내 하위 섹션) ── */
 /* tabbar와 동일하게 position:sticky. tabbar의 스크롤-고정 위치(top:52px) 바로 아래
@@ -571,6 +581,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-page="dividend" onclick="switchPage('dividend')">💰 배당금관리</button>
   <button data-page="tax" onclick="switchPage('tax')">🧾 세금관리</button>
   </div>
+  <button type="button" class="hide-amt-btn" id="hideAmtBtn" role="switch" aria-checked="false" onclick="setHideAmounts(!hideAmounts)" title="금액·단가·수량을 ••••로 가립니다(퍼센트는 그대로)"><span class="hide-amt-ico">👁</span>금액 숨기기<span class="sw"></span></button>
 </nav>
 
 <div class="main">
@@ -2396,7 +2407,7 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
     const r=nearest.entry, d=new Date(r.at), isBuy=r.type==='buy';
     tipEl.style.display='block';
     tipEl.classList.remove('below');
-    tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?BUY_COLOR:SELL_COLOR};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?r.quantity.toLocaleString():''}${r.reason?' · '+r.reason:''}`;
+    tipEl.innerHTML = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} · <span style="color:${isBuy?BUY_COLOR:SELL_COLOR};font-weight:700;">${isBuy?'매수':'매도'}</span> ${r.price!=null?unitPriceStr(r.price, r.currency):''} × ${r.quantity!=null?maskAmt(r.quantity.toLocaleString()):''}${r.reason?' · '+r.reason:''}`;
     // 클릭한 화살표 바로 위에 말풍선을 붙인다 — 뒤에 나올 표까지 밀어내는 일반 흐름 배치
     // 대신 캔버스 위에 절대좌표로 겹쳐서, 클릭 지점에서 눈을 뗄 필요 없이 바로 보이게 함.
     // 화살표가 차트 맨 위쪽이라 위 공간이 부족하면 대신 아래에 붙이고 꼬리도 위로 뒤집는다.
@@ -2485,7 +2496,7 @@ async function loadAndDrawStockChart(id){
         <td style="text-align:left;font-size:11px;color:var(--color-tertiary);">${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}</td>
         <td style="text-align:center;"><span style="color:${isBuy?'#ff3b30':'#0a84ff'};font-weight:700;">${isBuy?'매수':'매도'}</span></td>
         <td style="font-size:11px;">${r.price!=null?unitPriceStr(r.price, r.currency):'—'}</td>
-        <td style="font-size:11px;">${r.quantity!=null?r.quantity.toLocaleString():'—'}</td>
+        <td style="font-size:11px;">${r.quantity!=null?maskAmt(r.quantity.toLocaleString()):'—'}</td>
         <td style="text-align:left;font-size:11px;color:var(--color-secondary);">${r.reason||''}</td>
       </tr>`;
     }).join('') : `<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--color-tertiary);">매매 이력 없음</td></tr>`;
@@ -2764,13 +2775,43 @@ function evKRW(a){
 }
 function costKRW(a){return toKRW(a,a.avgPrice)*a.quantity;}
 function totalEv(){return assets.reduce((s,a)=>s+evKRW(a),0);}
+// 평가 금액 숨기기 — 포트폴리오·현금흐름 앱이 같은 키로 상태를 공유한다. 퍼센트는 그대로 두고 금액·단가·수량·평단만 가린다.
+// 거래/현금 입력 폼과 확인 미리보기(사용자가 방금 입력한 값)는 대상에서 제외한다.
+const HIDE_AMOUNTS_KEY = 'pf_hide_amounts_v1';
+const AMOUNT_MASK = '••••';
+let hideAmounts = false;
+try{ hideAmounts = localStorage.getItem(HIDE_AMOUNTS_KEY)==='1'; }catch(e){}
+function maskAmt(s){ return hideAmounts ? AMOUNT_MASK : s; }
+function applyHideAmountsUI(){
+  const b = document.getElementById('hideAmtBtn');
+  if(b){ b.classList.toggle('on', hideAmounts); b.setAttribute('aria-checked', hideAmounts?'true':'false'); }
+}
+function setHideAmounts(on){
+  hideAmounts = !!on;
+  try{ localStorage.setItem(HIDE_AMOUNTS_KEY, hideAmounts?'1':'0'); }catch(e){}
+  applyHideAmountsUI();
+  rerenderForHideAmounts();
+}
+function rerenderForHideAmounts(){
+  renderAll(); renderSnaps(); renderSoldHistory();
+  drawLineChart(); renderStatBar();
+}
+// 현금흐름 앱이나 다른 탭에서 바꾼 경우에도 즉시 따라간다
+window.addEventListener('storage', e=>{
+  if(e.key!==HIDE_AMOUNTS_KEY) return;
+  hideAmounts = e.newValue==='1';
+  applyHideAmountsUI();
+  rerenderForHideAmounts();
+});
 function fmt(n){
+  if(hideAmounts) return AMOUNT_MASK;
   const abs=Math.abs(n);
   if(abs>=1e8) return (n/1e8).toFixed(2)+'억';
   if(abs>=1e4) return Math.trunc(n/1e4)+'만';
   return Math.round(n).toLocaleString('ko-KR')+'원';
 }
 function fmtEval(n){
+  if(hideAmounts) return AMOUNT_MASK;
   const abs=Math.abs(n);
   if(abs>=1e8) return (n/1e8).toFixed(3)+'억';
   if(abs>=1e4) return (n/1e4).toFixed(1)+'만';
@@ -2779,6 +2820,7 @@ function fmtEval(n){
 function fmtPct(n){return(n>=0?'+':'')+n.toFixed(2)+'%';}
 // 종목 1주당 단가 표시 — fmt()와 달리 만/억으로 뭉개지 않고 원 단위까지 그대로 표시
 function unitPriceStr(price, currency){
+  if(hideAmounts) return AMOUNT_MASK;
   if(currency==='USD') return '$'+price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   if(currency==='JPY') return '¥'+Math.round(price).toLocaleString('ja-JP');
   return '₩'+Math.round(price).toLocaleString('ko-KR');
@@ -2934,7 +2976,7 @@ function deleteSoldHistory(id){
   const dtStr = `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
   titleEl.innerHTML = `<span style="color:var(--color-up)">🗑 매매 이력 삭제</span>`;
   detailEl.innerHTML = `${dtStr} · <b>${r.name}</b> (${r.type==='buy'?'매수':'매도'})<br>
-    ${sym}${(r.price||0).toLocaleString()} × ${(r.quantity||0).toLocaleString()}<br>
+    ${maskAmt(sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString())}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">이 매매 이력을 삭제할까요?</span>`;
   document.getElementById('tc_reason_wrap').style.display='none';
   confirmBtn.style.background = 'var(--color-up)';
@@ -3303,7 +3345,7 @@ function renderSoldHistory(){
         ${acctTypeAssetTypeLine}
       </td>
       <td style="font-size:12px;line-height:1.4;text-align:right;">
-        ${isDiv ? '' : sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString()}
+        ${isDiv ? '' : maskAmt(sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString())}
         <div style="font-size:10px;color:var(--color-tertiary);margin-top:1px;">${fmt(r.totalKRW||0)}</div>
       </td>
       <td style="font-size:12px;line-height:1.4;text-align:right;">${pnlCell}</td>
@@ -3606,6 +3648,7 @@ function renderTable(){
     const cc=ACCTTYPE_COLS[a.acctType]||'#8e8e93';
     const sac=a.company?LINE_COLS[subAcctNames.indexOf(a.company)%LINE_COLS.length]:null;
     const priceStr=p=>{
+      if(hideAmounts) return AMOUNT_MASK;
       if(a.currency==='USD') return '$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
       if(a.currency==='JPY') return '¥'+Math.round(p).toLocaleString('ja-JP');
       return '₩'+Math.round(p).toLocaleString('ko-KR');
@@ -3614,7 +3657,7 @@ function renderTable(){
     // 현금 현재가 표시
     let cashPriceDisplay = priceStr(a.currentPrice);
     if(a.acctType==='cash' && a.currency!=='KRW'){
-      cashPriceDisplay = `${priceStr(a.currentPrice)}<br><span style="font-size:10px;color:var(--color-tertiary)">₩${Math.round(evKRW(a)).toLocaleString('ko-KR')}</span>`;
+      cashPriceDisplay = `${priceStr(a.currentPrice)}<br><span style="font-size:10px;color:var(--color-tertiary)">${maskAmt('₩'+Math.round(evKRW(a)).toLocaleString('ko-KR'))}</span>`;
     }
 
     // ── 현재가 셀 + 전일比 셀 ──
@@ -3675,7 +3718,7 @@ function renderTable(){
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
       <td class="fold-hide fold-hide-narrow" style="font-size:11px;">
-        ${isCash ? na : `${priceStr(a.avgPrice)}<div style="font-size:10px;color:var(--color-tertiary);margin-top:1px;">×${a.quantity.toLocaleString()}</div>`}
+        ${isCash ? na : `${priceStr(a.avgPrice)}<div style="font-size:10px;color:var(--color-tertiary);margin-top:1px;">${maskAmt('×'+a.quantity.toLocaleString())}</div>`}
       </td>
       <td class="fold-hide" style="font-size:11px;">${isCash ? cashEvDisplay : fmt(ev)}</td>
       <td class="${updn(pnl)}" style="font-size:11px;">
@@ -3700,7 +3743,7 @@ function renderTable(){
           <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#007aff;">
             ⚡ 빠른 거래
             <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-              ${a.name} · 보유 ${a.quantity.toLocaleString()}주 · 평균 ${priceStr(a.avgPrice)}
+              ${a.name} · 보유 ${maskAmt(a.quantity.toLocaleString()+'주')} · 평균 ${priceStr(a.avgPrice)}
             </span>
           </div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
@@ -3742,7 +3785,7 @@ function renderTable(){
             <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
               ✏️ 현금 수정
               <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-                ${a.name} · 현재 ${sym}${a.avgPrice.toLocaleString()}
+                ${a.name} · 현재 ${maskAmt(sym+a.avgPrice.toLocaleString())}
               </span>
             </div>
             <!-- 투자시장 / 금융회사 / 계좌유형 / 자산유형 -->
@@ -4790,7 +4833,7 @@ function searchSell(query){
     <div class="suggest-item" onclick="selectSell('${a.id}')">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600;">${a.name} ${a.acctType?`<span style="font-size:9px;font-weight:700;color:${ACCTTYPE_COLS[a.acctType]||'#8e8e93'};background:${ACCTTYPE_COLS[a.acctType]||'#8e8e93'}20;border-radius:5px;padding:1px 5px;margin-left:3px;">${ACCTTYPE_LABELS[a.acctType]||a.acctType}</span>`:''}${a.company?`<span style="font-size:9px;font-weight:700;color:#8e8e93;background:#8e8e9320;border-radius:5px;padding:1px 5px;margin-left:3px;">${COMPANY_LABELS[a.company]||a.company}</span>`:''}</div>
-        <div style="font-size:11px;color:var(--color-tertiary)">${a.ticker} · 보유 ${a.quantity.toLocaleString()}주 · 평균 ${CUR_SYM[a.currency]}${a.avgPrice.toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--color-tertiary)">${a.ticker} · 보유 ${maskAmt(a.quantity.toLocaleString()+'주')} · 평균 ${maskAmt(CUR_SYM[a.currency]+a.avgPrice.toLocaleString())}</div>
       </div>
     </div>`).join('');
   box.style.display='block';
@@ -5208,15 +5251,15 @@ function renderCapitalGainsTax(){
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
       <div class="sum-card" style="flex:1;min-width:140px;">
         <div class="sum-lbl">실현손익 합계</div>
-        <div class="sum-val ${updn(gainMan)}">${gainMan>=0?'+':''}${gainMan.toLocaleString()}만원</div>
+        <div class="sum-val ${updn(gainMan)}">${maskAmt((gainMan>=0?'+':'')+gainMan.toLocaleString()+'만원')}</div>
       </div>
       <div class="sum-card" style="flex:1;min-width:140px;">
         <div class="sum-lbl">기본공제 250만원 후 과세대상</div>
-        <div class="sum-val">${taxableMan.toLocaleString()}만원</div>
+        <div class="sum-val">${maskAmt(taxableMan.toLocaleString()+'만원')}</div>
       </div>
       <div class="sum-card" style="flex:1;min-width:140px;">
         <div class="sum-lbl">예상 양도소득세(22%)</div>
-        <div class="sum-val ${taxMan>0?'dn':''}">${taxMan.toLocaleString()}만원</div>
+        <div class="sum-val ${taxMan>0?'dn':''}">${maskAmt(taxMan.toLocaleString()+'만원')}</div>
       </div>
     </div>
     <div class="tbl-wrap">
@@ -5251,14 +5294,14 @@ function renderFinIncomeThreshold(){
   const overMan = totalMan - THRESHOLD;
 
   const statusHtml = overMan > 0
-    ? `<span class="dn" style="font-weight:700;">⚠️ 기준 초과 +${overMan.toLocaleString()}만원 — 종합과세 대상(다른 소득과 합산해 누진세율 적용)</span>`
-    : `<span class="up" style="font-weight:700;">✅ 기준 이내 (${Math.abs(overMan).toLocaleString()}만원 여유) — 15.4% 원천징수로 과세 종결</span>`;
+    ? `<span class="dn" style="font-weight:700;">⚠️ 기준 초과 ${maskAmt('+'+overMan.toLocaleString()+'만원')} — 종합과세 대상(다른 소득과 합산해 누진세율 적용)</span>`
+    : `<span class="up" style="font-weight:700;">✅ 기준 이내 (${maskAmt(Math.abs(overMan).toLocaleString()+'만원')} 여유) — 15.4% 원천징수로 과세 종결</span>`;
 
   el.innerHTML = `
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
       <div class="sum-card" style="flex:1;min-width:140px;">
         <div class="sum-lbl">배당 로그 합계</div>
-        <div class="sum-val">${divSumMan.toLocaleString()}만원</div>
+        <div class="sum-val">${maskAmt(divSumMan.toLocaleString()+'만원')}</div>
       </div>
       <div class="sum-card" style="flex:1;min-width:180px;">
         <div class="sum-lbl">기타 이자·배당 소득(연, 수동입력)</div>
@@ -5269,7 +5312,7 @@ function renderFinIncomeThreshold(){
       </div>
       <div class="sum-card" style="flex:1;min-width:140px;">
         <div class="sum-lbl">금융소득 합계 / 기준</div>
-        <div class="sum-val">${totalMan.toLocaleString()} / 2,000만원</div>
+        <div class="sum-val">${maskAmt(totalMan.toLocaleString())} / 2,000만원</div>
       </div>
     </div>
     <div class="notice" style="margin:0;">${statusHtml}<br>💡 이 앱의 배당 로그와 수동 입력값만 반영합니다 — 예금 이자, 다른 계좌 배당 등 여기 기록되지 않은 금액이 있으면 "기타 이자·배당 소득"에 직접 더해 넣으세요. "배당 로그 합계"를 고치려면 배당금관리 탭에서 해당 배당 기록을 수정·삭제하세요.</div>
@@ -8354,7 +8397,7 @@ function renderStatBar(){
       const ev = evKRW(a);
       return '<div class="stat-item">'+
         '<div class="stat-lbl" style="font-weight:700;"><span class="dot" style="background:#8e8e93"></span>'+a.name+'</div>'+
-        '<div class="stat-val">+0원 (+0.00%)</div>'+
+        '<div class="stat-val">'+maskAmt('+0원')+' (+0.00%)</div>'+
         '<div class="stat-sub">고: '+fmt(ev)+' · 저: '+fmt(ev)+'</div>'+
       '</div>';
     }
@@ -8907,6 +8950,7 @@ window.addEventListener('orientationchange',()=>{
 });
 
 (async function init(){
+  applyHideAmountsUI();
   migrateSoldHistory();
   reconcileTradeLogAttrs();
   // 기존 데이터에 음수 현금이 있으면 0으로 보정

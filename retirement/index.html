@@ -604,7 +604,7 @@ button{font-family:inherit;cursor:pointer;}
   <div class="note" style="margin-top:0;">건강보험 피부양자 자격을 잃으면 소득+재산 모두에 보험료가 부과되는 지역가입자로 전환됩니다. 계산에 필요한 항목은 아래 8개(국민연금은 위 현금흐름에서 자동 반영)이며, 채울수록 정확도가 올라갑니다. 자세한 개념 설명은 상단 "세금 상식" 참고.</div>
 
   <div class="health-ref-row">
-    <span class="health-ref-chip">재산세 과표(자동계산) <b id="hrefRe">-</b>만원</span>
+    <span class="health-ref-chip">재산세 과표(자동계산) <b id="hrefRe" data-amt>-</b>만원</span>
     <span style="font-size:9px;color:#AAB0BB;">↑ 재산세 과표는 아래 공시가격 입력으로 계산</span>
   </div>
 
@@ -2685,7 +2685,7 @@ function drawChart(rows){
         onHover:(evt,els,chart)=>showCustomTooltip(evt,els,chart),
         scales:{
           x:{stacked:true,ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true},grid:{display:false}},
-          y:{stacked:true,ticks:{font:{size:9},callback:v=>v+'만'},grid:{color:'rgba(0,0,0,0.04)'}}
+          y:{stacked:true,ticks:{font:{size:9},callback:v=>hideAmounts?'••':v+'만'},grid:{color:'rgba(0,0,0,0.04)'}}
         }}
     });
 
@@ -2724,7 +2724,7 @@ function drawChart(rows){
         },
         scales:{
           x:{ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true},grid:{display:false}},
-          y:{ticks:{font:{size:9},callback:v=>v+'억'},grid:{color:'rgba(0,0,0,0.04)'}}
+          y:{ticks:{font:{size:9},callback:v=>hideAmounts?'••':v+'억'},grid:{color:'rgba(0,0,0,0.04)'}}
         }}
     });
     _assetChartRef = mainChart; // mousemove 툴팁용 참조 저장
@@ -2941,8 +2941,57 @@ function syncTopBarPad(){
 syncTopBarPad();
 window.addEventListener('resize', syncTopBarPad);
 
+/* ── 금액 숨기기 ──
+   포트폴리오 앱의 토글(localStorage pf_hide_amounts_v1)을 그대로 따른다 — 이 화면에는 토글 버튼이 없다.
+   화면의 금액(…만 / …만원 / …억)을 ••••로 바꾸고 퍼센트·나이는 그대로 둔다. 입력칸 값과 "세금 상식" 같은
+   고정 안내문은 대상이 아니다. 결과 영역이 innerHTML로 통째로 다시 그려지는 구조라, 렌더 함수를 하나씩 고치는
+   대신 DOM에 들어오는 글자를 감시해 바로 가린다(툴팁·상세·표·건보료·플랜 배너 모두 자동 적용). */
+const HIDE_AMOUNTS_KEY = 'pf_hide_amounts_v1';
+const AMOUNT_MASK = '••••';
+let hideAmounts = false;
+try{ hideAmounts = localStorage.getItem(HIDE_AMOUNTS_KEY)==='1'; }catch(e){}
+const AMT_RE = /[+\-−]?\d[\d,]*(?:\.\d+)?\s*(?:천만|억원|억|만원|만)/g;
+const AMT_SKIP = 'input,textarea,select,script,style,#taxGuidePanel,.hir-hint,.unit-tag,.note,#subtitle';
+const maskedOriginals = new Map();
+function maskTextNode(n){
+  if(!hideAmounts || n.nodeType!==3) return;
+  const el = n.parentElement;
+  if(!el || el.closest(AMT_SKIP)) return;
+  const v = n.nodeValue;
+  const nv = el.closest('[data-amt]') ? (/\d/.test(v) ? AMOUNT_MASK : v) : v.replace(AMT_RE, AMOUNT_MASK);
+  if(nv===v) return;
+  if(maskedOriginals.size>3000) maskedOriginals.forEach((o,k)=>{ if(!k.isConnected) maskedOriginals.delete(k); });
+  if(!maskedOriginals.has(n)) maskedOriginals.set(n, v);
+  n.nodeValue = nv;
+}
+function maskSubtree(root){
+  if(!hideAmounts) return;
+  if(root.nodeType===3){ maskTextNode(root); return; }
+  if(root.nodeType!==1) return;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n; while((n=w.nextNode())) maskTextNode(n);
+}
+new MutationObserver(recs=>{
+  if(!hideAmounts) return;
+  recs.forEach(r=>{
+    if(r.type==='characterData') maskTextNode(r.target);
+    else r.addedNodes.forEach(maskSubtree);
+  });
+}).observe(document.body, {childList:true, subtree:true, characterData:true});
+function applyHideAmounts(on){
+  hideAmounts = !!on;
+  if(hideAmounts){ maskSubtree(document.body); }
+  else{
+    maskedOriginals.forEach((orig,n)=>{ if(n.isConnected) n.nodeValue = orig; });
+    maskedOriginals.clear();
+  }
+  upd(); // 차트(y축 눈금)와 결과 영역을 현재 상태 기준으로 다시 그린다
+}
+window.addEventListener('storage', e=>{ if(e.key===HIDE_AMOUNTS_KEY) applyHideAmounts(e.newValue==='1'); });
+
 if(!loadState()) upd(); else upd();
 applyInputTags();
+maskSubtree(document.body);
 
 /* ── 자동 제안 시 입력 필요도 뱃지 표시 ── */
 function applyInputTags(){
