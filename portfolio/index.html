@@ -43,7 +43,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
   height:52px;gap:8px;position:fixed;top:0;left:0;right:0;z-index:100;}
 .logo{font-size:17px;font-weight:700;letter-spacing:-.04em;flex-shrink:0;}
 .logo span{color:var(--color-accent);}
-.topbar-left{display:flex;align-items:baseline;gap:8px;flex-shrink:0;}
+.topbar-left{display:flex;align-items:baseline;gap:14px;flex-shrink:0;}
 .logo-fx{font-size:10.5px;color:var(--color-tertiary);white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .2s;}
 .logo-fx b{font-weight:700;color:var(--color-secondary);}
 @media(max-width:480px){ .logo-fx .fx-lbl{display:none;} .logo-fx::before{content:'$ ';} }
@@ -168,6 +168,8 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn-ghost{background:var(--color-section-bg);color:var(--color-text);}
 .btn-green{background:#34c75920;color:#34c759;}
 .btn-red{background:#ff3b3015;color:var(--color-up);}
+/* 종목 차트의 "트리맵으로 가기" — 기간 탭과 겹쳐 누르기 어렵지 않게 넉넉한 높이의 틴트 캡슐 */
+.btn-return{background:rgba(0,122,255,.12);color:var(--color-accent);min-height:34px;padding:7px 14px;font-size:12px;font-weight:600;border-radius:999px;}
 
 /* ── 레이아웃 ── */
 .main{max-width:1280px;margin:0 auto;padding:8px 12px 48px;display:flex;flex-direction:column;gap:16px;}
@@ -2447,9 +2449,8 @@ const STOCK_CHART_PERIODS = ['1D','5D','1M','3M','6M','YTD','1Y','3Y','5Y','10Y'
 // 차트를 열고 닫을 때는 여전히 이전에 골랐던 기간이 그대로 유지된다. 사용자가 기간 탭을
 // 직접 누르거나(setStockChartRange) 행을 수동으로 토글하면(toggleStockChart) 즉시 해제됨.
 let treemapForcedChartId = null;
-// 트리맵에서 종목을 눌러 들어온 경우 어느 화면에서 왔는지 기록 — 종목 차트의 "트리맵으로 가기" 버튼이 그 화면으로 되돌린다.
-// 표에서 📈로 직접 연 차트에는 없다(수동 토글 시 해제).
-let stockDetailReturn = null;
+// 종목 차트의 "트리맵으로 가기"로 변화추이(트리맵)에 돌아왔을 때 그 종목 셀을 강조하기 위한 id(그 화면을 벗어나면 해제)
+let qvHighlightId = null;
 function resolveStockChartPeriod(id){
   if(treemapForcedChartId===id) return 'ALL';
   return stockChartRangeMap[id] || STOCK_CHART_DEFAULT_PERIOD;
@@ -2473,7 +2474,6 @@ function flashPress(el){ if(el) el.classList.add('pressed-flash'); }
 function toggleStockChart(id){
   quickTradeId = null; editingId = null;
   treemapForcedChartId = null; // 수동 조작 시점부터는 평소처럼 저장된 기간을 따름
-  stockDetailReturn = null;
   chartDetailId = chartDetailId===id ? null : id;
   // 클릭한 버튼 자신을 즉시 재생성하면 터치 기기에서 탭 하이라이트/눌림 피드백이
   // 보일 틈도 없이 사라진다 — 사람이 인지할 수 있는 정도(160ms)까지 렌더를 늦춘다.
@@ -4155,9 +4155,9 @@ function renderTable(){
         <td colspan="10" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:14px;">
               <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
-              ${stockDetailReturn && stockDetailReturn.id===a.id ? `<button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="returnToTreemap()">← 트리맵으로 가기</button>` : ''}
+              <button class="btn btn-return" onclick="returnToTreemap('${a.id}')">← 트리맵으로 가기</button>
             </div>
           </div>
           <div class="chart-wrap" style="position:relative;">
@@ -4170,7 +4170,7 @@ function renderTable(){
               <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                   <span>메모</span>
-                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="chartDetailId=null;stockDetailReturn=null;renderTable();">✕ 세부 정보 닫기</button>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="chartDetailId=null;renderTable();">✕ 세부 정보 닫기</button>
                 </div>
               </th></tr></thead>
               <tbody id="stockChartTradeBody_${a.id}"></tbody>
@@ -4618,6 +4618,7 @@ const PAGE_IDS = ['dashboard','portfolio','tradelog','returns','dividend','tax']
 const PAGE_RENDER_HOOKS = {};
 function switchPage(pageId){
   if(!PAGE_IDS.includes(pageId)) return;
+  if(pageId!=='dashboard') qvHighlightId = null;
   PAGE_IDS.forEach(id=>{
     const sec=document.getElementById('page_'+id);
     if(sec) sec.classList.toggle('active', id===pageId);
@@ -4648,6 +4649,7 @@ const SUBPAGE_RENDER_HOOKS = {};
 function switchSubPage(pageId, subId){
   const container=document.getElementById('page_'+pageId);
   if(!container) return;
+  if(pageId==='dashboard' && subId!=='summary') qvHighlightId = null; // 트리맵 종목 강조는 그 화면을 벗어나면 해제
   container.querySelectorAll(':scope > .subpage').forEach(sec=>{
     sec.classList.toggle('active', sec.dataset.sub===subId);
   });
@@ -7234,16 +7236,19 @@ function reconcileTradeLogAttrs(){
 // 자산 하나의 수익률을 계산 — mode로 두 축을 분리:
 //  'holding'(총수익률) = 내 평균 매입원가 대비 현재 평가액. 기간과 무관한 값이다(기간별 변화는 'market'이 담당).
 //  'market'(시장이력)  = 그 기간 시작 시점 1주당 단가 대비 현재 1주당 단가("이 종목 가격 자체가 얼마나 움직였나", 내 손익과 무관)
-function assetReturnForPeriod(asset, mode, period){
+function assetReturnForPeriod(asset, mode, period){ return assetReturnDetail(asset, mode, period).rtn; }
+// 수익률(%)과 손익 금액(KRW)을 함께 돌려준다. 금액은 '현재 보유수량' 기준(통계 바의 손익 정의와 같다):
+//  holding = 평가액 − 매입원가, market = 수량 × (현재 단가 − 기간 시작 단가)
+function assetReturnDetail(asset, mode, period){
   const ev = evKRW(asset);
   if(mode==='holding'){
     const cost=costKRW(asset);
-    return cost>0 ? (ev-cost)/cost*100 : 0;
+    return {rtn: cost>0 ? (ev-cost)/cost*100 : 0, pnl: ev-cost};
   }
   // mode==='market' — 순수 시세 변화(1주당 단가 비교, 보유수량 변화의 영향을 배제)
   if(period==='1D'){
-    if(!(asset.prevPrice>0)) return 0;
-    return (asset.currentPrice-asset.prevPrice)/asset.prevPrice*100;
+    if(!(asset.prevPrice>0)) return {rtn:0, pnl:0};
+    return {rtn:(asset.currentPrice-asset.prevPrice)/asset.prevPrice*100, pnl: toKRW(asset, asset.currentPrice-asset.prevPrice)*asset.quantity};
   }
   const validSnaps = loadSnapsForAnalysis().filter(s=>s.byAsset && s.byAsset[asset.id]!=null && s.byQty && s.byQty[asset.id]>0);
   const earliestSnap = validSnaps.slice().sort((a,b)=>a.timestamp-b.timestamp)[0];
@@ -7263,19 +7268,29 @@ function assetReturnForPeriod(asset, mode, period){
   if(startSnap && asset.quantity>0){
     const startUnitKRW = startSnap.byAsset[asset.id] / startSnap.byQty[asset.id];
     const nowUnitKRW = ev / asset.quantity;
-    if(startUnitKRW>0) return (nowUnitKRW-startUnitKRW)/startUnitKRW*100;
+    if(startUnitKRW>0) return {rtn:(nowUnitKRW-startUnitKRW)/startUnitKRW*100, pnl:(nowUnitKRW-startUnitKRW)*asset.quantity};
   }
-  return 0; // 순수 시세 지표라 데이터 부족 시 매입원가로 폴백하지 않고 중립(0)
+  return {rtn:0, pnl:0}; // 순수 시세 지표라 데이터 부족 시 매입원가로 폴백하지 않고 중립(0)
+}
+// 트리맵 셀용 손익 금액 표기 — "+1.1억", "-2100만", 숨김 중엔 ••••
+function fmtCompactSigned(n){
+  if(hideAmounts) return AMOUNT_MASK;
+  const a = Math.abs(n), sign = n>0 ? '+' : (n<0 ? '-' : '');
+  if(a>=1e8) return sign + (a/1e8).toFixed(1).replace(/\.0$/,'') + '억';
+  if(a>=1e4) return sign + Math.round(a/1e4).toLocaleString('ko-KR') + '만';
+  return sign + Math.round(a).toLocaleString('ko-KR') + '원';
 }
 
 function buildTreemapItems(assetList, mode, period){
-  return assetList.filter(a=>a.acctType!=='cash').map(a=>({
-    id:a.id, name:dispName(a.name), value:evKRW(a), rtn:assetReturnForPeriod(a,mode,period)
-  })).filter(i=>i.value>0).sort((a,b)=>b.value-a.value);
+  return assetList.filter(a=>a.acctType!=='cash').map(a=>{
+    const d = assetReturnDetail(a,mode,period);
+    // pnlParen: 주가 변화율 모드는 % 뒤에 괄호로, 총수익률 모드는 % 뒤에 그대로 손익 금액을 붙인다
+    return {id:a.id, name:dispName(a.name), value:evKRW(a), rtn:d.rtn, pnl:d.pnl, pnlParen: mode!=='holding'};
+  }).filter(i=>i.value>0).sort((a,b)=>b.value-a.value);
 }
 
 // 공용 트리맵 렌더러 — 비중현황/Quick View/글로벌시장 트리맵이 모두 이 함수를 호출
-function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg){
+function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highlightId){
   const canvas = document.getElementById(canvasId);
   if(!canvas || canvas.offsetParent===null) return; // 숨겨진 상태면 스킵 — 다시 보일 때 해당 서브탭 훅이 재호출
   const wrap = canvas.parentElement;
@@ -7310,6 +7325,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg){
     ctx.closePath();
     ctx.fillStyle = cell.color || treemapColor(cell.rtn); // color가 있으면 구성비용 카테고리색, 없으면 수익률 색
     ctx.fill();
+    if(highlightId && cell.id===highlightId){ ctx.lineWidth=2.5; ctx.strokeStyle='#1c1c1e'; ctx.stroke(); } // "트리맵으로 가기"로 돌아온 종목 강조
 
     if(cw>44 && ch>28){ // 너무 작은 셀은 라벨 생략(겹침 방지, drawDonut()의 소형 섹터 라벨 생략과 동일한 원칙)
       const pctStr = maskAmt(cell.sub!==undefined ? cell.sub : (cell.rtn>=0?'+':'')+cell.rtn.toFixed(1)+'%'); // 기본은 손익률, 분포 트리맵은 sub(비중 %)
@@ -7323,8 +7339,18 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg){
       ctx.fillText(label, cx+6, cy+6);
       if(ch>44){
         ctx.font=`${fontSize-1}px Pretendard`;
-        ctx.fillText(pctStr, cx+6, cy+6+fontSize+3);
-        if(ch>48) ctx.fillText(fmt(cell.value), cx+6, cy+6+2*(fontSize+3));
+        const step = fontSize+3;
+        let ty = cy+6+step;
+        let lines = [pctStr];
+        if(cell.pnl!==undefined){
+          // % 뒤에 손익 금액 — 한 줄에 안 들어가면 다음 줄로 내리고, 높이도 모자라면 생략(평가금액 줄보다 우선)
+          const p = fmtCompactSigned(cell.pnl), pt = cell.pnlParen ? `(${p})` : p;
+          const joined = `${pctStr} ${pt}`;
+          if(ctx.measureText(joined).width <= cw-12) lines = [joined];
+          else if(ch > 48+step) lines = [pctStr, pt];
+        }
+        lines.forEach(l=>{ ctx.fillText(l, cx+6, ty); ty += step; });
+        if(ty-cy+fontSize <= ch-3) ctx.fillText(fmt(cell.value), cx+6, ty);
       }
       ctx.restore();
     }
@@ -7350,10 +7376,7 @@ function treemapTextColor(bg){
 
 // 트리맵 셀 클릭 시 공통 동작: 포트폴리오 탭의 해당 종목 상세 차트로 이동
 function goToStockDetail(assetId){
-  // 이동하기 전에 지금 보고 있는 화면(페이지+서브탭)을 기억해 둔다
-  const fromPage = PAGE_IDS.find(id=>{ const s=document.getElementById('page_'+id); return s && s.classList.contains('active'); });
-  const fromSubEl = fromPage && document.querySelector('#page_'+fromPage+' > .subpage.active');
-  stockDetailReturn = fromPage && fromPage!=='portfolio' ? {id:assetId, page:fromPage, sub:fromSubEl?fromSubEl.dataset.sub:null} : null;
+  qvHighlightId = null;
   switchPage('portfolio');
   quickTradeId=null; editingId=null; chartDetailId=assetId;
   treemapForcedChartId = assetId; // 이 종목에 저장된 기간과 무관하게 이번엔 ALL로 보여줌
@@ -7364,14 +7387,13 @@ function goToStockDetail(assetId){
   }, 100);
 }
 
-// 종목 차트에서 "트리맵으로 가기" — 차트를 닫고 출발했던 화면(변화추이 트리맵/비중현황)으로 돌아간다
-function returnToTreemap(){
-  const r = stockDetailReturn;
-  stockDetailReturn = null; treemapForcedChartId = null; chartDetailId = null;
+// 종목 차트에서 "트리맵으로 가기" — 어디서 열었든 차트를 닫고 변화추이(트리맵)로 가서 그 종목 셀을 강조한다
+function returnToTreemap(assetId){
+  treemapForcedChartId = null; chartDetailId = null;
   renderTable();
-  if(!r) return;
-  switchPage(r.page);
-  if(r.sub) switchSubPage(r.page, r.sub);
+  qvHighlightId = assetId || null;
+  switchPage('dashboard');
+  switchSubPage('dashboard', 'summary');
 }
 
 // 자산 Quick View 트리맵 — 대시보드 기본값: 기간별 주가 변화율(market) × 1D
@@ -7395,7 +7417,7 @@ function syncQuickViewPeriodTabs(){
 }
 function drawQuickViewTreemap(){
   syncQuickViewPeriodTabs();
-  renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), 280, goToStockDetail);
+  renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), 280, goToStockDetail, undefined, qvHighlightId);
 }
 
 /* ── 자산군 분포 (비중현황 > 트리맵) ─────────────────────────────────
