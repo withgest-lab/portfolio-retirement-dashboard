@@ -43,7 +43,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
   padding:0 16px;display:flex;align-items:center;justify-content:space-between;
   height:52px;gap:8px;position:fixed;top:0;left:0;right:0;z-index:100;}
 .logo{font-size:17px;font-weight:700;letter-spacing:-.04em;flex-shrink:0;}
-.logo span{color:var(--color-accent);}
+.logo span{color:var(--color-text);font-weight:800;}
 .topbar-left{display:flex;align-items:baseline;gap:14px;flex-shrink:0;}
 .logo-fx{font-size:10.5px;color:var(--color-tertiary);white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .2s;}
 .logo-fx b{font-weight:700;color:var(--color-secondary);}
@@ -580,12 +580,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <span id="statusText">준비 중...</span>
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
-    <button class="btn btn-green" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
+    <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
     <a href="../" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🏠 홈</a>
     <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 KIS 매매전략</a>
     <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
-    <button class="btn btn-green" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
-    <button class="btn btn-green" onclick="openBackupModal()">💾 백업 / 복원</button>
+    <button class="btn btn-ghost" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
+    <button class="btn btn-ghost" onclick="openBackupModal()">💾 백업 / 복원</button>
   </div>
 </div>
 <div class="topbar-spacer" aria-hidden="true"></div>
