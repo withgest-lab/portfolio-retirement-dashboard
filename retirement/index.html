@@ -2957,6 +2957,10 @@ document.documentElement.classList.toggle('privacy-on', hideAmounts);
 const AMT_RE = /[+\-−]?\d[\d,]*(?:\.\d+)?\s*(?:천만|억원|억|만원|만)/g;
 const AMT_SKIP = 'input,textarea,select,script,style,#taxGuidePanel,.hir-hint,.unit-tag,.note,#subtitle';
 const maskedOriginals = new Map();
+// 금융회사 이름은 개인정보 — 포트폴리오 앱의 별칭(농협→계좌 1, 미래에셋→계좌 2)과 같게 바꾼다.
+// 연금저축·IRP·퇴직연금·국민연금·ISA 같은 상품/제도 이름은 개인정보가 아니라 그대로 둔다.
+const CO_RE = /농협|미래에셋/g;
+const CO_MAP = {'농협':'계좌 1', '미래에셋':'계좌 2'};
 function maskTextNode(n){
   if(!hideAmounts || n.nodeType!==3) return;
   const el = n.parentElement;
@@ -2967,8 +2971,10 @@ function maskTextNode(n){
     if(v!==AMOUNT_MASK){ if(!maskedOriginals.has(n)) maskedOriginals.set(n, v); n.nodeValue = AMOUNT_MASK; }
     return;
   }
-  if(el.closest(AMT_SKIP)) return;
-  const nv = el.closest('[data-amt]') ? (/\d/.test(v) ? AMOUNT_MASK : v) : v.replace(AMT_RE, AMOUNT_MASK);
+  if(el.closest('input,textarea,select,script,style')) return;
+  // 금융회사 이름은 고정 안내문·세금 상식·건보료 패널까지 모든 글자에서 바꾼다(금액 마스킹 제외 영역 포함)
+  let nv = v.replace(CO_RE, m=>CO_MAP[m]);
+  if(!el.closest(AMT_SKIP)) nv = el.closest('[data-amt]') ? (/\d/.test(nv) ? AMOUNT_MASK : nv) : nv.replace(AMT_RE, AMOUNT_MASK);
   if(nv===v) return;
   if(maskedOriginals.size>3000) maskedOriginals.forEach((o,k)=>{ if(!k.isConnected) maskedOriginals.delete(k); });
   if(!maskedOriginals.has(n)) maskedOriginals.set(n, v);
