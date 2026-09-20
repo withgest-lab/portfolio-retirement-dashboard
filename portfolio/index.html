@@ -289,16 +289,13 @@ tr:last-child td{border-bottom:none;}
 .edit-btn,.del-btn{border:none;cursor:pointer;background:transparent;font-size:16px;padding:7px 9px;border-radius:7px;transition:.15s;}
 @media (hover: hover) { .edit-btn:hover,.del-btn:hover{background:var(--color-section-bg);} }
 .edit-btn:active,.del-btn:active{transform:scale(.85);}
-/* 행 동작 아이콘: 연필·차트=파랑, 휴지통=빨강 (SF Symbols식 라인 아이콘) */
-.btn-chart,.btn-editicon{color:var(--color-accent);} .del-btn{color:#ff3b30;}
+/* 행 동작 아이콘(연필·차트·휴지통)은 모두 검정 (SF Symbols식 라인 아이콘) */
+.btn-chart,.btn-editicon,.del-btn{color:var(--color-text);}
 .edit-btn .ic,.del-btn .ic{width:19px;height:19px;vertical-align:middle;}
-.btn-chart:active{background:#2a78d635;}
-.btn-editicon:active{background:#007aff35;}
-.del-btn:active{background:#ff3b3035;}
+.btn-chart:active,.btn-editicon:active,.del-btn:active{background:rgba(60,60,67,.14);}
 /* :active만으로는 tap-highlight가 꺼진 터치 환경에서 손을 떼는 순간 바로 사라져
    체감이 안 된다 — 클릭 시 JS(flashPress)로 씌우는 명시적 플래시 클래스. */
-.btn-chart.pressed-flash{background:#2a78d655;transform:scale(.85);}
-.btn-editicon.pressed-flash{background:#007aff55;transform:scale(.85);}
+.btn-chart.pressed-flash,.btn-editicon.pressed-flash{background:rgba(60,60,67,.22);transform:scale(.85);}
 .btn-icon{border:none;cursor:pointer;background:transparent;font-size:13px;padding:4px 6px;border-radius:6px;transition:.15s;}
 @media (hover: hover) { .btn-icon:hover{background:var(--color-section-bg);} }
 .btn-icon+.btn-icon{margin-left:4px;}
