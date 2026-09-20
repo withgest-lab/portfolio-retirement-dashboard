@@ -5825,11 +5825,10 @@ function drawPrincipalVsValueChart(){
   const valuedSeries = series.filter(p=>p.value!=null);
   const lastValued = valuedSeries.length ? valuedSeries[valuedSeries.length-1] : null;
   const lastGain = lastValued ? lastValued.value >= lastValued.principal : false;
-  // 국내 주식 등락 관례(빨강=상승/이익, 파랑=하락/손실)에 맞춰 손익 텍스트(.up/.dn,
-  // --color-up/--color-down)와 동일한 색 계열 사용 — 이 차트 안에서도 서로 다른 색
-  // 관례가 섞이지 않도록 통일.
-  const GAIN_FILL = 'rgba(255,59,48,0.12)';   // 원금 대비 수익 구간 — 빨강
-  const LOSS_FILL = 'rgba(0,122,255,0.10)';   // 원금 대비 손실 구간 — 파랑
+  // 종목 가격추이 차트(drawStockPriceChart의 UP_COLOR/DOWN_COLOR)와 같은 색 — 이익=초록, 손실=빨강.
+  // 채움 투명도만 이 차트용으로 유지한다.
+  const GAIN_FILL = 'rgba(30,142,90,0.12)';   // 원금 대비 수익 구간 — 초록(#1e8e5a)
+  const LOSS_FILL = 'rgba(192,57,43,0.10)';   // 원금 대비 손실 구간 — 빨강(#c0392b)
 
   // 손익 구간 채움 (자산가치선과 원금선 사이) — 구간별로 원금 대비 수익/손실이 갈리면
   // 교차 지점을 선형보간해 그 지점에서 색을 나눠 칠한다(구간 전체를 마지막 시점 기준
@@ -6001,7 +6000,7 @@ function renderPvDetail(idx, series){
     <div class="pd-title">📅 ${dateStr}</div>
     <div class="pd-value">${fmt(p.value)}</div>
     <div class="pd-row"><span>투입원금</span><b>${fmt(p.principal)}</b></div>
-    <div class="pd-row"><span>손익</span><b class="${pnl>=0?'up':'dn'}">${pnl>=0?'+':''}${fmt(pnl)} (${pnl>=0?'+':''}${pnlPct.toFixed(1)}%)</b></div>
+    <div class="pd-row"><span>손익</span><b style="color:${pnl>=0?'#1e8e5a':'#c0392b'};">${pnl>=0?'+':''}${fmt(pnl)} (${pnl>=0?'+':''}${pnlPct.toFixed(1)}%)</b></div>
   `;
 }
 
