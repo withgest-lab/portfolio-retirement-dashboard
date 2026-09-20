@@ -2463,6 +2463,10 @@ const STOCK_CHART_PERIODS = ['1D','5D','1M','3M','6M','YTD','1Y','3Y','5Y','10Y'
 let treemapForcedChartId = null;
 // 종목 차트의 "트리맵으로 가기"로 변화추이(트리맵)에 돌아왔을 때 그 종목 셀을 강조하기 위한 id(그 화면을 벗어나면 해제)
 let qvHighlightId = null;
+// 종목 상세로 들어온 출발 화면 — {type:'alloc', view, scrollY, sel}(비중현황) | null(변화 추이 트리맵·보유 종목 표 → 기본은 변화 추이).
+// "트리맵으로 가기"가 이 값을 보고 돌아갈 곳을 정한다. 종목 상세를 닫는 모든 경로는 closeStockDetail()로 함께 비운다.
+let stockDetailOrigin = null;
+function closeStockDetail(){ chartDetailId = null; stockDetailOrigin = null; }
 function resolveStockChartPeriod(id){
   if(treemapForcedChartId===id) return 'ALL';
   return stockChartRangeMap[id] || STOCK_CHART_DEFAULT_PERIOD;
@@ -2486,6 +2490,7 @@ function flashPress(el){ if(el) el.classList.add('pressed-flash'); }
 function toggleStockChart(id){
   quickTradeId = null; editingId = null;
   treemapForcedChartId = null; // 수동 조작 시점부터는 평소처럼 저장된 기간을 따름
+  stockDetailOrigin = null;    // 표에서 직접 여닫는 경우엔 출발 화면 기억 없음(기본: 변화 추이)
   chartDetailId = chartDetailId===id ? null : id;
   // 클릭한 버튼 자신을 즉시 재생성하면 터치 기기에서 탭 하이라이트/눌림 피드백이
   // 보일 틈도 없이 사라진다 — 사람이 인지할 수 있는 정도(160ms)까지 렌더를 늦춘다.
@@ -4196,7 +4201,7 @@ function renderTable(){
         <td colspan="11" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
-            <button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">← 트리맵으로 가기</button>
+            <button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">${stockDetailOrigin&&stockDetailOrigin.type==='alloc'?'← 비중현황으로 가기':'← 트리맵으로 가기'}</button>
           </div>
           <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
             <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
@@ -4211,7 +4216,7 @@ function renderTable(){
               <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                   <span>메모</span>
-                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="chartDetailId=null;renderTable();">✕ 세부 정보 닫기</button>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="closeStockDetail();renderTable();">✕ 세부 정보 닫기</button>
                 </div>
               </th></tr></thead>
               <tbody id="stockChartTradeBody_${a.id}"></tbody>
@@ -4229,7 +4234,7 @@ function renderTable(){
 }
 function toggleQuickTrade(id){
   quickTradeId = quickTradeId===id ? null : id;
-  editingId = null; chartDetailId = null;
+  editingId = null; closeStockDetail();
   renderTable();
   // 패널 열리면 수량 입력칸으로 포커스
   if(quickTradeId) setTimeout(()=>{
@@ -4626,7 +4631,7 @@ function setQuickMode(id, mode){ quickMode[id]=mode; }
 
 function toggleEdit(id){
   // 편집 클릭 시 빠른 매수/매도 패널 닫고 편집 패널 열기
-  quickTradeId = null; chartDetailId = null;
+  quickTradeId = null; closeStockDetail();
   editingId = editingId===id ? null : id;
   // toggleStockChart와 동일한 이유로 렌더를 160ms 늦춰 눌림 피드백이 실제로 보이게 함
   setTimeout(renderTable, 160);
@@ -6899,13 +6904,19 @@ function drawDonutRings(canvasId, tree, size){
   paintDonutRings(ctx,R,R,R,tree,{outerPct:true,typeNames:false});
   donutSetCenterFont(cv,R);
 }
-// 콜아웃 리더선의 앵커 뒤 경로(꺾임점 목록). 반대편으로 옮긴 라벨(viaW)은 링 바깥(반경 it.rW)을 따라 12·6시까지 돌아 나온다 —
+// 콜아웃 리더선: 시작점은 조각 "중심"이 아니라 자기 조각 영역 안에서 라벨 높이에 가장 가까운 점(it.ang)이다.
+// 종목 = 바깥 링 호 안(반경 OOR), 자산유형 알약 = 안쪽 링 조각 안(반경 RM). 바깥 링을 가로질러 반경 R+10 꺾임점까지 곧게 나온다.
+function calloutStart(it, cx, cy, R){
+  const r = it.hdr ? R*0.48 : R*0.96-2;
+  return [cx+Math.cos(it.ang)*r, cy+Math.sin(it.ang)*r];
+}
+// 시작점 뒤 경로(꺾임점 목록). 반대편으로 옮긴 라벨(viaW)은 링 바깥(반경 it.rW)을 따라 12·6시까지 돌아 나온다 —
 // 여러 개면 반경을 달리해 겹치지 않는 동심 경로가 되고, 호를 잘게 나눠 그려 링 안쪽을 지나지 않는다.
 function calloutPath(it, cx, cy, R){
-  const ca=Math.cos(it.mid), sa=Math.sin(it.mid), side=it.side, ex=cx+side*(R+20);
-  if(!it.viaW) return [[cx+ca*(R+10),cy+sa*(R+10)],[ex,it.ly],[ex+side*4,it.ly]];
-  const r=it.rW, sy=sa<0?-1:1, A=sy*Math.PI/2, n=Math.max(1,Math.ceil(Math.abs(A-it.th)/0.25)), P=[];
-  for(let k=0;k<=n;k++){ const a=it.th+(A-it.th)*k/n; P.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]); }
+  const side=it.side, ex=cx+side*(R+20);
+  if(!it.viaW) return [[cx+Math.cos(it.ang)*(R+10),cy+Math.sin(it.ang)*(R+10)],[ex,it.ly],[ex+side*4,it.ly]];
+  const r=it.rW, sy=Math.sin(it.tha)<0?-1:1, A=sy*Math.PI/2, n=Math.max(1,Math.ceil(Math.abs(A-it.tha)/0.25)), P=[];
+  for(let k=0;k<=n;k++){ const a=it.tha+(A-it.tha)*k/n; P.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]); }
   P.push([ex,it.ly],[ex+side*4,it.ly]);
   return P;
 }
@@ -6915,93 +6926,163 @@ function segDistToPoint(a, b, cx, cy){
   const t=l2 ? donutClamp(((cx-a[0])*dx+(cy-a[1])*dy)/l2,0,1) : 0;
   return Math.hypot(a[0]+t*dx-cx, a[1]+t*dy-cy);
 }
-// 콜아웃 라벨 배치: ① 같은 자산군 라벨은 한쪽 옆에 모은다(12·6시 ±60° 안쪽 종목만 반대편으로 옮김) ② 세로는 라벨끼리 최소 간격 LINE을 두고
-// 각자 목표 높이에 가장 가깝게 놓되, 목표는 "자기 앵커 높이"와 "같은 자산군 라벨 평균 높이"의 절반씩(자산군이 흩어지지 않게).
-// (간격 제약이 있는 최소제곱 = 등단조 회귀(PAV). 몰려 있는 라벨은 한쪽으로 밀리지 않고 몰린 자리 중심으로 고르게 퍼진다)
-// pts: {mid: 각 라벨이 가리키는 각도, g: 자산군 번호, w: 호 각도(안쪽 링 유형 라벨은 0)} — 바깥 링 종목들 뒤에 리더라인으로 뺀 안쪽 링 유형이 이어진다
+// 두 선분이 (끝점 접촉 제외) 엇갈리는가
+function segsCross(a, b, c, d){
+  const o=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]);
+  const d1=o(a,b,c), d2=o(a,b,d), d3=o(c,d,a), d4=o(c,d,b);
+  return ((d1>1e-6&&d2<-1e-6)||(d1<-1e-6&&d2>1e-6)) && ((d3>1e-6&&d4<-1e-6)||(d3<-1e-6&&d4>1e-6));
+}
+// 콜아웃 라벨 배치.
+// ① 같은 자산군 라벨은 한쪽 옆에 모은다(12·6시 ±60° 안쪽 종목만 반대편으로 옮김). 반원보다 큰 자산군은 어차피 양쪽에 걸치므로 조각 위치대로 둔다.
+// ② 열은 "묶음"의 나열 — 묶음 = [자산유형 알약(안쪽 링에 글자가 안 들어가는 작은 유형만) → 그 자산군 종목들]. 알약이 묶음 맨 위.
+// ③ 세로 위치: 묶음 목표 = 조각 위치와 열 전체 균등 배분의 절반씩. 묶음 사이 최소 간격 BLOCK_GAP, 묶음 안은 LINE 간격.
+//    (간격 제약이 있는 최소제곱 = 등단조 회귀(PAV). 몰려 있는 묶음은 몰린 자리 중심으로 고르게 퍼진다)
+// ④ 배치가 정해지면 각 라벨의 리더선 시작점을 자기 조각 안에서 라벨 높이에 맞춰 고르고, 리더선이 엇갈리면 큰 벌점을 준다.
+// pts: {mid, g: 자산군 번호, w: 호 각도(알약은 0), a0,a1: 조각의 (펼친) 각도 범위, hdr: 알약 여부} — 바깥 링 종목들 뒤에 알약이 이어진다
 function layoutCallouts(pts, cx, cy, R, H, PADV, LINE){
-  const OOR=R*0.96, TAU=2*Math.PI, PULL=0.5;
+  const OOR=R*0.96, EL=R+10, TAU=2*Math.PI, BLOCK_GAP=12, EVEN_MAX=40, PULL_IN=0.5, PILL_SEP=0.03;
+  const nrm=a=>((a+Math.PI)%TAU+TAU)%TAU-Math.PI;
+  const rawOf=(th,ref)=>th+TAU*Math.round((ref-th)/TAU);   // th를 ref에 가까운 펼친 각도로
   const items=pts.map(p=>{
-    const th=((p.mid+Math.PI)%TAU+TAU)%TAU-Math.PI;
-    return {mid:p.mid, g:p.g, w:p.w, th, side:Math.cos(th)>=0?1:-1, viaW:false, ay:cy+Math.sin(th)*OOR};
+    const th=nrm(p.mid), m=Math.min(0.02,(p.a1-p.a0)*0.25);
+    return {mid:p.mid, g:p.g, w:p.w, a0:p.a0+m, a1:p.a1-m, hdr:!!p.hdr, th, side:Math.cos(th)>=0?1:-1, moved:false, viaW:false, ang:p.mid};
   });
   // ① 자산군 응집 — 양쪽에 걸친 자산군은 호가 더 큰 쪽으로, 세로축 근처 종목만 옮긴다
   const groups=new Map();
   items.forEach(it=>{ if(!groups.has(it.g)) groups.set(it.g,[]); groups.get(it.g).push(it); });
   let split=0, splitN=0;   // 흩어진 호 각도 합 / 흩어진 라벨 수
   groups.forEach(arr=>{
-    // 호가 반원보다 큰 자산군은 어차피 양쪽에 걸친다 — 억지로 모으지 않고 조각 위치대로 둔다(이동·분할 벌점·세로 끌어당김 없음)
-    const span=arr.reduce((s,it)=>s+it.w,0);
-    arr.forEach(it=>{ it.pull = span<=Math.PI ? PULL : 0; });
-    if(span>Math.PI) return;
-    let wr=0, wl=0; arr.forEach(it=>{ if(it.side===1) wr+=it.w; else wl+=it.w; });
-    if(!wr||!wl) return;
+    const its=arr.filter(it=>!it.hdr), hd=arr.find(it=>it.hdr);
+    const one=its.reduce((s,it)=>s+it.w,0)>Math.PI;
+    its.forEach(it=>{ it.one=one; });
+    let wr=0, wl=0; its.forEach(it=>{ if(it.side===1) wr+=it.w; else wl+=it.w; });
     const maj=wr>=wl?1:-1;
-    arr.forEach(it=>{ if(it.side!==maj && Math.abs(Math.cos(it.th))<0.5){ it.side=maj; it.moved=true; } });
-    let r=0, l=0, nr=0, nl=0; arr.forEach(it=>{ if(it.side===1){ r+=it.w; nr++; } else { l+=it.w; nl++; } });
+    if(hd) hd.side=maj;   // 알약은 종목이 더 많은 쪽 묶음 맨 위에 둔다
+    if(one||!wr||!wl) return;
+    its.forEach(it=>{ if(it.side!==maj && Math.abs(Math.cos(it.th))<0.5){ it.side=maj; it.moved=true; } });
+    let r=0, l=0, nr=0, nl=0; its.forEach(it=>{ if(it.side===1){ r+=it.w; nr++; } else { l+=it.w; nl++; } });
     if(r<l){ split+=r; splitN+=nr; } else { split+=l; splitN+=nl; }
   });
-  // 옮긴 라벨의 우회 경로: 같은 쪽(12시/6시)으로 도는 라벨끼리 세로축에 가까운 것이 안쪽 반경, 먼 것이 바깥 반경
-  [1,-1].forEach(side=>[-1,1].forEach(sy=>{
-    items.filter(it=>it.moved&&it.side===side&&(it.th<0?-1:1)===sy).sort((a,b)=>Math.abs(a.th-sy*Math.PI/2)-Math.abs(b.th-sy*Math.PI/2))
-      .forEach((it,i)=>{ it.viaW=true; it.rW=R+22+9*i; });
-  }));
-  // 옮긴 라벨이 있어도 라벨 열의 위→아래 순서는 링을 도는 순서와 같아야 리더선이 엇갈리지 않는다
-  items.forEach(it=>{ it.key = it.side===1 ? it.th : (((-it.th)%TAU+TAU)%TAU)-Math.PI/2; });
-  const y0=PADV+LINE/2-3, y1=H-PADV-LINE/2+3; let cost=split/TAU*8000+splitN*150, maxSide=0;
+  // 옮긴 종목은 세로축에 가장 가까운 자기 호 안 지점에서 출발해 돌아 나오는 길을 줄인다
+  items.forEach(it=>{
+    if(it.moved){ const A=(it.th<0?-1:1)*Math.PI/2; it.ang=donutClamp(rawOf(A,it.mid),it.a0,it.a1); }
+    it.tha=nrm(it.ang);
+    it.ay=cy+Math.sin(it.tha)*(it.moved?EL:OOR);
+    it.key = it.side===1 ? it.th : (((-it.th)%TAU+TAU)%TAU)-Math.PI/2;   // 열의 위→아래 순서 = 링을 도는 순서
+  });
+  const y0=PADV+LINE/2-3, y1=H-PADV-LINE/2+3, Lspan=y1-y0; let cost=split/TAU*8000+splitN*450, over=0;
   const cnt={1:0,'-1':0};
   [1,-1].forEach(side=>{
-    const arr=items.filter(x=>x.side===side).sort((a,b)=>a.key-b.key), n=arr.length;
-    cnt[side]=n; maxSide=Math.max(maxSide,n); if(!n) return;
-    // ② 목표 높이 = 앵커와 같은 자산군 평균의 중간
-    const gs=new Map(), gn=new Map();
-    arr.forEach(it=>{ gs.set(it.g,(gs.get(it.g)||0)+it.ay); gn.set(it.g,(gn.get(it.g)||0)+1); });
-    arr.forEach(it=>{ it.t=(1-it.pull)*it.ay+it.pull*gs.get(it.g)/gn.get(it.g); });
-    const blocks=[];
-    arr.forEach((it,i)=>{
-      blocks.push({sum:it.t-i*LINE,cnt:1});
-      while(blocks.length>1){
-        const b=blocks[blocks.length-1], a=blocks[blocks.length-2];
-        if(a.sum/a.cnt<=b.sum/b.cnt) break;
-        a.sum+=b.sum; a.cnt+=b.cnt; blocks.pop();
+    const mem=items.filter(x=>x.side===side); cnt[side]=mem.length; if(!mem.length) return;
+    // ② 묶음 구성
+    const blocks=[], byG=new Map();
+    mem.filter(x=>!x.hdr).sort((a,b)=>a.key-b.key).forEach(it=>{
+      if(it.one){ blocks.push({g:it.g,list:[it],key:it.key}); return; }
+      let b=byG.get(it.g); if(!b){ b={g:it.g,list:[],key:it.key}; byG.set(it.g,b); blocks.push(b); }
+      b.list.push(it);
+    });
+    mem.filter(x=>x.hdr).forEach(h=>{
+      const b=byG.get(h.g);
+      if(b) b.list.unshift(h); else blocks.push({g:h.g,list:[h],key:h.key});
+    });
+    blocks.sort((a,b)=>a.key-b.key);
+    // ③ 세로 위치 — 종목별 목표 = 묶음 평균 + 앵커 편차의 절반(응집 "중간") + 여백 균등 배분 이동(상한 EVEN_MAX).
+    //    열 전체를 한 번의 PAV로 푼다: 묶음 안 최소 간격 LINE, 묶음 사이 LINE+BLOCK_GAP, 알약은 첫 종목 바로 위(목표 −LINE)
+    const B=blocks.length; let total=0;
+    blocks.forEach(b=>{ b.n=b.list.length; total+=b.n*LINE; });
+    const need=total+(B-1)*BLOCK_GAP-LINE, slack=Lspan-need, e=Math.max(0,slack)/(B+1);
+    over=Math.max(over,need-(Lspan+12));
+    const seq=[]; let off=0, evenAcc=0;
+    blocks.forEach((b,bi)=>{
+      const its=b.list.filter(x=>!x.hdr), ideal=(its.length?its:b.list).reduce((s,x)=>s+x.ay,0)/(its.length||b.n);
+      const centerEven=y0+e*(bi+1)+evenAcc+(b.n-1)*LINE/2;
+      const shift=donutClamp(0.5*(centerEven-ideal),-EVEN_MAX,EVEN_MAX);
+      b.list.forEach((it,i)=>{
+        if(seq.length) off+= i===0 ? LINE+BLOCK_GAP : LINE;
+        it.off=off; it.t=ideal+PULL_IN*(it.ay-ideal)+shift; seq.push(it);
+      });
+      if(b.list[0].hdr) b.list[0].t = b.list[1] ? b.list[1].t-LINE : ideal+shift;
+      evenAcc+=b.n*LINE+BLOCK_GAP;
+    });
+    const st=[];
+    seq.forEach(it=>{
+      st.push({sum:it.t-it.off,cnt:1});
+      while(st.length>1){
+        const q=st[st.length-1], a=st[st.length-2];
+        if(a.sum/a.cnt<=q.sum/q.cnt) break;
+        a.sum+=q.sum; a.cnt+=q.cnt; st.pop();
       }
     });
-    let k=0; blocks.forEach(b=>{ const z=b.sum/b.cnt; for(let j=0;j<b.cnt;j++,k++) arr[k].z=z; });
-    const zmax=Math.max(y0,y1-(n-1)*LINE);
-    arr.forEach((it,i)=>{
-      it.ly=Math.min(Math.max(it.z,y0),zmax)+i*LINE; cost+=Math.abs(it.ly-it.ay);
-      if(it.viaW) cost+=25+Math.abs(Math.abs(it.th)-Math.PI/2)*R*0.5;   // 돌아 나오는 리더선은 길이만큼 감점
-      // 리더선이 도넛 링을 파고들면 감점
-      const minD=P=>{ let d=1e9; for(let q=0;q<P.length-1;q++) d=Math.min(d,segDistToPoint(P[q],P[q+1],cx,cy)); return d; };
-      const d=minD(calloutPath(it,cx,cy,R));
-      if(d<R+3) cost+=(R+3-d)*6;
+    let k=0; st.forEach(q=>{ const z=q.sum/q.cnt; for(let j=0;j<q.cnt;j++,k++) seq[k].z=z; });
+    const zmax=Math.max(y0,y1-seq[seq.length-1].off);
+    seq.forEach(it=>{ it.ly=Math.min(Math.max(it.z,y0),zmax)+it.off; });
+    // ④ 리더선 시작점: 자기 조각 안에서 꺾임점 높이가 라벨 높이에 가장 가깝게(옮긴 종목은 이미 정해짐)
+    const angFor=(it,lo,hi)=>{
+      const sn=donutClamp((it.ly-cy)/EL,-1,1), t0=side===1?Math.asin(sn):Math.PI-Math.asin(sn);
+      return donutClamp(rawOf(t0,it.mid),Math.min(lo,hi),Math.max(lo,hi));
+    };
+    blocks.forEach(b=>{
+      const h=b.list[0].hdr?b.list[0]:null, f=h?b.list[1]:null;
+      b.list.filter(x=>!x.hdr&&!x.moved).forEach(it=>{
+        let lo=it.a0, hi=it.a1;
+        // 알약 선과 첫 종목 선이 나란히 붙어 달리지 않게 첫 종목은 알약 쪽 가장자리에서 PILL_SEP 떨어진 곳에서 출발한다
+        if(it===f){ if(side===1) lo=Math.max(lo,Math.min(hi,h.a0+PILL_SEP+0.01)); else hi=Math.min(hi,Math.max(lo,h.a1-PILL_SEP-0.01)); }
+        it.ang=angFor(it,lo,hi); it.tha=nrm(it.ang);
+      });
+      if(!h) return;
+      // 알약 선은 묶음의 첫 종목 선보다 열 위쪽(=링 순서상 앞)이어야 안 엇갈린다
+      let lo=h.a0, hi=h.a1;
+      if(f){ if(side===1) hi=Math.min(hi,f.ang-PILL_SEP); else lo=Math.max(lo,f.ang+PILL_SEP); }
+      h.ang=angFor(h,lo,hi); h.tha=nrm(h.ang);
     });
   });
-  cost+=Math.abs(cnt[1]-cnt[-1])*3;
-  return {items,cost,maxSide};
+  // 돌아 나오는(viaW) 라벨: 세로축에 가까운 것이 안쪽 반경, 먼 것이 바깥 반경 — 겹치지 않는 동심 경로
+  items.forEach(it=>{ if(it.moved || Math.cos(it.tha)*it.side<0) it.viaW=true; });
+  [1,-1].forEach(side=>[-1,1].forEach(sy=>{
+    items.filter(it=>it.viaW&&it.side===side&&(Math.sin(it.tha)<0?-1:1)===sy).sort((a,b)=>Math.abs(a.tha-sy*Math.PI/2)-Math.abs(b.tha-sy*Math.PI/2))
+      .forEach((it,i)=>{ it.rW=R+22+9*i; });
+  }));
+  // 비용: 리더선 기울기, 돌아 나오는 길이, 링 침범, 선 교차, 좌우 불균형
+  const polys=items.map(it=>{ const T=calloutPath(it,cx,cy,R); return {tail:T, poly:[calloutStart(it,cx,cy,R)].concat(T)}; });
+  const parts={split:Math.round(split/TAU*8000+splitN*450), tilt:0, via:0, clear:0};
+  items.forEach((it,i)=>{
+    const tl=Math.abs(it.ly-(cy+Math.sin(it.ang)*EL)); cost+=tl; parts.tilt+=tl;
+    if(it.viaW){ const v=25+Math.abs(Math.abs(it.tha)-Math.PI/2)*R*0.5; cost+=v; parts.via+=v; }
+    let d=1e9; const T=polys[i].tail; for(let q=0;q<T.length-1;q++) d=Math.min(d,segDistToPoint(T[q],T[q+1],cx,cy));
+    if(d<R+3){ cost+=(R+3-d)*6; parts.clear+=(R+3-d)*6; }
+  });
+  let cross=0;
+  for(let i=0;i<polys.length;i++) for(let j=i+1;j<polys.length;j++){
+    const A=polys[i].poly, C=polys[j].poly; let hit=false;
+    for(let a=0;a<A.length-1&&!hit;a++) for(let c=0;c<C.length-1&&!hit;c++) if(segsCross(A[a],A[a+1],C[c],C[c+1])) hit=true;
+    if(hit) cross++;
+  }
+  cost+=cross*2000+Math.abs(cnt[1]-cnt[-1])*30;
+  return {items,cost,over,cross,parts};
 }
 // 넓은 화면용: 큰 도넛 + 바깥 링 각 조각에서 좌/우로 리더라인을 빼 "종목명 12.3%" 라벨을 양옆에 세로 정렬.
 // 안쪽 링(자산유형) 조각 안에 라벨이 못 들어가는 작은 유형(예: 유망주·원자재)도 같은 방식으로 리더라인을 빼 "● 유형 %" 라벨을 잇는다.
 // 작은 조각이 한 곳에 몰리면 라벨이 길게 퍼지므로, 시작각을 돌려 가며(기본 12시 우선) 리더라인이 가장 짧아지는 각도를 고른다.
-function drawDonutCallouts(canvasId, tree, W){
+function drawDonutCallouts(canvasId, tree, W, opt){   // opt.degs: 시작각 후보를 직접 지정(검증용)
   const cv=document.getElementById(canvasId); if(!cv) return;
   const total=tree.reduce((s,t)=>s+t.value,0);
   const LINE=18, PADV=44;
   const vals=tree.flatMap(t=>t.children.map(c=>c.value));
   // 라벨 글자 영역(약 165px)을 먼저 확보하고 남는 폭으로 도넛 반지름을 정한다 — 긴 종목명이 잘리지 않게
   const R=donutClamp(W/2-206,100,250);
-  const H=Math.round(Math.max(2*R+2*PADV, Math.ceil((vals.length+tree.length)*0.65)*LINE+2*PADV));
+  const H=Math.round(Math.max(2*R+2*PADV, Math.ceil((vals.length+tree.length)*0.65)*LINE+tree.length*14+2*PADV));
   const cx=W/2, cy=H/2, OOR=R*0.96, RM=R*0.48; // RM = 안쪽 링 중간 반지름
   const mctx=cv.getContext('2d'); // 글자 폭 측정용(캔버스 크기 조정 전이어도 측정은 동일)
-  const outerPts=start=>{ const m=[]; let ang=start; tree.forEach((t,ti)=>t.children.forEach(c=>{ const s=c.value/total*2*Math.PI; m.push({mid:ang+s/2,g:ti,w:s}); ang+=s; })); return m; };
+  const outerPts=start=>{ const m=[]; let ang=start; tree.forEach((t,ti)=>t.children.forEach(c=>{ const s=c.value/total*2*Math.PI; m.push({mid:ang+s/2,g:ti,w:s,a0:ang,a1:ang+s}); ang+=s; })); return m; };
   let best=null;
   if(total>0){
-    for(let deg=-90; deg<270; deg+=10){
+    const degs=(opt&&opt.degs)||Array.from({length:36},(_,i)=>-90+i*10);
+    for(const deg of degs){
       const start=deg*Math.PI/180;
       const plan=planInnerLabels(mctx,cx,cy,R,tree,total,start,true);
       const unplaced=plan.filter(s=>!s.label);
-      const L=layoutCallouts(outerPts(start).concat(unplaced.map(s=>({mid:s.mid,g:tree.indexOf(s.t),w:0}))),cx,cy,R,H,PADV,LINE);
-      if(L.maxSide*LINE > H-2*PADV+LINE) continue;
+      const L=layoutCallouts(outerPts(start).concat(unplaced.map(s=>({mid:s.mid,g:tree.indexOf(s.t),w:0,hdr:true,a0:s.a0,a1:s.a1}))),cx,cy,R,H,PADV,LINE);
+      if(L.over>0) continue;
       const dev=Math.min(Math.abs(deg+90),360-Math.abs(deg+90));
       const score=L.cost + 60*dev/180;   // 12시에서 벗어날수록 약간의 불이익
       if(!best || score<best.score) best={score,start,L,plan,unplaced};
@@ -7015,6 +7096,7 @@ function drawDonutCallouts(canvasId, tree, W){
   const start = best ? best.start : -Math.PI/2;
   const {outer}=paintDonutRings(ctx,cx,cy,R,tree,{start,outerPct:false,typeNames:true,plan:best?best.plan:null});
   donutSetCenterFont(cv,R);
+  cv._calloutLayout = best ? best.L : null;   // 검증용(교차·간격 확인)
   if(!best) return;
   const FONT=`600 12px Pretendard,-apple-system,sans-serif`, FONT_B=`800 12px Pretendard,-apple-system,sans-serif`;
   const maxTextW=W/2-R-41;
@@ -7022,12 +7104,11 @@ function drawDonutCallouts(canvasId, tree, W){
   best.L.items.forEach((it,i)=>{
     const isType = i>=vals.length;
     const o = isType ? null : outer[i], u = isType ? best.unplaced[i-vals.length] : null;
-    const mid = isType ? u.mid : o.mid, side=it.side, ca=Math.cos(mid), sa=Math.sin(mid);
-    const ex=cx+side*(R+20), P=calloutPath(it,cx,cy,R);   // 반대편으로 옮긴 라벨은 도넛 위/아래 바깥을 돌아 나온다
+    const side=it.side, ex=cx+side*(R+20), P=calloutPath(it,cx,cy,R);   // 반대편으로 옮긴 라벨은 도넛 위/아래 바깥을 돌아 나온다
+    const [px,py]=calloutStart(it,cx,cy,R);   // 시작점: 자기 조각 안(중심 고정 아님)
     const trace=(px,py)=>{ ctx.beginPath(); ctx.moveTo(px,py); P.forEach(q=>ctx.lineTo(q[0],q[1])); };
     if(isType){
-      // 안쪽 링 유형 라벨: 조각 중심에서 바깥 링을 가로질러 나온다 — 흰 테두리를 먼저 깔아 바깥 링 조각 위에서도 선이 또렷하다
-      const px=cx+ca*RM, py=cy+sa*RM;
+      // 안쪽 링 유형 라벨: 안쪽 링 조각 안에서 출발해 바깥 링을 가로질러 나온다 — 흰 테두리를 먼저 깔아 바깥 링 조각 위에서도 선이 또렷하다
       const path=()=>trace(px,py);
       ctx.lineJoin='round';
       path(); ctx.strokeStyle='#fff'; ctx.lineWidth=3.4; ctx.stroke();
@@ -7051,7 +7132,6 @@ function drawDonutCallouts(canvasId, tree, W){
       }
       return;
     }
-    const px=cx+ca*(OOR-2), py=cy+sa*(OOR-2);
     ctx.strokeStyle='#b4b4bb'; ctx.lineWidth=1;
     trace(px,py); ctx.stroke();
     ctx.fillStyle='#8e8e93'; ctx.beginPath(); ctx.arc(px,py,2,0,Math.PI*2); ctx.fill();
@@ -7473,8 +7553,15 @@ function treemapTextColor(bg){
 }
 
 // 트리맵 셀 클릭 시 공통 동작: 포트폴리오 탭의 해당 종목 상세 차트로 이동
+// 출발 화면 판정: 비중현황 서브탭(도넛/트리맵)에서 눌렀으면 그 화면·스크롤·선택 셀을 기억, 그 밖(변화 추이 트리맵 등)은 null
+function currentStockDetailOrigin(){
+  const pg=document.getElementById('page_dashboard');
+  const sub=pg && pg.classList.contains('active') ? pg.querySelector(':scope > .subpage.active') : null;
+  return sub && sub.dataset.sub==='alloc' ? {type:'alloc', view:allocView, scrollY:window.scrollY, sel:detailTmSel} : null;
+}
 function goToStockDetail(assetId){
   qvHighlightId = null;
+  stockDetailOrigin = currentStockDetailOrigin();   // switchPage가 스크롤을 0으로 되돌리기 전에 잡아 둔다
   switchPage('portfolio');
   quickTradeId=null; editingId=null; chartDetailId=assetId;
   treemapForcedChartId = assetId; // 이 종목에 저장된 기간과 무관하게 이번엔 ALL로 보여줌
@@ -7482,10 +7569,21 @@ function goToStockDetail(assetId){
   setTimeout(()=>focusStockRow(assetId), 100);
 }
 
-// 종목 차트에서 "트리맵으로 가기" — 어디서 열었든 차트를 닫고 변화추이(트리맵)로 가서 그 종목 셀을 강조한다
+// 종목 차트에서 "트리맵으로 가기" — 비중현황에서 들어왔으면 그 화면(뷰·스크롤·선택 셀 유지)으로, 그 밖에는 기본으로
+// 변화추이(트리맵)로 가서 그 종목 셀을 강조한다
 function returnToTreemap(assetId){
-  treemapForcedChartId = null; chartDetailId = null;
+  const origin = stockDetailOrigin;
+  treemapForcedChartId = null; closeStockDetail();
   renderTable();
+  if(origin && origin.type==='alloc'){
+    qvHighlightId = null; detailTmSel = origin.sel;
+    switchPage('dashboard');
+    switchSubPage('dashboard', 'alloc');
+    if(allocView!==origin.view) setAllocView(origin.view);
+    const restore=()=>window.scrollTo(0,origin.scrollY);   // 두 스위치가 스크롤을 0으로 되돌리므로 그려진 뒤 복원
+    requestAnimationFrame(restore); setTimeout(restore,150);
+    return;
+  }
   qvHighlightId = assetId || null;
   switchPage('dashboard');
   switchSubPage('dashboard', 'summary');
@@ -8904,7 +9002,7 @@ function applyBackupData(data){
 
   assets = data.assets;
   if(writes[FX_KEY]) FX = data.fx;
-  editingId = null; quickTradeId = null; chartDetailId = null;
+  editingId = null; quickTradeId = null; closeStockDetail();
   return {rows, retirementInFile};
 }
 
