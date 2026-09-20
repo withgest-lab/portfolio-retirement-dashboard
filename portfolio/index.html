@@ -267,6 +267,9 @@ table.table-fit th,table.table-fit td{padding-left:8px;padding-right:8px;white-s
 /* 투자시장/금융회사/계좌유형/자산유형(2~5번째 칼럼)은 짧은 배지 하나가 내용의 전부라
    숫자처럼 오른쪽 정렬할 이유가 없다 — 헤더와 배지 모두 가운데 정렬해 헤더 글자와
    배지가 서로 다른 위치에 떠 있지 않고 시각적으로 한 축에 맞도록 한다. */
+/* 보유종목 표의 마지막 두 열: 차트 열("상세 정보", 아이콘 폭에 맞춘 고정 폭)과 연필·휴지통 열(왼쪽 정렬로 차트 열 옆에 바짝) */
+#page_portfolio table.table-fit th:nth-child(10),#page_portfolio table.table-fit td:nth-child(10){width:64px;}
+#page_portfolio table.table-fit td:nth-child(11){text-align:left;}
 table.table-fit th:nth-child(2),table.table-fit td:nth-child(2),
 table.table-fit th:nth-child(3),table.table-fit td:nth-child(3),
 table.table-fit th:nth-child(4),table.table-fit td:nth-child(4),
@@ -514,8 +517,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:10%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:11.5%;}
+  /* 차트 열("상세 정보", 10번째)과 연필·휴지통 열(11번째) — 예전 편집 열 21%를 8% + 13%로 나눈다 */
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:21%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:8%;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:13%;}
   /* 배지 칼럼이 하나 늘어난 만큼 각 배지가 쓸 수 있는 폭이 줄었다 — 배지 자체의
      좌우 여백과 글자 크기를 조금 줄여 "안전자산"(4자) 같은 값이 줄바꿈되지 않게 한다. */
   #page_portfolio .tbl-wrap table.table-fit .acctType-badge{
@@ -832,7 +838,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <th class="fold-hide fold-hide-narrow">평단<br><span style="font-weight:400;text-transform:none;">수량</span></th>
         <th class="fold-hide" onclick="setAssetSort('ev')" style="cursor:pointer;">평가금액<span id="sortArrow_ev"></span></th>
         <th onclick="setAssetSort('pnl')" style="cursor:pointer;">평가손익<span id="sortArrow_pnl"></span><br><span style="font-weight:400;text-transform:none;">수익률</span></th>
-        <th>편집</th>
+        <th class="fold-hide" style="text-align:center;">상세 정보</th>
+        <th></th>
       </tr></thead>
       <tbody id="assetTbody"></tbody>
     </table>
@@ -1135,7 +1142,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <th style="text-align:center">유형<br><span style="font-weight:400;text-transform:none;">금융회사·계좌유형·자산유형</span></th>
         <th>체결단가 × 수량<br><span style="font-weight:400;text-transform:none;">총금액</span></th>
         <th>실현손익</th>
-        <th>관리</th>
+        <th></th>
       </tr></thead>
       <tbody id="soldTbody"></tbody>
     </table>
@@ -1351,7 +1358,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
           <th style="text-align:center;width:16%;">구분</th>
           <th style="width:16%;">금액</th>
           <th style="width:16%;">누적 잔액</th>
-          <th style="width:14%;white-space:nowrap;">관리</th>
+          <th style="width:14%;white-space:nowrap;"></th>
         </tr></thead>
         <tbody id="principalLedgerBody"></tbody>
       </table>
@@ -2092,7 +2099,7 @@ function resolveIndicatorTimeframe(period, points){
 // 단일 종목 절대가격 라인이라 다중자산 %-오버레이 로직과는 별도 함수로 분리
 function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, period, avgPrice, curPrice){
   const wrap = canvas.parentElement;
-  // wrap은 보유종목 표의 <td colspan="10"> 안에 있다 — 그 표가 table-layout:auto로
+  // wrap은 보유종목 표의 <td colspan="11"> 안에 있다 — 그 표가 table-layout:auto로
   // 뷰포트보다 넓게 그려지면(좁은 화면 9열 스퀴즈 등) wrap.clientWidth도 같이 부풀어
   // 캔버스가 실제 화면보다 넓게 그려지고 오른쪽이 잘린다. 표 자체의 가로 스크롤은
   // .tbl-wrap(overflow-x:auto)이 항상 정확히 뷰포트 폭으로 감싸주므로, 그 폭을 기준으로
@@ -3790,7 +3797,7 @@ function renderTable(){
     if(el) el.textContent = assetSort.field===f ? (assetSort.dir>0?' ▲':' ▼') : '';
   });
   if(!list.length){
-    tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--color-tertiary)">조건에 맞는 자산이 없습니다</td></tr>';
+    tb.innerHTML='<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--color-tertiary)">조건에 맞는 자산이 없습니다</td></tr>';
     return;
   }
 
@@ -3877,10 +3884,12 @@ function renderTable(){
       <td class="${updn(pnl)}" style="font-size:11px;">
         ${isCash ? na : `${pnl>=0?'+':''}${fmt(pnl)}<div style="font-size:10px;font-weight:700;margin-top:1px;">${fmtPct(rtn)}</div>`}
       </td>
-      <td style="white-space:nowrap;" onclick="event.stopPropagation()">
-        <div style="display:inline-flex;gap:4px;">
-        ${!isCash ? `<button class="edit-btn btn-chart fold-hide"
+      <td class="fold-hide" style="white-space:nowrap;text-align:center;" onclick="event.stopPropagation()">
+        ${!isCash ? `<button class="edit-btn btn-chart"
           onclick="flashPress(this); toggleStockChart('${a.id}')" title="종목별 가격 차트">📈</button>` : ''}
+      </td>
+      <td style="white-space:nowrap;padding-left:8px;text-align:left;" onclick="event.stopPropagation()">
+        <div style="display:inline-flex;gap:4px;">
         <button class="edit-btn btn-editicon"
           onclick="flashPress(this); toggleEdit('${a.id}')" title="수정">✏️</button>
         <button class="del-btn fold-hide"
@@ -3892,7 +3901,7 @@ function renderTable(){
     // 거래 패널 (행 클릭) - 매수/매도
     if(quickTradeId===a.id){
       rows+=`<tr class="tr-full" style="background:#f0f7ff;">
-        <td colspan="10" style="padding:14px 16px;" onclick="event.stopPropagation()">
+        <td colspan="11" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#007aff;">
             ⚡ 빠른 거래
             <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
@@ -3934,7 +3943,7 @@ function renderTable(){
         // ── 현금 전용: 잔액설정 / 입금 / 출금 ──
         const sym=CUR_SYM[a.currency];
         rows+=`<tr class="tr-full" style="background:#f0fff4;">
-          <td colspan="10" style="padding:14px 16px;" onclick="event.stopPropagation()">
+          <td colspan="11" style="padding:14px 16px;" onclick="event.stopPropagation()">
             <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
               ✏️ 현금 수정
               <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
@@ -4093,7 +4102,7 @@ function renderTable(){
                          padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>`;
         rows+=`<tr class="tr-full" style="background:#f0fff4;">
-          <td colspan="10" style="padding:14px 16px;" onclick="event.stopPropagation()">
+          <td colspan="11" style="padding:14px 16px;" onclick="event.stopPropagation()">
             <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
               ✏️ 종목 수정
               <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
@@ -4184,7 +4193,7 @@ function renderTable(){
     if(chartDetailId===a.id){
       const SL = stockChartLayout();
       rows+=`<tr class="tr-full" style="background:var(--color-card);">
-        <td colspan="10" style="padding:14px 16px;" onclick="event.stopPropagation()">
+        <td colspan="11" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
             <button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">← 트리맵으로 가기</button>
@@ -5423,7 +5432,7 @@ function renderCapitalGainsTax(){
     </div>
     <div class="tbl-wrap">
       <table class="table-auto">
-        <thead><tr><th style="text-align:left">종목</th><th>매도일</th><th>실현손익</th><th>관리</th></tr></thead>
+        <thead><tr><th style="text-align:left">종목</th><th>매도일</th><th>실현손익</th><th></th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>
