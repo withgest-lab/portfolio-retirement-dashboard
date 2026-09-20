@@ -82,6 +82,12 @@
   // ── 스타일 ──
   var css = '.ic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;flex-shrink:0;' +
     'fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}';
+  // ── 눌림 피드백(모든 페이지 공통) ── 누르면 추가 동작이 일어나는 버튼/카드/요약행은 살짝 줄어들며 어두워진다.
+  // 탭·서브탭·기간 탭·모드 토글처럼 선택 상태로 배경이 바뀌는 것은 제외(PRESS_SKIP). 아이콘 버튼(.edit-btn 등)은 자체 규칙이 있다.
+  css += '.pressed-flash{transform:scale(.95);filter:brightness(.88);}' +
+    ':is(button,a.btn,[role=button],summary,.suggest-item,.div-cal-cell,a.card,.toggle-ctrl):not(.no-press):not(.edit-btn,.del-btn,.btn-chart,.btn-editicon,:disabled){transition:transform .12s,filter .12s;}' +
+    ':is(button,a.btn,[role=button],summary,.suggest-item,.div-cal-cell,a.card,.toggle-ctrl):not(.no-press):not(.edit-btn,.del-btn,.btn-chart,.btn-editicon,:disabled):active{transform:scale(.95);filter:brightness(.88);}' +
+    'tr[onclick]:active>td,th[onclick]:active{background:rgba(60,60,67,.08);}';
   var st = document.createElement('style');
   st.setAttribute('data-icons', '');
   st.textContent = css;
@@ -144,6 +150,29 @@
       else r.addedNodes.forEach(convertSubtree);
     });
   }).observe(document.body, { childList: true, subtree: true, characterData: true });
+
+  // ── 눌림 피드백: 실행 지연 ──
+  // 누르면 화면을 바로 다시 그리는 버튼(예: '세부 정보 닫기')은 눌린 모습이 그려지기도 전에 사라진다.
+  // 인라인 onclick이 있는 동작 버튼은 첫 클릭을 붙잡아 눌림 클래스를 씌우고 150ms 뒤 같은 요소를 다시 클릭해 원래 동작을 실행한다.
+  var PRESS_TARGET = 'button,a.btn,[role=button],summary,.suggest-item,.div-cal-cell,a.card,.toggle-ctrl';
+  var PRESS_SKIP = '.no-press,.tabbar,.subtabbar,.period-tabs,.trade-tab,.main-tabs,.tab-btn,.toggle-pill,[role=switch],' +
+    '#stockDetailToggleBtn,[id^=cf_mode_],[id^=ep_mode_],.plan-banner-backdrop';
+  var PRESS_DELAY = 150;
+  document.addEventListener('click', function (e) {
+    var el = e.target && e.target.closest && e.target.closest(PRESS_TARGET);
+    if (!el) return;
+    if (el.__pressReplay) { el.__pressReplay = false; return; }        // 지연 후 재발사된 클릭 — 그대로 통과
+    var oc = el.getAttribute('onclick');
+    if (!oc || oc.indexOf('flashPress(') >= 0 || el.disabled || el.matches(PRESS_SKIP) || el.closest(PRESS_SKIP)) return;
+    e.preventDefault(); e.stopPropagation();
+    el.classList.add('pressed-flash');
+    setTimeout(function () {
+      el.classList.remove('pressed-flash');
+      if (!el.isConnected || el.disabled) return;
+      el.__pressReplay = true; el.click();
+      el.__pressReplay = false;                                           // 클릭이 막혔더라도 플래그가 남지 않게
+    }, PRESS_DELAY);
+  }, true);
 
   window.Icons = { map: MAP, convert: convertSubtree };
 })();
