@@ -603,7 +603,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="qvModeTabs">
           <button data-mode="market" class="active" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
-          <button data-mode="holding" onclick="setQuickViewMode('holding')">기간별 총수익률</button>
+          <button data-mode="holding" onclick="setQuickViewMode('holding')">총수익률 (평단 대비)</button>
         </div>
         <div class="period-tabs period-tabs-sm" id="qvPeriodTabs" style="border-left:1px solid var(--color-border);padding-left:6px;">
           <button data-p="1D" class="active" onclick="setQuickViewPeriod('1D')">1D</button>
@@ -621,7 +621,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </div>
     </div>
     <div class="chart-wrap"><canvas id="qvTreemapCanvas" height="300"></canvas></div>
-    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=선택 기간 수익률(초록 이익/빨강 손실). 1D는 오늘 국내장 개장(09:00, 휴장일엔 직전 평일 09:00) 기준입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
+    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=수익률(초록 이익/빨강 손실). '기간별 주가 변화율'은 선택한 기간 동안의 주가 변화이고, '총수익률 (평단 대비)'은 기간과 무관하게 내 평균 매입가 대비 현재 수익률이라 기간 탭이 없습니다. 1D는 오늘 국내장 개장(09:00, 휴장일엔 직전 평일 09:00) 기준입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
   </div>
 </div>
 
@@ -764,7 +764,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
   </div>
   <div id="allocTreemapView" style="display:none;">
-    <div class="summary-grid compact" id="summaryGrid" style="margin-bottom:12px;"></div>
+    <div class="summary-grid compact" id="summaryGrid" style="margin-bottom:12px;grid-template-columns:1fr;"></div>
     <div class="section-label" style="margin:0 0 12px;">자산군 분포</div>
     <div class="dist-top-grid">
       <div class="dist-cell">
@@ -6536,55 +6536,9 @@ SUBPAGE_RENDER_HOOKS['returns_yearly'] = renderYearlyReturns;
 ════════════════════════════════════════ */
 
 function renderSummary(){
-  // 오늘 손익 기준: 1D 그래프와 동일한 "1D 시작 직전 스냅샷"
-  setBase1DSnap();
-  const lastSnap = _base1DSnap;
-
-  const ev   = totalEv();
-  const cost = assets.reduce((s,a)=>s+costKRW(a), 0);
-  const pnl  = ev - cost;
-  const rtn  = cost > 0 ? (pnl/cost)*100 : 0;
-
-  // 오늘 손익 계산: 현재 보유 중인 자산만 기준 (현금 제외)
-  const currentAssets = assets.filter(a => a.acctType !== 'cash');
-
-  // 현재 보유 자산의 현재 평가액 합계
-  const currentTotal = currentAssets.reduce((s,a)=>s+evKRW(a), 0) || 1;
-
-  // 현재 보유 자산의 어제 평가액 합계 (그래프 1D와 동일 기준)
-  // 기준단가: ① 개장 전이면 현재가(=변화0%) ② 유효 prevPrice ③ 1D스냅샷 ④ 현재가
-  const yesterdayTotal = currentAssets.reduce((s,a)=>{
-    const fx = a.currency==='USD'?FX.USD : a.currency==='JPY'?FX.JPY : 1;
-    const qty = a.quantity||1;
-    let baseUnit; // KRW 단가
-    if(isMarketPreOpen(a)){
-      baseUnit = a.currentPrice * fx;                     // 개장 전 → 0%
-    } else if(a.prevPrice && a.prevPrice>0 && a.prevPrice!==a.currentPrice){
-      baseUnit = a.prevPrice * fx;                        // 전일종가
-    } else if(lastSnap && lastSnap.byAsset && lastSnap.byAsset[a.id]!=null){
-      const q = (lastSnap.byQty && lastSnap.byQty[a.id]) ? lastSnap.byQty[a.id] : qty;
-      baseUnit = lastSnap.byAsset[a.id] / (q||1);         // 1D 스냅샷 단가
-    } else {
-      baseUnit = a.currentPrice * fx;                     // 폴백(0%)
-    }
-    return s + baseUnit * qty;
-  }, 0) || 1;
-
-  const todayPnl = currentTotal - yesterdayTotal;
-  const todayPct = (todayPnl / yesterdayTotal) * 100;
-
-  document.getElementById('summaryGrid').innerHTML=[
-    {lbl:'총 평가금액',  val:fmtEval(ev),                                  sub:'',             cls:''},
-    {lbl:'오늘 손익',    val:(todayPnl>=0?'+':'')+fmt(todayPnl),         sub:fmtPct(todayPct), cls:updn(todayPnl)},
-    {lbl:'총 평가손익',  val:(pnl>=0?'+':'')+fmt(pnl),                   sub:'원금 '+fmt(cost),cls:updn(pnl)},
-    {lbl:'수익률',       val:fmtPct(rtn),                                sub:'',             cls:updn(rtn)},
-  ].map(c=>`<div class="sum-card">
-    <div class="sum-lbl">${c.lbl}</div>
-    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;">
-      <div class="sum-val ${c.cls||''}">${c.val}</div>
-      ${c.sub?`<div class="sum-sub ${c.cls||''}" style="white-space:nowrap;">${c.sub}</div>`:''}
-    </div>
-  </div>`).join('');
+  // 비중현황 트리맵 위 요약은 총 평가금액 카드 하나만 둔다
+  document.getElementById('summaryGrid').innerHTML =
+    `<div class="sum-card"><div class="sum-lbl">총 평가금액</div><div class="sum-val">${fmtEval(totalEv())}</div></div>`;
 }
 
 /* ════════════════════════════════════════
@@ -7077,107 +7031,13 @@ function reconcileTradeLogAttrs(){
   }catch(e){}
 }
 
-// 매매이력이 자산의 "현재 보유수량"을 다 설명하지 못하면(초기 보유분을 매매이력 없이,
-// 예: 수정 폼으로 수량만 직접 입력해 들여온 경우) 그 차이만큼을 "가상 매수"로 보충해
-// 기간별 계산이 항상 가능하도록 한다. 값은 실제 이력과 합쳤을 때 정확히 지금의
-// 평단가·수량이 나오도록 역산하고, 시점은 실제 이력·스냅샷 중 가장 이른 시점보다도
-// 하루 앞서 잡아 "원래부터 들고 있던 몫"으로 취급되게 한다 — 그래야 실제 매매이력의
-// 날짜만으로 기간별 차이가 생긴다. 종목 상세 차트·매매이력 탭에는 절대 노출하지 않고
-// (거기는 loadTradeLog()를 직접 쓰지 이 함수를 거치지 않음) 기간별 수익률 계산에만 쓴다.
-function phantomEntryFor(asset){
-  const real = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, asset))
-    .sort((a,b)=>a.at-b.at);
-  let loggedQty=0, loggedAvg=0;
-  real.forEach(r=>{
-    if(r.type==='buy'){
-      loggedAvg = (loggedQty+r.quantity)>0 ? (loggedAvg*loggedQty + r.price*r.quantity)/(loggedQty+r.quantity) : r.price;
-      loggedQty += r.quantity;
-    } else {
-      loggedQty = Math.max(0, loggedQty - r.quantity);
-    }
-  });
-  const phantomQty = asset.quantity - loggedQty;
-  if(!(phantomQty > 1e-6)) return null; // 매매이력이 이미 충분함(또는 초과) — 보충 불필요
-  const phantomPrice = (asset.avgPrice*asset.quantity - loggedAvg*loggedQty) / phantomQty;
-  if(!(phantomPrice > 0)) return null; // 역산 결과가 이상하면 보정 포기(안전 폴백 유지)
-  const snaps = loadSnaps();
-  const earliestSnapTs = snaps.length ? Math.min(...snaps.map(s=>s.timestamp)) : Infinity;
-  const earliestRealTs = real.length ? real[0].at : Infinity;
-  const known = Math.min(earliestSnapTs, earliestRealTs);
-  const at = isFinite(known) ? known - 1 : Date.now() - 10*365*86400000;
-  return { type:'buy', price:phantomPrice, quantity:phantomQty, at,
-    ticker:asset.ticker, name:asset.name, company:asset.company||null, acctType:asset.acctType||null };
-}
-
-// 매매이력(+가상 보충분)이 asset의 "현재 보유수량"을 온전히 설명하는지 확인 — 위 가상
-// 보충이 정상적으로 계산됐다면 사실상 항상 true가 되고, 역산이 불가능한 극단적인
-// 경우에만 false로 남아 기간별 계산 대신 ALL과 동일한 전체 매입원가로 안전하게 폴백한다.
-function tradeLogFullyExplainsAsset(asset){
-  const real = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, asset));
-  const phantom = phantomEntryFor(asset);
-  const entries = phantom ? [...real, phantom] : real;
-  if(!entries.length) return false;
-  let qty=0;
-  entries.forEach(r=>{ qty += r.type==='buy' ? r.quantity : -r.quantity; });
-  return Math.abs(qty - asset.quantity) < 1e-6;
-}
-
-// 매매이력(+가상 보충분)을 ts 시점까지 시간순으로 리플레이해서 그 시점의 매입원가(KRW)를 재구성.
-// 매매이력이 아예 없거나 그 시점 보유수량이 0으로 계산되면(재구성 불가) null 반환 — 호출부에서 폴백 처리.
-// KRW 환산은 항상 현재 환율 사용(과거 환율은 저장하지 않음 — 매입원가 계산 전반의 기존 관례와 동일).
-function costBasisAsOf(asset, ts){
-  const entries = loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') &&
-    tradeMatchesAsset(r, asset) &&
-    r.at <= ts
-  );
-  const phantom = phantomEntryFor(asset);
-  if(phantom && phantom.at <= ts) entries.push(phantom);
-  entries.sort((a,b)=>a.at-b.at);
-  if(!entries.length) return null;
-  let qty=0, avg=0;
-  entries.forEach(r=>{
-    if(r.type==='buy'){
-      avg = (qty+r.quantity)>0 ? (avg*qty + r.price*r.quantity)/(qty+r.quantity) : r.price;
-      qty += r.quantity;
-    } else {
-      qty = Math.max(0, qty - r.quantity);
-    }
-  });
-  if(qty<=0) return null;
-  return toKRW(asset, avg) * qty;
-}
-
-// 기간 시작(ts) 시점의 매입원가를 시작 자본으로 삼아, 그 이후 ~ 지금까지의 매수/매도를
-// 실제 투입 자본 기준으로 반영한 "실투자원금"을 계산 — 매수는 그 시점 가격×수량만큼 더하고
-// 매도는 그만큼 뺀다. 기간 중 수량이 바뀐 경우에도 (평가액 vs 매입원가) 수량 불일치 없이
-// 정확한 "그 기간 동안 실제로 얼마를 벌었는지"를 낼 수 있다. 재구성 불가 시 null.
-function netInvestedAsOf(asset, startTs){
-  const base = costBasisAsOf(asset, startTs);
-  if(base===null) return null;
-  let net = base;
-  loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, asset) && r.at>startTs)
-    .sort((a,b)=>a.at-b.at)
-    .forEach(r=>{
-      const amt = toKRW(asset, r.price) * r.quantity;
-      net += r.type==='buy' ? amt : -amt;
-    });
-  return net;
-}
-
 // 자산 하나의 수익률을 계산 — mode로 두 축을 분리:
-//  'holding'(매입이력) = 그 기간 시작 시점에 실제로 들고 있던 매입원가 대비 현재 수익률("내가 그 기간 얼마를 벌었나")
+//  'holding'(총수익률) = 내 평균 매입원가 대비 현재 평가액. 기간과 무관한 값이다(기간별 변화는 'market'이 담당).
 //  'market'(시장이력)  = 그 기간 시작 시점 1주당 단가 대비 현재 1주당 단가("이 종목 가격 자체가 얼마나 움직였나", 내 손익과 무관)
 function assetReturnForPeriod(asset, mode, period){
   const ev = evKRW(asset);
   if(mode==='holding'){
-    if(period==='ALL'){
-      const cost=costKRW(asset);
-      return cost>0 ? (ev-cost)/cost*100 : 0;
-    }
-    const startTs = getPeriodStart(period).getTime();
-    const basis = tradeLogFullyExplainsAsset(asset) ? netInvestedAsOf(asset, startTs) : null;
-    if(basis && basis>0) return (ev-basis)/basis*100;
-    const cost=costKRW(asset); // 매매이력 없음/불완전 → 전체 매입원가로 폴백
+    const cost=costKRW(asset);
     return cost>0 ? (ev-cost)/cost*100 : 0;
   }
   // mode==='market' — 순수 시세 변화(1주당 단가 비교, 보유수량 변화의 영향을 배제)
@@ -7264,6 +7124,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg){
       if(ch>44){
         ctx.font=`${fontSize-1}px Pretendard`;
         ctx.fillText(pctStr, cx+6, cy+6+fontSize+3);
+        if(ch>48) ctx.fillText(fmt(cell.value), cx+6, cy+6+2*(fontSize+3));
       }
       ctx.restore();
     }
@@ -7303,6 +7164,7 @@ function goToStockDetail(assetId){
 let qvTreemapMode = 'market', qvTreemapPeriod = localStorage.getItem('qvTreemapPeriod') || '1D';
 function setQuickViewMode(mode){
   qvTreemapMode = mode;
+  syncQuickViewPeriodTabs();
   document.querySelectorAll('#qvModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
   drawQuickViewTreemap();
 }
@@ -7312,7 +7174,13 @@ function setQuickViewPeriod(period){
   document.querySelectorAll('#qvPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawQuickViewTreemap();
 }
+// 총수익률(평단 대비)은 기간과 무관하므로 그 모드에서는 기간 탭을 숨긴다
+function syncQuickViewPeriodTabs(){
+  const el = document.getElementById('qvPeriodTabs');
+  if(el) el.style.display = qvTreemapMode==='holding' ? 'none' : '';
+}
 function drawQuickViewTreemap(){
+  syncQuickViewPeriodTabs();
   renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), 280, goToStockDetail);
 }
 
@@ -7398,13 +7266,15 @@ function fitCanvasText(ctx, text, maxW){
 }
 
 // 트리맵 셀 라벨: 종목명(여러 줄) + 총자산 대비 %. 셀 크기에 맞춰 글자 크기를 3단계로 줄이고, 그래도 안 들어가면 %만/생략
-function drawTreemapCellLabel(ctx, name, pctStr, x, y, w, h, fg){
+function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg){
   const PAD=5, iw=w-PAD*2, ih=h-PAD*2;
   if(iw<20 || ih<10) return;
   const fs = (w>=130&&h>=70)?13 : (w>=84&&h>=46)?11.5 : 10;
   const font = wt=>`${wt} ${fs}px Pretendard,-apple-system,sans-serif`;
-  const lineH = Math.round(fs*1.25), pctH = fs+2;
-  const maxLines = Math.floor((ih-pctH)/lineH);
+  const lineH = Math.round(fs*1.25), pctH = fs+2, amtH = fs+2;
+  // 금액 줄은 이름이 최소 1줄 남는 경우에만 넣는다(이름 줄 수를 줄여서라도 금액을 우선 표시)
+  const withAmt = !!amtStr && Math.floor((ih-pctH-amtH)/lineH) >= 1;
+  const maxLines = Math.floor((ih-pctH-(withAmt?amtH:0))/lineH);
   ctx.save();
   ctx.beginPath(); ctx.rect(x+2,y+2,w-4,h-4); ctx.clip();
   ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='top';
@@ -7413,7 +7283,9 @@ function drawTreemapCellLabel(ctx, name, pctStr, x, y, w, h, fg){
     const lines=wrapCanvasText(ctx,name,iw,Math.min(maxLines,3));
     lines.forEach((ln,i)=>ctx.fillText(ln,x+PAD,y+PAD+i*lineH));
     ctx.font=font(500);
-    ctx.fillText(pctStr,x+PAD,y+PAD+lines.length*lineH+1);
+    const pctY = y+PAD+lines.length*lineH+1;
+    ctx.fillText(pctStr,x+PAD,pctY);
+    if(withAmt) ctx.fillText(fitCanvasText(ctx,amtStr,iw),x+PAD,pctY+pctH);
   }else{
     // 세로가 얕은 셀: 이름이 두 글자 이상 들어가면 "이름 %" 한 줄, 아니면 %만
     ctx.font=font(700);
@@ -7468,7 +7340,8 @@ function drawDetailTreemap(){
     if(hasHead){
       const fg=treemapTextColor(t.color);
       ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='middle';
-      const pct=(total>0?t.value/total*100:0).toFixed(1)+'%';
+      const pct0=(total>0?t.value/total*100:0).toFixed(1)+'%';
+      const pct = bw>=170 ? fmt(t.value)+' · '+pct0 : pct0;
       ctx.font='800 11.5px Pretendard,-apple-system,sans-serif';
       const pw=ctx.measureText(pct).width;
       ctx.fillText(fitCanvasText(ctx,t.key,Math.max(10,bw-pw-22)), bx+7, by+HEAD/2+1);
@@ -7484,7 +7357,7 @@ function drawDetailTreemap(){
       const col=donutShade(t.color,j,n), key=t.key+'|'+cell.c.key;
       rr(cx,cy,cw,ch,4); ctx.fillStyle=col; ctx.fill();
       const pctStr=sharePctText(cell.c.value,total);
-      drawTreemapCellLabel(ctx, cell.c.label, pctStr, cx, cy, cw, ch, treemapTextColor(col));
+      drawTreemapCellLabel(ctx, cell.c.label, pctStr, fmt(cell.c.value), cx, cy, cw, ch, treemapTextColor(col));
       if(key===detailTmSel){ rr(cx+1,cy+1,cw-2,ch-2,4); ctx.lineWidth=2.5; ctx.strokeStyle='#1c1c1e'; ctx.stroke(); }
       detailTmCells.push({x:cell.x,y:cell.y,w:cell.w,h:cell.h,key,type:t,child:cell.c,pct:pctStr,col});
     });
