@@ -8,7 +8,7 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Malgun Gothic',sans-serif;
-    background:#F5F6F8;color:#1c1c1e;min-height:100vh;
+    background:#F2F2F7;color:#1c1c1e;min-height:100vh;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     padding:24px;gap:28px;
   }
@@ -21,7 +21,12 @@
     border:1px solid rgba(0,0,0,0.04);transition:transform .15s,box-shadow .15s;
   }
   .card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.09);}
-  .card .emoji{font-size:28px;margin-bottom:10px;display:block;}
+  /* iOS 설정 앱처럼 색 라운드 스퀘어 안에 흰 아이콘 */
+  .card .emoji{width:48px;height:48px;border-radius:12px;margin-bottom:14px;display:grid;place-items:center;
+    font-size:26px;color:#fff;background:linear-gradient(160deg,#5ac8fa,#007aff);}
+  .cards .card:nth-child(2) .emoji{background:linear-gradient(160deg,#4cd964,#34c759);}
+  .cards .card:nth-child(3) .emoji{background:linear-gradient(160deg,#ffb340,#ff9500);}
+  .card .emoji .ic{width:26px;height:26px;stroke-width:1.7;}
   .card .title{font-size:15px;font-weight:700;margin-bottom:6px;}
   .card .desc{font-size:12px;color:#8a8a8e;line-height:1.5;}
   footer{font-size:11px;color:#a0a0a5;text-align:center;}
@@ -60,5 +65,6 @@
     </a>
   </div>
   <footer>모든 데이터는 이 브라우저의 localStorage에만 저장됩니다.</footer>
+  <script src="shared/icons.js"></script>
 </body>
 </html>

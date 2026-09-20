@@ -13,15 +13,17 @@
 html{--topbar-h:50px;} /* top-bar 실제 높이 — 좁은 화면에서 버튼이 2줄로 줄바꿈되면 JS(syncTopBarPad)가 재조정 */
 html,body{height:100%;}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
-  background:#F4F6F9;font-size:14px;color:#222;
+  background:#F2F2F7;font-size:14px;color:#222;
   display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
   padding-top:var(--topbar-h);} /* top-bar가 fixed로 빠지며 비는 자리 채움 */
 
 /* ── 상단 헤더 (항상 화면 상단에 고정 — 패널을 펼쳐도 버튼이 계속 보이도록) ── */
 .top-bar{display:flex;align-items:center;
   justify-content:space-between;gap:8px;padding:6px 14px;
-  background:#fff;border-bottom:1px solid #E8EAF0;flex-wrap:wrap;
+  background:rgba(255,255,255,.82);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);
+  border-bottom:.5px solid rgba(60,60,67,.22);flex-wrap:wrap;
   position:fixed;top:0;left:0;right:0;z-index:30;}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){ .top-bar{background:#fff;} }
 h1{font-size:16px;font-weight:700;color:#111;}
 .subtitle{font-size:11px;color:#999;}
 /* ── 접이식 상세 섹션(민감도 체크·자동설계 근거) ── */
@@ -34,7 +36,7 @@ h1{font-size:16px;font-weight:700;color:#111;}
 /* ── 메트릭 바(요약 카드): 세로 높이 최소화 — 라벨+값을 한 줄로(1단) 압축, 카드 폭을
    넓게 쓰도록 바깥 padding·카드 간 gap을 최소화 ── */
 .metrics-bar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
-  gap:4px;padding:0 0 10px;background:#F4F6F9;}
+  gap:4px;padding:0 0 10px;background:#F2F2F7;}
 .mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:5px 6px;
   display:flex;align-items:baseline;gap:4px;min-width:0;}
 .mlabel{font-size:9.5px;color:#AAB0BB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -82,7 +84,7 @@ h1{font-size:16px;font-weight:700;color:#111;}
 .main-layout{display:flex;flex-direction:column;}
 
 /* ── 입력 패널(상단) ── */
-.left-panel{padding:8px 10px 10px;background:#F4F6F9;}
+.left-panel{padding:8px 10px 10px;background:#F2F2F7;}
 
 /* ── 결과 패널(하단) ── — 좌우 padding을 .main-tabs의 margin(10px)과 맞춰,
    메트릭 카드·차트 카드의 좌우 가장자리가 위 탭 버튼과 수직으로 나란히 정렬되게 한다. */
@@ -280,15 +282,16 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 .leg-item{display:flex;align-items:center;gap:3px;font-size:10px;color:#555;}
 .leg-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
 .tabs{display:flex;gap:4px;}
-.tab-btn{padding:3px 9px;font-size:11px;border-radius:5px;cursor:pointer;
-  border:1px solid #ddd;background:#fff;color:#888;font-family:inherit;}
-.tab-btn.on{background:#3D5A66;color:#fff;border-color:#3D5A66;font-weight:700;}
+.tab-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:3px 10px;font-size:11px;border-radius:999px;cursor:pointer;
+  border:none;background:rgba(118,118,128,.12);color:#636366;font-family:inherit;}
+.tab-btn.on{background:rgba(0,122,255,.14);color:#007aff;font-weight:700;}
 
 /* ── 최상위 탭: 설계 / 예상결과 ── */
 /* 좌우 여백을 .left-panel의 좌우 padding(10px)과 맞춰, 아래 "기본 정보" 패널 카드의
    가로 폭·좌우 가장자리와 탭 버튼 줄이 수직으로 나란히 정렬되게 한다. */
 .main-tabs{display:flex;gap:6px;margin:10px 10px 2px;}
-.main-tabs .tab-btn{flex:1;padding:6px 10px;font-size:13px;border-radius:8px;text-align:center;font-weight:700;}
+.main-tabs .tab-btn{flex:1;padding:6px 10px;font-size:13px;border-radius:999px;text-align:center;font-weight:700;}
+.main-tabs .tab-btn.on{background:#007aff;color:#fff;}
 .phase-seg{border-radius:4px;padding:5px 6px;font-size:10px;font-weight:700;
   line-height:1.5;white-space:pre-line;}
 .phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
@@ -402,9 +405,9 @@ button{font-family:inherit;cursor:pointer;}
 .irow-hidden{display:none !important;}
 
 /* ── "세금 상식" / "건보료 설계" 공용 토글 버튼 ── */
-.tax-guide-btn{padding:4px 10px;font-size:11px;border-radius:5px;border:1px solid #E8EAF0;
-  background:#fff;color:#555;font-weight:700;font-family:inherit;display:inline-flex;align-items:center;gap:4px;}
-.tax-guide-btn:hover{background:#F0F2F5;}
+.tax-guide-btn{padding:5px 12px;font-size:11px;border-radius:999px;border:none;
+  background:rgba(118,118,128,.12);color:#1c1c1e;font-weight:700;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}
+.tax-guide-btn:hover{background:rgba(118,118,128,.2);}
 .guide-sec{margin-bottom:12px;}
 .guide-sec h4{font-size:12px;font-weight:700;color:#3F7A5E;margin-bottom:5px;}
 .guide-sec p{font-size:11.5px;color:#555;line-height:1.7;margin-bottom:6px;}
@@ -1300,6 +1303,7 @@ button{font-family:inherit;cursor:pointer;}
 
 </div><!-- main-layout -->
 
+<script src="../shared/icons.js"></script>
 <script>
 const C={
   nh:  {fill:'rgba(78,155,120,0.85)',  line:'#4E9B78'},
