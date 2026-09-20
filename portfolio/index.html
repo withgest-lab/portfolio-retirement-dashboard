@@ -2440,6 +2440,9 @@ const STOCK_CHART_PERIODS = ['1D','5D','1M','3M','6M','YTD','1Y','3Y','5Y','10Y'
 // 차트를 열고 닫을 때는 여전히 이전에 골랐던 기간이 그대로 유지된다. 사용자가 기간 탭을
 // 직접 누르거나(setStockChartRange) 행을 수동으로 토글하면(toggleStockChart) 즉시 해제됨.
 let treemapForcedChartId = null;
+// 트리맵에서 종목을 눌러 들어온 경우 어느 화면에서 왔는지 기록 — 종목 차트의 "트리맵으로 가기" 버튼이 그 화면으로 되돌린다.
+// 표에서 📈로 직접 연 차트에는 없다(수동 토글 시 해제).
+let stockDetailReturn = null;
 function resolveStockChartPeriod(id){
   if(treemapForcedChartId===id) return 'ALL';
   return stockChartRangeMap[id] || STOCK_CHART_DEFAULT_PERIOD;
@@ -2463,6 +2466,7 @@ function flashPress(el){ if(el) el.classList.add('pressed-flash'); }
 function toggleStockChart(id){
   quickTradeId = null; editingId = null;
   treemapForcedChartId = null; // 수동 조작 시점부터는 평소처럼 저장된 기간을 따름
+  stockDetailReturn = null;
   chartDetailId = chartDetailId===id ? null : id;
   // 클릭한 버튼 자신을 즉시 재생성하면 터치 기기에서 탭 하이라이트/눌림 피드백이
   // 보일 틈도 없이 사라진다 — 사람이 인지할 수 있는 정도(160ms)까지 렌더를 늦춘다.
@@ -4033,7 +4037,10 @@ function renderTable(){
         <td colspan="10" style="padding:14px 16px;" onclick="event.stopPropagation()">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
             <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
-            <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
+              ${stockDetailReturn && stockDetailReturn.id===a.id ? `<button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="returnToTreemap()">← 트리맵으로 가기</button>` : ''}
+            </div>
           </div>
           <div class="chart-wrap" style="position:relative;">
             <canvas id="stockChart_${a.id}" height="260"></canvas>
@@ -4045,7 +4052,7 @@ function renderTable(){
               <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                   <span>메모</span>
-                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="chartDetailId=null;renderTable();">✕ 닫기</button>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="chartDetailId=null;stockDetailReturn=null;renderTable();">✕ 세부 정보 닫기</button>
                 </div>
               </th></tr></thead>
               <tbody id="stockChartTradeBody_${a.id}"></tbody>
@@ -7150,6 +7157,10 @@ function treemapTextColor(bg){
 
 // 트리맵 셀 클릭 시 공통 동작: 포트폴리오 탭의 해당 종목 상세 차트로 이동
 function goToStockDetail(assetId){
+  // 이동하기 전에 지금 보고 있는 화면(페이지+서브탭)을 기억해 둔다
+  const fromPage = PAGE_IDS.find(id=>{ const s=document.getElementById('page_'+id); return s && s.classList.contains('active'); });
+  const fromSubEl = fromPage && document.querySelector('#page_'+fromPage+' > .subpage.active');
+  stockDetailReturn = fromPage && fromPage!=='portfolio' ? {id:assetId, page:fromPage, sub:fromSubEl?fromSubEl.dataset.sub:null} : null;
   switchPage('portfolio');
   quickTradeId=null; editingId=null; chartDetailId=assetId;
   treemapForcedChartId = assetId; // 이 종목에 저장된 기간과 무관하게 이번엔 ALL로 보여줌
@@ -7158,6 +7169,16 @@ function goToStockDetail(assetId){
     const btn = document.querySelector(`button[onclick="toggleStockChart('${assetId}')"]`);
     if(btn) btn.closest('tr').scrollIntoView({behavior:'smooth', block:'center'});
   }, 100);
+}
+
+// 종목 차트에서 "트리맵으로 가기" — 차트를 닫고 출발했던 화면(변화추이 트리맵/비중현황)으로 돌아간다
+function returnToTreemap(){
+  const r = stockDetailReturn;
+  stockDetailReturn = null; treemapForcedChartId = null; chartDetailId = null;
+  renderTable();
+  if(!r) return;
+  switchPage(r.page);
+  if(r.sub) switchSubPage(r.page, r.sub);
 }
 
 // 자산 Quick View 트리맵 — 대시보드 기본값: 기간별 주가 변화율(market) × 1D
