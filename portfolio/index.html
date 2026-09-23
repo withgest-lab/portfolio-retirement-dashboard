@@ -284,6 +284,13 @@ table.table-fit th:nth-child(2),table.table-fit td:nth-child(2),
 table.table-fit th:nth-child(3),table.table-fit td:nth-child(3),
 table.table-fit th:nth-child(4),table.table-fit td:nth-child(4),
 table.table-fit th:nth-child(5),table.table-fit td:nth-child(5){text-align:center;}
+/* 배지 4칼럼과 편집 아이콘 칼럼은 내용이 짧아 8px 좌우 여백이 과한 편이다 — 이 칸들의
+   여백을 5px로 줄여 확보한 폭(약 30px)을 종목명 칸의 max-width 확대에 쓴다(아래 참고). */
+#page_portfolio table.table-fit th:nth-child(2),#page_portfolio table.table-fit td:nth-child(2),
+#page_portfolio table.table-fit th:nth-child(3),#page_portfolio table.table-fit td:nth-child(3),
+#page_portfolio table.table-fit th:nth-child(4),#page_portfolio table.table-fit td:nth-child(4),
+#page_portfolio table.table-fit th:nth-child(5),#page_portfolio table.table-fit td:nth-child(5),
+#page_portfolio table.table-fit th:nth-child(11),#page_portfolio table.table-fit td:nth-child(11){padding-left:5px;padding-right:5px;}
 tr:last-child td{border-bottom:none;}
 /* hover 스타일은 실제 마우스 등 포인팅 장치가 있는 기기에서만 적용 — 터치 기기는
    탭을 hover로 흉내내고 나서 mouseleave가 오지 않아 다른 곳을 눌러야만 풀리는
@@ -297,9 +304,11 @@ tr:last-child td{border-bottom:none;}
    120px로 묶여 있어 화면이 넓어도 더 심하게 잘려 보였다. stocks.csv 753개 종목명을 실제
    폰트로 측정한 폭 분포(95백분위 ≈174px)를 기준으로 흔한 이름은 대부분 안 잘리도록 190px로
    올린다 — table-layout:auto라 이 칸이 실제로 더 가져갈 폭도 있다(다른 칸은 그대로 auto).
-   극단적으로 긴 이름(레버리지·해외 기업명 등)은 여전히 …으로 줄임(안전장치 유지). */
-.name-cell{max-width:190px;}
-.name-main{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;}
+   극단적으로 긴 이름(레버리지·해외 기업명 등)은 여전히 …으로 줄임(안전장치 유지).
+   이후 배지·편집 아이콘 칼럼의 여백을 8px→5px로 줄여 확보한 폭(~30px)만큼 220px로 추가
+   상향 — 위 칼럼들 padding 축소와 세트인 변경이라 되돌릴 때 함께 되돌릴 것. */
+.name-cell{max-width:220px;}
+.name-main{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;}
 .name-sub{font-size:10px;color:var(--color-tertiary);margin-top:1px;}
 .ticker-badge{font-size:10px;color:var(--color-tertiary);margin-left:3px;}
 .acctType-badge{display:inline-flex;align-items:center;justify-content:center;
@@ -3956,7 +3965,7 @@ function renderTable(){
         ${!isCash ? `<button class="edit-btn btn-chart"
           onclick="flashPress(this); toggleStockChart('${a.id}')" title="종목별 가격 차트">📈</button>` : ''}
       </td>
-      <td style="white-space:nowrap;padding-left:8px;text-align:left;" onclick="event.stopPropagation()">
+      <td style="white-space:nowrap;text-align:left;" onclick="event.stopPropagation()">
         <div style="display:inline-flex;gap:4px;">
         <button class="edit-btn btn-editicon"
           onclick="flashPress(this); toggleEdit('${a.id}')" title="수정">✏️</button>
