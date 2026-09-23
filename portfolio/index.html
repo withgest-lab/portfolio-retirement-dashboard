@@ -594,7 +594,14 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   .add-form{flex-direction:column;align-items:stretch;}
   table{font-size:10px;}
   th,td{padding:6px 3px;}
-  .name-main{max-width:80px;font-size:11px;}
+  /* 위 th,td{padding:6px 3px}는 의도한 값이지만 #page_portfolio 보유종목 표(table.table-fit)는
+     261행의 table.table-fit th,td{padding-left:8px;padding-right:8px} 규칙이 더 구체적(specificity
+     높음)이라 실제로는 8px가 그대로 적용되고 있었다 — 종목명(1)/현재가(6)/평가손익(9) 칸이 이
+     "숨은 8px 여백" 때문에 화면이 좁은 모바일에서 실제 필요보다 좁게 잡혀 있었다. ID 스코프로
+     명시적으로 덮어써 의도한 4px를 적용하고, 그만큼 확보된 폭을 종목명 max-width로 돌린다. */
+  #page_portfolio table.table-fit th,
+  #page_portfolio table.table-fit td{padding-left:4px;padding-right:4px;}
+  .name-main{max-width:96px;font-size:11px;}
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 }
 </style>
