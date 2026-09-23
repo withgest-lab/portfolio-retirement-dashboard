@@ -292,8 +292,14 @@ tr:last-child td{border-bottom:none;}
   tr:hover td{background:#f7f7f9!important;}
   tr:hover td:first-child{background:#f7f7f9!important;}
 }
-.name-cell{max-width:120px;}
-.name-main{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;}
+/* 종목명이 "TIGER 미국S&P500"처럼 정식 명칭으로 길어지면서, 정작 여유 폭이 가장 넉넉한
+   데스크톱(이 기본값이 그대로 적용되는 961px 이상)에서 481~960px 구간(130px)보다도 좁은
+   120px로 묶여 있어 화면이 넓어도 더 심하게 잘려 보였다. stocks.csv 753개 종목명을 실제
+   폰트로 측정한 폭 분포(95백분위 ≈174px)를 기준으로 흔한 이름은 대부분 안 잘리도록 190px로
+   올린다 — table-layout:auto라 이 칸이 실제로 더 가져갈 폭도 있다(다른 칸은 그대로 auto).
+   극단적으로 긴 이름(레버리지·해외 기업명 등)은 여전히 …으로 줄임(안전장치 유지). */
+.name-cell{max-width:190px;}
+.name-main{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;}
 .name-sub{font-size:10px;color:var(--color-tertiary);margin-top:1px;}
 .ticker-badge{font-size:10px;color:var(--color-tertiary);margin-left:3px;}
 .acctType-badge{display:inline-flex;align-items:center;justify-content:center;
@@ -492,7 +498,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   .summary-grid{grid-template-columns:repeat(4,1fr);}
   table{font-size:11px;}
   th,td{padding:7px 4px;}
-  .name-main{max-width:130px;font-size:12px;}
+  .name-main{max-width:160px;font-size:12px;}
   #soldTbody td{padding:4px 3px!important;line-height:1.2!important;font-size:10px!important;}
   .card .tbl-wrap table.table-auto th,
   .card .tbl-wrap table.table-auto td{padding-left:4px;padding-right:4px;}
