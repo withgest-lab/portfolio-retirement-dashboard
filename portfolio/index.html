@@ -48,9 +48,17 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .logo-fx{font-size:10.5px;color:var(--color-tertiary);white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .2s;}
 .logo-fx b{font-weight:700;color:var(--color-secondary);}
 @media(max-width:960px){ .logo-fx .fx-lbl{display:none;} .logo-fx::before{content:'$ ';} }
-.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
+.topbar-actions{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
   overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .topbar-actions::-webkit-scrollbar{display:none;}
+/* 버튼 6개가 터치 드래그로 가로 스크롤되다 손을 떼는 위치에 따라 오른쪽 끝(백업/복원)이
+   어중간하게 잘린 채로 멈추는 문제 — 패딩을 좁혀 여유 폭을 만들고, 버튼이 실제로 다
+   들어가는 폭(768px, Fold7 펼침 ~904px 포함)부터는 아예 스크롤을 막아 드래그해도
+   움직이지 않게 한다. 481~767px는 압축해도 다 안 들어가(실측 720px에서야 겨우 들어감)
+   768px보다 낮게 잡으면 오히려 완전히 가려지는 역효과가 나므로 여유를 두고 768px로 잡았다.
+   767px 이하(그 구간 포함 폴드 접힘 등 좁은 화면)는 기존처럼 스크롤로 접근한다. */
+.topbar-actions .btn{padding:6px 10px;}
+@media(min-width:768px){ .topbar-actions{overflow-x:hidden;} }
 .status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);
   flex-shrink:1;min-width:0;overflow:hidden;}
 .status-wrap .dot{flex-shrink:0;}
