@@ -404,10 +404,11 @@ button{font-family:inherit;cursor:pointer;}
 /* ── 화면에는 숨기되 계산에는 계속 쓰는 필드(납입시작/종료 나이 등) ── */
 .irow-hidden{display:none !important;}
 
-/* ── "세금 상식" / "건보료 설계" 공용 토글 버튼 ── */
-.tax-guide-btn{padding:5px 12px;font-size:11px;border-radius:999px;border:none;
-  background:rgba(118,118,128,.12);color:#1c1c1e;font-weight:700;font-family:inherit;display:inline-flex;align-items:center;gap:5px;}
+/* ── "세금 상식" / "건보료 설계" 공용 토글 버튼 — 포트폴리오 상단바 버튼(.btn.btn-ghost)과 톤 통일 ── */
+.tax-guide-btn{padding:6px 10px;font-size:12px;border-radius:999px;border:none;
+  background:rgba(118,118,128,.12);color:#1c1c1e;font-weight:600;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:.15s;}
 .tax-guide-btn:hover{background:rgba(118,118,128,.2);}
+.tax-guide-btn:active{transform:scale(.97);}
 .guide-sec{margin-bottom:12px;}
 .guide-sec h4{font-size:12px;font-weight:700;color:#3F7A5E;margin-bottom:5px;}
 .guide-sec p{font-size:11.5px;color:#555;line-height:1.7;margin-bottom:6px;}
