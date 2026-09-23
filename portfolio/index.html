@@ -47,7 +47,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .topbar-left{display:flex;align-items:baseline;gap:14px;flex-shrink:0;}
 .logo-fx{font-size:10.5px;color:var(--color-tertiary);white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .2s;}
 .logo-fx b{font-weight:700;color:var(--color-secondary);}
-@media(max-width:480px){ .logo-fx .fx-lbl{display:none;} .logo-fx::before{content:'$ ';} }
+@media(max-width:960px){ .logo-fx .fx-lbl{display:none;} .logo-fx::before{content:'$ ';} }
 .topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
   overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .topbar-actions::-webkit-scrollbar{display:none;}
@@ -463,8 +463,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .modal-box{background:#fff;border-radius:16px;padding:24px;max-width:360px;width:90%;margin:0 auto;}
 
 /* ── 반응형 ── */
-/* ── Z Fold7 펼침 (메인화면 ~904px) ── */
-@media(max-width:900px){
+/* ── Z Fold7 펼침 (메인화면 ~904px) ──
+   기준을 900px로 잡으면 실제 폭(~904px)보다 좁아 이 구간에서 규칙이 적용되지 않고,
+   환율/상태 텍스트가 계속 표시돼 .topbar-actions 버튼(특히 맨 오른쪽 "백업 / 복원")이
+   가로 스크롤(.topbar-actions는 스크롤바를 숨겨둠) 밖으로 밀려 안 보이는 것처럼 보였다.
+   아래 481~960px 구간 규칙과 같은 상한(960px)으로 맞춰 Fold7 실측 폭을 확실히 포함한다. */
+@media(max-width:960px){
   .topbar-actions .status-wrap span{display:none;}
 }
 /* ── Z Fold7 펼침(세로/가로 모두, ~481~960px) ──
