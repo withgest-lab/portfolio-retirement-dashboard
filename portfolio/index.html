@@ -594,6 +594,41 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_tradelog .tbl-wrap table.table-auto th:nth-child(6),
   #page_tradelog .tbl-wrap table.table-auto td:nth-child(6){width:14%;}
 }
+/* ── Z Fold7 펼침 기본(세로, 사용자 실기기 실측 ~904px 부근) 안에서 상세정보~편집 아이콘
+   사이 여백 보정 ──
+   위 481~960px 블록의 10·11번째 칼럼 폭(8%/14.5%)은 481px 근처(좁은 쪽)에서 아이콘이
+   안 잘리도록 맞춘 값이라, 같은 %를 실제 사용자 기기 폭(~904px)에 그대로 적용하면 셀이
+   너무 넓어져 상세정보 아이콘과 편집 아이콘 사이에 82px(904px)~93px(960px)짜리 빈 여백이
+   생겼다(실측 확인). 481~960px 전체를 한 번에 딱 맞추는 퍼센트는 존재하지 않는다 — 아이콘
+   내용물 폭은 거의 고정인데 이 구간 자체가 423px~902px(2배 이상)로 넓어서, 좁은 쪽에 맞추면
+   넓은 쪽에서 남고 넓은 쪽에 맞추면 좁은 쪽에서 모자란다. 사용자가 실제로 쓰는 폭은 481이
+   아니라 ~904 하나뿐이므로(펼침 기본), 그 근처(850~960px)만 좁게 겨냥해 위 블록보다 나중에
+   선언해 덮어쓴다 — 이 구간은 실측으로 확인된 실기기 폭이라 예전에 피하려던 "폭 추측"과는
+   다르다. */
+@media(min-width:850px) and (max-width:960px){
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:7.2%;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:7.7%;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:8.3%;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:7.7%;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(6),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(6){width:11%;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:11%;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:11%;}
+  /* 10·11번째는 px로 고정 — table-layout:fixed에서 %열과 px열을 섞으면 %열이 자기 몫을
+     먼저 가져간 뒤 "남는 폭"을 px열끼리 선언 비율(64:88)대로 나눠 갖는다(절대값이 아님,
+     실측·!important로 확인된 동작 — 아래 961px+ 블록 주석 참고). 위에서 2~9번 칼럼 합을
+     ~904px 기준 남는 폭이 정확히 152px(64+88)가 되도록 역산해뒀다. */
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:64px;}
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:88px;}
+}
 /* ── Z Fold7 펼침 + 90도 회전(가로, 961px 이상) ──
    table-layout:auto에 맡기면 남는 여유 폭이 예측 불가능하게 한 칼럼(처음엔 편집 아이콘 칸,
    막으면 다음엔 종목명 칸)으로 몰려서 표가 한쪽으로 쏠려 보였다. 481~960px 구간과 같은
