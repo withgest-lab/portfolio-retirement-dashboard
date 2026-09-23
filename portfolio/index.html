@@ -7696,8 +7696,8 @@ function indexGroupKeyOf(name){
 // 자산유형 → 종목(이름 기준 합산) → 지수 그룹(운용사 무관 합산) 트리 — 세부 종목 도넛과 트리맵 ③이 같은 트리를 공유한다.
 // 1) 같은 종목명은 계좌가 달라도 하나로 합친다(종목 비중 막대와 동일 규칙).
 // 2) 그중 같은 지수를 추종하는 상품(TIGER/KODEX 미국S&P500 등)은 운용사가 달라도 한 슬라이스로 더 합친다.
-//    실제로 2개 이상의 운용사가 섞였을 때만 라벨을 지수명("미국S&P500")으로 바꾸고, 하나뿐이면
-//    원래 종목명(운용사 포함)을 그대로 보여준다 — 합쳐지지도 않았는데 정보를 지우지 않기 위함.
+//    라벨은 항상 지수명("미국S&P500"/"미국나스닥100" 등)으로 — 지금은 운용사가 하나뿐이어도 나중에
+//    다른 운용사 상품이 추가되면 자동으로 같은 슬라이스에 합쳐지므로, 미리 지수 단위로 표시한다.
 // 각 child의 names[]는 실제로 합쳐진 종목명별 {name, value, ids} — 운용사가 여럿이면 "상세 ›"에서
 // 어느 종목으로 갈지 고를 수 있게 한다.
 function buildAssetClassTree(assetList){
@@ -7722,8 +7722,7 @@ function buildAssetClassTree(assetList){
         byGroup.set(gk, c);
       });
       const children = [...byGroup.values()]
-        .map(c=>({key:c.key, value:c.value, ids:c.ids, names:c.names,
-          label: dispName(c.names.length>1 ? c.key : c.names[0].name)}))
+        .map(c=>({key:c.key, value:c.value, ids:c.ids, names:c.names, label: dispName(c.key)}))
         .sort((x,y)=>y.value-x.value);
       return {key:t.key, value:t.value, list:t.list, color:distTypeColor(t.key,i), children};
     });
