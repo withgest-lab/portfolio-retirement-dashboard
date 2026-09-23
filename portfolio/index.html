@@ -507,7 +507,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   .summary-grid{grid-template-columns:repeat(4,1fr);}
   table{font-size:11px;}
   th,td{padding:7px 4px;}
-  .name-main{max-width:160px;font-size:12px;}
+  .name-main{max-width:200px;font-size:12px;}
   #soldTbody td{padding:4px 3px!important;line-height:1.2!important;font-size:10px!important;}
   .card .tbl-wrap table.table-auto th,
   .card .tbl-wrap table.table-auto td{padding-left:4px;padding-right:4px;}
@@ -518,23 +518,26 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   /* 편집 칼럼(📈/✏️/🗑 최대 3개)이 실제로 들어갈 폭을 확보하려면 아이콘 버튼 자체도
      좀 더 좁혀야 한다 — 터치 타겟이 과하게 작아지지 않는 선에서 좌우 패딩만 축소. */
   #page_portfolio .tbl-wrap table.table-fit .edit-btn,
-  #page_portfolio .tbl-wrap table.table-fit .del-btn{padding:6px 5px;}
+  #page_portfolio .tbl-wrap table.table-fit .del-btn{padding:6px 4px;}
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:14%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:18%;}
   /* 투자시장/금융회사/계좌유형/자산유형(2~5번째) — 배지 4개가 나란히 들어간다.
      칼럼이 3개→4개로 늘었으므로 각 폭을 조금씩 줄이고, 부족분은 종목/현재가/
      평가금액에서 덜어온다. 편집 칼럼(21%)은 아이콘 3개가 잘리지 않도록 유지.
      값 길이가 서로 달라(투자시장 "한국" 2자 vs 계좌유형 "IRP 개인" 6자) 폭을
-     균일하게 주지 않고 실제 필요한 만큼 차등 배분한다. */
+     균일하게 주지 않고 실제 필요한 만큼 차등 배분한다.
+     (종목명이 481px에서도 sticky 첫칼럼 min-width:70px보다 항상 커지도록 14%→18%로
+     올리고, 그만큼을 배지 4칸에서 1%씩 덜어옴 — Playwright로 481~960px 스윕해 배지가
+     두 줄로 안 깨지는 것 확인함.) */
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:7.5%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:6.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:8%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:8.5%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:8%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:7%;}
   /* 평단(7번째)은 이 구간에서 .fold-hide-narrow로 숨기지만, table-layout:fixed는
      숨긴 셀에도 폭이 지정 안 돼 있으면 남는 폭을 나눠가지려 해 표 전체가 그만큼
      더 넓어져(.tbl-wrap 자체 스크롤로 미세하게 남는 좌우 유동의 원인) 0으로 못박는다. */
@@ -545,12 +548,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:10%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:11.5%;}
-  /* 차트 열("상세 정보", 10번째)과 연필·휴지통 열(11번째) — 예전 편집 열 21%를 8% + 13%로 나눈다 */
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:10%;}
+  /* 차트 열("상세 정보", 10번째)과 연필·휴지통 열(11번째) — 예전 편집 열 21%를 8% + 13%로 나눈다.
+     11번째는 481px 경계에서 버튼 2개(✏️🗑) 실측 폭(67px)이 원래 13%(55px)보다 넓어 표 자체가
+     .tbl-wrap보다 11px 더 넓어지는 사전 버그가 있었다(9번째에서 1.5% 덜어와 14.5%로 보강,
+     481~960px 전체 스윕해서 가로 스크롤 사라지는 것 확인). */
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:8%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:13%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:14.5%;}
   /* 배지 칼럼이 하나 늘어난 만큼 각 배지가 쓸 수 있는 폭이 줄었다 — 배지 자체의
      좌우 여백과 글자 크기를 조금 줄여 "안전자산"(4자) 같은 값이 줄바꿈되지 않게 한다. */
   #page_portfolio .tbl-wrap table.table-fit .acctType-badge{
