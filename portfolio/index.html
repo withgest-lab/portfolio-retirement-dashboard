@@ -155,6 +155,8 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .dist-info .di-sw{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
 .dist-info .di-sub{color:var(--color-secondary);font-size:11.5px;}
 .dist-info .di-go{padding:2px 8px;font-size:11px;margin-left:auto;}
+.dist-info .di-issuer-pick{display:flex;flex-wrap:wrap;gap:4px;margin-left:auto;}
+.dist-info .di-issuer-pick .di-go{margin-left:0;}
 .dist-info .di-tiny{flex-basis:100%;font-size:10.5px;color:var(--color-tertiary);}
 .dist-cell{background:var(--color-section-bg);border-radius:var(--radius-sm);padding:8px;min-width:0;}
 .dist-canvas-wrap{min-width:0;}
@@ -350,8 +352,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* 비중현황: 2열 그리드(윗줄 투자시장·계좌유형 / 아랫줄 자산유형·종목 비중). minmax(0,1fr)+min-width:0으로 가로 스크롤 방지 */
 .alloc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;align-items:start;}
 .alloc-cell{min-width:0;display:flex;flex-direction:column;align-items:center;}
-.alloc-title{font-size:10px;font-weight:600;color:var(--color-tertiary);text-align:center;
-  text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.alloc-title{font-size:13px;font-weight:600;color:var(--color-tertiary);text-align:center;
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px;}
 .alloc-donut-row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;max-width:100%;}
 .alloc-legend{display:flex;flex-direction:column;gap:0;justify-content:center;min-width:0;flex:1 1 104px;max-width:200px;}
 .lg-row{display:flex;align-items:center;gap:5px;height:20px;border-bottom:1px solid var(--color-section-bg);}
@@ -582,7 +584,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </div>
     <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
     <a href="../" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🏠 홈</a>
-    <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 KIS 매매전략</a>
+    <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 매매전략</a>
     <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
     <button class="btn btn-ghost" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
     <button class="btn btn-ghost" onclick="openBackupModal()">💾 백업 / 복원</button>
@@ -1527,7 +1529,7 @@ const ASSETTYPE_OPTIONS = ['Core','주도주','유망주','원자재','안전자
 const COMPANY_LABELS = {nh:'농협',mf:'미래에셋'};
 const ASSETTYPE_COLS = {'Core':'#0a84ff','주도주':'#ff9500','유망주':'#34c759','원자재':'#a2845e','현금':'#8e8e93','안전자산':'#5ac8fa','가상자산':'#ff3b30','미지정':'#c7c7cc'};
 /* 투자시장(market) — "상장 거래소"가 아니라 "실제 투자 대상 지역" 기준.
-   예) TIGER S&P500은 한국거래소 상장이지만 투자 대상은 미국이므로 'us'.
+   예) TIGER 미국S&P500은 한국거래소 상장이지만 투자 대상은 미국이므로 'us'.
    여러 나라에 분산 투자하는 상품(글로벌·선진국·신흥국 등)은 'global'. */
 const MARKET_LABELS = {kr:'한국', us:'미국', jp:'일본', global:'글로벌'};
 const MARKET_COLS   = {kr:'#007aff', us:'#ff9500', jp:'#ff3b30', global:'#34c759', 미지정:'#c7c7cc'};
@@ -1575,9 +1577,9 @@ let FX = loadFX();
 const DEFAULT_ASSETS = [
   {id:'1', ticker:'GOOGL',     name:'알파벳 A',               acctType:'general', market:'us', quantity:172,  avgPrice:313,    currentPrice:382.97, prevPrice:387.68, currency:'USD'},
   {id:'2', ticker:'6268.T',    name:'나부테스코',              acctType:'general', market:'jp', quantity:400,  avgPrice:3767,   currentPrice:5495,   prevPrice:5312,   currency:'JPY'},
-  {id:'3', ticker:'360750.KS', name:'TIGER S&P500',           acctType:'general',         quantity:3235, avgPrice:25088,  currentPrice:28100,  prevPrice:27744,  currency:'KRW'},
-  {id:'4', ticker:'379800.KS', name:'KODEX S&P500',           acctType:'general',         quantity:3137, avgPrice:23427,  currentPrice:25615,  prevPrice:25293,  currency:'KRW'},
-  {id:'5', ticker:'133690.KS', name:'TIGER 나스닥100',        acctType:'general',         quantity:57,   avgPrice:178300, currentPrice:197990, prevPrice:195248, currency:'KRW'},
+  {id:'3', ticker:'360750.KS', name:'TIGER 미국S&P500',       acctType:'general',         quantity:3235, avgPrice:25088,  currentPrice:28100,  prevPrice:27744,  currency:'KRW'},
+  {id:'4', ticker:'379800.KS', name:'KODEX 미국S&P500',       acctType:'general',         quantity:3137, avgPrice:23427,  currentPrice:25615,  prevPrice:25293,  currency:'KRW'},
+  {id:'5', ticker:'133690.KS', name:'TIGER 미국나스닥100',    acctType:'general',         quantity:57,   avgPrice:178300, currentPrice:197990, prevPrice:195248, currency:'KRW'},
   {id:'6', ticker:'381170.KS', name:'TIGER 테크TOP10',        acctType:'general',         quantity:352,  avgPrice:31789,  currentPrice:34980,  prevPrice:34611,  currency:'KRW'},
   {id:'7', ticker:'487230.KS', name:'KODEX 미국AI전력핵심인프라',acctType:'general',      quantity:800,  avgPrice:18941,  currentPrice:26535,  prevPrice:25711,  currency:'KRW'},
   {id:'8', ticker:'276990.KS', name:'KODEX 글로벌로봇',       acctType:'general',         quantity:300,  avgPrice:22935,  currentPrice:29545,  prevPrice:28899,  currency:'KRW'},
@@ -1603,6 +1605,27 @@ const DEFAULT_ASSETS = [
 const LEGACY_STOCK_ACCTTYPES = ['stock_kr','stock_us','stock_jp','crypto'];
 const CRYPTO_FIX_KEY = 'pf_fix_crypto_frame_v1'; // 가상자산 프레임 1회 보정 완료 표시
 const CRYPTO_LOG_FIX_KEY = 'pf_fix_crypto_log_v1'; // 매매이력 쪽 1회 보정 완료 표시
+// 종목명 정규화 맵 — 한국 상장 해외추종 ETF 정식 명칭(stocks.csv 기준)으로 축약 표기를 통일한다.
+// 예) "TIGER S&P500" → "TIGER 미국S&P500", "KODEX 나스닥100" → "KODEX 미국나스닥100"
+const NAME_NORMALIZE_MAP = {
+  'TIGER S&P500':'TIGER 미국S&P500',       'KODEX S&P500':'KODEX 미국S&P500',
+  'ACE S&P500':'ACE 미국S&P500',           'RISE S&P500':'RISE 미국S&P500',
+  'SOL S&P500':'SOL 미국S&P500',           'HANARO S&P500':'HANARO 미국S&P500',
+  'TIGER 나스닥100':'TIGER 미국나스닥100', 'KODEX 나스닥100':'KODEX 미국나스닥100',
+  'ACE 나스닥100':'ACE 미국나스닥100',     'RISE 나스닥100':'RISE 미국나스닥100',
+  'SOL 나스닥100':'SOL 미국나스닥100',
+};
+const NAME_FIX_KEY = 'pf_fix_name_v1'; // 보유종목 쪽 종목명 정규화 1회 완료 표시
+const NAME_LOG_FIX_KEY = 'pf_fix_name_log_v1'; // 매매이력 쪽 종목명 정규화 1회 완료 표시
+// 배열의 각 항목 name을 정규화 맵 기준으로 1회 교체. 변경이 있었으면 true.
+function normalizeAssetNames(arr){
+  if(!Array.isArray(arr)) return false;
+  let changed=false;
+  arr.forEach(r=>{
+    if(r && NAME_NORMALIZE_MAP[r.name]){ r.name = NAME_NORMALIZE_MAP[r.name]; changed=true; }
+  });
+  return changed;
+}
 // 가상자산 판별 — 자산유형이 '가상자산'이거나, (다른 역할을 이미 지정한 경우를 대비해) 티커가 BTC-USD 형태
 function isCryptoAsset(a){
   return !!a && a.acctType!=='cash' && (a.assetType==='가상자산' || /-USD$/i.test(a.ticker||''));
@@ -1651,7 +1674,7 @@ function migrateRecordFields(r){
 
 /* 투자시장(market) 자동 추정 — market 필드가 없는 기존 자산에 1회 부여.
    ★ 기준은 "상장 거래소"가 아니라 "실제 투자 대상 지역"이다.
-     예) TIGER S&P500 은 한국거래소 상장이지만 투자 대상은 미국 → 'us'
+     예) TIGER 미국S&P500 은 한국거래소 상장이지만 투자 대상은 미국 → 'us'
          KODEX 200 은 한국 지수 → 'kr'
    판단 근거가 약한 순서로 내려가며, 끝까지 판단 불가하면 null로 남겨
    사용자가 직접 지정하게 한다(임의로 찍지 않는다). */
@@ -1758,6 +1781,18 @@ let assets = (()=>{
           localStorage.setItem(CRYPTO_FIX_KEY,'1');
         }
       }catch(e){}
+      // 1회 보정: 종목명 축약 표기("TIGER S&P500" 등)를 정식 명칭("TIGER 미국S&P500")으로 통일.
+      // 플래그로 1회만 실행하므로 이후 사용자가 직접 다른 이름으로 바꾼 값은 다시 덮어쓰지 않는다.
+      try{
+        if(localStorage.getItem(NAME_FIX_KEY)===null){
+          const raw = localStorage.getItem(ASSETS_KEY);
+          if(normalizeAssetNames(s)){
+            if(localStorage.getItem(ASSETS_KEY+'_premigration_name')===null) localStorage.setItem(ASSETS_KEY+'_premigration_name', raw);
+            changed = true;
+          }
+          localStorage.setItem(NAME_FIX_KEY,'1');
+        }
+      }catch(e){}
       if(changed){
         try{ localStorage.setItem(ASSETS_KEY, JSON.stringify(s)); }catch(e){}
       }
@@ -1765,6 +1800,7 @@ let assets = (()=>{
     }
   }catch(e){}
   try{ localStorage.setItem(CRYPTO_FIX_KEY,'1'); }catch(e){} // 처음 쓰는 사용자는 보정 대상 없음
+  try{ localStorage.setItem(NAME_FIX_KEY,'1'); }catch(e){} // 처음 쓰는 사용자는 보정 대상 없음
   const defaults = JSON.parse(JSON.stringify(DEFAULT_ASSETS));
   migrateAssets(defaults); // DEFAULT_ASSETS에도 market 필드를 채워 최초 진입 시부터 일관되게 동작
   return defaults;
@@ -3044,6 +3080,15 @@ function loadTradeLog(){
           changed=true;
         }
         try{ localStorage.setItem(CRYPTO_LOG_FIX_KEY,'1'); }catch(e){}
+      }
+      // 1회 보정: 매매이력에 남은 종목명 축약 표기도 보유종목과 같은 기준으로 정식 명칭으로 통일.
+      if(localStorage.getItem(NAME_LOG_FIX_KEY)===null){
+        const before = localStorage.getItem(TRADE_KEY);
+        if(normalizeAssetNames(arr)){
+          try{ if(localStorage.getItem(TRADE_KEY+'_premigration_name')===null) localStorage.setItem(TRADE_KEY+'_premigration_name', before); }catch(e){}
+          changed = true;
+        }
+        try{ localStorage.setItem(NAME_LOG_FIX_KEY,'1'); }catch(e){}
       }
       if(changed){ try{ localStorage.setItem(TRADE_KEY, JSON.stringify(arr)); }catch(e){} }
     }
@@ -7637,23 +7682,51 @@ function distBuildItems(assetList, keyFn, labelFn, colorFn, denom){
     sub: (denom>0 ? e.value/denom*100 : 0).toFixed(1)+'%', rtn: 0,
   }));
 }
-// 자산유형 → 종목(이름 기준 합산) 트리 — 세부 종목 도넛과 트리맵 ③이 같은 트리를 공유한다.
-// 같은 종목명은 계좌가 달라도 하나로 합친다(종목 비중 막대와 동일 규칙). 현금·채권·코인도 각자의 이름 그대로.
+// 운용사 브랜드 접두어 — 국내 상장 ETF 종목명 앞에 붙는 운용사 이름들
+const ETF_ISSUER_PREFIX_RE = /^(TIGER|KODEX|ACE|RISE|SOL|HANARO|KIWOOM|TIME|PLUS|KINDEX|ARIRANG|KBSTAR|TIMEFOLIO)\s+/i;
+// 세부 종목 도넛·트리맵 전용 — 종목명에서 운용사 접두어를 뗀 나머지가 "미국S&P500"/"미국나스닥100"으로
+// 시작하면 그 나머지 문자열을 지수 그룹 키로 쓴다. 레버리지·환헤지(H)·액티브 등 접미사는 그대로 남아
+// 자동으로 다른 그룹이 되므로(위험/수익 구조가 다른 상품끼리 섞이지 않음), 완전한 순수 지수 추종
+// 상품끼리만 운용사 구분 없이 합쳐진다. 표시 전용 — 원본 보유종목 데이터(assets)는 건드리지 않는다.
+function indexGroupKeyOf(name){
+  if(!name) return null;
+  const stripped = name.replace(ETF_ISSUER_PREFIX_RE, '').trim();
+  return /^미국(S&P500|나스닥100)/.test(stripped) ? stripped : null;
+}
+// 자산유형 → 종목(이름 기준 합산) → 지수 그룹(운용사 무관 합산) 트리 — 세부 종목 도넛과 트리맵 ③이 같은 트리를 공유한다.
+// 1) 같은 종목명은 계좌가 달라도 하나로 합친다(종목 비중 막대와 동일 규칙).
+// 2) 그중 같은 지수를 추종하는 상품(TIGER/KODEX 미국S&P500 등)은 운용사가 달라도 한 슬라이스로 더 합친다.
+//    실제로 2개 이상의 운용사가 섞였을 때만 라벨을 지수명("미국S&P500")으로 바꾸고, 하나뿐이면
+//    원래 종목명(운용사 포함)을 그대로 보여준다 — 합쳐지지도 않았는데 정보를 지우지 않기 위함.
+// 각 child의 names[]는 실제로 합쳐진 종목명별 {name, value, ids} — 운용사가 여럿이면 "상세 ›"에서
+// 어느 종목으로 갈지 고를 수 있게 한다.
 function buildAssetClassTree(assetList){
   const byType = new Map();
   assetList.forEach(a=>{
     const v = evKRW(a); if(!(v>0)) return;
     const tk = distAssetTypeKey(a);
-    if(!byType.has(tk)) byType.set(tk, {key:tk, value:0, children:new Map(), list:[]});
+    if(!byType.has(tk)) byType.set(tk, {key:tk, value:0, byName:new Map(), list:[]});
     const t = byType.get(tk); t.value += v; t.list.push(a);
     const nm = a.name || a.ticker || '(이름 없음)';
-    const c = t.children.get(nm) || {key:nm, label:dispName(nm), value:0, ids:[]};
-    c.value += v; c.ids.push(a.id); t.children.set(nm, c);
+    const n = t.byName.get(nm) || {name:nm, value:0, ids:[]};
+    n.value += v; n.ids.push(a.id); t.byName.set(nm, n);
   });
   return [...byType.values()]
     .sort((x,y)=>y.value-x.value)
-    .map((t,i)=>({key:t.key, value:t.value, list:t.list, color:distTypeColor(t.key,i),
-      children:[...t.children.values()].sort((x,y)=>y.value-x.value)}));
+    .map((t,i)=>{
+      const byGroup = new Map();
+      [...t.byName.values()].forEach(n=>{
+        const gk = indexGroupKeyOf(n.name) || n.name;
+        const c = byGroup.get(gk) || {key:gk, value:0, ids:[], names:[]};
+        c.value += n.value; c.ids.push(...n.ids); c.names.push(n);
+        byGroup.set(gk, c);
+      });
+      const children = [...byGroup.values()]
+        .map(c=>({key:c.key, value:c.value, ids:c.ids, names:c.names,
+          label: dispName(c.names.length>1 ? c.key : c.names[0].name)}))
+        .sort((x,y)=>y.value-x.value);
+      return {key:t.key, value:t.value, list:t.list, color:distTypeColor(t.key,i), children};
+    });
 }
 // 자산유형 요약 칩 줄 — "● Core 45.2%  ● 주도주 20.1% …" (도넛·트리맵 ③ 공용)
 function assetTypeChipsHtml(tree, total){
@@ -7801,8 +7874,14 @@ function drawDetailTreemap(){
   canvas.onpointermove = e=>{ if(e.pointerType==='mouse') select(hit(e)); };
   const sel = detailTmCells.find(c=>c.key===detailTmSel);
   if(infoEl){
+    // 운용사가 여럿 합쳐진 슬라이스(같은 지수를 TIGER/KODEX 등 여러 운용사 상품으로 나눠 보유)는
+    // "상세 ›" 버튼 하나로 임의의 한 종목으로 보내지 않고, 운용사별 종목을 골라 이동할 수 있게 한다.
+    const detailNav = sel && (sel.child.names.length>1
+      ? `<span class="di-issuer-pick">${sel.child.names.slice().sort((a,b)=>b.value-a.value)
+          .map(n=>`<button class="btn btn-ghost di-go" onclick="goToStockDetail('${n.ids[0]}')">${dispName(n.name)} ›</button>`).join('')}</span>`
+      : `<button class="btn btn-ghost di-go" onclick="goToStockDetail('${sel.child.ids[0]}')">상세 ›</button>`);
     infoEl.innerHTML = sel
-      ? `<span class="di-sw" style="background:${sel.col};"></span><b>${sel.child.label}</b> <span class="di-sub">${sel.type.key} · ${fmt(sel.child.value)} · 총자산의 ${sel.pct}</span> <button class="btn btn-ghost di-go" onclick="goToStockDetail('${sel.child.ids[0]}')">상세 ›</button>`
+      ? `<span class="di-sw" style="background:${sel.col};"></span><b>${sel.child.label}</b> <span class="di-sub">${sel.type.key} · ${fmt(sel.child.value)} · 총자산의 ${sel.pct}</span> ${detailNav}`
       : '<span class="di-sub">사각형을 누르면(마우스는 올리면) 종목 이름·금액·비중이 여기에 표시됩니다</span>';
     if(tinyCells.length) infoEl.innerHTML += `<span class="di-tiny">※ 너무 작아 그리지 못한 종목: ${tinyCells.map(c=>`${c.label} ${sharePctText(c.value,total)}`).join(', ')}</span>`;
   }
@@ -8850,7 +8929,7 @@ function closeSheetsModal(){document.getElementById('sheetsModal').classList.rem
 const BACKUP_VERSION = 2;
 const RETIREMENT_KEY = 'retirement_dashboard_v1'; // retirement/index.html의 STORAGE_KEY와 반드시 같아야 함
 // 1회 보정 완료 표시 — 같이 옮겨야 복원한 데이터가 새 기기에서 한 번 더 자동 보정되어 백업과 달라지는 일이 없다
-const BACKUP_FLAG_KEYS = [CRYPTO_FIX_KEY, CRYPTO_LOG_FIX_KEY, TRADELOG_ATTRSYNC_KEY];
+const BACKUP_FLAG_KEYS = [CRYPTO_FIX_KEY, CRYPTO_LOG_FIX_KEY, TRADELOG_ATTRSYNC_KEY, NAME_FIX_KEY, NAME_LOG_FIX_KEY];
 const BACKUP_STORAGE_KEYS = [ASSETS_KEY, FX_KEY, SNAP_KEY, TRADE_KEY, OTHER_FIN_INCOME_KEY, RETIREMENT_KEY, ...BACKUP_FLAG_KEYS];
 
 function buildBackupData(){
