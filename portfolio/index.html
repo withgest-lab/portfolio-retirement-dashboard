@@ -7125,6 +7125,11 @@ function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
 // 2중 링을 (cx,cy) 중심·반지름 R로 그린다: 안쪽 링=자산유형, 바깥 링=종목(실제 종목명 단위, 유형색을 명암만 달리해 부모-자식이 색으로 보임).
 // opt.start=시작각(기본 12시), opt.outerPct=바깥 링 조각 안에 % 표시, opt.typeNames=안쪽 링에 유형 이름도 표시(아니면 %만),
 // opt.plan=planInnerLabels 결과를 재사용. 반환: {outer: 바깥 링 조각 정보(콜아웃 라벨용), unplaced: 조각 안에 라벨이 못 들어간 안쪽 링 조각}
+// 조각 위 글자: 항상 흰색 + 어두운 얇은 외곽선(밝은 조각에서도 읽히게 하면서 색을 통일)
+function fillRingText(ctx, t, x, y){
+  ctx.save(); ctx.lineJoin='round'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.38)'; ctx.strokeText(t,x,y); ctx.restore();
+  ctx.save(); ctx.fillStyle='#fff'; ctx.fillText(t,x,y); ctx.restore();
+}
 function paintDonutRings(ctx, cx, cy, R, tree, opt){
   const total = tree.reduce((s,t)=>s+t.value,0); if(!total) return {outer:[], unplaced:[]};
   const IR=R*0.30, IOR=R*0.64, OIR=R*0.67, OOR=R*0.96;
@@ -7148,8 +7153,8 @@ function paintDonutRings(ctx, cx, cy, R, tree, opt){
         arc(OIR,OOR,a+0.006,a+cs-0.006,col);
         if(opt.outerPct && cs>0.24){
           const m=a+cs/2, r=(OIR+OOR)/2;
-          ctx.font=FONT; ctx.fillStyle=treemapTextColor(col); ctx.textAlign='center'; ctx.textBaseline='middle';
-          ctx.fillText(sharePctText(c.value,total), cx+Math.cos(m)*r, cy+Math.sin(m)*r);
+          ctx.font=FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
+          fillRingText(ctx, sharePctText(c.value,total), cx+Math.cos(m)*r, cy+Math.sin(m)*r);
         }
       }
       outer.push({label:c.label, value:c.value, color:col, typeColor:t.color, mid:a+cs/2});
@@ -7161,11 +7166,10 @@ function paintDonutRings(ctx, cx, cy, R, tree, opt){
   ctx.font=FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
   plan.forEach(s=>{
     const L=s.label; if(!L) return;
-    ctx.fillStyle=treemapTextColor(s.t.color);
     ctx.font=`bold ${L.fs||fs}px Pretendard,-apple-system,sans-serif`;
     const llh=Math.round((L.fs||fs)*1.25);
-    if(L.lines===2){ ctx.fillText(L.name||s.t.key,L.x,L.y-llh/2+1); ctx.fillText(L.pct,L.x,L.y+llh/2); }
-    else ctx.fillText(L.text,L.x,L.y+0.5);
+    if(L.lines===2){ fillRingText(ctx,L.name||s.t.key,L.x,L.y-llh/2+1); fillRingText(ctx,L.pct,L.x,L.y+llh/2); }
+    else fillRingText(ctx,L.text,L.x,L.y+0.5);
   });
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   return {outer, unplaced:plan.filter(s=>!s.label)};
