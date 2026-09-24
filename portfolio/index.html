@@ -209,6 +209,16 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .toggle-pill.on .dot{opacity:1;}
 .toggle-ctrl{background:var(--color-section-bg);color:var(--color-text);border:none;cursor:pointer;
   border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;font-family:inherit;}
+/* 토글 배너(개인정보 숨기기와 같은 스위치형) — 합계 버튼과 같은 글자/배경, 켜지면 accent */
+.tgl-banner{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;border-radius:20px;
+  padding:3px 8px 3px 10px;background:var(--color-section-bg);color:var(--color-text);
+  font-size:11px;font-weight:600;font-family:inherit;white-space:nowrap;transition:.15s;}
+.tgl-banner .sw{width:24px;height:14px;border-radius:999px;background:#c7c7cc;position:relative;transition:.15s;flex-shrink:0;}
+.tgl-banner .sw::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:.15s;}
+.tgl-banner.on{background:var(--color-accent);color:#fff;}
+.tgl-banner.on .sw{background:rgba(255,255,255,.35);}
+.tgl-banner.on .sw::after{left:12px;}
+.tgl-banner-row{display:flex;margin:8px 0 0;}
 
 /* ── 접이식 상세 섹션 ── */
 .collapsible summary{cursor:pointer;color:var(--color-secondary);font-weight:600;font-size:11px;
@@ -376,7 +386,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .donut-center .dc-val{font-size:15px;font-weight:800;letter-spacing:-.03em;}
 .donut-legend{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;margin-top:12px;max-width:320px;}
 /* 비중현황: 2열 그리드(윗줄 투자시장·계좌유형 / 아랫줄 자산유형·종목 비중). minmax(0,1fr)+min-width:0으로 가로 스크롤 방지 */
-.alloc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;align-items:start;}
+.alloc-banner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.alloc-banner .summary-grid{display:block;margin:0;flex:0 1 auto;}
+.alloc-banner .summary-grid.compact .sum-card{display:flex;align-items:baseline;gap:8px;padding:5px 12px;}
+.alloc-banner .summary-grid.compact .sum-lbl{margin:0;font-size:10px;white-space:nowrap;}
+.alloc-banner .summary-grid.compact .sum-val{font-size:15px;white-space:nowrap;}
+.alloc-grid{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);gap:14px 20px;align-items:start;}
+.alloc-left{min-width:0;display:flex;flex-direction:column;gap:14px;}
+.alloc-right{min-width:0;display:flex;flex-direction:column;}
+.alloc-bar-cell{grid-column:1/-1;}
 .alloc-cell{min-width:0;display:flex;flex-direction:column;align-items:center;}
 .alloc-title{font-size:13px;font-weight:600;color:var(--color-tertiary);text-align:center;
   text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px;}
@@ -390,7 +408,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .lg-child{padding-left:9px;}
 .lg-child .lg-name{font-weight:600;}
 .lg-more{font-size:9px;color:var(--color-tertiary);height:16px;line-height:16px;}
-.alloc-detail-cell{grid-column:1/-1;}
+.alloc-detail-cell{width:100%;}
 .alloc-detail-row{flex-direction:column;gap:6px;width:100%;}
 .alloc-detail-cell .type-chips{width:100%;}
 .alloc-detail-legend{width:100%;max-width:460px;flex:none;}
@@ -401,8 +419,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .alloc-detail-legend .lg-child .lg-pct{font-size:11px;}
 .alloc-detail-legend .lg-amt{font-size:10px;min-width:44px;}
 /* 좁은 화면(접힘·반분할, JS가 폭<600px일 때 data-mode=narrow 지정): 범례는 도넛 아래, 막대는 금액 숨김 */
-.alloc-grid[data-mode="narrow"] .alloc-donut-row{flex-direction:column;gap:6px;}
-.alloc-grid[data-mode="narrow"] .alloc-legend{width:100%;max-width:none;flex:none;}
+.alloc-grid[data-mode="narrow"]{grid-template-columns:minmax(0,1fr);}
+.alloc-grid[data-mode="narrow"] .alloc-donut-row{flex-wrap:nowrap;width:100%;}
+.alloc-grid[data-mode="narrow"] .alloc-legend{max-width:none;}
+.alloc-grid[data-mode="wide"] .alloc-detail-row{flex-direction:row;align-items:flex-start;flex-wrap:nowrap;}
+.alloc-grid[data-mode="wide"] .alloc-detail-legend{flex:1 1 170px;width:auto;max-width:none;}
 .alloc-grid[data-mode="narrow"] .lg-amt{display:none;}
 .alloc-grid[data-mode="narrow"] .alloc-detail-legend .lg-amt{display:block;}
 .alloc-grid[data-mode="narrow"] .alloc-bars .bar-label{width:68px;}
@@ -471,16 +492,15 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* ── 원금 vs 자산가치 차트: 캔버스 + 선택 지점 상세 패널을 나란히 배치
    (넓은 화면), 좁은 화면에서는 패널이 아래로 자동으로 쌓임 — 정보가
    그림 위에 겹치는 플로팅 툴팁 대신 항상 빈 공간에 고정 표시됨 */
-.pv-chart-body{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-top:10px;}
-.pv-canvas-wrap{position:relative;flex:2 1 300px;min-width:0;margin-top:0;}
-.pv-detail{flex:1 1 180px;min-width:160px;max-width:260px;background:var(--color-section-bg);
-  border:1px solid var(--color-border);border-radius:10px;padding:9px 11px;}
+.pv-chart-body{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
+.pv-canvas-wrap{position:relative;width:calc(100% - 28px);align-self:center;min-width:0;margin-top:0;}
+.pv-detail{order:-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;background:var(--color-section-bg);
+  border:1px solid var(--color-border);border-radius:10px;padding:8px 12px;min-height:36px;}
 .pv-detail .pd-empty{font-size:11px;color:var(--color-tertiary);}
-.pv-detail .pd-title{font-size:10.5px;font-weight:700;color:var(--color-secondary);margin-bottom:5px;}
-.pv-detail .pd-value{font-size:15px;font-weight:700;color:var(--color-text);margin-bottom:5px;}
-.pv-detail .pd-row{font-size:11.5px;color:var(--color-secondary);margin-bottom:2px;display:flex;justify-content:space-between;gap:8px;}
-.pv-detail .pd-note{font-size:10px;color:var(--color-tertiary);margin-top:4px;line-height:1.4;}
-@media(max-width:600px){ .pv-canvas-wrap{flex-basis:100%;} .pv-detail{flex-basis:100%;max-width:none;} }
+.pv-detail .pd-title{font-size:10.5px;font-weight:700;color:var(--color-secondary);}
+.pv-detail .pd-value{font-size:15px;font-weight:700;color:var(--color-text);}
+.pv-detail .pd-row{font-size:11.5px;color:var(--color-secondary);display:inline-flex;gap:6px;}
+.pv-detail .pd-note{font-size:10px;color:var(--color-tertiary);line-height:1.4;flex-basis:100%;}
 
 /* ── 모달 ── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
@@ -784,9 +804,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="card">
   <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
     <div class="toggles" id="assetToggles" style="margin:0;"></div>
-    <button type="button" id="stockDetailToggleBtn" onclick="toggleStockDetailToggles()"
-      style="cursor:pointer;color:var(--color-secondary);font-weight:600;font-size:11px;
-             background:none;border:none;padding:4px 0;font-family:inherit;white-space:nowrap;">▸ 종목별 보기</button>
+    <button type="button" class="tgl-banner" id="stockDetailToggleBtn" role="switch" aria-checked="false" data-target="assetTogglesDetail" onclick="toggleBanner(this)">상세 종목 선택 하기<span class="sw"></span></button>
     <div class="period-tabs period-tabs-sm" id="periodTabs" style="margin-left:auto;">
       <button onclick="setPeriod('1D')" class="active">1D</button>
       <button onclick="setPeriod('5D')">5D</button>
@@ -803,10 +821,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
   <div class="toggles" id="assetTogglesDetail" style="display:none;margin-top:6px;"></div>
   <div class="chart-wrap" style="margin-top:0;"><canvas id="lineChart" height="320"></canvas></div>
-  <div class="stat-bar" id="statBar"></div>
+  <div class="tgl-banner-row"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="statBar" onclick="toggleBanner(this)">상세 종목별 수익률 보기<span class="sw"></span></button></div>
+  <div class="stat-bar" id="statBar" style="display:none;"></div>
 </div>
-<details class="collapsible" style="margin-top:8px;">
-  <summary>스냅샷 이력 보기</summary>
+<div class="tgl-banner-row"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="snapHistWrap" onclick="toggleBanner(this)">스냅샷 이력 보기<span class="sw"></span></button></div>
+<div id="snapHistWrap" style="display:none;">
   <div class="card" style="margin-top:10px;">
     <div class="snap-header">
       <div class="section-label" style="margin:0">스냅샷 이력</div>
@@ -842,21 +861,23 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </div>
     </div>
   </div>
-</details>
+</div>
 </div>
 
 <!-- 비중 현황 -->
 <div class="subpage" data-sub="alloc">
 <div class="card">
-  <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+  <div class="alloc-banner">
+    <div class="summary-grid compact" id="summaryGrid"></div>
     <div class="period-tabs" id="allocViewTabs">
       <button class="active" onclick="setAllocView('donut')">도넛</button>
       <button onclick="setAllocView('treemap')">트리맵</button>
     </div>
   </div>
   <div id="allocDonutView">
-  <!-- 배치: 윗줄 [투자시장][계좌유형] / 아랫줄 [자산유형][종목 비중 막대] — 좁은 화면(≤700px)은 1열 -->
+  <!-- 배치: 왼쪽 세로 [투자시장/계좌유형/자산유형] · 오른쪽 [세부 종목 비중] · 아래 전폭 [종목 비중 막대] — 좁은 화면(<600px)은 1열 -->
   <div class="alloc-grid">
+    <div class="alloc-left">
     <div class="alloc-cell">
       <div class="alloc-title">투자시장</div>
       <div class="alloc-donut-row">
@@ -896,10 +917,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <div id="assetTypeLegend" class="alloc-legend"></div>
       </div>
     </div>
-    <div class="alloc-cell alloc-bar-cell">
-      <div class="alloc-title">종목 비중</div>
-      <div id="barChart" class="alloc-bars"></div>
     </div>
+    <div class="alloc-right">
     <!-- 자산유형별 세부 종목 비중: 2중 링(안쪽=자산유형, 바깥=실제 종목) 대형 도넛 — 첫 화면(2×2) 아래 전체 폭 -->
     <div class="alloc-cell alloc-detail-cell">
       <div class="alloc-title">자산유형별 세부 종목 비중</div>
@@ -915,10 +934,14 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <div id="assetDetailLegend" class="alloc-legend alloc-detail-legend"></div>
       </div>
     </div>
+    </div>
+    <div class="alloc-cell alloc-bar-cell">
+      <div class="alloc-title">종목 비중</div>
+      <div id="barChart" class="alloc-bars"></div>
+    </div>
   </div>
   </div>
   <div id="allocTreemapView" style="display:none;">
-    <div class="summary-grid compact" id="summaryGrid" style="margin-bottom:12px;grid-template-columns:1fr;"></div>
     <div class="section-label" style="margin:0 0 12px;">자산군 분포</div>
     <div class="dist-top-grid">
       <div class="dist-cell">
@@ -1361,12 +1384,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 <section class="page" id="page_returns">
 <nav class="subtabbar">
-  <button class="active" data-sub="monthly_table" onclick="switchSubPage('returns','monthly_table')">스냅샷 기반 자산 추이</button>
+  <button class="active" data-sub="monthly_chart" onclick="switchSubPage('returns','monthly_chart')">원금 vs 자산가치</button>
+  <button data-sub="monthly_table" onclick="switchSubPage('returns','monthly_table')">스냅샷 기반 자산 추이</button>
   <button data-sub="yearly" onclick="switchSubPage('returns','yearly')">매매이력 기반 손익분석</button>
-  <button data-sub="monthly_chart" onclick="switchSubPage('returns','monthly_chart')">원금 vs 자산가치</button>
   <button data-sub="principal" onclick="switchSubPage('returns','principal')">원금기록장</button>
 </nav>
-<div class="subpage active" data-sub="monthly_table">
+<div class="subpage" data-sub="monthly_table">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
       <div class="section-label" style="margin:0" id="snapPerfLabel">스냅샷 기반 자산 추이 — 월별</div>
@@ -1421,7 +1444,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <div class="notice" id="yearlySnapStartNotice"></div>
   </div>
 </div>
-<div class="subpage" data-sub="monthly_chart">
+<div class="subpage active" data-sub="monthly_chart">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
       <div class="section-label" style="margin:0">자산가치 vs 투입원금 추이</div>
@@ -1450,8 +1473,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <div class="subpage" data-sub="principal">
   <div class="card">
     <div class="section-label" style="margin:0">원금 기록장</div>
-    <details class="collapsible" style="margin:10px 0 14px;">
-      <summary>원금 입출금 추가 <b>(자산/현금 잔액에는 영향 없음)</b></summary>
+    <div class="tgl-banner-row" style="margin:10px 0 0;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="principalAddWrap" onclick="toggleBanner(this)">원금 입출금 추가<span class="sw"></span></button></div>
+    <div id="principalAddWrap" style="display:none;margin:0 0 14px;">
       <div class="notice" style="margin:10px 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다.</div>
       <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
         <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
@@ -1480,7 +1503,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <button class="btn" style="background:#34c75920;color:#34c759;padding:7px 14px;" onclick="addPrincipalLedgerEntry()">추가</button>
       </div>
       <div class="form-status" id="principalLedgerStatus"></div>
-    </details>
+    </div>
     <div class="summary-grid" style="grid-template-columns:1fr;margin-bottom:14px;">
       <div class="sum-card">
         <div class="sum-lbl">누적 순입금액(기록된 입출금 기준)</div>
@@ -6087,7 +6110,7 @@ function drawPrincipalVsValueChart(){
   if(!canvas) return;
   const wrap = canvas.parentElement;
   const cssW = wrap.clientWidth || 300;
-  const cssH = 280;
+  const cssH = 300;
   const dpr = window.devicePixelRatio || 1;
   canvas.width = cssW*dpr; canvas.height = cssH*dpr;
   canvas.style.width = cssW+'px'; canvas.style.height = cssH+'px';
@@ -7359,35 +7382,30 @@ function donutDetailLegendHtml(tree, total){
   }).join('');
 }
 
-/* 한 화면 맞춤: 가용 높이·폭에서 첫 화면(2×2: 투자시장·계좌유형 / 자산유형·종목 비중)의 도넛 지름을 계산한다
-   (폴드7 접힘/펼침 세로/펼침 가로, 데스크톱 공통). 세부 종목 비중 도넛은 그 아래 별도 화면이라 높이 예산에 넣지 않는다.
-   높이 예산: 2·D1 ≤ H − (제목 23×2 + 행 간격 14) — 좁은 화면은 범례가 도넛 아래로 가서 그만큼 더 뺀다.
+/* 한 화면 맞춤: 왼쪽 세로 3개 도넛(투자시장·계좌유형·자산유형)의 지름 d1과 오른쪽 세부 종목 도넛 지름 d2를 계산한다
+   (폴드7 접힘/펼침 세로/펼침 가로, 데스크톱 공통). 높이 예산: 3·(제목 23 + d1) + 행 간격 2×14 ≤ 가용 높이.
+   d2는 왼쪽 열 높이에 맞춰 좌우 균형을 잡는다(제목·칩 약 70px 제외). 폭 <600px(접힘)은 1열로 쌓고 도넛 옆에 범례.
    숨겨진 상태(다른 서브탭)면 측정 불가 → 기본값을 돌려주고, 탭이 보일 때 훅이 다시 호출한다. */
 function fitAllocDonutLayout(){
-  const def = {mode:'wide', d1:200, d2:280, leg1:6, callout:false, detailW:0};
+  const def = {mode:'wide', d1:150, d2:240, leg1:6, callout:false, detailW:0};
   const grid = document.querySelector('#allocDonutView .alloc-grid');
   if(!grid || grid.offsetParent===null) return def;
   const W = grid.clientWidth; if(!(W>0)) return def;
   const narrow = W < 600;
-  const H = Math.max(300, window.innerHeight - (grid.getBoundingClientRect().top + window.scrollY) - 20); // 20 = 카드 하단 패딩 16 + 여유
   const TITLE=23, GAP=14, ROW=20;
-  const legBelow1 = narrow ? 3*ROW+6 : 0;   // 좁은 화면: 작은 도넛 범례 3줄이 도넛 아래로
-  const S = H - 2*TITLE - GAP - 2*legBelow1; // = 2·D1
-  let d1 = donutClamp(Math.floor(S/2), 100, 220);
-  const cellW = (W-16)/2;
   if(narrow){
-    // 접힘 화면은 4개 블록이 읽을 만한 크기로는 한 화면에 안 들어간다 → 가독성 하한(D1 110)을 우선하고
-    // 이 경우에만 세로 스크롤을 허용한다(가로 스크롤은 없음)
-    d1 = Math.min(Math.max(d1,110), Math.floor(cellW-4));
+    const d1 = donutClamp(Math.floor(W*0.4),100,150);
+    return { mode:'narrow', d1, d2: donutClamp(W-8,170,320), callout:false, detailW:W, leg1:Math.max(3,Math.floor(d1/ROW)) };
   }
-  else d1 = Math.min(d1, Math.floor(cellW-112));
-  d1 = Math.max(100,d1);
-  return {
-    mode: narrow?'narrow':'wide', d1,
-    d2: donutClamp(W-8,170,320),                 // 좁은 화면 세부 도넛 지름
-    callout: W >= 680, detailW: W,               // 넓은 화면은 리더라인 콜아웃 도넛(폭 전체 사용)
-    leg1: narrow ? 3 : Math.max(3, Math.floor(d1/ROW)),
-  };
+  const H = Math.max(420, window.innerHeight - (grid.getBoundingClientRect().top + window.scrollY) - 20);
+  const leftW = (W-20)*0.45, rightW = (W-20)*0.55;
+  let d1 = donutClamp(Math.floor((H - 3*TITLE - 2*GAP)/3), 100, 165);
+  d1 = Math.max(100, Math.min(d1, Math.floor(leftW-120)));
+  const leftH = 3*(TITLE+d1) + 2*GAP;
+  const callout = rightW >= 640;
+  let d2 = donutClamp(leftH - TITLE - 70, 170, 300);
+  d2 = Math.max(150, Math.min(d2, Math.floor(rightW-190)));
+  return { mode:'wide', d1, d2, callout, detailW:Math.floor(rightW), leg1:Math.max(3,Math.floor(d1/ROW)) };
 }
 
 function renderDonuts(){
@@ -8974,13 +8992,13 @@ function renderStatBar(){
 // 자산변화추이 "종목별 보기" — 예전에는 <details>였는데, 펼칠 때 같은 flex 행에 있던
 // 기간 탭(오른쪽)까지 같이 밀리거나 줄바꿈되어 위치가 흔들렸다. 버튼은 항상 제자리에
 // 고정하고, 펼침 목록만 그 아래 별도 줄에 나타나거나 사라지도록 분리.
-let stockDetailTogglesOpen = false;
-function toggleStockDetailToggles(){
-  stockDetailTogglesOpen = !stockDetailTogglesOpen;
-  const btn = document.getElementById('stockDetailToggleBtn');
-  const detail = document.getElementById('assetTogglesDetail');
-  if(btn) btn.textContent = (stockDetailTogglesOpen ? '▾' : '▸') + ' 종목별 보기';
-  if(detail) detail.style.display = stockDetailTogglesOpen ? '' : 'none';
+function toggleBanner(btn){
+  const on = !btn.classList.contains('on');
+  btn.classList.toggle('on', on);
+  btn.setAttribute('aria-checked', on ? 'true' : 'false');
+  const t = document.getElementById(btn.dataset.target);
+  if(t) t.style.display = on ? '' : 'none';
+  if(on && btn.dataset.onopen && typeof window[btn.dataset.onopen] === 'function') window[btn.dataset.onopen]();
 }
 
 function renderToggles(){
