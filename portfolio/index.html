@@ -445,8 +445,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .alloc-grid[data-mode="narrow"] .alloc-bars .bar-pct span:nth-child(2){display:none;}
 .alloc-bar-cell{align-items:stretch;}
 .alloc-bars .bar-row{margin-bottom:5px;gap:6px;}
-.alloc-bars .bar-label{width:172px;font-size:11px;line-height:1.25;white-space:normal;overflow:hidden;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow-wrap:anywhere;}
+.alloc-bars .bar-label{width:172px;font-size:11px;line-height:1.25;white-space:normal;overflow:visible;text-overflow:clip;
+  display:block;overflow-wrap:anywhere;}
 .alloc-bars .bar-track{height:14px;}
 .alloc-bars .bar-pct{width:100px;font-size:11px;}
 .bar-side{flex:1;min-width:260px;}
