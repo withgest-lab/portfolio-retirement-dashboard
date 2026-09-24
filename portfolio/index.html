@@ -7007,11 +7007,12 @@ function drawDonut(canvasId,data,size){
     ctx.arc(cx,cy,OR,angle+GAP,angle+sw-GAP);
     ctx.arc(cx,cy,IR,angle+sw-GAP,angle+GAP,true);
     ctx.closePath();ctx.fillStyle=d.color;ctx.fill();
-    // 조각 안에 글자가 완전히 들어갈 때만 표시: "59.4%" → 안 들어가면 "59.4"(% 생략) → 그래도 안 들어가면 표시 안 함
-    ctx.font=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
-    const num=((d.value/total)*100).toFixed(1);
-    for(const txt of [maskAmt(num+'%'), maskAmt(num)]){
-      const pos=fitLabelInSector(cx,cy,IR,OR,angle+GAP,angle+sw-GAP,ctx.measureText(txt).width+2,fs+1);
+    // 모든 조각을 같은 형식으로: % 없이 숫자만("59.4"). 조각 안에 완전히 들어갈 때만 표시하고,
+    // 안 들어가면 글자를 1pt씩 줄여(최소 8px) 다시 시도, 그래도 안 들어가면 표시 안 함
+    const txt=maskAmt(((d.value/total)*100).toFixed(1));
+    for(let f=fs; f>=8; f--){
+      ctx.font=`bold ${f}px Pretendard,-apple-system,sans-serif`;
+      const pos=fitLabelInSector(cx,cy,IR,OR,angle+GAP,angle+sw-GAP,ctx.measureText(txt).width+2,f+1);
       if(!pos) continue;
       ctx.fillStyle='rgba(255,255,255,0.95)';
       ctx.textAlign='center';
@@ -7093,7 +7094,7 @@ function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
   // 후보를 위에서부터 시도: (글자 크기 fs → fs-1 → fs-2) × ("이름/%" 2줄 → "이름 %" 1줄), typeNames==='fallback'이면 마지막에 "%만"까지.
   // 안 들어가면 label=null(콜아웃 모드는 리더라인으로 빼고, 그 외에는 표시 안 함). 글자가 겹치거나 잘리지 않는 자리만 채택한다.
   slices.slice().sort((a,b)=>b.sw-a.sw).forEach(s=>{
-    const pct=sharePctText(s.t.value,total);
+    const pct=sharePctText(s.t.value,total).replace('%',''); // 안쪽 링은 모든 조각을 "이름 숫자"(% 없이)로 통일
     const variants=[];
     const sizes = typeNames ? [fs, fs-1, fs-2].filter(f=>f>=8) : [fs];
     sizes.forEach(f=>{
