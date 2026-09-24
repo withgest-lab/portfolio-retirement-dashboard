@@ -7479,21 +7479,26 @@ function fitAllocDonutLayout(){
     const d1 = donutClamp(Math.floor(W*0.4),100,150);
     return { mode:'narrow', d1, d2: donutClamp(W-8,170,320), callout:false, detailW:W, leg1:Math.max(3,Math.floor(d1/ROW)) };
   }
-  const H = Math.max(420, window.innerHeight - (grid.getBoundingClientRect().top + window.scrollY) - 20);
-  const leftW = (W-20)*0.45, rightW = (W-20)*0.55;
-  let d1 = donutClamp(Math.floor((H - 3*TITLE - 2*GAP)/3), 100, 165);
-  d1 = Math.max(100, Math.min(d1, Math.floor(leftW-120)));
+  // 펼침(세로·가로) 공통: 작은 도넛은 폭 기준(목표 190px)으로 키우고, 왼쪽 열은 "도넛+간격 12+범례 124"로 딱 맞춰 남는 폭 전부를 오른쪽 열(세부 종목 도넛)에 넘긴다.
+  // 세로는 페이지 스크롤이 되므로 뷰포트 높이에 맞추지 않는다.
+  const LEG=124, SP=12, MIN_RIGHT=300;
+  let d1 = 190;
+  d1 = Math.max(120, Math.min(d1, W-20-MIN_RIGHT-SP-LEG));
+  const leftW = d1 + SP + LEG, rightW = W - 20 - leftW;
   const leftH = 3*(TITLE+d1) + 2*GAP;
   const callout = rightW >= 640;
-  let d2 = donutClamp(leftH - TITLE - 70, 170, 300);
-  d2 = Math.max(150, Math.min(d2, Math.floor(rightW-190)));
-  return { mode:'wide', d1, d2, callout, detailW:Math.floor(rightW), leg1:Math.max(3,Math.floor(d1/ROW)) };
+  let d2 = donutClamp(leftH - TITLE - 70, 170, 430);
+  d2 = Math.max(150, Math.min(d2, Math.floor(rightW-176)));
+  return { mode:'wide', d1, d2, callout, leftW, detailW:Math.floor(rightW), leg1:Math.max(3,Math.floor(d1/ROW)) };
 }
 
 function renderDonuts(){
   const fit = fitAllocDonutLayout();
   const grid = document.querySelector('#allocDonutView .alloc-grid');
-  if(grid) grid.dataset.mode = fit.mode;
+  if(grid){
+    grid.dataset.mode = fit.mode;
+    grid.style.gridTemplateColumns = fit.mode==='wide' && fit.leftW ? fit.leftW+'px minmax(0,1fr)' : '';
+  }
   const total=totalEv();
   const acctTypeMap={};
   assets.forEach(a=>{const k=donutAcctTypeKey(a);acctTypeMap[k]=(acctTypeMap[k]||0)+evKRW(a);});
