@@ -308,6 +308,14 @@ table.table-fit th:nth-child(5),table.table-fit td:nth-child(5){text-align:cente
 #page_portfolio table.table-fit th:nth-child(5),#page_portfolio table.table-fit td:nth-child(5),
 #page_portfolio table.table-fit th:nth-child(11),#page_portfolio table.table-fit td:nth-child(11),
 #page_portfolio table.table-fit th:nth-child(12),#page_portfolio table.table-fit td:nth-child(12){padding-left:5px;padding-right:5px;}
+/* 연필(11)·휴지통(12)은 한 쌍으로 표 오른쪽 끝에 붙인다 — 사이 여백(셀 padding)을 없애고 버튼 padding만 남긴다(v4: 글리프 간격 28→약 12px) */
+#page_portfolio table.table-fit th:nth-child(11),#page_portfolio table.table-fit td:nth-child(11){padding-left:4px;padding-right:0;}
+#page_portfolio table.table-fit th:nth-child(12),#page_portfolio table.table-fit td:nth-child(12){padding-left:0;padding-right:4px;text-align:left;}
+#page_portfolio table.table-fit td:nth-child(11) .edit-btn,#page_portfolio table.table-fit td:nth-child(12) .del-btn{padding:7px 6px;}
+/* 상세정보(10) 아이콘 확대 */
+#page_portfolio table.table-fit .btn-chart .ic{width:23px;height:23px;}
+/* 어떤 폭에서도 가로 스크롤 바가 생기지 않게(칼럼 폭은 퍼센트로 배분) */
+#page_portfolio .tbl-wrap{overflow-x:hidden;}
 tr:last-child td{border-bottom:none;}
 /* hover 스타일은 실제 마우스 등 포인팅 장치가 있는 기기에서만 적용 — 터치 기기는
    탭을 hover로 흉내내고 나서 mouseleave가 오지 않아 다른 곳을 눌러야만 풀리는
@@ -542,9 +550,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
      좀 더 좁혀야 한다 — 터치 타겟이 과하게 작아지지 않는 선에서 좌우 패딩만 축소. */
   #page_portfolio .tbl-wrap table.table-fit .edit-btn,
   #page_portfolio .tbl-wrap table.table-fit .del-btn{padding:6px 4px;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11) .edit-btn,
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12) .del-btn{padding:6px 4px;}
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:18%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:19.5%;}
   /* 투자시장/금융회사/계좌유형/자산유형(2~5번째) — 배지 4개가 나란히 들어간다.
      칼럼이 3개→4개로 늘었으므로 각 폭을 조금씩 줄이고, 부족분은 종목/현재가/
      평가금액에서 덜어온다. 편집 칼럼(21%)은 아이콘 3개가 잘리지 않도록 유지.
@@ -558,7 +568,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7.5%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:7%;}
   /* 평단(7번째)은 이 구간에서 .fold-hide-narrow로 숨기지만, table-layout:fixed는
@@ -580,9 +590,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:8%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:7.5%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:6.5%;}
   /* 배지 칼럼이 하나 늘어난 만큼 각 배지가 쓸 수 있는 폭이 줄었다 — 배지 자체의
      좌우 여백과 글자 크기를 조금 줄여 "안전자산"(4자) 같은 값이 줄바꿈되지 않게 한다. */
   #page_portfolio .tbl-wrap table.table-fit .acctType-badge{
@@ -613,7 +623,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_tradelog .tbl-wrap table.table-auto th:nth-child(5),
   #page_tradelog .tbl-wrap table.table-auto td:nth-child(5){width:14%;}
   #page_tradelog .tbl-wrap table.table-auto th:nth-child(6),
-  #page_tradelog .tbl-wrap table.table-auto td:nth-child(6){width:14%;}
+  #page_tradelog .tbl-wrap table.table-auto td:nth-child(6){width:11%;}
 }
 /* ── Z Fold7 펼침 기본(세로, 사용자 실기기 실측 ~904px 부근) ── 12칼럼 재설계 v2
    v1(직전 커밋)은 2~12번째를 전부 똑같이 균등 배분했는데, 연필(11)·휴지통(12)이 둘 다
@@ -628,9 +638,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
    (배지~상세정보 자연폭 합 432) − 80(연필+휴지통) = 98px → 2~6·8~10번째 8칼럼에
    12.25px씩 균등 배분 → 퍼센트 환산. */
 @media(min-width:850px) and (max-width:960px){
-  .name-main{max-width:230px;}
+  .name-main{max-width:244px;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:27.9%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:29.2%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:7.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
@@ -648,42 +658,45 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:7.6%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.3%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:4.7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:3.7%;}
 }
-/* ── Z Fold7 펼침 + 90도 회전(가로, 961px 이상) ── 12칼럼 재설계 v3
+/* ── Z Fold7 펼침 + 90도 회전(가로, 961px 이상) ── 12칼럼 재설계 v4 (v4: 종목명 302→약330px, 연필·휴지통 한 쌍 3.0%씩, 2~10번째는 자연폭+균등 여유 약 33px)
+   아래는 v3 계산 기록 — 
    위 850~960px 블록과 같은 이유·같은 방법론, 대표 테이블 폭 1222px 기준. v2에선 cushion을
    10px 줬는데 사용자가 더 좁혀 달라고 해서 4px로 축소, 아낀 만큼 종목명에 더 배분(v3).
    연필·휴지통 각 51px(자연폭47+4) 고정. 종목명 목표 302px(v2 290px보다 확대, cushion
    절감분 12px 반영). 남는 폭 = 1222 − 302 − (배지~상세정보 자연폭 합 513) −
    102(연필+휴지통) = 305px → 2~10번째 9칼럼에 약 34px씩 균등 배분 → 퍼센트 환산. */
 @media(min-width:961px){
+  .name-main{max-width:318px;}
+  .name-cell{max-width:318px;}
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:24.7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:26.7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:5.6%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:6.9%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:6.6%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:6.2%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7.8%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:7.7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:6.6%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:6.2%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(6),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(6){width:8.4%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(6){width:8.3%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(7),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:8.4%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:8.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:7.1%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:7.0%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:7.8%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:7.7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:7.4%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.8%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.0%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:4.8%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:3.4%;}
 }
 /* ── Z Fold7 접힘 / 일반 모바일 (~390px) ── */
 @media(max-width:480px){
@@ -703,7 +716,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
      명시적으로 덮어써 의도한 4px를 적용하고, 그만큼 확보된 폭을 종목명 max-width로 돌린다. */
   #page_portfolio table.table-fit th,
   #page_portfolio table.table-fit td{padding-left:4px;padding-right:4px;}
-  .name-main{max-width:140px;font-size:11px;}
+  .name-main{max-width:150px;font-size:11px;}
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   /* 이 폭에서 보이는 칼럼은 종목명(1)/현재가(6)/평가금액(8, 사용자 요청으로 새로 노출)/
      평가손익(9)/연필(11) 5개뿐이다(나머지는 fold-hide로 display:none). table-layout:auto에
@@ -714,15 +727,16 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
      퍼센트라 접힘 폭 범위(320~480px) 어디서든 비율이 그대로 유지된다. */
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:34.5%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:36%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(6),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(6){width:19.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:14.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:17%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:18.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:14.5%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:11.5%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11) .edit-btn{padding:7px 6px;}
 }
 </style>
 </head>
