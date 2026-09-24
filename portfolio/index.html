@@ -6961,6 +6961,30 @@ function renderSummary(){
    도넛 + 막대 차트
 ════════════════════════════════════════ */
 const donutClamp = (v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+// 도넛 조각(반경 r1~r2, 각도 a0~a1) 안에 w×h 글상자가 완전히 들어가는 자리를 조각 중심에 가장 가까운 순서로 찾는다. 없으면 null.
+function fitLabelInSector(cx,cy,r1,r2,a0,a1,w,h){
+  const TAU=2*Math.PI, mid=(a0+a1)/2, rm=(r1+r2)/2;
+  const inSec=(px,py)=>{
+    const d=Math.hypot(px-cx,py-cy); if(d<r1+1||d>r2-1) return false;
+    const rel=((Math.atan2(py-cy,px-cx)-a0)%TAU+TAU)%TAU;
+    return rel<=a1-a0;
+  };
+  const mx=cx+Math.cos(mid)*rm, my=cy+Math.sin(mid)*rm;
+  let best=null, bestD=Infinity;
+  for(let a=a0; a<=a1; a+=2/rm){
+    for(let r=r1+1; r<=r2-1; r+=2){
+      const x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r, d=(x-mx)*(x-mx)+(y-my)*(y-my);
+      if(d>=bestD) continue;
+      let ok=true;
+      for(let i=0;i<=4&&ok;i++) for(let j=0;j<=4;j++){
+        if(i>0&&i<4&&j>0&&j<4) continue;
+        if(!inSec(x+(i/4-0.5)*w, y+(j/4-0.5)*h)){ ok=false; break; }
+      }
+      if(ok){ best={x,y}; bestD=d; }
+    }
+  }
+  return best;
+}
 // 단일 링 도넛. size(지름, 기본 200)에 비례해 링 두께·폰트를 스케일한다.
 function drawDonut(canvasId,data,size){
   size = size||200;
@@ -6983,17 +7007,17 @@ function drawDonut(canvasId,data,size){
     ctx.arc(cx,cy,OR,angle+GAP,angle+sw-GAP);
     ctx.arc(cx,cy,IR,angle+sw-GAP,angle+GAP,true);
     ctx.closePath();ctx.fillStyle=d.color;ctx.fill();
-    // 섹터 중간에 % 표시 (3% 이상만)
-    if(sw>0.19){
-      const mid=angle+sw/2;
-      const r=(IR+OR)/2;
-      const tx=cx+Math.cos(mid)*r;
-      const ty=cy+Math.sin(mid)*r;
-      ctx.font=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
+    // 조각 안에 글자가 완전히 들어갈 때만 표시: "59.4%" → 안 들어가면 "59.4"(% 생략) → 그래도 안 들어가면 표시 안 함
+    ctx.font=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
+    const num=((d.value/total)*100).toFixed(1);
+    for(const txt of [maskAmt(num+'%'), maskAmt(num)]){
+      const pos=fitLabelInSector(cx,cy,IR,OR,angle+GAP,angle+sw-GAP,ctx.measureText(txt).width+2,fs+1);
+      if(!pos) continue;
       ctx.fillStyle='rgba(255,255,255,0.95)';
       ctx.textAlign='center';
       ctx.textBaseline='middle';
-      ctx.fillText(maskAmt(((d.value/total)*100).toFixed(1)+'%'),tx,ty);
+      ctx.fillText(txt,pos.x,pos.y+0.5);
+      break;
     }
     angle+=sw;
   });
@@ -7029,9 +7053,8 @@ function sharePctText(v, total){
 // 규칙(모든 화면 크기 공통): 큰 조각부터, 조각 안 어디든 완전히 들어가는 자리를 찾아 "이름/%"(2줄) → "이름 %"(1줄) 순으로 시도한다.
 // 그래도 안 되면 label=null — 호출부가 리더라인으로 밖에 빼서 표시한다(좁은 화면은 위 칩 줄·아래 범례가 대신한다).
 function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
-  const IR=R*0.34, IOR=R*0.62, rm=(IR+IOR)/2;
-  const fs=donutClamp(Math.round(R*0.085),8,12), lh=Math.round(fs*1.25);
-  ctx.font=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
+  const IR=R*0.30, IOR=R*0.64, rm=(IR+IOR)/2;
+  const fs=donutClamp(Math.round(R*0.085),8,12);
   const GAP=0.014, TAU=2*Math.PI;
   const slices=[]; let angle=start;
   tree.forEach(t=>{
@@ -7067,16 +7090,29 @@ function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
     }
     return best;
   };
+  // 후보를 위에서부터 시도: (글자 크기 fs → fs-1 → fs-2) × ("이름/%" 2줄 → "이름 %" 1줄), typeNames==='fallback'이면 마지막에 "%만"까지.
+  // 안 들어가면 label=null(콜아웃 모드는 리더라인으로 빼고, 그 외에는 표시 안 함). 글자가 겹치거나 잘리지 않는 자리만 채택한다.
   slices.slice().sort((a,b)=>b.sw-a.sw).forEach(s=>{
     const pct=sharePctText(s.t.value,total);
-    const nameW=ctx.measureText(s.t.key).width, pctW=ctx.measureText(pct).width, spW=ctx.measureText(' ').width;
-    const variants = typeNames
-      ? [{w:Math.max(nameW,pctW)+6,h:lh*2,lines:2}, {w:nameW+spW+pctW+6,h:lh,lines:1}]
-      : [{w:pctW+6,h:lh,lines:1}];
+    const variants=[];
+    const sizes = typeNames ? [fs, fs-1, fs-2].filter(f=>f>=8) : [fs];
+    sizes.forEach(f=>{
+      ctx.font=`bold ${f}px Pretendard,-apple-system,sans-serif`;
+      const lh=Math.round(f*1.25);
+      const nameW=ctx.measureText(s.t.key).width, pctW=ctx.measureText(pct).width, spW=ctx.measureText(' ').width;
+      if(typeNames){
+        variants.push({fs:f,w:Math.max(nameW,pctW)+6,h:lh*2,lines:2});
+        variants.push({fs:f,w:nameW+spW+pctW+6,h:lh,lines:1});
+      } else variants.push({fs:f,w:pctW+6,h:lh,lines:1,pctOnly:true});
+    });
+    if(typeNames==='fallback'){
+      ctx.font=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
+      variants.push({fs,w:ctx.measureText(pct).width+6,h:Math.round(fs*1.25),lines:1,pctOnly:true});
+    }
     for(const v of variants){
       const pos=findSpot(s,v.w,v.h);
       if(!pos) continue;
-      s.label={x:pos.x, y:pos.y, w:v.w, h:v.h, lines:v.lines, pct, text: typeNames ? `${s.t.key} ${pct}` : pct};
+      s.label={x:pos.x, y:pos.y, w:v.w, h:v.h, lines:v.lines, fs:v.fs, pct, text: (typeNames&&!v.pctOnly) ? `${s.t.key} ${pct}` : pct, pctOnly:!!v.pctOnly};
       placed.push({x:pos.x, y:pos.y, w:v.w, h:v.h});
       break;
     }
@@ -7088,7 +7124,7 @@ function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
 // opt.plan=planInnerLabels 결과를 재사용. 반환: {outer: 바깥 링 조각 정보(콜아웃 라벨용), unplaced: 조각 안에 라벨이 못 들어간 안쪽 링 조각}
 function paintDonutRings(ctx, cx, cy, R, tree, opt){
   const total = tree.reduce((s,t)=>s+t.value,0); if(!total) return {outer:[], unplaced:[]};
-  const IR=R*0.34, IOR=R*0.62, OIR=R*0.65, OOR=R*0.96;
+  const IR=R*0.30, IOR=R*0.64, OIR=R*0.67, OOR=R*0.96;
   const fs=donutClamp(Math.round(R*0.085),8,12), lh=Math.round(fs*1.25);
   const FONT=`bold ${fs}px Pretendard,-apple-system,sans-serif`;
   const arc=(r1,r2,a0,a1,color)=>{
@@ -7118,12 +7154,14 @@ function paintDonutRings(ctx, cx, cy, R, tree, opt){
     });
     angle+=sw;
   });
-  const plan = opt.plan || planInnerLabels(ctx,cx,cy,R,tree,total,start,!!opt.typeNames);
+  const plan = opt.plan || planInnerLabels(ctx,cx,cy,R,tree,total,start,opt.typeNames);
   ctx.font=FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
   plan.forEach(s=>{
     const L=s.label; if(!L) return;
     ctx.fillStyle=treemapTextColor(s.t.color);
-    if(L.lines===2){ ctx.fillText(s.t.key,L.x,L.y-lh/2+1); ctx.fillText(L.pct,L.x,L.y+lh/2); }
+    ctx.font=`bold ${L.fs||fs}px Pretendard,-apple-system,sans-serif`;
+    const llh=Math.round((L.fs||fs)*1.25);
+    if(L.lines===2){ ctx.fillText(s.t.key,L.x,L.y-llh/2+1); ctx.fillText(L.pct,L.x,L.y+llh/2); }
     else ctx.fillText(L.text,L.x,L.y+0.5);
   });
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
@@ -7137,7 +7175,7 @@ function donutSetCenterFont(cv, R){
   if(l) l.style.fontSize = donutClamp(Math.round(R*0.09),8,11)+'px';
 }
 // 좁은 화면용: 도넛만(조각 안에 %) — 이름은 아래 그룹 범례가 전부 보여준다
-function drawDonutRings(canvasId, tree, size){
+function drawDonutRings(canvasId, tree, size, typeNames){
   const cv=document.getElementById(canvasId); if(!cv) return;
   const ctx=cv.getContext('2d');
   const dpr=window.devicePixelRatio||1;
@@ -7145,7 +7183,7 @@ function drawDonutRings(canvasId, tree, size){
   cv.width=Math.round(size*dpr); cv.height=Math.round(size*dpr);
   cv.style.width=size+'px'; cv.style.height=size+'px';
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,size,size);
-  paintDonutRings(ctx,R,R,R,tree,{outerPct:true,typeNames:false});
+  paintDonutRings(ctx,R,R,R,tree,{outerPct:true,typeNames:typeNames||false});
   donutSetCenterFont(cv,R);
 }
 // 콜아웃 리더선: 시작점은 조각 "중심"이 아니라 자기 조각 영역 안에서 라벨 높이에 가장 가까운 점(it.ang)이다.
@@ -7502,7 +7540,7 @@ function renderDonuts(){
     drawDonutCallouts('assetDetailDonut', tree, fit.detailW);
     detailLegend.style.display='none'; detailLegend.innerHTML='';
   }else{
-    drawDonutRings('assetDetailDonut', tree, fit.d2);
+    drawDonutRings('assetDetailDonut', tree, fit.d2, fit.mode==='wide' ? 'fallback' : false);
     detailLegend.style.display=''; detailLegend.innerHTML=donutDetailLegendHtml(tree,treeTotal);
   }
 
