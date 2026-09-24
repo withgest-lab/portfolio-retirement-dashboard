@@ -6991,7 +6991,7 @@ function drawDonut(canvasId,data,size){
   const cv=document.getElementById(canvasId);if(!cv)return;
   const ctx=cv.getContext('2d');
   const dpr=window.devicePixelRatio||1;
-  const LW=size,LH=size,cx=size/2,cy=size/2,OR=size*0.45,IR=size*(size<140?0.3:0.27);
+  const LW=size,LH=size,cx=size/2,cy=size/2,OR=size*0.45,IR=size*(size<140?0.25:0.235);
   cv.width=Math.round(LW*dpr);cv.height=Math.round(LH*dpr);
   cv.style.width=LW+'px';cv.style.height=LH+'px';
   ctx.scale(dpr,dpr);ctx.clearRect(0,0,LW,LH);
@@ -7012,7 +7012,7 @@ function drawDonut(canvasId,data,size){
     const txt=maskAmt(((d.value/total)*100).toFixed(1));
     for(let f=fs; f>=8; f--){
       ctx.font=`bold ${f}px Pretendard,-apple-system,sans-serif`;
-      const pos=fitLabelInSector(cx,cy,IR,OR,angle+GAP,angle+sw-GAP,ctx.measureText(txt).width+2,f+1);
+      const pos=fitLabelInSector(cx,cy,IR,OR,angle+GAP,angle+sw-GAP,ctx.measureText(txt).width+1,Math.round(f*0.85));
       if(!pos) continue;
       ctx.fillStyle='rgba(255,255,255,0.95)';
       ctx.textAlign='center';
