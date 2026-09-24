@@ -26,6 +26,15 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){ .top-bar{background:#fff;} }
 h1{font-size:16px;font-weight:700;color:#111;}
 .subtitle{font-size:11px;color:#999;}
+/* ── 토글 배너(개인정보 숨기기와 같은 스위치형) ── */
+.tgl-banner{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e0e6;cursor:pointer;border-radius:999px;
+  padding:4px 9px 4px 11px;background:#fff;color:#444;font-size:11px;font-weight:600;font-family:inherit;white-space:nowrap;transition:.15s;}
+.tgl-banner .sw{width:26px;height:15px;border-radius:999px;background:#c7c7cc;position:relative;transition:.15s;flex-shrink:0;}
+.tgl-banner .sw::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:.15s;}
+.tgl-banner.on{color:#007aff;border-color:#007aff;}
+.tgl-banner.on .sw{background:#007aff;}
+.tgl-banner.on .sw::after{left:13px;}
+.tgl-body{margin-top:8px;}
 /* ── 접이식 상세 섹션(민감도 체크·자동설계 근거) ── */
 .collapsible{font-size:12px;}
 .collapsible > summary{cursor:pointer;color:#666;font-weight:700;padding:2px 0;list-style:none;}
@@ -1188,8 +1197,8 @@ button{font-family:inherit;cursor:pointer;}
 </div>
 
 <div class="panel">
-<details class="collapsible">
-  <summary>고급 : 수익률 · 물가상승률 가정</summary>
+<button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률 / 물가상승률 설정 보기<span class="sw"></span></button>
+<div id="ratesWrap" class="tgl-body" style="display:none;">
 <div class="sec-label" style="margin-top:8px;">계좌별 수익률</div>
 <div class="rates-fields">
 <div class="irow nh">
@@ -1247,7 +1256,7 @@ button{font-family:inherit;cursor:pointer;}
   <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
 </div>
 </div>
-</details>
+</div>
 </div>
 
 </div><!-- left-panel -->
@@ -1282,8 +1291,8 @@ button{font-family:inherit;cursor:pointer;}
     <div class="phase-cards" id="phase-cards"></div>
   </div>
   <div class="chart-wrap">
-    <details class="collapsible">
-      <summary>수익률 민감도 체크 (낙관·비관 시나리오 비교)</summary>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="scWrap" onclick="toggleBanner(this)">수익률 민감도 체크 (낙관·비관 시나리오 비교)<span class="sw"></span></button>
+    <div id="scWrap" class="tgl-body" style="display:none;">
       <table style="margin-top:6px;">
         <thead><tr>
           <th style="text-align:left">시나리오</th>
@@ -1291,13 +1300,13 @@ button{font-family:inherit;cursor:pointer;}
         </tr></thead>
         <tbody id="sc-body"></tbody>
       </table>
-    </details>
+    </div>
   </div>
   <div class="chart-wrap">
-    <details class="collapsible">
-      <summary>완전소진 vs 필요분만 인출 비교</summary>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="needWrap" onclick="toggleBanner(this)">완전소진 vs 필요분만 인출 비교<span class="sw"></span></button>
+    <div id="needWrap" class="tgl-body" style="display:none;">
       <div id="need-only-compare" style="margin-top:8px;"></div>
-    </details>
+    </div>
   </div>
   <div class="note">※ 사적연금 한도(<span id="note-limit">1,400</span>만원/년)는 농협·미래에셋 연금저축+IRP 개인납입분 합산. 퇴직IRP 원금은 퇴직소득세 분류과세(한도 무관). ISA 200만원 비과세·초과 9.9% 분리과세. 참고용 시뮬레이션입니다.</div>
 </div>
@@ -3032,6 +3041,13 @@ function applyInputTags(){
   AUTO.forEach(id=>tag(id,'tag-auto'));
 }
 
+function toggleBanner(btn){
+  const on=!btn.classList.contains('on');
+  btn.classList.toggle('on',on);
+  btn.setAttribute('aria-checked',on?'true':'false');
+  const t=document.getElementById(btn.dataset.target);
+  if(t) t.style.display=on?'':'none';
+}
 </script>
 </body>
 </html>
