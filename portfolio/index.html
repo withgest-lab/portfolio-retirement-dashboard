@@ -1708,6 +1708,10 @@ const MARKET_COLS   = {kr:'#007aff', us:'#ff9500', jp:'#ff3b30', global:'#34c759
 const MARKET_OPTIONS = ['kr','us','jp','global'];
 const CUR_SYM    = {KRW:'₩',USD:'$',JPY:'¥'};
 const SNAP_KEY    = 'pf_snaps_v5';
+// 보유종목 표 행 아이콘 — icons.js의 이모지→SVG 자동 치환에 맡기지 않고 소스에 직접 SVG로 둔다(연필·휴지통은 icons.js 'pencil'·'trash'와 같은 모양).
+const ICON_EDIT = '<svg class="ic" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
+const ICON_TRASH = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>';
+const ICON_DETAIL = '<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="14" width="4" height="7" rx="1" fill="#b8ebc6" stroke="none"/><rect x="10" y="10" width="4" height="11" rx="1" fill="#b8ebc6" stroke="none"/><rect x="17" y="6" width="4" height="15" rx="1" fill="#b8ebc6" stroke="none"/><polyline points="3 12 9 6.5 13 10 20 3" stroke="#34c759" stroke-width="2.4"/><polyline points="15 3 20 3 20 8" stroke="#34c759" stroke-width="2.4"/></svg>';
 const ASSETS_KEY  = 'pf_assets_v1';
 const SOLD_KEY    = 'pf_sold_v1';
 const TRADE_KEY   = 'pf_tradelog_v1';
@@ -4115,15 +4119,15 @@ function renderTable(){
       </td>
       <td class="fold-hide" style="white-space:nowrap;text-align:center;" onclick="event.stopPropagation()">
         ${!isCash ? `<button class="edit-btn btn-chart"
-          onclick="flashPress(this); toggleStockChart('${a.id}')" title="종목별 가격 차트">📈</button>` : ''}
+          onclick="flashPress(this); toggleStockChart('${a.id}')" title="종목별 가격 차트">${ICON_DETAIL}</button>` : ''}
       </td>
       <td style="white-space:nowrap;text-align:right;" onclick="event.stopPropagation()">
         <button class="edit-btn btn-editicon"
-          onclick="flashPress(this); toggleEdit('${a.id}')" title="수정">✏️</button>
+          onclick="flashPress(this); toggleEdit('${a.id}')" title="수정">${ICON_EDIT}</button>
       </td>
       <td class="fold-hide" style="white-space:nowrap;text-align:right;" onclick="event.stopPropagation()">
         <button class="del-btn"
-          onclick="confirmDelete('${a.id}','${a.name.replace(/'/g,'')}')" title="삭제">🗑</button>
+          onclick="confirmDelete('${a.id}','${a.name.replace(/'/g,'')}')" title="삭제">${ICON_TRASH}</button>
       </td>
     </tr>`;
 
