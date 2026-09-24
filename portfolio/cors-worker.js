@@ -51,11 +51,15 @@ export default {
       return new Response('host not allowed', { status: 403, headers: CORS_HEADERS });
     }
 
+    // 같은 URL이 짧은 시간에 몰리면(여러 종목·기기·자동갱신 겹침) 엣지 캐시가 10초간 흡수해 야후/네이버로 가는
+    // 요청과 429를 줄인다(성공 응답만 캐시). 업스트림이 5초 넘게 걸리면 끊고 502를 돌려줘 클라이언트가
+    // 다음 후보로 바로 넘어가게 한다(예전엔 무한 대기 가능).
     let upstream;
     try {
       upstream = await fetch(targetUrl.toString(), {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        cf: { cacheTtl: 0 },
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        cf: { cacheEverything: true, cacheTtlByStatus: { '200-299': 10, '300-599': 0 } },
+        signal: AbortSignal.timeout(5000),
       });
     } catch (e) {
       return new Response('upstream fetch failed: ' + e.message, { status: 502, headers: CORS_HEADERS });
