@@ -2039,40 +2039,74 @@ async function mapWithConcurrency(items, limit, fn){
   return results;
 }
 
-// 여러 프록시 후보를 동시에 쏘고 하나라도 성공하면 즉시 나머지를 취소(abort)한다.
-// 예전엔 Promise.any로 경쟁만 시키고 진 요청들은 그대로 방치해 자체 8초 타임아웃까지
-// 브라우저의 호스트당 동시 연결 슬롯을 계속 붙잡고 있었다 — 종목 수가 늘면서 죽은
-// 프록시(allorigins 500/hang, corsproxy.io 403 등)로 가는 요청들이 슬롯을 잠식해
-// 뒤에 나가는 요청이 밀리고, 시세 갱신이 느려지거나 일부 종목만 랜덤하게 실패하는
-// 원인이 됐다. fn은 (signal)=>Promise 형태.
-async function firstSuccess(fns){
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), 8000);
-  try{
-    return await Promise.any(fns.map(fn=>fn(controller.signal)));
-  } finally {
-    clearTimeout(timer);
-    controller.abort();
-  }
+// 시세 조회 v2(2026-09-24): 워커는 실측 0.2~0.5초로 빠른데도 갱신이 수 초~10초 넘게 걸렸다 —
+// 종목당 8~12개 요청을 한꺼번에 쏘는 팬아웃 + 동시 처리 2종목 제한 + 실패 시 고정 3초 대기 때문.
+// 이제 워커를 먼저 1건만 쏘고, 1.2초 안에 응답이 없거나 실패하면 워커의 두 번째 URL(query2/다른 네이버 API),
+// 2.5초 뒤에도 못 받았으면 외부 프록시 폴백을 차례로 추가로 쏜다(먼저 성공한 것만 채택, 나머지는 취소).
+// 한 후보가 실패하면 지연 시간을 기다리지 않고 바로 다음 후보를 시작한다(fast-fail).
+const WORKER_PROXY = PROXIES[0];
+const FALLBACK_PROXIES = PROXIES.slice(1);
+const pxTelemetry = {last:[]}; // 최근 시세 갱신의 조회별 {label, ms} — 상태줄/콘솔 계측용
+function proxyLabel(p){ try{ return new URL(p).hostname.replace(/^api\./,'').split('.')[0]; }catch(e){ return p; } }
+
+function hedgedFirst(cands, totalMs=6000){
+  const ctrl = new AbortController();
+  const t0 = performance.now();
+  const timers = [];
+  const overall = setTimeout(()=>ctrl.abort(), totalMs);
+  const p = new Promise((resolve, reject)=>{
+    let done = false, settled = 0;
+    const start = c => {
+      if(done || c.started) return;
+      c.started = true;
+      c.run(ctrl.signal).then(v=>{
+        if(done) return;
+        done = true;
+        pxTelemetry.last.push({label:c.label, ms:Math.round(performance.now()-t0)});
+        resolve(v);
+      }).catch(e=>{
+        settled++;
+        if(done) return;
+        // 워커가 정상 응답했는데 종목이 없다는 확정적 실패(404/가격 없음)면 폴백 프록시를 기다릴 이유가 없다
+        if(e && e.definitive){ done = true; pxTelemetry.last.push({label:'not-found', ms:Math.round(performance.now()-t0)}); reject(e); return; }
+        const nxt = cands.find(x=>!x.started);
+        if(nxt) start(nxt);
+        else if(settled >= cands.length){ done = true; pxTelemetry.last.push({label:'fail', ms:Math.round(performance.now()-t0)}); reject(new Error('all failed')); }
+      });
+    };
+    cands.forEach((c,i)=>{ if(i===0) start(c); else timers.push(setTimeout(()=>start(c), c.delay)); });
+    ctrl.signal.addEventListener('abort', ()=>{ if(!done){ done = true; pxTelemetry.last.push({label:'timeout', ms:Math.round(performance.now()-t0)}); reject(new Error('timeout')); } });
+  });
+  const cleanup = ()=>{ clearTimeout(overall); timers.forEach(clearTimeout); ctrl.abort(); };
+  return p.then(v=>{ cleanup(); return v; }, e=>{ cleanup(); throw e; });
 }
 
-async function yahooFetch(url){
-  const tryProxy = async (proxy, signal) => {
-    const res = await fetch(proxy+encodeURIComponent(url),{
-      signal,
-      headers:{'User-Agent':'Mozilla/5.0'}
-    });
-    if(!res.ok) throw new Error('not ok');
+// urls: 같은 데이터를 주는 대체 URL들(query1/query2 등), parse: JSON -> 결과(실패 시 throw)
+function buildCands(urls, parse){
+  const one = (proxy, url) => async signal => {
+    const viaWorker = proxy === WORKER_PROXY;
+    const res = await fetch(proxy+encodeURIComponent(url), {signal});
+    if(!res.ok){
+      const err = new Error('http '+res.status);
+      err.definitive = viaWorker && (res.status===404 || res.status===400);
+      throw err;
+    }
     const text = await res.text();
-    let json;
-    try{ json=JSON.parse(text); }catch(e){ throw new Error('parse fail'); }
-    if(json?.contents) try{ json=JSON.parse(json.contents); }catch(e){}
-    if(!json?.chart?.result?.[0]?.meta) throw new Error('no meta');
-    return json;
+    let json; try{ json = JSON.parse(text); }catch(e){ throw new Error('parse'); }
+    if(json?.contents) try{ json = JSON.parse(json.contents); }catch(e){}
+    try{ return parse(json); }
+    catch(e){ e.definitive = viaWorker; throw e; }
   };
-  try{
-    return await firstSuccess(PROXIES.map(p=>signal=>tryProxy(p,signal)));
-  }catch(e){ return null; }
+  const c = [{label:'worker', delay:0, run:one(WORKER_PROXY, urls[0])}];
+  urls.slice(1).forEach(u=>c.push({label:'worker-alt', delay:1200, run:one(WORKER_PROXY, u)}));
+  FALLBACK_PROXIES.forEach(px=>c.push({label:proxyLabel(px), delay:2500, run:one(px, urls[0])}));
+  return c;
+}
+
+async function yahooFetch(url, validate){
+  const parse = validate || (j=>{ if(!j?.chart?.result?.[0]?.meta) throw new Error('no meta'); return j; });
+  try{ return await hedgedFirst(buildCands([url], parse)); }
+  catch(e){ return null; }
 }
 
 // ── 미국 장 상태 (시간 기반 폴백) ──
@@ -2128,51 +2162,24 @@ async function fetchNaver(ticker){
     return {ok:true, price, prev:prev>0?prev:price, regularPrice:price};
   };
 
-  // 모든 URL × 프록시 조합 병렬 시도 → 가장 빠른 성공 응답 사용 (실패한 나머지는 즉시 취소)
-  const combos = naverUrls.flatMap(naverUrl =>
-    PROXIES.map(proxy => async (signal) => {
-      const res = await fetch(proxy+encodeURIComponent(naverUrl),{
-        signal,
-        headers:{'User-Agent':'Mozilla/5.0'}
-      });
-      if(!res.ok) throw new Error('not ok');
-      const text = await res.text();
-      let json; try{ json=JSON.parse(text); }catch(e){ throw new Error('parse'); }
-      return parsePrice(json);
-    })
-  );
-
   try{
-    return await firstSuccess(combos);
+    return await hedgedFirst(buildCands(naverUrls, parsePrice));
   }catch(e){
-    return {ok:false};
+    return {ok:false, definitive:!!(e&&e.definitive)};
   }
 }
 
 async function fetchYahoo(ticker){
-  // query1/query2 × 프록시 조합 병렬 시도 → 가장 빠른 응답 사용 (실패한 나머지는 즉시 취소)
-  const tryCombo = async (host, proxy, signal) => {
-    const url=`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
-    const res = await fetch(proxy+encodeURIComponent(url),{
-      signal,
-      headers:{'User-Agent':'Mozilla/5.0'}
-    });
-    if(!res.ok) throw new Error('not ok');
-    const text = await res.text();
-    let json; try{ json=JSON.parse(text); }catch(e){ throw new Error('parse'); }
-    if(json?.contents) try{ json=JSON.parse(json.contents); }catch(e){}
+  const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`);
+  const parse = json => {
     const meta = json?.chart?.result?.[0]?.meta;
     if(!meta?.regularMarketPrice) throw new Error('no price');
     const regularPrice = meta.regularMarketPrice;
     const prev = meta.chartPreviousClose||meta.previousClose||regularPrice;
-    // v8에서는 postMarketPrice가 없을 수 있으므로 별도로 v10에서 가져옴 (아래 fetchPostMarket 참조)
     return {ok:true, price:regularPrice, prev, regularPrice, marketState:'REGULAR', postMarketPct: null};
   };
-  try{
-    return await firstSuccess(
-      ['query1','query2'].flatMap(host => PROXIES.map(proxy => signal=>tryCombo(host, proxy, signal)))
-    );
-  }catch(e){ return {ok:false}; }
+  try{ return await hedgedFirst(buildCands(urls, parse)); }
+  catch(e){ return {ok:false, definitive:!!(e&&e.definitive)}; }
 }
 
 /* ── 종목별 과거 시세 (기능 A: 종목 상세 차트 + 매수/매도 마커) ──
@@ -2195,16 +2202,8 @@ function yahooIntervalForRange(range){
 }
 async function fetchYahooHistory(ticker, range){
   const interval = yahooIntervalForRange(range);
-  const tryCombo = async (host, proxy, signal) => {
-    const url=`https://${host}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`;
-    const res = await fetch(proxy+encodeURIComponent(url),{
-      signal,
-      headers:{'User-Agent':'Mozilla/5.0'}
-    });
-    if(!res.ok) throw new Error('not ok');
-    const text = await res.text();
-    let json; try{ json=JSON.parse(text); }catch(e){ throw new Error('parse'); }
-    if(json?.contents) try{ json=JSON.parse(json.contents); }catch(e){}
+  const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`);
+  const parse = json => {
     const result = json?.chart?.result?.[0];
     const timestamps = result?.timestamp;
     const quote = result?.indicators?.quote?.[0];
@@ -2217,11 +2216,8 @@ async function fetchYahooHistory(ticker, range){
     if(!points.length) throw new Error('empty');
     return points;
   };
-  try{
-    return await firstSuccess(
-      ['query1','query2'].flatMap(host => PROXIES.map(proxy => signal=>tryCombo(host, proxy, signal)))
-    );
-  }catch(e){ return null; }
+  try{ return await hedgedFirst(buildCands(urls, parse), 10000); }
+  catch(e){ return null; }
 }
 async function getStockHistory(ticker, range){
   const cache = loadPxHistCache();
@@ -2821,33 +2817,40 @@ async function fetchPrice(ticker){
   return fetchYahoo(ticker);
 }
 
-// USD 종목 애프터마켓 % 가져오기 (v10/quoteSummary price 모듈)
+// USD 종목 애프터마켓 % — v10 quoteSummary는 야후가 crumb 인증(401 Invalid Crumb)을 요구해 항상 실패했다
+// (프록시 8회 요청을 매번 헛수고). v8 chart의 includePrePost로 장후 구간 마지막 종가를 받아 정규장 종가 대비 %를 계산한다.
+// 장후(post) 시간대가 아니면 조회 없이 null.
 async function fetchPostMarket(ticker){
-  for(const host of ['query1','query2']){
-    try{
-      const url = `https://${host}.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=price`;
-      const json = await yahooFetch(url);
-      const price = json?.quoteSummary?.result?.[0]?.price;
-      if(!price) continue;
-      const postPct = price.postMarketChangePercent;
-      const postPrice = price.postMarketPrice;
-      const marketState = price.marketState; // POST, PRE, REGULAR
-      if(marketState === 'POST' && postPct != null){
-        return {pct: Math.round(postPct * 10000) / 100}; // raw값이 0.0054... 형태
-      }
-    }catch(e){}
-  }
-  return null;
+  const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=5m&range=1d&includePrePost=true`);
+  const parse = json => {
+    const r = json?.chart?.result?.[0];
+    if(!r?.meta) throw new Error('no meta');
+    return r;
+  };
+  try{
+    const r = await hedgedFirst(buildCands(urls, parse));
+    const post = r.meta.currentTradingPeriod?.post;
+    const nowSec = Date.now()/1000;
+    if(!post || nowSec < post.start || nowSec > post.end) return null;
+    const closes = r.indicators?.quote?.[0]?.close || [];
+    const ts = r.timestamp || [];
+    let last = null;
+    for(let i=closes.length-1;i>=0;i--){ if(closes[i]!=null && ts[i]>=post.start){ last = closes[i]; break; } }
+    const reg = r.meta.regularMarketPrice;
+    if(last==null || !(reg>0)) return null;
+    return {pct: Math.round((last-reg)/reg*10000)/100};
+  }catch(e){ return null; }
 }
 
 async function fetchFXRate(pair){
-  for(const host of ['query1','query2']){
-    const url=`https://${host}.finance.yahoo.com/v8/finance/chart/${pair}?interval=1d&range=1d`;
-    const json = await yahooFetch(url);
+  const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${pair}?interval=1d&range=1d`);
+  const parse = json => {
     const price = json?.chart?.result?.[0]?.meta?.regularMarketPrice;
-    if(price&&price>0) return price;
-  }
-  return null;
+    if(!(price>0)) throw new Error('no price');
+    return price;
+  };
+  try{ return await hedgedFirst(buildCands(urls, parse)); }
+  catch(e){ return null; }
 }
 
 /* 헤더 "포트폴리오" 옆 USD/KRW 실시간 표시 — 전체 시세 갱신(5분)과 별개로 이 한 종목만 30초마다 조회한다.
@@ -2863,12 +2866,12 @@ function renderLogoFx(){
 }
 async function refreshLiveUsdKrw(){
   try{
-    let meta=null;
-    for(const host of ['query1','query2']){
-      const json = await yahooFetch(`https://${host}.finance.yahoo.com/v8/finance/chart/USDKRW=X?interval=1d&range=1d`);
-      meta = json?.chart?.result?.[0]?.meta;
-      if(meta?.regularMarketPrice>0) break;
-    }
+    const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/USDKRW=X?interval=1d&range=1d`);
+    const meta = await hedgedFirst(buildCands(urls, json=>{
+      const m = json?.chart?.result?.[0]?.meta;
+      if(!(m?.regularMarketPrice>0)) throw new Error('no meta');
+      return m;
+    }));
     const val = meta?.regularMarketPrice;
     if(!(val>1000 && val<2000)) throw new Error('bad fx');
     const prev = meta.chartPreviousClose || meta.previousClose || val;
@@ -2915,18 +2918,12 @@ function onSaveSnapClick(btn){
   setTimeout(()=>{ btn.innerHTML = original; btn.disabled = false; }, 900);
 }
 
-// 한국=네이버, 미국/일본=야후 프록시 조회. 종목별로 firstSuccess가 이미 최대 12개
-// 프록시 조합을 동시에 쏘므로, 종목 자체를 전부 한꺼번에 풀어버리면 브라우저의 프록시
-// 호스트당 동시 연결 한도에 걸려 뒤쪽 종목이 밀린다 — 동시 처리 종목 수를 제한해 실제
-// 네트워크로 나가는 순간 최대 동시 연결 수를 낮춘다.
-// 2026-09-01: 현재 실질적으로 살아있는 프록시가 cors.lol 하나뿐이라(PROXIES 위 설명
-// 참고) 4개씩만 풀어도 그 하나에 요청이 몰려 자체 rate limit로 전량 실패하는 게
-// 재현됐다 — 2개로 더 낮춰 한 프록시에 몰리는 순간 부하 자체를 줄인다.
-// targets의 asset 객체를 직접 변형(currentPrice 등)하고, 실패한 asset들을 그대로
-// 돌려준다 — 호출부(fetchAllPrices)가 실패분만 추려 재시도할 수 있도록.
+// 한국=네이버, 미국/일본=야후 프록시 조회. 종목당 워커 1건이 기본이라(hedgedFirst 참고) 동시 처리 종목 수를
+// 8로 올렸다(예전엔 종목당 8~12건 팬아웃이라 2로 제한). targets의 asset 객체를 직접 변형(currentPrice 등)하고,
+// 실패한 asset들을 그대로 돌려준다 — 호출부(fetchAllPrices)가 실패분만 추려 재시도할 수 있도록.
 async function fetchPricesFor(targets){
-  const results=await mapWithConcurrency(targets, 2, async a=>({a, r:await fetchPrice(a.ticker)}));
-  let ok=0; const failed=[];
+  const results=await mapWithConcurrency(targets, 8, async a=>({a, r:await fetchPrice(a.ticker)}));
+  let ok=0; const failed=[], soft=[];
   results.forEach(({a,r})=>{
     if(r.ok){
       // prev가 price와 같으면 (전일 데이터 없음) 기존 prevPrice 유지
@@ -2945,9 +2942,10 @@ async function fetchPricesFor(targets){
       ok++;
     } else {
       failed.push(a);
+      if(!r.definitive) soft.push(a); // 종목 자체를 못 찾은 확정 실패는 재시도해도 소용없다
     }
   });
-  return {ok, failed};
+  return {ok, failed, soft};
 }
 
 let isFetching=false;
@@ -2961,38 +2959,46 @@ function fetchAllPrices(saveSnapshot=false){
   fetchAllPricesPromise=(async()=>{
   setStatus('loading','시세 조회 중...');
   try{
-    const[usd,jpy]=await Promise.all([fetchFXRate('USDKRW=X'),fetchFXRate('JPYKRW=X')]);
-    if(usd&&usd>1000&&usd<2000){FX.USD=usd;}
-    if(jpy&&jpy>5&&jpy<20){FX.JPY=jpy;}
-    saveFX();
-
+    const tStart=performance.now();
+    pxTelemetry.last=[];
     const targets=assets.filter(a=>a.ticker&&a.ticker!=='—'&&a.acctType!=='cash');
 
-    let {ok, failed}=await fetchPricesFor(targets);
+    // 환율 조회와 종목 시세 조회를 동시에 진행(예전엔 환율이 끝나야 종목 조회를 시작했다)
+    const fxTask=(async()=>{
+      const[usd,jpy]=await Promise.all([fetchFXRate('USDKRW=X'),fetchFXRate('JPYKRW=X')]);
+      if(usd&&usd>1000&&usd<2000){FX.USD=usd;}
+      if(jpy&&jpy>5&&jpy<20){FX.JPY=jpy;}
+      saveFX();
+    })();
+    let [{ok, failed, soft}]=await Promise.all([fetchPricesFor(targets), fxTask]);
 
-    // 실패한 종목만 잠깐 쉬었다가 한 번 더 시도한다. 실패의 실제 원인은 프록시(특히
-    // 현재 유일하게 안정적인 cors.lol) 쪽 순간 rate limit인 경우가 대부분이라, 그 부하가
-    // 가라앉을 시간을 주면 재시도에서 회복되는 경우가 많다(재현 확인: 첫 시도에서 일부
-    // 종목이 실패해도 몇 초 후 재시도하면 성공).
-    if(failed.length){
-      await new Promise(r=>setTimeout(r, 3000));
-      const retry=await fetchPricesFor(failed);
+    // 실패한 종목만 짧게 쉬었다가 한 번 더 시도한다(순간 오류 대비). 예전의 고정 3초 대기는 제거.
+    if(soft.length){
+      await new Promise(r=>setTimeout(r, 400));
+      const retry=await fetchPricesFor(soft);
       ok += retry.ok;
-      failed = retry.failed;
+      failed = failed.filter(a=>!soft.includes(a)).concat(retry.failed);
     }
     const fail = failed.length;
     const failNames = failed.map(a=>a.name);
+    failed.forEach(a=>{ a.priceStale = true; });
+    targets.forEach(a=>{ if(!failed.includes(a)) delete a.priceStale; });
+    const elapsed=((performance.now()-tStart)/1000).toFixed(1);
+    try{
+      const by={}; pxTelemetry.last.forEach(x=>{ (by[x.label]=by[x.label]||[]).push(x.ms); });
+      console.info('[시세 갱신] '+elapsed+'초 · 종목 '+targets.length+'개 · 경로별 채택 횟수/최대ms', Object.fromEntries(Object.entries(by).map(([k,v])=>[k, v.length+'/'+Math.max(...v)+'ms'])));
+    }catch(e){}
     saveAssets();renderAll();
     const t=new Date().toLocaleTimeString('ko-KR');
     if(ok>0&&fail===0){
-      setStatus('ok',`갱신 완료 ${t} · ${ok}개`);
+      setStatus('ok',`갱신 완료 ${t} · ${ok}개 · ${elapsed}초`);
     } else if(ok>0&&fail>0){
-      setStatus('ok',`갱신 완료 ${t} · ${ok}개 성공 / ${fail}개 실패(${failNames.slice(0,2).join(',')})`);
+      setStatus('ok',`갱신 완료 ${t} · ${ok}개 성공 / ${fail}개 실패(${failNames.slice(0,2).join(',')}) · ${elapsed}초`);
     } else {
       setStatus('err',`시세 조회 실패 (${fail}개) — LTE로 시도하거나 잠시 후 재시도하세요`);
     }
 
-    // USD 종목 애프터마켓 데이터 별도 조회 (v10 quoteSummary)
+    // USD 종목 애프터마켓 데이터 별도 조회(화면 갱신과 분리, 값이 바뀐 경우에만 재렌더)
     const usdAssets = assets.filter(a=>a.currency==='USD' && a.ticker && a.ticker!=='—');
     if(usdAssets.length){
       Promise.allSettled(usdAssets.map(a=>
@@ -3003,8 +3009,8 @@ function fetchAllPrices(saveSnapshot=false){
           if(p.status==='fulfilled'){
             const a=assets.find(x=>x.id===p.value.id);
             if(a){
-              a.postMarketPct = p.value.r ? p.value.r.pct : null;
-              updated=true;
+              const nv = p.value.r ? p.value.r.pct : null;
+              if((a.postMarketPct??null) !== nv){ a.postMarketPct = nv; updated=true; }
             }
           }
         });
@@ -3015,6 +3021,7 @@ function fetchAllPrices(saveSnapshot=false){
     if(saveSnapshot) saveSnap();
   }catch(e){
     setStatus('err','오류: '+e.message);
+    try{ saveAssets(); renderAll(); }catch(e3){} // 일부라도 갱신된 값은 화면에 반영
     // ★ 에러여도 스냅샷 요청이면 현재 값으로 저장 시도
     if(saveSnapshot) try{ saveSnap(); }catch(e2){}
   }
@@ -4096,7 +4103,7 @@ function renderTable(){
         ? `<span class="acctType-badge" style="background:${ACCTTYPE_COLS[a.cashAcctType]||'#8e8e93'}20;color:${ACCTTYPE_COLS[a.cashAcctType]||'#8e8e93'}">${ACCTTYPE_LABELS[a.cashAcctType]||a.cashAcctType}</span>`
         : `<span class="acctType-badge" style="background:${cc}20;color:${cc}">${acctTypeBadge(a)}</span>`}</td>
       <td class="fold-hide">${(a.assetType||(isCash?'현금':''))?`<span class="acctType-badge" style="background:${ASSETTYPE_COLS[a.assetType||'현금']||'#8e8e93'}20;color:${ASSETTYPE_COLS[a.assetType||'현금']||'#8e8e93'}">${a.assetType||'현금'}</span>`:na}</td>
-      <td style="font-size:11px;">
+      <td style="font-size:11px;${a.priceStale?'opacity:.5;':''}" ${a.priceStale?'title="최근 시세 갱신 실패 — 이전 값 표시 중"':''}>
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
       <td class="fold-hide fold-hide-narrow" style="font-size:11px;">
@@ -6102,6 +6109,22 @@ function buildPrincipalVsValueSeries(){
     principalPath.push({ts:s.timestamp, principal:cumPrincipal});
   });
 
+  // 마지막 스냅샷 이후의 입출금과 "지금" 값을 반영한다 — 예전엔 스냅샷을 새로 저장하기 전까지 시세 갱신·원금 입출금이
+  // 이 차트에 나타나지 않았다. 지금 지점은 저장하지 않는 라이브 포인트(live:true)다.
+  if(snaps.length && assets.length){
+    const nowTs = Date.now();
+    const last = series[series.length-1];
+    if(nowTs - last.ts > 30000){
+      while(idx < cashEvents.length && cashEvents[idx].at <= nowTs){
+        cumPrincipal += (cashEvents[idx].type==='deposit'?1:-1)*(cashEvents[idx].totalKRW||0);
+        principalPath.push({ts:cashEvents[idx].at, principal:cumPrincipal, event:cashEvents[idx]});
+        idx++;
+      }
+      series.push({ts:nowTs, value:totalEv(), principal:cumPrincipal, live:true});
+      principalPath.push({ts:nowTs, principal:cumPrincipal});
+    }
+  }
+
   return {series, principalPath};
 }
 
@@ -6368,7 +6391,7 @@ function renderPvDetail(idx, series){
   }
   const p = series[idx];
   const d = new Date(p.ts);
-  const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`;
+  const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`+(p.live?' (현재 · 저장 전)':'');
   if(p.value==null){
     panel.innerHTML = `
       <div class="pd-title">📅 ${dateStr}</div>
