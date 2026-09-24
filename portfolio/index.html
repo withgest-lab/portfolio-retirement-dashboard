@@ -307,11 +307,11 @@ tr:last-child td{border-bottom:none;}
   tr:hover td:first-child{background:#f7f7f9!important;}
 }
 /* 종목명 칸 최대폭. 펼침+90도 회전(961px+) 구간은 아래 @media(min-width:961px) 블록에서
-   12칼럼을 퍼센트로 재배분하면서 종목명 칸(23.7%, 대표 테이블 폭 1222px 기준 약 290px)
+   12칼럼을 퍼센트로 재배분하면서 종목명 칸(24.7%, 대표 테이블 폭 1222px 기준 약 302px)
    자체가 이미 이 값보다 커지므로, 여기 max-width는 그보다 살짝 낮게 잡아 실제 상한 역할만
    하게 한다(극단적으로 긴 이름은 …으로 줄임, 안전장치). */
-.name-cell{max-width:280px;}
-.name-main{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px;}
+.name-cell{max-width:292px;}
+.name-main{font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:292px;}
 .name-sub{font-size:10px;color:var(--color-tertiary);margin-top:1px;}
 .ticker-badge{font-size:10px;color:var(--color-tertiary);margin-left:3px;}
 .acctType-badge{display:inline-flex;align-items:center;justify-content:center;
@@ -600,15 +600,17 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
    text-align:right라 각 칸의 여백이 전부 아이콘 왼쪽에 쌓여서 "상세정보~연필", "연필~
    휴지통" 사이가 다른 칼럼 경계보다 훨씬 넓어 보였다(상세정보는 가운데 정렬이라 여백이
    양옆에 반씩 나뉘는 것과 대비됨). 연필·휴지통은 "균등 배분" 대상에서 빼고 내용물에 딱
-   맞는 폭(자연폭+6px)만 줘서 둘이 바짝 붙게 하고, 거기서 아낀 폭은 종목명 확대에 쓴다.
+   맞는 폭만 줘서 둘이 바짝 붙게 하고, 거기서 아낀 폭은 종목명 확대에 쓴다. v2에선 cushion을
+   6px 줬는데 사용자가 더 좁혀 달라고 해서 3px로 축소, 아낀 만큼 종목명에 더 배분(v3).
    계산: 자연폭 실측(11px 폰트) — 배지 51·43·61·43, 현재가68, 평가금액53, 평가손익61,
-   상세정보52, 연필·휴지통 각 37. 연필·휴지통 43px씩(자연폭+6) 고정. 종목명 목표
-   230px(기존 215px보다 확대). 남는 폭 = 846 − 230 − (배지~상세정보 자연폭 합 432) −
-   86(연필+휴지통) = 98px → 2~6·8~10번째 8칼럼에 12.25px씩 균등 배분 → 퍼센트 환산. */
+   상세정보52, 연필·휴지통 각 37. 연필·휴지통 40px씩(자연폭+3) 고정. 종목명 목표
+   236px(v2 230px보다 확대, cushion 절감분 6px 반영). 남는 폭 = 846 − 236 −
+   (배지~상세정보 자연폭 합 432) − 80(연필+휴지통) = 98px → 2~6·8~10번째 8칼럼에
+   12.25px씩 균등 배분 → 퍼센트 환산. */
 @media(min-width:850px) and (max-width:960px){
-  .name-main{max-width:225px;}
+  .name-main{max-width:230px;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:27.2%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:27.9%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:7.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
@@ -626,21 +628,22 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:7.6%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:5.1%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:5.1%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:4.7%;}
 }
-/* ── Z Fold7 펼침 + 90도 회전(가로, 961px 이상) ── 12칼럼 재설계 v2
-   위 850~960px 블록과 같은 이유·같은 방법론, 대표 테이블 폭 1222px 기준.
-   연필·휴지통 각 57px(자연폭47+10) 고정. 종목명 목표 290px(기존 260px보다 확대). 남는
-   폭 = 1222 − 290 − (배지~상세정보 자연폭 합 513) − 114(연필+휴지통) = 305px →
-   2~10번째 9칼럼에 약 34px씩 균등 배분 → 퍼센트 환산. */
+/* ── Z Fold7 펼침 + 90도 회전(가로, 961px 이상) ── 12칼럼 재설계 v3
+   위 850~960px 블록과 같은 이유·같은 방법론, 대표 테이블 폭 1222px 기준. v2에선 cushion을
+   10px 줬는데 사용자가 더 좁혀 달라고 해서 4px로 축소, 아낀 만큼 종목명에 더 배분(v3).
+   연필·휴지통 각 51px(자연폭47+4) 고정. 종목명 목표 302px(v2 290px보다 확대, cushion
+   절감분 12px 반영). 남는 폭 = 1222 − 302 − (배지~상세정보 자연폭 합 513) −
+   102(연필+휴지통) = 305px → 2~10번째 9칼럼에 약 34px씩 균등 배분 → 퍼센트 환산. */
 @media(min-width:961px){
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:23.7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:24.7%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:5.6%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:6.6%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
@@ -658,9 +661,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:7.4%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.8%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:4.7%;}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:4.8%;}
 }
 /* ── Z Fold7 접힘 / 일반 모바일 (~390px) ── */
 @media(max-width:480px){
