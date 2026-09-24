@@ -432,6 +432,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .alloc-grid[data-mode="narrow"] .alloc-legend{max-width:none;}
 .alloc-grid[data-mode="wide"] .alloc-detail-row{flex-direction:row;align-items:flex-start;flex-wrap:nowrap;}
 .alloc-grid[data-mode="wide"] .alloc-detail-legend{flex:1 1 170px;width:auto;max-width:none;}
+/* 펼침·펼침+90도: 작은 도넛 범례는 이름이 잘리지 않게 금액을 숨긴다(금액은 가운데 총자산·종목 비중 막대에 있음) */
+.alloc-grid[data-mode="wide"] .alloc-legend .lg-amt{display:none;}
+/* 왼쪽 작은 도넛 줄은 열 폭 전체를 쓰고(내용 폭으로 줄어들면 범례가 도넛 아래로 내려간다) 범례가 남는 폭을 채운다 */
+.alloc-grid[data-mode="wide"] .alloc-left .alloc-donut-row{width:100%;flex-wrap:nowrap;justify-content:flex-start;}
+.alloc-grid[data-mode="wide"] .alloc-left .alloc-donut-row .donut-canvas-wrap{flex:none;}
+.alloc-grid[data-mode="wide"] .alloc-left .alloc-legend{flex:1 1 0;min-width:0;max-width:none;}
 .alloc-grid[data-mode="narrow"] .lg-amt{display:none;}
 .alloc-grid[data-mode="narrow"] .alloc-detail-legend .lg-amt{display:block;}
 .alloc-grid[data-mode="narrow"] .alloc-bars .bar-label{width:68px;}
@@ -809,7 +815,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </div>
     </div>
     <div class="chart-wrap"><canvas id="qvTreemapCanvas" height="300"></canvas></div>
-    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=수익률(초록 이익/빨강 손실). '기간별 주가 변화율'은 선택한 기간 동안의 주가 변화이고, '총수익률 (평단 대비)'은 기간과 무관하게 내 평균 매입가 대비 현재 수익률이라 기간 탭이 없습니다. 1D는 오늘 국내장 개장(09:00, 휴장일엔 직전 평일 09:00) 기준입니다. 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
+    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=수익률(초록 이익/빨강 손실). '기간별 주가 변화율'은 선택한 기간 동안의 주가 변화이고, '총수익률 (평단 대비)'은 기간과 무관하게 내 평균 매입가 대비 현재 수익률이라 기간 탭이 없습니다. 1D는 '오늘 국내장(09:00) + 오늘 밤 미국장'을 하루로 묶습니다(금요일 국장+미장은 다음 월요일 국장 개장 전까지 유지). 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
   </div>
 </div>
 
@@ -6991,17 +6997,18 @@ function drawDonut(canvasId,data,size){
   const cv=document.getElementById(canvasId);if(!cv)return;
   const ctx=cv.getContext('2d');
   const dpr=window.devicePixelRatio||1;
-  const LW=size,LH=size,cx=size/2,cy=size/2,OR=size*0.45,IR=size*(size<140?0.25:0.235);
+  const LW=size,LH=size,cx=size/2,cy=size/2,OR=size*0.45,IR=size*(size<125?0.22:size<140?0.25:0.235);
   cv.width=Math.round(LW*dpr);cv.height=Math.round(LH*dpr);
   cv.style.width=LW+'px';cv.style.height=LH+'px';
   ctx.scale(dpr,dpr);ctx.clearRect(0,0,LW,LH);
   const total=data.reduce((s,d)=>s+d.value,0);if(!total)return;
   let angle=-Math.PI/2;const GAP=0.016;
   const fs=donutClamp(Math.round(size*0.06),8,12);
+  const labels=[];   // 검증용: 조각별 비중과 숫자 표시 여부(cv._donutLabels)
   data.forEach(d=>{
     const sw=(d.value/total)*2*Math.PI;
     // 너무 작은 섹터는 건너뜀 (역방향 호 버그 방지)
-    if(sw < GAP*2 + 0.001){ angle+=sw; return; }
+    if(sw < GAP*2 + 0.001){ labels.push({label:d.label,pct:d.value/total*100,drawn:false}); angle+=sw; return; }
     // 섹터 그리기
     ctx.beginPath();
     ctx.arc(cx,cy,OR,angle+GAP,angle+sw-GAP);
@@ -7010,6 +7017,8 @@ function drawDonut(canvasId,data,size){
     // 모든 조각을 같은 형식으로: % 없이 숫자만("59.4"). 조각 안에 완전히 들어갈 때만 표시하고,
     // 안 들어가면 글자를 1pt씩 줄여(최소 8px) 다시 시도, 그래도 안 들어가면 표시 안 함
     const txt=maskAmt(((d.value/total)*100).toFixed(1));
+    const pctNum=(d.value/total)*100;
+    let drawn=false;
     for(let f=fs; f>=8; f--){
       ctx.font=`bold ${f}px Pretendard,-apple-system,sans-serif`;
       const pos=fitLabelInSector(cx,cy,IR,OR,angle+GAP,angle+sw-GAP,ctx.measureText(txt).width+1,Math.round(f*0.85));
@@ -7018,10 +7027,23 @@ function drawDonut(canvasId,data,size){
       ctx.textAlign='center';
       ctx.textBaseline='middle';
       ctx.fillText(txt,pos.x,pos.y+0.5);
+      drawn=true;
       break;
     }
+    // 두 자리 비중(10% 이상) 조각은 어떤 경우에도 숫자를 넣는다. 조각 안에 글상자가 완전히 들어가는 자리가 없으면(도넛이 작을 때)
+    // 조각 중심에 8px로, 배경색이 달라도 읽히도록 어두운 외곽선을 두른 흰 글자로 그린다.
+    if(!drawn && pctNum>=10){
+      const mid=angle+sw/2, rm=(IR+OR)/2, x=cx+Math.cos(mid)*rm, y=cy+Math.sin(mid)*rm+0.5;
+      ctx.font=`bold 8px Pretendard,-apple-system,sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.lineJoin='round';
+      ctx.lineWidth=2.4; ctx.strokeStyle='rgba(0,0,0,0.45)'; ctx.strokeText(txt,x,y);
+      ctx.fillStyle='rgba(255,255,255,0.97)'; ctx.fillText(txt,x,y);
+      drawn=true;
+    }
+    labels.push({label:d.label,pct:pctNum,drawn});
     angle+=sw;
   });
+  cv._donutLabels=labels;
   // 안쪽 흰 원
   ctx.beginPath();ctx.arc(cx,cy,IR-1,0,2*Math.PI);ctx.fillStyle='#fff';ctx.fill();
   ctx.textAlign='left';ctx.textBaseline='alphabetic';
@@ -7483,16 +7505,17 @@ function fitAllocDonutLayout(){
     const d1 = donutClamp(Math.floor(W*0.4),100,150);
     return { mode:'narrow', d1, d2: donutClamp(W-8,170,320), callout:false, detailW:W, leg1:Math.max(3,Math.floor(d1/ROW)) };
   }
-  // 펼침(세로·가로) 공통: 작은 도넛은 폭 기준(목표 190px)으로 키우고, 왼쪽 열은 "도넛+간격 12+범례 124"로 딱 맞춰 남는 폭 전부를 오른쪽 열(세부 종목 도넛)에 넘긴다.
+  // 펼침(기본)·펼침+90도 공통: 왼쪽 작은 도넛 3개는 작게(펼침 132px, 펼침+90도 116px) 두고 왼쪽 열을 "도넛+간격 12+범례"에 딱 맞춰,
+  // 남는 폭 전부를 오른쪽 열(자산유형별 세부 종목 도넛)에 넘긴다. 작은 도넛 안의 두 자리 비중(10% 이상) 숫자는 drawDonut이 항상 그린다.
   // 세로는 페이지 스크롤이 되므로 뷰포트 높이에 맞추지 않는다.
-  const LEG=124, SP=12, MIN_RIGHT=300;
-  let d1 = 190;
-  d1 = Math.max(120, Math.min(d1, W-20-MIN_RIGHT-SP-LEG));
+  const land = window.innerWidth >= 961;          // 펼침+90도(가로): 961px 이상
+  const LEG = land ? 108 : 112, SP = 12;
+  const d1 = land ? 116 : 132;
   const leftW = d1 + SP + LEG, rightW = W - 20 - leftW;
-  const leftH = 3*(TITLE+d1) + 2*GAP;
-  const callout = rightW >= 640;
-  let d2 = donutClamp(leftH - TITLE - 70, 170, 430);
-  d2 = Math.max(150, Math.min(d2, Math.floor(rightW-176)));
+  // 콜아웃(리더라인 라벨)은 라벨 영역 때문에 도넛 반지름이 W/2-206로 줄어 폭이 넉넉할 때만 이득이다(R≥약 205 → 오른쪽 열 ≥ 820px).
+  // 그보다 좁으면 링 도넛을 열 폭에 맞춰 최대한 키우고 범례는 그 옆에 둔다.
+  const callout = rightW >= 820;
+  const d2 = donutClamp(Math.floor(rightW-168), 200, 500);
   return { mode:'wide', d1, d2, callout, leftW, detailW:Math.floor(rightW), leg1:Math.max(3,Math.floor(d1/ROW)) };
 }
 
@@ -7715,7 +7738,8 @@ function assetReturnDetail(asset, mode, period){
   // mode==='market' — 순수 시세 변화(1주당 단가 비교, 보유수량 변화의 영향을 배제)
   if(period==='1D'){
     if(!(asset.prevPrice>0)) return {rtn:0, pnl:0};
-    return {rtn:(asset.currentPrice-asset.prevPrice)/asset.prevPrice*100, pnl: toKRW(asset, asset.currentPrice-asset.prevPrice)*asset.quantity};
+    const bp = dayBasePrice(asset);
+    return {rtn:(asset.currentPrice-bp)/bp*100, pnl: toKRW(asset, asset.currentPrice-bp)*asset.quantity};
   }
   const validSnaps = loadSnapsForAnalysis().filter(s=>s.byAsset && s.byAsset[asset.id]!=null && s.byQty && s.byQty[asset.id]>0);
   const earliestSnap = validSnaps.slice().sort((a,b)=>a.timestamp-b.timestamp)[0];
@@ -8254,12 +8278,27 @@ if(selectedAssets.size===0 && !showSum){
   showSum = true;
 }
 
+// 1D 기준단가: 평일 09:00~미국장 개장 전에는 오늘 밤 미국장이 아직 시작 전이므로 미국 종목은 변화 0(기준=현재가),
+// 그 외(미국장 진행 중·마감 후·주말)에는 제공된 전일종가(prevPrice)를 기준으로 한다.
+// 국내·일본 종목은 다음 국내장 개장 전까지 당일 등락을 그대로 유지한다.
+function usAwaitingOpenToday(){
+  const now = new Date(), d = now.getDay();
+  if(d===0 || d===6) return false;
+  const hm = now.getHours()*60 + now.getMinutes();
+  const usOpenHM = isUSDST() ? 22*60+30 : 23*60+30;
+  return hm >= 9*60 && hm < usOpenHM;
+}
+function dayBasePrice(a){
+  return (a.currency==='USD' && usAwaitingOpenToday() && a.currentPrice>0) ? a.currentPrice : a.prevPrice;
+}
 function getPeriodStart(period){
   const now = new Date();
   const dst = isUSDST();
   const usH = dst ? 22 : 23; // 미국장 시작 시간
 
   if(period==='1D'){
+    // 1D = "오늘 국내장(09:00) + 오늘 밤에 시작하는 미국장"을 하루로 본다. 시작점은 국내장 개장 09:00이고
+    // 하루는 다음 국내장 개장(다음 영업일 09:00)까지 이어진다(평일 야간·새벽의 미국장, 주말의 금요일 미국장 포함).
     // 오늘 국내장 개장 시각(09:00) — 아직 개장 전이면 전날, 주말이면 실제로 국내장이
     // 열렸던 가장 최근 평일(보통 금요일)의 09:00까지 거슬러 올라간다. 그래야 국내장이
     // 열려 있는 동안은 리셋되지 않고 그대로 누적되며, 토·일요일에는 금요일 국장+미장
@@ -8400,13 +8439,13 @@ function isMarketPreOpen(a){
   if(day === 0 || day === 6) return true;
   // KRW·JPY:
   // ① 오전 9시 이전 → 개장 전
-  // ② 22:30(비서머)/22:30(서머) 이후 → 새 하루 시작, 한국/일본장 미개장 → 0%
+  // ② (1D 정의 변경) 미국장 개장 이후에도 국내·일본 종목은 다음 국내장 개장 전까지 당일 등락 유지 — 아래 usOpenHM 규칙은 더 이상 쓰지 않음
   const h = now.getHours(), m = now.getMinutes();
   const hm = h * 60 + m;
   const dst = isUSDST();
   const usOpenHM = dst ? 22*60+30 : 23*60+30;
   if(hm < 9*60) return true;   // 오전 9시 이전
-  if(hm >= usOpenHM) return true; // 미국장 개장 이후 → 새 하루, KRW/JPY 미거래
+  void usOpenHM;
   return false;
 }
 
@@ -8464,7 +8503,7 @@ function buildSnapshotHistory(period){
       // 표(전일종가 기준)와 1D 그래프(스냅샷 기준)의 등락률이 서로 달라 보이는 문제가 있었다.
       // prevPrice가 없는 경우에만 스냅샷 → getBaseEvKRW1D 순으로 폴백한다.
       if(a.prevPrice>0){
-        base1D[a.id] = Math.round(toKRW(a, a.prevPrice) * (a.quantity||1));
+        base1D[a.id] = Math.round(toKRW(a, dayBasePrice(a)) * (a.quantity||1));
         qty1D[a.id]  = a.quantity || 1;
       } else if(_base1DSnap && _base1DSnap.byAsset && _base1DSnap.byAsset[a.id]!=null){
         const bq = (_base1DSnap.byQty && _base1DSnap.byQty[a.id]) ? _base1DSnap.byQty[a.id] : (a.quantity||1);
