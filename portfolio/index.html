@@ -7053,6 +7053,7 @@ function sharePctText(v, total){
 // 콜아웃 모드는 시작각 후보마다 "조각 안에 못 들어가 리더라인으로 빼야 하는 유형"을 미리 알아야 해서 그리기와 분리했다.
 // 규칙(모든 화면 크기 공통): 큰 조각부터, 조각 안 어디든 완전히 들어가는 자리를 찾아 "이름/%"(2줄) → "이름 %"(1줄) 순으로 시도한다.
 // 그래도 안 되면 label=null — 호출부가 리더라인으로 밖에 빼서 표시한다(좁은 화면은 위 칩 줄·아래 범례가 대신한다).
+const INNER_SHORT_NAMES = {'안전자산':'안전','주도주':'주도','유망주':'유망'}; // 안쪽 링 라벨용 줄임말(Core 등 나머지는 그대로)
 function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
   const IR=R*0.30, IOR=R*0.64, rm=(IR+IOR)/2;
   const fs=donutClamp(Math.round(R*0.085),8,12);
@@ -7095,12 +7096,13 @@ function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
   // 안 들어가면 label=null(콜아웃 모드는 리더라인으로 빼고, 그 외에는 표시 안 함). 글자가 겹치거나 잘리지 않는 자리만 채택한다.
   slices.slice().sort((a,b)=>b.sw-a.sw).forEach(s=>{
     const pct=sharePctText(s.t.value,total).replace('%',''); // 안쪽 링은 모든 조각을 "이름 숫자"(% 없이)로 통일
+    const nm=INNER_SHORT_NAMES[s.t.key]||s.t.key;
     const variants=[];
     const sizes = typeNames ? [fs, fs-1, fs-2].filter(f=>f>=8) : [fs];
     sizes.forEach(f=>{
       ctx.font=`bold ${f}px Pretendard,-apple-system,sans-serif`;
       const lh=Math.round(f*1.25);
-      const nameW=ctx.measureText(s.t.key).width, pctW=ctx.measureText(pct).width, spW=ctx.measureText(' ').width;
+      const nameW=ctx.measureText(nm).width, pctW=ctx.measureText(pct).width, spW=ctx.measureText(' ').width;
       if(typeNames){
         variants.push({fs:f,w:Math.max(nameW,pctW)+6,h:lh*2,lines:2});
         variants.push({fs:f,w:nameW+spW+pctW+6,h:lh,lines:1});
@@ -7113,7 +7115,7 @@ function planInnerLabels(ctx, cx, cy, R, tree, total, start, typeNames){
     for(const v of variants){
       const pos=findSpot(s,v.w,v.h);
       if(!pos) continue;
-      s.label={x:pos.x, y:pos.y, w:v.w, h:v.h, lines:v.lines, fs:v.fs, pct, text: (typeNames&&!v.pctOnly) ? `${s.t.key} ${pct}` : pct, pctOnly:!!v.pctOnly};
+      s.label={x:pos.x, y:pos.y, w:v.w, h:v.h, lines:v.lines, fs:v.fs, pct, name:nm, text: (typeNames&&!v.pctOnly) ? `${nm} ${pct}` : pct, pctOnly:!!v.pctOnly};
       placed.push({x:pos.x, y:pos.y, w:v.w, h:v.h});
       break;
     }
@@ -7162,7 +7164,7 @@ function paintDonutRings(ctx, cx, cy, R, tree, opt){
     ctx.fillStyle=treemapTextColor(s.t.color);
     ctx.font=`bold ${L.fs||fs}px Pretendard,-apple-system,sans-serif`;
     const llh=Math.round((L.fs||fs)*1.25);
-    if(L.lines===2){ ctx.fillText(s.t.key,L.x,L.y-llh/2+1); ctx.fillText(L.pct,L.x,L.y+llh/2); }
+    if(L.lines===2){ ctx.fillText(L.name||s.t.key,L.x,L.y-llh/2+1); ctx.fillText(L.pct,L.x,L.y+llh/2); }
     else ctx.fillText(L.text,L.x,L.y+0.5);
   });
   ctx.textAlign='left'; ctx.textBaseline='alphabetic';
