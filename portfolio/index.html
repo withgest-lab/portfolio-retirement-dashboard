@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="../shared/theme.js"></script>
 <title>자산 포트폴리오 대시보드</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <style>
@@ -770,6 +771,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-page="dividend" onclick="switchPage('dividend')">💰 배당금관리</button>
   <button data-page="tax" onclick="switchPage('tax')">🧾 세금관리</button>
   </div>
+  <span id="themeMountPf" style="display:contents"></span>
   <button type="button" class="hide-amt-btn" id="hideAmtBtn" role="switch" aria-checked="false" onclick="setHideAmounts(!hideAmounts)" title="금액·%·종목명·티커·금융회사·메모를 가리고 손익 색을 회색으로 바꿉니다"><span class="hide-amt-ico">👁</span>개인정보 숨기기<span class="sw"></span></button>
 </nav>
 
@@ -839,7 +841,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <div class="tgl-banner-row"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="statBar" onclick="toggleBanner(this)">상세 종목별 수익률 보기<span class="sw"></span></button></div>
   <div class="stat-bar" id="statBar" style="display:none;"></div>
 </div>
-<div class="tgl-banner-row" style="margin-left:16.5px;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="snapHistWrap" onclick="toggleBanner(this)">스냅샷 이력 보기<span class="sw"></span></button></div>
+<div class="tgl-banner-row" style="margin-left:13px;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="snapHistWrap" onclick="toggleBanner(this)">스냅샷 이력 보기<span class="sw"></span></button></div>
 <div id="snapHistWrap" style="display:none;">
   <div class="card" style="margin-top:10px;">
     <div class="snap-header">
@@ -1666,6 +1668,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 </div>
 
 <script src="../shared/icons.js"></script>
+<script>if(window.kisTheme){var m=document.getElementById("themeMountPf");kisTheme.mount(m.parentNode,m);}</script>
 <script>
 /* ════════════════════════════════════════
    상수 & 팔레트

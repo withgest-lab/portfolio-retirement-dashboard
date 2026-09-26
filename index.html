@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-native-dark>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>포트폴리오 · 은퇴 현금흐름 대시보드</title>
+<script src="shared/theme.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
@@ -31,17 +32,19 @@
   .card .desc{font-size:12px;color:#8a8a8e;line-height:1.5;}
   footer{font-size:11px;color:#a0a0a5;text-align:center;}
 
-  @media (prefers-color-scheme: dark){
-    body{background:#111214;color:#f0f0f2;}
-    p.sub{color:#9a9aa0;}
-    .card{background:#1c1d20;border-color:rgba(255,255,255,0.06);box-shadow:0 2px 10px rgba(0,0,0,0.3);}
-    .card:hover{box-shadow:0 6px 18px rgba(0,0,0,0.4);}
-    .card .desc{color:#9a9aa0;}
-    footer{color:#6b6b70;}
-  }
+  /* 다크: shared/theme.js가 html[data-theme]를 정한다(시스템 설정 또는 사용자가 고른 값, 모든 화면 공유) */
+  html[data-theme="dark"] body{background:#111214;color:#f0f0f2;}
+  html[data-theme="dark"] p.sub{color:#9a9aa0;}
+  html[data-theme="dark"] .card{background:#1c1d20;border-color:rgba(255,255,255,0.06);box-shadow:0 2px 10px rgba(0,0,0,0.3);}
+  html[data-theme="dark"] .card:hover{box-shadow:0 6px 18px rgba(0,0,0,0.4);}
+  html[data-theme="dark"] .card .desc{color:#9a9aa0;}
+  html[data-theme="dark"] footer{color:#6b6b70;}
+  html[data-theme="dark"] .kis-theme-sw{background:#1c1d20;color:#aeaeb2;border-color:rgba(255,255,255,.18);}
+  #themeSlot{position:absolute;top:14px;right:14px;}
 </style>
 </head>
 <body>
+  <div id="themeSlot"></div>
   <h1>내 포트폴리오 &amp; 은퇴 현금흐름</h1>
   <p class="sub">
     자산 포트폴리오 현황과 은퇴 후 현금흐름 시뮬레이션이 하나로 연동됩니다.
@@ -66,5 +69,6 @@
   </div>
   <footer>모든 데이터는 이 브라우저의 localStorage에만 저장됩니다.</footer>
   <script src="shared/icons.js"></script>
+  <script>if(window.kisTheme) kisTheme.mount(document.getElementById("themeSlot"));</script>
 </body>
 </html>
