@@ -5,7 +5,7 @@
 
 - 📊 [자산 포트폴리오](./portfolio/) — 이전: [-New-portfolio-dashboard](https://withgest-lab.github.io/-New-portfolio-dashboard/)
 - 🧮 [은퇴 후 현금흐름](./retirement/) — 이전: [Retirement-dashboard-](https://withgest-lab.github.io/Retirement-dashboard-/)
-- 📈 [KIS 매수신호](./signals/) — 데이터 출처: [kis-buy-signal](https://withgest-lab.github.io/kis-buy-signal/)(별도 저장소, 매일 자동 갱신)
+- 📈 [KIS 기반 매수·매도 전략](./signals/) — 데이터 출처: [kis-buy-signal](https://withgest-lab.github.io/kis-buy-signal/)(별도 저장소, 매일 자동 갱신)
 
 ## 구조
 
@@ -16,7 +16,7 @@
 │   └── index.html     # 자산 포트폴리오 대시보드
 ├── retirement/
 │   └── index.html     # 은퇴 후 현금흐름 시뮬레이션
-├── signals/            # KIS 매수신호 대시보드 - 이 저장소에는 커밋되지 않음.
+├── signals/            # KIS 기반 매수·매도 전략 대시보드 - 이 저장소에는 커밋되지 않음.
 │   │                    index.html/scores.json/detail/*.json 전부 배포 시점에
 │   │                    .github/workflows/deploy.yml이 kis-buy-signal 저장소의
 │   │                    공개 Pages에서 자동으로 받아와 채운다.
@@ -86,7 +86,7 @@
 - 지역가입자 요율(소득보험료율·재산점수당 금액·장기요양보험료율)은 매년(때로 연중) 개정되므로
   "2026년 기준" 수치이며 실제 고지서와 차이가 있을 수 있습니다.
 
-## KIS 매수신호 대시보드 & 배포 방식
+## KIS 기반 매수·매도 전략 대시보드 & 배포 방식
 
 `signals/`는 별도 저장소([withgest-lab/kis-buy-signal](https://github.com/withgest-lab/kis-buy-signal))의
 Python 파이프라인(KIS Open API 시세 수집 → MDD/RSI/MFI 스코어링 → 텔레그램 알림)이 매일
@@ -101,7 +101,7 @@ Python 파이프라인(KIS Open API 시세 수집 → MDD/RSI/MFI 스코어링 �
   묶어 배포합니다.
 - 데이터/화면 fetch가 실패하면(원본 사이트 장애 등) 배포 자체가 실패 처리되어 직전까지 정상
   배포돼 있던 사이트가 그대로 유지됩니다(부분/깨진 배포 없음).
-- **유지보수**: KIS 매수신호 대시보드의 화면·로직·알림을 고치려면 `kis-buy-signal` 저장소만
+- **유지보수**: KIS 기반 매수·매도 전략 대시보드의 화면·로직·알림을 고치려면 `kis-buy-signal` 저장소만
   고치고 그 저장소의 `main`에 push하면 됩니다. 이 저장소(portfolio-retirement-dashboard)에서
   손으로 옮기거나 동기화해야 할 파일은 전혀 없습니다 — 다음 배포(매일 자동, 또는 수동
   `workflow_dispatch`) 때 최신 내용이 자동으로 반영됩니다.
