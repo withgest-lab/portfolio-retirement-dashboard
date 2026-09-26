@@ -52,7 +52,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .logo-fx{font-size:10.5px;color:var(--color-tertiary);white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .2s;}
 .logo-fx b{font-weight:700;color:var(--color-secondary);}
 @media(max-width:960px){ .logo-fx .fx-lbl{display:none;} .logo-fx::before{content:'$ ';} }
-.topbar-actions{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
+.topbar-actions{min-width:0;flex:0 1 auto;display:flex;gap:6px;align-items:center;flex-wrap:nowrap;justify-content:flex-start;
   overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .topbar-actions::-webkit-scrollbar{display:none;}
 /* 버튼 6개가 터치 드래그로 가로 스크롤되다 손을 떼는 위치에 따라 오른쪽 끝(백업/복원)이
@@ -64,8 +64,11 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .topbar-actions .btn{height:32px;padding:0 12px;font-size:12.5px;gap:5px;}
 .topbar-actions .btn:active,.topbar-actions .btn:focus-visible{background:rgba(0,122,255,.14);color:var(--color-accent);outline:none;}
 /* 시세 갱신↔홈, 현금흐름↔스냅샷 사이를 조금 더 벌려 묶음을 구분 */
-.topbar-actions a[href="../"],.topbar-actions #btnSaveSnap{margin-left:8px;}
+.topbar-actions #btnSaveSnap{margin-left:8px;}
+.topbar-actions .btn-home{width:32px;padding:0;}
 @media(min-width:768px){ .topbar-actions{overflow-x:hidden;} }
+/* 폭이 모자란 펼침 화면(≈900~1100px): 상태 문구를 숨겨 버튼이 잘리지 않게 한다 */
+@media(min-width:768px) and (max-width:1120px){ .topbar-actions .status-wrap span{display:none;} .topbar-actions .btn{padding:0 10px;} }
 .status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);
   flex-shrink:1;min-width:0;overflow:hidden;}
 .status-wrap .dot{flex-shrink:0;}
@@ -766,7 +769,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
     <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
-    <a href="../" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🏠 홈</a>
+    <a href="../" class="btn btn-ghost btn-home" aria-label="홈" title="홈" style="text-decoration:none;display:inline-flex;align-items:center;">🏠</a>
     <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 매매전략</a>
     <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
     <button class="btn btn-ghost" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
