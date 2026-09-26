@@ -557,11 +557,11 @@ button{font-family:inherit;cursor:pointer;}
     <a href="../" class="tax-guide-btn" style="text-decoration:none;">🏠 홈</a>
     <a href="../portfolio/" class="tax-guide-btn" style="text-decoration:none;"><span class="t-e">📊 </span>포트폴리오</a>
     <a href="../signals/" class="tax-guide-btn" style="text-decoration:none;">📈 매매전략</a>
-    <span id="themeMountRt" style="display:contents"></span>
     <button onclick="if(confirm('모든 설정값을 초기화할까요?'))resetState();"
       style="padding:3px 9px;font-size:10px;border-radius:5px;border:1px solid #E8EAF0;background:#fff;color:#AAB0BB;">
       ↺ 초기화
     </button>
+    <span id="themeMountRt" style="display:contents"></span>
   </div>
 </div>
 
@@ -1320,7 +1320,7 @@ button{font-family:inherit;cursor:pointer;}
 </div><!-- main-layout -->
 
 <script src="../shared/icons.js"></script>
-<script>if(window.kisTheme){var m=document.getElementById("themeMountRt");kisTheme.mount(m.parentNode,m);}</script>
+<script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountRt").parentNode);}</script>
 <script>
 const C={
   nh:  {fill:'rgba(78,155,120,0.85)',  line:'#4E9B78'},

@@ -106,8 +106,10 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 @media (max-width:480px){ .hide-amt-btn .hide-amt-ico{display:none;} }
 /* 개인정보 숨기기(html.privacy-on): 수익률로 정해지는 색은 회색으로, 폼에 채워진 값은 가린다(입력·수정은 가능) */
 .privacy-on .up,.privacy-on .dn{color:var(--color-secondary)!important;}
-.privacy-on .index-tile .up,.privacy-on #logoFx .up{color:var(--color-up)!important;}
-.privacy-on .index-tile .dn,.privacy-on #logoFx .dn{color:var(--color-down)!important;}
+.privacy-on .index-tile .up{color:#34c759!important;}
+.privacy-on #logoFx .up{color:var(--color-up)!important;}
+.privacy-on .index-tile .dn{color:#ff3b30!important;}
+.privacy-on #logoFx .dn{color:var(--color-down)!important;}
 .privacy-on :is(#page_dashboard,#page_portfolio,#page_tradelog,#page_returns,#page_dividend,#page_tax) :is(input:not([type=checkbox],[type=radio],[type=file],[type=date],[type=button]),textarea){
   color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 
@@ -480,10 +482,12 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* ── 지수: Yahoo Finance 스타일 타일(이름 / 하루 인트라데이 스파크라인 + 전일종가 점선 / 현재가 / 등락률) ── */
 .index-group-title{font-size:11px;color:var(--color-tertiary);font-weight:700;letter-spacing:.02em;margin:14px 2px 6px;}
 .index-group-title:first-child{margin-top:2px;}
-.index-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.index-tiles{--index-up:#34c759;--index-down:#ff3b30;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
 .index-tile{background:var(--color-card);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px 12px;min-width:0;}
 .index-tile-name{font-size:15px;font-weight:500;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .index-spark{display:block;width:100%;height:40px;margin:6px 0 8px;overflow:visible;}
+.index-tile .up{color:var(--index-up);}
+.index-tile .dn{color:var(--index-down);}
 .index-spark-empty{height:40px;margin:6px 0 8px;}
 .index-tile .index-val{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;}
 .index-tile .index-chg{font-size:17px;font-weight:500;margin-top:2px;white-space:nowrap;}
@@ -759,6 +763,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     <button class="btn btn-ghost" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
     <button class="btn btn-ghost" onclick="openBackupModal()">💾 백업 / 복원</button>
   </div>
+  <span id="themeMountPf" style="display:contents"></span>
 </div>
 <div class="topbar-spacer" aria-hidden="true"></div>
 
@@ -771,7 +776,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <button data-page="dividend" onclick="switchPage('dividend')">💰 배당금관리</button>
   <button data-page="tax" onclick="switchPage('tax')">🧾 세금관리</button>
   </div>
-  <span id="themeMountPf" style="display:contents"></span>
   <button type="button" class="hide-amt-btn" id="hideAmtBtn" role="switch" aria-checked="false" onclick="setHideAmounts(!hideAmounts)" title="금액·%·종목명·티커·금융회사·메모를 가리고 손익 색을 회색으로 바꿉니다"><span class="hide-amt-ico">👁</span>개인정보 숨기기<span class="sw"></span></button>
 </nav>
 
@@ -1668,7 +1672,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 </div>
 
 <script src="../shared/icons.js"></script>
-<script>if(window.kisTheme){var m=document.getElementById("themeMountPf");kisTheme.mount(m.parentNode,m);}</script>
+<script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
 /* ════════════════════════════════════════
    상수 & 팔레트
@@ -7840,7 +7844,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
           const [a1,a2] = cell.amtParts, one = a1+' '+a2;
           if(ctx.measureText(one).width <= cw-12 && ty-cy+fontSize <= ch-3) ctx.fillText(one, cx+6, ty);
           else if(ty-cy+fontSize*2+3 <= ch-3){ ctx.fillText(a1, cx+6, ty); ctx.fillText(a2, cx+6, ty+step); }
-          else if(ty-cy+fontSize <= ch-3) ctx.fillText(a1, cx+6, ty);
+          else if(ty-cy+fontSize <= ch-3) ctx.fillText(a2, cx+6, ty); // 한 줄만 남으면 금액보다 수익률·수익금을 우선
         } else if(ty-cy+fontSize <= ch-3) ctx.fillText(fmt(cell.value), cx+6, ty);
       }
       ctx.restore();
@@ -8055,26 +8059,36 @@ function fitCanvasText(ctx, text, maxW){
 }
 
 // 트리맵 셀 라벨: 종목명(여러 줄) + 총자산 대비 %. 셀 크기에 맞춰 글자 크기를 3단계로 줄이고, 그래도 안 들어가면 %만/생략
-function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg){
+function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg, retStr){
   const PAD=5, iw=w-PAD*2, ih=h-PAD*2;
   if(iw<20 || ih<10) return;
   const fs = (w>=130&&h>=70)?13 : (w>=84&&h>=46)?11.5 : 10;
   const font = wt=>`${wt} ${fs}px Pretendard,-apple-system,sans-serif`;
   const lineH = Math.round(fs*1.25), pctH = fs+2, amtH = fs+2;
-  // 금액 줄은 이름이 최소 1줄 남는 경우에만 넣는다(이름 줄 수를 줄여서라도 금액을 우선 표시)
-  const withAmt = !!amtStr && Math.floor((ih-pctH-amtH)/lineH) >= 1;
-  const maxLines = Math.floor((ih-pctH-(withAmt?amtH:0))/lineH);
   ctx.save();
   ctx.beginPath(); ctx.rect(x+2,y+2,w-4,h-4); ctx.clip();
   ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='top';
+  // 이름 아래 줄들을 우선순위대로 쌓는다: 비중% → 금액 → (수익률, 수익금). 이름은 최소 1줄을 남긴다.
+  // 수익률은 비중% 줄과 합쳐서라도 남긴다(모든 셀에 수익률이 보이게).
+  ctx.font=font(500);
+  const withAmt = !!amtStr && Math.floor((ih-pctH-amtH)/lineH) >= 1;
+  const retRows = retStr ? (Math.floor((ih-pctH-(withAmt?amtH:0)-amtH)/lineH) >= 1 ? 1 : 0) : 0;
+  const maxLines = Math.floor((ih-pctH-(withAmt?amtH:0)-(retRows?amtH:0))/lineH);
   if(maxLines>=1){
     ctx.font=font(700);
     const lines=wrapCanvasText(ctx,name,iw,Math.min(maxLines,3));
     lines.forEach((ln,i)=>ctx.fillText(ln,x+PAD,y+PAD+i*lineH));
     ctx.font=font(500);
-    const pctY = y+PAD+lines.length*lineH+1;
-    ctx.fillText(pctStr,x+PAD,pctY);
-    if(withAmt) ctx.fillText(fitCanvasText(ctx,amtStr,iw),x+PAD,pctY+pctH);
+    let ty = y+PAD+lines.length*lineH+1;
+    // 수익 줄을 따로 못 둘 만큼 낮으면 비중% 줄 뒤에 수익률만 붙인다("45.3% (+8.3%)"), 폭이 모자라면 비중%만
+    let pctLine = pctStr;
+    if(retStr && !retRows){
+      const shortRet = retStr.replace(/^\(([^,)]*).*$/, '($1)');
+      if(ctx.measureText(pctStr+' '+shortRet).width <= iw) pctLine = pctStr+' '+shortRet;
+    }
+    ctx.fillText(pctLine,x+PAD,ty); ty += pctH;
+    if(withAmt){ ctx.fillText(fitCanvasText(ctx,amtStr,iw),x+PAD,ty); ty += amtH; }
+    if(retRows) ctx.fillText(fitCanvasText(ctx,retStr,iw),x+PAD,ty);
   }else{
     // 세로가 얕은 셀: 이름이 두 글자 이상 들어가면 "이름 %" 한 줄, 아니면 %만
     ctx.font=font(700);
@@ -8151,7 +8165,7 @@ function drawDetailTreemap(){
       const col=donutShade(t.color,j,n), key=t.key+'|'+cell.c.key;
       rr(cx,cy,cw,ch,4); ctx.fillStyle=col; ctx.fill();
       const pctStr=sharePctText(cell.c.value,total);
-      drawTreemapCellLabel(ctx, cell.c.label, pctStr, fmt(cell.c.value), cx, cy, cw, ch, treemapTextColor(col));
+      drawTreemapCellLabel(ctx, cell.c.label, pctStr, fmt(cell.c.value), cx, cy, cw, ch, treemapTextColor(col), returnText(cell.c.agg));
       if(key===detailTmSel){ rr(cx+1,cy+1,cw-2,ch-2,4); ctx.lineWidth=2.5; ctx.strokeStyle='#1c1c1e'; ctx.stroke(); }
       detailTmCells.push({x:cell.x,y:cell.y,w:cell.w,h:cell.h,key,type:t,child:cell.c,pct:pctStr,col});
     });
@@ -8175,7 +8189,7 @@ function drawDetailTreemap(){
     infoEl.innerHTML = sel
       ? `<span class="di-sw" style="background:${sel.col};"></span><b>${sel.child.label}</b> <span class="di-sub">${sel.type.key} · ${fmt(sel.child.value)} ${returnText(sel.child.agg)} · 총자산의 ${sel.pct}</span> ${detailNav}`
       : '<span class="di-sub">사각형을 누르면(마우스는 올리면) 종목 이름·금액·비중이 여기에 표시됩니다</span>';
-    if(tinyCells.length) infoEl.innerHTML += `<span class="di-tiny">※ 너무 작아 그리지 못한 종목: ${tinyCells.map(c=>`${c.label} ${sharePctText(c.value,total)}`).join(', ')}</span>`;
+    if(tinyCells.length) infoEl.innerHTML += `<span class="di-tiny">※ 너무 작아 그리지 못한 종목: ${tinyCells.map(c=>`${c.label} ${sharePctText(c.value,total)} ${returnText(c.agg)}`).join(', ')}</span>`;
   }
 }
 function drawAssetClassDistribution(){
@@ -8230,7 +8244,7 @@ function indexSparkSvg(idx, uid){
       <clipPath id="${cu}"><rect x="0" y="-5" width="${W}" height="${(yb+5).toFixed(2)}"/></clipPath>
       <clipPath id="${cd}"><rect x="0" y="${yb.toFixed(2)}" width="${W}" height="${(H+5-yb).toFixed(2)}"/></clipPath>
     </defs>
-    ${seg('var(--color-up)',cu)}${seg('var(--color-down)',cd)}
+    ${seg('var(--index-up)',cu)}${seg('var(--index-down)',cd)}
     <line x1="0" x2="${W}" y1="${yb.toFixed(2)}" y2="${yb.toFixed(2)}" stroke="var(--color-tertiary)" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
   </svg>`;
 }
