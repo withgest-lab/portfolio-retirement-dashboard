@@ -299,8 +299,10 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 /* 좌우 여백을 .left-panel의 좌우 padding(10px)과 맞춰, 아래 "기본 정보" 패널 카드의
    가로 폭·좌우 가장자리와 탭 버튼 줄이 수직으로 나란히 정렬되게 한다. */
 .main-tabs{display:flex;gap:6px;margin:10px 10px 2px;}
-.main-tabs .tab-btn{flex:1;padding:6px 10px;font-size:13px;border-radius:999px;text-align:center;font-weight:700;}
+.main-tabs .tab-btn{flex:1 1 0;min-width:0;padding:6px 6px;font-size:13px;border-radius:999px;text-align:center;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .main-tabs .tab-btn.on{background:#007aff;color:#fff;}
+@media (max-width:480px){ .main-tabs .tab-btn .t-x{display:none;} }
+@media (max-width:420px){ .main-tabs .tab-btn .t-e{display:none;} }
 .phase-seg{border-radius:4px;padding:5px 6px;font-size:10px;font-weight:700;
   line-height:1.5;white-space:pre-line;}
 .phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
@@ -355,7 +357,7 @@ button{font-family:inherit;cursor:pointer;}
    내용(suggest-box)만 position:absolute로 행 전체 아래에 드롭다운처럼 띄움. */
 .basic-row-action{display:flex;align-items:center;gap:6px;flex-shrink:0;margin:0 0 0 auto;}
 .basic-row-detail{align-self:center;flex-shrink:1;min-width:0;position:static;}
-.basic-row-detail > summary{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+.basic-row-detail > summary{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
 .basic-row-detail #suggest-box{position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:6;
   max-height:60vh;overflow-y:auto;}
 
@@ -425,7 +427,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ── 인라인 패널 공용(모달 아님, 대시보드 흐름 안에서 펼침/접힘) — "세금 상식"·"건보료 설계" 둘 다 사용 ── */
 .inline-panel{display:none;flex:0 0 auto;background:#fff;border:1px solid #E8EAF0;border-radius:10px;
-  margin:0 14px 8px;padding:10px 14px 12px;scroll-margin-top:calc(var(--topbar-h) + 6px);}
+  margin:8px 10px 8px;padding:10px 14px 12px;scroll-margin-top:calc(var(--topbar-h) + 6px);}
 .inline-panel.show{display:block;}
 .inline-panel-title{font-size:12px;font-weight:700;color:#333;margin-bottom:4px;}
 .health-ref-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0;padding:5px 8px;background:#F8F9FB;border-radius:6px;}
@@ -515,7 +517,7 @@ button{font-family:inherit;cursor:pointer;}
   .tax-guide-btn{padding:3px 8px;font-size:10px;}
   h1{font-size:13px;}
   .main-tabs{margin:5px 10px 2px;}
-  .main-tabs .tab-btn{padding:4px 8px;font-size:12px;}
+  .main-tabs .tab-btn{padding:4px 1px;font-size:10.5px;}
   .left-panel{padding:5px 10px 6px;}
   .panel{padding:4px 8px;margin-bottom:3px;}
   .basic-row .ilabel{font-size:8px;}
@@ -552,15 +554,41 @@ button{font-family:inherit;cursor:pointer;}
   </div>
   <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
     <a href="../" class="tax-guide-btn" style="text-decoration:none;">🏠 홈</a>
-    <a href="../portfolio/" class="tax-guide-btn" style="text-decoration:none;">📊 포트폴리오</a>
+    <a href="../portfolio/" class="tax-guide-btn" style="text-decoration:none;"><span class="t-e">📊 </span>포트폴리오</a>
     <a href="../signals/" class="tax-guide-btn" style="text-decoration:none;">📈 매매전략</a>
-    <button type="button" class="tax-guide-btn" onclick="toggleHealthPanel()">🏥 건보료 설계</button>
-    <button type="button" class="tax-guide-btn" onclick="toggleTaxGuide()">📖 세금 상식</button>
     <button onclick="if(confirm('모든 설정값을 초기화할까요?'))resetState();"
       style="padding:3px 9px;font-size:10px;border-radius:5px;border:1px solid #E8EAF0;background:#fff;color:#AAB0BB;">
       ↺ 초기화
     </button>
   </div>
+</div>
+
+<!-- 플랜 요약 배너: 자동설계 결과 팝업 (예상결과 화면 위에 오버랩) -->
+<div class="plan-banner-backdrop" id="planBannerBackdrop" onclick="closePlanBanner()"></div>
+<div class="plan-banner" id="planBanner">
+  <div class="pb-title">
+    <span>✨ 세금·건보료 최소화 최적 인출 플랜 요약</span>
+    <button class="pb-close" onclick="closePlanBanner()">✕</button>
+  </div>
+  <div class="pb-grid">
+    <div class="pb-card"><div class="pb-label">공백기 월 수령 합계</div><div class="pb-val" id="pb-gap-total" style="color:#8FC7AC">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
+    <div class="pb-card"><div class="pb-label">완성기 월 수령 합계</div><div class="pb-val" id="pb-full-total" style="color:#9BC0DC">-</div><div class="pb-sub" id="pb-full-vs">-</div></div>
+    <div class="pb-card"><div class="pb-label">사적연금 연간 수령</div><div class="pb-val" id="pb-priv-annual" style="color:#E0BD8E">-</div><div class="pb-sub" id="pb-priv-tax">-</div></div>
+    <div class="pb-card"><div class="pb-label">은퇴 시점 총 자산</div><div class="pb-val" id="pb-total-fv" style="color:#BBB2E0">-</div><div class="pb-sub" id="pb-runway">-</div></div>
+  </div>
+  <div class="pb-phases">
+    <div class="pb-phase"><div class="pb-phase-title" id="pb-gap-title" style="color:#E0BD8E;">🔶 공백기 인출 순서</div><div id="pb-gap-rows"></div></div>
+    <div class="pb-phase"><div class="pb-phase-title" id="pb-full-title" style="color:#A8D6CB;">🔷 완성기 수입원</div><div id="pb-full-rows"></div></div>
+  </div>
+  <div class="pb-insight" id="pb-insight"></div>
+</div>
+
+<!-- 최상위 탭: 설계(입력) / 예상결과(차트) -->
+<div class="main-tabs">
+  <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')"><span class="t-e">📝 </span>설계</button>
+  <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')"><span class="t-e">📊 </span>예상결과</button>
+  <button class="tab-btn" id="mtb-health" onclick="setMainTab('health')"><span class="t-e">🏥 </span>건보료<span class="t-x"> 설계</span></button>
+  <button class="tab-btn" id="mtb-tax" onclick="setMainTab('tax')"><span class="t-e">📖 </span>세금<span class="t-x"> 상식</span></button>
 </div>
 
 <!-- 세금 상식 인라인 패널 (버튼 클릭 시 펼침/접힘, 모달 아님) -->
@@ -591,7 +619,7 @@ button{font-family:inherit;cursor:pointer;}
       · <b>1세대 1주택 특례</b>: 공시가격 3억원 이하 43% / 3억~6억원 44% / 6억원 초과 45%<br>
       · <b>다주택자(2주택 이상)·법인</b>: 특례 대상이 아니므로 원칙대로 <b>60%</b> 적용
     </p>
-    <p>즉 예를 들어 1세대 1주택으로 공시가격이 5억원이면 과세표준 = 5억 × 44% = <b>2.2억원</b>이 됩니다(시세·공시가격 그 자체가 아님). 이 대시보드는 아래 "🏥 건보료 설계" 패널에 <b>공시가격</b>과 주택 유형만 입력하면 위 공식대로 과세표준을 자동으로 계산합니다 — 정확한 공시가격은 국토교통부 부동산공시가격 알리미(realtyprice.kr)에서 확인하세요.</p>
+    <p>즉 예를 들어 1세대 1주택으로 공시가격이 5억원이면 과세표준 = 5억 × 44% = <b>2.2억원</b>이 됩니다(시세·공시가격 그 자체가 아님). 이 대시보드는 위 "🏥 건보료 설계" 탭에 <b>공시가격</b>과 주택 유형만 입력하면 위 공식대로 과세표준을 자동으로 계산합니다 — 정확한 공시가격은 국토교통부 부동산공시가격 알리미(realtyprice.kr)에서 확인하세요.</p>
     <p style="margin-bottom:2px;"><b>판정 예시</b></p>
     <table>
       <tr><th>재산세 과세표준</th><th>소득(연)</th><th>결과</th></tr>
@@ -602,7 +630,7 @@ button{font-family:inherit;cursor:pointer;}
     <p style="margin-top:6px;"><b>놓치기 쉬운 부분: 장기요양보험료</b> — 건강보험료 고지서에는 항상 장기요양보험료(건보료의 약 13%)가 자동으로 같이 붙습니다. "건보료 얼마"를 따질 땐 이 둘의 합을 봐야 실제 고지서 금액과 맞습니다.</p>
     <p><b>보험료 상한·하한은 "월" 기준입니다</b> — 지역가입자 건강보험료는 아무리 소득·재산이 많아도 <b>월 459만원</b>(2026년 기준, 정확히는 4,591,740원)을 넘지 않고, 아무리 적어도 <b>월 2만원</b>(20,160원) 밑으로 내려가지 않습니다. 연 기준이 아니라 매달 청구되는 금액의 상/하한이니 혼동하지 마세요("월별 건강보험료액의 상한과 하한에 관한 고시" 기준, 매년 개정).</p>
     <p><b>임의계속가입 제도</b> — 퇴직 전 18개월 중 통산 1년 이상 직장가입자였다면, 지역가입자로 전환돼도 최대 36개월간 퇴직 전 수준의 보험료(재산 미반영)를 유지할 수 있는 "임의계속가입"을 신청할 수 있습니다. 단 최초 지역가입자 보험료 고지서 납부기한으로부터 2개월 이내에 신청해야 합니다. 은퇴 초반 보험료 충격을 완화하는 실질적인 수단이니 알아두세요.</p>
-    <p>정확한 예상 보험료 계산과 각 입력값을 어디서 확인해야 하는지는 상단 <b>"🏥 건보료 설계"</b> 패널에서 확인하세요.</p>
+    <p>정확한 예상 보험료 계산과 각 입력값을 어디서 확인해야 하는지는 상단 <b>"🏥 건보료 설계"</b> 탭에서 확인하세요.</p>
   </div>
   <div class="guide-sec">
     <h4>③ 국민연금 더 많이 받는 법</h4>
@@ -683,31 +711,6 @@ button{font-family:inherit;cursor:pointer;}
   <div class="health-detail" id="healthDetail"></div>
 </div>
 
-<!-- 플랜 요약 배너: 자동설계 결과 팝업 (예상결과 화면 위에 오버랩) -->
-<div class="plan-banner-backdrop" id="planBannerBackdrop" onclick="closePlanBanner()"></div>
-<div class="plan-banner" id="planBanner">
-  <div class="pb-title">
-    <span>✨ 세금·건보료 최소화 최적 인출 플랜 요약</span>
-    <button class="pb-close" onclick="closePlanBanner()">✕</button>
-  </div>
-  <div class="pb-grid">
-    <div class="pb-card"><div class="pb-label">공백기 월 수령 합계</div><div class="pb-val" id="pb-gap-total" style="color:#8FC7AC">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">완성기 월 수령 합계</div><div class="pb-val" id="pb-full-total" style="color:#9BC0DC">-</div><div class="pb-sub" id="pb-full-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">사적연금 연간 수령</div><div class="pb-val" id="pb-priv-annual" style="color:#E0BD8E">-</div><div class="pb-sub" id="pb-priv-tax">-</div></div>
-    <div class="pb-card"><div class="pb-label">은퇴 시점 총 자산</div><div class="pb-val" id="pb-total-fv" style="color:#BBB2E0">-</div><div class="pb-sub" id="pb-runway">-</div></div>
-  </div>
-  <div class="pb-phases">
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-gap-title" style="color:#E0BD8E;">🔶 공백기 인출 순서</div><div id="pb-gap-rows"></div></div>
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-full-title" style="color:#A8D6CB;">🔷 완성기 수입원</div><div id="pb-full-rows"></div></div>
-  </div>
-  <div class="pb-insight" id="pb-insight"></div>
-</div>
-
-<!-- 최상위 탭: 설계(입력) / 예상결과(차트) -->
-<div class="main-tabs">
-  <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')">📝 설계</button>
-  <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')">📊 예상결과</button>
-</div>
 
 <div class="main-layout">
 
@@ -1946,7 +1949,7 @@ function showPlanBanner(d){
   // 고정 안내하면 재산이 큰 사용자에게는 틀린 정보가 됨 — 현재 재산 과표 기준으로 실제 적용 기준을 표시
   const depThreshold = p.realestate > 90000 ? null : (p.realestate > 54000 ? 1000 : 2000);
   insights.push(depThreshold === null
-    ? '💡 재산 과세표준이 9억원을 넘어 소득과 무관하게 피부양자 자동 탈락 구간입니다 — 상단 "🏥 건보료 설계"에서 예상 보험료를 확인하세요.'
+    ? '💡 재산 과세표준이 9억원을 넘어 소득과 무관하게 피부양자 자동 탈락 구간입니다 — 상단 "🏥 건보료 설계" 탭에서 예상 보험료를 확인하세요.'
     : '💡 ISA·안세공 비과세 인출로 건보료 산정 소득을 낮춰 피부양자 유지(공적연금 등 소득 연 '+depThreshold.toLocaleString()+'만원 이하, 현재 재산 과표 기준)를 우선 검토하세요.');
 
   document.getElementById('pb-insight').innerHTML = insights.join('<br>');
@@ -2273,62 +2276,17 @@ function setTab(t){ chartTab=t; ['flow','asset'].forEach(x=>document.getElementB
 // 그려지면 크기가 0으로 굳어버리므로, 결과 탭으로 전환할 때는 항상 upd()를 다시 호출해
 // 실제로 보이는 크기로 다시 그린다.
 let mainTab='design';
+// 4개 탭(설계/예상결과/건보료 설계/세금 상식) 중 하나만 아래 화면으로 보인다.
 function setMainTab(t){
   mainTab=t;
-  document.getElementById('mtb-design').className='tab-btn'+(t==='design'?' on':'');
-  document.getElementById('mtb-result').className='tab-btn'+(t==='result'?' on':'');
+  const on = {design:'mtb-design', result:'mtb-result', health:'mtb-health', tax:'mtb-tax'};
+  Object.keys(on).forEach(k=>{ document.getElementById(on[k]).className='tab-btn'+(k===t?' on':''); });
   document.getElementById('designTab').style.display = t==='design' ? '' : 'none';
   document.getElementById('resultTab').style.display = t==='result' ? '' : 'none';
+  document.getElementById('healthPanel').classList.toggle('show', t==='health');
+  document.getElementById('taxGuidePanel').classList.toggle('show', t==='tax');
   if(t==='result') upd();
-}
-
-/* ── 세금 상식 가이드 모달 ── */
-/* ── "세금 상식" 인라인 패널 (모달 아님 — 버튼으로 펼침/접힘 토글) ── */
-// 두 인라인 패널(세금 상식/건보료 설계)의 공통 토글 로직.
-// 문제: 한 패널이 펼쳐진 채로 다른 패널 버튼을 누르면, 새로 펼쳐진 패널이 이미 펼쳐진
-// 패널 아래(화면 밖)에 나타나 "눌렀는데 아무 일도 안 일어난 것처럼" 보이는 문제가 있었음.
-// 해결: ① 한 번에 하나만 펼쳐지도록(다른 패널은 자동으로 접음) ② 펼쳐진 패널로 자동 스크롤.
-function toggleInlinePanel(id, otherIds, onOpen){
-  const el = document.getElementById(id);
-  if(!el) return;
-  const willOpen = !el.classList.contains('show');
-  (otherIds||[]).forEach(oid => {
-    const other = document.getElementById(oid);
-    if(other) other.classList.remove('show');
-  });
-  el.classList.toggle('show', willOpen);
-  if(willOpen){
-    if(onOpen) onOpen();
-    el.scrollIntoView({behavior:'smooth', block:'start'});
-  }
-  updateGuidePanelVisibility();
-}
-
-// 세금 상식/건보료 설계 패널이 열려 있는 동안은 그 아래로 설계/예상결과 탭(+탭 버튼)이
-// 이어서 나오지 않도록 숨긴다 — 가이드 내용만 보이게 하고, 패널을 모두 닫으면 원래
-// 보고 있던 탭(설계 또는 예상결과) 화면으로 되돌아온다.
-function updateGuidePanelVisibility(){
-  const guideOpen = ['taxGuidePanel','healthPanel'].some(id => document.getElementById(id)?.classList.contains('show'));
-  const mainTabs = document.querySelector('.main-tabs');
-  if(mainTabs) mainTabs.style.display = guideOpen ? 'none' : '';
-  const designTab = document.getElementById('designTab');
-  const resultTab = document.getElementById('resultTab');
-  if(guideOpen){
-    if(designTab) designTab.style.display = 'none';
-    if(resultTab) resultTab.style.display = 'none';
-  } else {
-    if(designTab) designTab.style.display = mainTab==='design' ? '' : 'none';
-    if(resultTab) resultTab.style.display = mainTab==='result' ? '' : 'none';
-  }
-}
-
-function toggleTaxGuide(){
-  toggleInlinePanel('taxGuidePanel', ['healthPanel']);
-}
-
-/* ── "건보료 설계" 인라인 패널 (모달 아님 — 버튼으로 펼침/접힘 토글) ── */
-function toggleHealthPanel(){
-  toggleInlinePanel('healthPanel', ['taxGuidePanel'], renderHealthPanel);
+  if(t==='health') renderHealthPanel();
 }
 
 // "예상 건보료 계산하기" 버튼 클릭 시 — 이미 실시간으로도 갱신되지만, 버튼을 눌렀을 때
