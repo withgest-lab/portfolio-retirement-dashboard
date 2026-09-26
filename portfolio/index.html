@@ -61,7 +61,8 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
    움직이지 않게 한다. 481~767px는 압축해도 다 안 들어가(실측 720px에서야 겨우 들어감)
    768px보다 낮게 잡으면 오히려 완전히 가려지는 역효과가 나므로 여유를 두고 768px로 잡았다.
    767px 이하(그 구간 포함 폴드 접힘 등 좁은 화면)는 기존처럼 스크롤로 접근한다. */
-.topbar-actions .btn{padding:6px 10px;}
+.topbar-actions .btn{height:32px;padding:0 12px;font-size:12.5px;gap:5px;}
+.topbar-actions .btn:active,.topbar-actions .btn:focus-visible{background:rgba(0,122,255,.14);color:var(--color-accent);outline:none;}
 /* 시세 갱신↔홈, 현금흐름↔스냅샷 사이를 조금 더 벌려 묶음을 구분 */
 .topbar-actions a[href="../"],.topbar-actions #btnSaveSnap{margin-left:8px;}
 @media(min-width:768px){ .topbar-actions{overflow-x:hidden;} }
@@ -141,7 +142,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .subtabbar button{flex:1 1 auto;border:none;cursor:pointer;border-radius:6px;padding:5px 8px;
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
-.subtabbar button.active{background:var(--color-card);color:var(--color-text);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.subtabbar button.active{background:rgba(0,122,255,.14);color:var(--color-accent);}
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
 .page{display:none;flex-direction:column;gap:8px;}
@@ -483,6 +484,14 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .index-group-title{font-size:11px;color:var(--color-tertiary);font-weight:700;letter-spacing:.02em;margin:14px 2px 6px;}
 .index-group-title:first-child{margin-top:2px;}
 .index-tiles{--index-up:#34c759;--index-down:#ff3b30;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+/* 폭 601px 이상(폴드 펼침·펼침+90도·데스크톱): 미국 6종목이 수평 스크롤 없이 한 줄에 모두 보이도록 6열 고정, 한국·환율 타일도 같은 칸 크기 */
+@media (min-width:601px){
+  .index-tiles{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}
+  .index-tile{padding:10px 10px 10px;border-radius:12px;}
+  .index-tile-name{font-size:13px;}
+  .index-tile .index-val{font-size:16px;}
+  .index-tile .index-chg{font-size:14px;}
+}
 .index-tile{background:var(--color-card);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px 12px;min-width:0;}
 .index-tile-name{font-size:15px;font-weight:500;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .index-spark{display:block;width:100%;height:40px;margin:6px 0 8px;overflow:visible;}
@@ -985,7 +994,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 <!-- 글로벌 시장 -->
 <div class="subpage" data-sub="indices">
-<div class="card" style="max-width:760px;">
+<div class="card" style="max-width:1000px;">
   <div class="section-label">글로벌 시장</div>
   <div id="indexTiles"></div>
   <div class="notice">※ 야후 파이낸스 기준 (15~20분 지연). 5분마다 자동 갱신됩니다.</div>
@@ -8215,6 +8224,7 @@ const INDEX_LIST=[
   {sym:'^DJI',     label:'DOW 30',      dec:2,unit:'',  group:'us'},
   {sym:'^RUT',     label:'Russell 2000',dec:2,unit:'',  group:'us'},
   {sym:'^VIX',     label:'VIX',         dec:2,unit:'',  group:'us'},
+  {sym:'BTC-USD',  label:'Bitcoin',     dec:0,unit:'$', group:'us'},
   {sym:'^KS11',    label:'KOSPI',       dec:2,unit:'',  group:'kr'},
   {sym:'^KQ11',    label:'KOSDAQ',      dec:2,unit:'',  group:'kr'},
   {sym:'USDKRW=X', label:'USD/KRW',     dec:1,unit:'₩', group:'fx'},
