@@ -14,16 +14,16 @@
 
   var css = document.createElement('style');
   css.textContent =
-    'html[data-theme="dark"]{color-scheme:dark;}' +
+    'html[data-theme="dark"][data-native-dark]{color-scheme:dark;}' +
     'html[data-theme="dark"]:not([data-native-dark]){background:#fff;filter:invert(1) hue-rotate(180deg);}' +
     'html[data-theme="dark"]:not([data-native-dark]) img,html[data-theme="dark"]:not([data-native-dark]) video{filter:invert(1) hue-rotate(180deg);}' +
     /* 채워진 색 셀 위주의 트리맵 캔버스는 다시 뒤집어 원래 색(흰 글씨 포함)을 유지 */
     'html[data-theme="dark"]:not([data-native-dark]) #qvTreemapCanvas,html[data-theme="dark"]:not([data-native-dark]) #distMarketCanvas,html[data-theme="dark"]:not([data-native-dark]) #distAssetTypeCanvas,html[data-theme="dark"]:not([data-native-dark]) #distDetailCanvas{filter:invert(1) hue-rotate(180deg);}' +
     /* 초승달 아이콘 전용 버튼: OFF = 회색 윤곽, ON(다크) = 안이 흰색으로 채워진 초승달 */
-    '.kis-theme-sw,.tabbar button.kis-theme-sw{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:32px;height:32px;padding:0;border:0;' +
+    '.kis-theme-sw,.tabbar button.kis-theme-sw{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:26px;height:26px;padding:0;border:0;margin-left:6px;' +
       'background:transparent;border-radius:999px;cursor:pointer;color:#8e8e93;}' +
     '.top-bar .kis-theme-sw{margin-left:auto;}' +
-    '.kis-theme-sw svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.15s;}' +
+    '.kis-theme-sw svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.15s;}' +
     '.kis-theme-sw.on{color:#fff;}' +
     '.kis-theme-sw.on svg{fill:#fff;}' +
     'html[data-theme="dark"]:not([data-native-dark]) .kis-theme-sw{filter:invert(1) hue-rotate(180deg);}';
