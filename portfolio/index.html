@@ -64,11 +64,10 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .topbar-actions .btn{height:32px;padding:0 12px;font-size:12.5px;gap:5px;}
 .topbar-actions .btn:active,.topbar-actions .btn:focus-visible{background:rgba(0,122,255,.14);color:var(--color-accent);outline:none;}
 /* 시세 갱신↔홈, 현금흐름↔스냅샷 사이를 조금 더 벌려 묶음을 구분 */
-.topbar-actions #btnSaveSnap{margin-left:8px;}
-.topbar-actions .btn-home{width:32px;padding:0;}
+.topbar-actions .btn-home,.topbar-actions .btn-snap{width:32px;padding:0;}
 @media(min-width:768px){ .topbar-actions{overflow-x:hidden;} }
 /* 폭이 모자란 펼침 화면(≈900~1100px): 상태 문구를 숨겨 버튼이 잘리지 않게 한다 */
-@media(min-width:768px) and (max-width:1120px){ .topbar-actions .status-wrap span{display:none;} .topbar-actions .btn{padding:0 10px;} }
+@media(min-width:768px) and (max-width:1120px){ .logo-fx{display:none;} .topbar-actions .status-wrap span{display:none;} .topbar-actions .btn{padding:0 10px;} }
 .status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);
   flex-shrink:1;min-width:0;overflow:hidden;}
 .status-wrap .dot{flex-shrink:0;}
@@ -110,9 +109,9 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 @media (max-width:480px){ .hide-amt-btn .hide-amt-ico{display:none;} }
 /* 개인정보 숨기기(html.privacy-on): 수익률로 정해지는 색은 회색으로, 폼에 채워진 값은 가린다(입력·수정은 가능) */
 .privacy-on .up,.privacy-on .dn{color:var(--color-secondary)!important;}
-.privacy-on .index-tile .up{color:#34c759!important;}
+.privacy-on .index-tile .up{color:#22a06b!important;}
 .privacy-on #logoFx .up{color:var(--color-up)!important;}
-.privacy-on .index-tile .dn{color:#ff3b30!important;}
+.privacy-on .index-tile .dn{color:#e5484d!important;}
 .privacy-on #logoFx .dn{color:var(--color-down)!important;}
 .privacy-on :is(#page_dashboard,#page_portfolio,#page_tradelog,#page_returns,#page_dividend,#page_tax) :is(input:not([type=checkbox],[type=radio],[type=file],[type=date],[type=button]),textarea){
   color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
@@ -486,7 +485,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* ── 지수: Yahoo Finance 스타일 타일(이름 / 하루 인트라데이 스파크라인 + 전일종가 점선 / 현재가 / 등락률) ── */
 .index-group-title{font-size:11px;color:var(--color-tertiary);font-weight:700;letter-spacing:.02em;margin:14px 2px 6px;}
 .index-group-title:first-child{margin-top:2px;}
-.index-tiles{--index-up:#34c759;--index-down:#ff3b30;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.index-tiles{--index-up:#22a06b;--index-down:#e5484d;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
 /* 폭 601px 이상(폴드 펼침·펼침+90도·데스크톱): 미국 6종목이 수평 스크롤 없이 한 줄에 모두 보이도록 6열 고정, 한국·환율 타일도 같은 칸 크기 */
 @media (min-width:601px){
   .index-tiles{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;}
@@ -498,8 +497,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .index-tile{background:var(--color-card);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px 12px;min-width:0;}
 .index-tile-name{font-size:15px;font-weight:500;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .index-spark{display:block;width:100%;height:40px;margin:6px 0 8px;overflow:visible;}
-.index-tile .up{color:var(--index-up);}
-.index-tile .dn{color:var(--index-down);}
+.index-tile .index-chg.up{color:var(--index-up);}
+.index-tile .index-chg.dn{color:var(--index-down);}
+.index-tile .index-val{color:var(--color-text);}
 .index-spark-empty{height:40px;margin:6px 0 8px;}
 .index-tile .index-val{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;}
 .index-tile .index-chg{font-size:17px;font-weight:500;margin-top:2px;white-space:nowrap;}
@@ -769,10 +769,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
     <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 시세 갱신</button>
+    <button class="btn btn-ghost btn-snap" id="btnSaveSnap" aria-label="스냅샷" title="스냅샷" onclick="onSaveSnapClick(this)">📸</button>
     <a href="../" class="btn btn-ghost btn-home" aria-label="홈" title="홈" style="text-decoration:none;display:inline-flex;align-items:center;">🏠</a>
     <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 매매전략</a>
     <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
-    <button class="btn btn-ghost" id="btnSaveSnap" onclick="onSaveSnapClick(this)">📸 스냅샷</button>
     <button class="btn btn-ghost" onclick="openBackupModal()">💾 백업 / 복원</button>
   </div>
   <span id="themeMountPf" style="display:contents"></span>
@@ -7790,6 +7790,29 @@ function buildTreemapItems(assetList, mode, period){
   }).filter(i=>i.value>0).sort((a,b)=>b.value-a.value);
 }
 
+// 트리맵 셀이 작아 수익률·금액을 다 못 그렸을 때 "…"로 표시하고, 눌렀을 때 내용을 말풍선으로 보여준다
+let tmBubbleEl = null, tmBubbleKey = null;
+function hideTmBubble(){ if(tmBubbleEl){ tmBubbleEl.style.display='none'; } tmBubbleKey=null; }
+function showTmBubble(canvas, box, lines, key){
+  if(!tmBubbleEl){
+    tmBubbleEl = document.createElement('div');
+    tmBubbleEl.style.cssText='position:fixed;z-index:400;max-width:240px;padding:8px 10px;border-radius:10px;background:rgba(28,28,30,.94);color:#fff;font-size:12px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.28);pointer-events:none;';
+    document.body.appendChild(tmBubbleEl);
+    document.addEventListener('click', e=>{ if(!e.target.closest || !e.target.closest('canvas[data-tmb]')) hideTmBubble(); });
+    window.addEventListener('scroll', hideTmBubble, true);
+  }
+  canvas.dataset.tmb='1';
+  tmBubbleEl.innerHTML = lines.map((l,i)=>i===0?`<b>${l}</b>`:l).join('<br>');
+  tmBubbleEl.style.display='block';
+  const r = canvas.getBoundingClientRect();
+  const bw = tmBubbleEl.offsetWidth, bh = tmBubbleEl.offsetHeight;
+  let left = r.left + box.x + box.w/2 - bw/2;
+  let top = r.top + box.y - bh - 8;
+  if(top < 8) top = r.top + box.y + box.h + 8;
+  left = Math.max(8, Math.min(window.innerWidth - bw - 8, left));
+  tmBubbleEl.style.left = left+'px'; tmBubbleEl.style.top = top+'px';
+  tmBubbleKey = key;
+}
 // 공용 트리맵 렌더러 — 비중현황/Quick View/글로벌시장 트리맵이 모두 이 함수를 호출
 function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highlightId){
   const canvas = document.getElementById(canvasId);
@@ -7815,7 +7838,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
 
   layout.forEach(cell=>{
     const cx=cell.x+GAP/2, cy=cell.y+GAP/2, cw=Math.max(0,cell.w-GAP), ch=Math.max(0,cell.h-GAP);
-    if(cw<=0||ch<=0) return;
+    if(cw<=0||ch<=0){ cell.trunc=true; return; }
     const r = Math.min(6, cw/2, ch/2);
     ctx.beginPath();
     ctx.moveTo(cx+r,cy);
@@ -7828,6 +7851,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
     ctx.fill();
     if(highlightId && cell.id===highlightId){ ctx.lineWidth=2.5; ctx.strokeStyle='#1c1c1e'; ctx.stroke(); } // "트리맵으로 가기"로 돌아온 종목 강조
 
+    if(!(cw>44 && ch>28)) cell.trunc = true;
     if(cw>44 && ch>28){ // 너무 작은 셀은 라벨 생략(겹침 방지, drawDonut()의 소형 섹터 라벨 생략과 동일한 원칙)
       const pctStr = maskAmt(cell.sub!==undefined ? cell.sub : (cell.rtn>=0?'+':'')+cell.rtn.toFixed(1)+'%'); // 기본은 손익률, 분포 트리맵은 sub(비중 %)
       ctx.save();
@@ -7856,9 +7880,11 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
           const [a1,a2] = cell.amtParts, one = a1+' '+a2;
           if(ctx.measureText(one).width <= cw-12 && ty-cy+fontSize <= ch-3) ctx.fillText(one, cx+6, ty);
           else if(ty-cy+fontSize*2+3 <= ch-3){ ctx.fillText(a1, cx+6, ty); ctx.fillText(a2, cx+6, ty+step); }
-          else if(ty-cy+fontSize <= ch-3) ctx.fillText(a2, cx+6, ty); // 한 줄만 남으면 금액보다 수익률·수익금을 우선
+          else if(ty-cy+fontSize <= ch-3){ ctx.fillText(a2, cx+6, ty); cell.trunc=true; } // 한 줄만 남으면 금액보다 수익률·수익금을 우선
+          else cell.trunc=true;
         } else if(ty-cy+fontSize <= ch-3) ctx.fillText(fmt(cell.value), cx+6, ty);
-      }
+        if(cell.amtParts && cell.trunc){ ctx.textAlign='right'; ctx.fillText('…', cx+cw-6, cy+ch-fontSize-5); ctx.textAlign='left'; }
+      } else if(cell.amtParts){ cell.trunc=true; ctx.font=`700 ${fontSize}px Pretendard`; ctx.textAlign='right'; ctx.fillText('…', cx+cw-6, cy+6); ctx.textAlign='left'; }
       ctx.restore();
     }
   });
@@ -7868,7 +7894,15 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
     const rect = canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left, my=e.clientY-rect.top;
     const hit = layout.find(c=>mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h);
-    if(hit && typeof onCellClick==='function') onCellClick(hit.id);
+    if(!hit) return;
+    // 내용이 잘린("…") 셀은 첫 클릭에 말풍선으로 전체 내용을 보여주고, 같은 셀을 다시 누르면 상세로 이동
+    const key = canvasId+'|'+hit.name;
+    if(hit.trunc && hit.amtParts && tmBubbleKey!==key){
+      showTmBubble(canvas, hit, [hit.name, '비중 '+hit.sub, hit.amtParts.join(' ')], key);
+      return;
+    }
+    hideTmBubble();
+    if(typeof onCellClick==='function') onCellClick(hit.id);
   };
 }
 
@@ -8073,7 +8107,8 @@ function fitCanvasText(ctx, text, maxW){
 // 트리맵 셀 라벨: 종목명(여러 줄) + 총자산 대비 %. 셀 크기에 맞춰 글자 크기를 3단계로 줄이고, 그래도 안 들어가면 %만/생략
 function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg, retStr){
   const PAD=5, iw=w-PAD*2, ih=h-PAD*2;
-  if(iw<20 || ih<10) return;
+  if(iw<20 || ih<10) return true;
+  let trunc = false;
   const fs = (w>=130&&h>=70)?13 : (w>=84&&h>=46)?11.5 : 10;
   const font = wt=>`${wt} ${fs}px Pretendard,-apple-system,sans-serif`;
   const lineH = Math.round(fs*1.25), pctH = fs+2, amtH = fs+2;
@@ -8100,21 +8135,27 @@ function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg, retStr)
     }
     ctx.fillText(pctLine,x+PAD,ty); ty += pctH;
     if(withAmt){ ctx.fillText(fitCanvasText(ctx,amtStr,iw),x+PAD,ty); ty += amtH; }
-    if(retRows) ctx.fillText(fitCanvasText(ctx,retStr,iw),x+PAD,ty);
+    if(retRows){ const fitted=fitCanvasText(ctx,retStr,iw); ctx.fillText(fitted,x+PAD,ty); if(fitted!==retStr) trunc=true; }
+    else if(retStr) trunc=true;
+    if(amtStr && !withAmt) trunc=true;
   }else{
     // 세로가 얕은 셀: 이름이 두 글자 이상 들어가면 "이름 %" 한 줄, 아니면 %만
     ctx.font=font(700);
     const both=fitCanvasText(ctx,name+' '+pctStr,iw);
     if(ih>=fs && iw>=44 && both.length>pctStr.length+2) ctx.fillText(both,x+PAD,y+Math.max(2,(h-fs)/2));
     else if(ih>=fs-1 && iw>=26) ctx.fillText(pctStr,x+PAD,y+Math.max(2,(h-fs)/2));
+    trunc = true;
   }
+  if(trunc){ ctx.font=font(700); ctx.textAlign='right'; ctx.textBaseline='bottom'; ctx.fillText('…', x+w-PAD, y+h-2); }
   ctx.restore();
+  return trunc;
 }
 
 /* ③ 자산유형별 세부 종목 비중 — 전체 사각형 = 총자산 100%, 안쪽에 자산유형 블록(헤더 띠), 그 안에 실제 종목명 셀.
    셀 크기 = 평가금액. 작은 셀은 라벨이 생략될 수 있으므로 셀을 누르면(마우스는 올리면) 아래 정보 줄에 이름·금액·비중이 뜬다. */
 let detailTmSel = null;      // 선택된 셀 키 "유형|종목명"
 let detailTmCells = [];      // 히트테스트용
+let detailHeads = [];        // 자산유형 헤더 띠(잘렸을 때 말풍선용)
 function detailTreemapHeight(W){ return W<560 ? donutClamp(Math.round(W*1.35),440,640) : donutClamp(Math.round(W*0.6),340,620); }
 function drawDetailTreemap(){
   const canvas = document.getElementById('distDetailCanvas');
@@ -8131,7 +8172,7 @@ function drawDetailTreemap(){
   canvas.style.width = W+'px'; canvas.style.height = H+'px';
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
-  detailTmCells = [];
+  detailTmCells = []; detailHeads = [];
   const tinyCells = [];   // 면적이 너무 작아 사각형으로 못 그린 종목(아래 안내 줄에 이름으로 표시)
   if(!tree.length){
     ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
@@ -8155,17 +8196,19 @@ function drawDetailTreemap(){
     if(hasHead){
       const fg=treemapTextColor(t.color);
       ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='middle';
-      // 헤더: "안전자산 36.6%" (왼쪽) + "2.75억 (+3.1%, +500만)" (오른쪽, 폭이 모자라면 수익 → 금액 순으로 생략)
+      // 헤더: "안전자산 36.6%" (왼쪽) + "2.75억 (+3.1%, +500만)" (오른쪽). 폭이 모자라면 금액 → 수익금 순으로 줄이되 수익률은 끝까지 남기고, 그래도 안 되면 "…"
       const pct0=maskAmt((total>0?t.value/total*100:0).toFixed(1)+'%');
       ctx.font='800 11.5px Pretendard,-apple-system,sans-serif';
-      const leftFull = t.key+' '+pct0, lw=ctx.measureText(leftFull).width;
-      const rets = returnText(t.agg), amt = fmt(t.value);
-      const room = bw-14-lw-10;
-      const right = [amt+' '+rets, amt, ''].find(r=>!r || ctx.measureText(r).width<=room);
-      const rw = right ? ctx.measureText(right).width : 0;
-      ctx.textAlign='left';
-      ctx.fillText(fitCanvasText(ctx,leftFull,Math.max(10,bw-14-(rw?rw+10:0))), bx+7, by+HEAD/2+1);
-      if(right){ ctx.textAlign='right'; ctx.fillText(right, bx+bw-7, by+HEAD/2+1); }
+      const rets = returnText(t.agg), amt = fmt(t.value), shortRets = rets.replace(/^\(([^,)]*).*$/, '($1)');
+      const wOf = str=>ctx.measureText(str).width;
+      const lefts = [t.key+' '+pct0, t.key], rights = [amt+' '+rets, rets, shortRets];
+      let L=null, R=null;
+      outer: for(const r of rights){ for(const l of lefts){ if(wOf(l)+wOf(r)+24<=bw){ L=l; R=r; break outer; } } }
+      let trunc = R!==rights[0];
+      if(L===null){ L=fitCanvasText(ctx,t.key,Math.max(10,bw-14-wOf('…')-8)); R='…'; trunc=true; }
+      ctx.textAlign='left'; ctx.fillText(L, bx+7, by+HEAD/2+1);
+      ctx.textAlign='right'; ctx.fillText(R, bx+bw-7, by+HEAD/2+1);
+      detailHeads.push({x:bx,y:by,w:bw,h:HEAD,t,pct:pct0,trunc});
     }
     const ix=bx+2, iy=by+HEAD+2, iw=bw-4, ih=bh-HEAD-4;
     if(iw<=0||ih<=0) return;
@@ -8177,9 +8220,9 @@ function drawDetailTreemap(){
       const col=donutShade(t.color,j,n), key=t.key+'|'+cell.c.key;
       rr(cx,cy,cw,ch,4); ctx.fillStyle=col; ctx.fill();
       const pctStr=sharePctText(cell.c.value,total);
-      drawTreemapCellLabel(ctx, cell.c.label, pctStr, fmt(cell.c.value), cx, cy, cw, ch, treemapTextColor(col), returnText(cell.c.agg));
+      const trunc = drawTreemapCellLabel(ctx, cell.c.label, pctStr, fmt(cell.c.value), cx, cy, cw, ch, treemapTextColor(col), returnText(cell.c.agg));
       if(key===detailTmSel){ rr(cx+1,cy+1,cw-2,ch-2,4); ctx.lineWidth=2.5; ctx.strokeStyle='#1c1c1e'; ctx.stroke(); }
-      detailTmCells.push({x:cell.x,y:cell.y,w:cell.w,h:cell.h,key,type:t,child:cell.c,pct:pctStr,col});
+      detailTmCells.push({x:cell.x,y:cell.y,w:cell.w,h:cell.h,key,type:t,child:cell.c,pct:pctStr,col,trunc});
     });
   });
   const hit = e=>{
@@ -8188,7 +8231,16 @@ function drawDetailTreemap(){
   };
   const select = c=>{ if(c && c.key!==detailTmSel){ detailTmSel=c.key; drawDetailTreemap(); } };
   canvas.style.cursor='pointer';
-  canvas.onclick = e=>select(hit(e));
+  canvas.onclick = e=>{
+    const c = hit(e);
+    const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+    const hd = detailHeads.find(h=>h.trunc && mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h);
+    select(c);
+    const cur = c && detailTmCells.find(x=>x.key===c.key);
+    if(hd){ showTmBubble(canvas, hd, [hd.t.key+' '+hd.pct, fmt(hd.t.value), returnText(hd.t.agg)], 'H|'+hd.t.key); }
+    else if(cur && cur.trunc){ showTmBubble(canvas, cur, [cur.child.label, cur.type.key+' · 총자산의 '+cur.pct, fmt(cur.child.value)+' '+returnText(cur.child.agg)], cur.key); }
+    else hideTmBubble();
+  };
   canvas.onpointermove = e=>{ if(e.pointerType==='mouse') select(hit(e)); };
   const sel = detailTmCells.find(c=>c.key===detailTmSel);
   if(infoEl){
@@ -8251,7 +8303,7 @@ function indexSparkSvg(idx, uid){
   const line = 'M'+pts.join(' L');
   const area = `${line} L${W},${yb.toFixed(2)} L0,${yb.toFixed(2)} Z`;
   const cu=`spu${uid}`, cd=`spd${uid}`;
-  const seg = (col,clip)=>`<g clip-path="url(#${clip})"><path d="${area}" fill="${col}" fill-opacity=".16" stroke="none"/><path d="${line}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></g>`;
+  const seg = (col,clip)=>`<g clip-path="url(#${clip})"><path d="${area}" fill="${col}" fill-opacity=".12" stroke="none"/><path d="${line}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></g>`;
   return `<svg class="index-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     <defs>
       <clipPath id="${cu}"><rect x="0" y="-5" width="${W}" height="${(yb+5).toFixed(2)}"/></clipPath>
@@ -8267,7 +8319,7 @@ function renderIndexTile(idx, i){
     <div class="index-tile">
       <div class="index-tile-name">${idx.label}</div>
       ${indexSparkSvg(idx, i)}
-      <div class="index-val ${idx.val!=null?cls:''}" style="${idx.val==null?'color:var(--color-tertiary)':''}">${idx.val!=null?idx.unit+idx.val.toLocaleString('en-US',{minimumFractionDigits:idx.dec,maximumFractionDigits:idx.dec}):'—'}</div>
+      <div class="index-val" style="${idx.val==null?'color:var(--color-tertiary)':''}">${idx.val!=null?idx.unit+idx.val.toLocaleString('en-US',{minimumFractionDigits:idx.dec,maximumFractionDigits:idx.dec}):'—'}</div>
       <div class="index-chg ${cls}">${idx.chg!=null?(idx.chg>=0?'+':'')+idx.chg.toFixed(2)+'%':'조회 중...'}</div>
     </div>`;
 }
