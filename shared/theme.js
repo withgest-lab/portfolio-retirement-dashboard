@@ -25,14 +25,20 @@
     '.top-bar .kis-theme-sw{margin-left:auto;}' +
     '.kis-theme-sw svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.15s;}' +
     '.kis-theme-sw.on{color:#fff;}' +
-    '.kis-theme-sw.on svg{fill:#fff;}' +
+    '.kis-theme-sw.on svg{fill:none;}' +
     'html[data-theme="dark"]:not([data-native-dark]) .kis-theme-sw{filter:invert(1) hue-rotate(180deg);}';
   (document.head || root).appendChild(css);
 
   var buttons = [];
   function paint(){
     var dark = current()==='dark';
-    buttons.forEach(function(b){ b.classList.toggle('on', dark); b.setAttribute('aria-checked', dark ? 'true' : 'false'); });
+    buttons.forEach(function(b){
+      b.classList.toggle('on', dark); b.setAttribute('aria-checked', dark ? 'true' : 'false');
+      // 라이트 = 초승달(누르면 다크), 다크 = 햇살(누르면 라이트)
+      b.querySelector('svg').innerHTML = dark ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' : '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
+      b.title = dark ? '라이트 모드로 전환' : '다크 모드로 전환';
+      b.setAttribute('aria-label', b.title);
+    });
   }
   function set(v, persist){
     root.dataset.theme = v;
