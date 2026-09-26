@@ -19,14 +19,14 @@
     'html[data-theme="dark"]:not([data-native-dark]) img,html[data-theme="dark"]:not([data-native-dark]) video{filter:invert(1) hue-rotate(180deg);}' +
     /* 채워진 색 셀 위주의 트리맵 캔버스는 다시 뒤집어 원래 색(흰 글씨 포함)을 유지 */
     'html[data-theme="dark"]:not([data-native-dark]) #qvTreemapCanvas,html[data-theme="dark"]:not([data-native-dark]) #distMarketCanvas,html[data-theme="dark"]:not([data-native-dark]) #distAssetTypeCanvas,html[data-theme="dark"]:not([data-native-dark]) #distDetailCanvas{filter:invert(1) hue-rotate(180deg);}' +
-    '.kis-theme-sw,.tabbar button.kis-theme-sw{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;padding:5px 9px;border:1px solid rgba(60,60,67,.29);' +
-      'background:#fff;color:#636366;border-radius:999px;font-size:11px;font-weight:600;line-height:1;font-family:inherit;cursor:pointer;white-space:nowrap;}' +
-    '.kis-theme-sw .sw{width:26px;height:15px;border-radius:999px;background:#c7c7cc;position:relative;transition:.15s;flex-shrink:0;}' +
-    '.kis-theme-sw .sw::after{content:"";position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:.15s;}' +
-    '.kis-theme-sw.on{color:#007aff;border-color:#007aff;}' +
-    '.kis-theme-sw.on .sw{background:#007aff;}' +
-    '.kis-theme-sw.on .sw::after{left:13px;}' +
-    '@media (max-width:480px){.kis-theme-sw .tx{display:none;}.kis-theme-sw{padding:5px 7px;gap:4px;}}';
+    /* 초승달 아이콘 전용 버튼: OFF = 회색 윤곽, ON(다크) = 안이 흰색으로 채워진 초승달 */
+    '.kis-theme-sw,.tabbar button.kis-theme-sw{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:32px;height:32px;padding:0;border:0;' +
+      'background:transparent;border-radius:999px;cursor:pointer;color:#8e8e93;}' +
+    '.top-bar .kis-theme-sw{margin-left:auto;}' +
+    '.kis-theme-sw svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.15s;}' +
+    '.kis-theme-sw.on{color:#fff;}' +
+    '.kis-theme-sw.on svg{fill:#fff;}' +
+    'html[data-theme="dark"]:not([data-native-dark]) .kis-theme-sw{filter:invert(1) hue-rotate(180deg);}';
   (document.head || root).appendChild(css);
 
   var buttons = [];
@@ -55,7 +55,8 @@
       var b = document.createElement('button');
       b.type = 'button'; b.className = 'kis-theme-sw'; b.setAttribute('role','switch');
       b.title = '다크 모드 켜기/끄기 (모든 화면에 적용)';
-      b.innerHTML = '<span class="ico">🌙</span><span class="tx">다크 모드</span><span class="sw"></span>';
+      b.setAttribute('aria-label','다크 모드 켜기/끄기');
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
       b.addEventListener('click', function(){ set(current()==='dark' ? 'light' : 'dark'); });
       if(before) parent.insertBefore(b, before); else parent.appendChild(b);
       buttons.push(b); paint();
