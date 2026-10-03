@@ -833,10 +833,10 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="basic-row-action">
 <div class="basic-row-links">
 <details class="collapsible basic-row-detail">
-  <summary>자동설계 상세 근거 보기</summary>
+  <summary>자동설계 근거</summary>
   <div class="suggest-result" id="suggest-box"></div>
 </details>
-<button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률 / 물가상승률 설정 보기<span class="sw"></span></button>
+<button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button>
 </div>
 <button class="suggest-btn" style="background:linear-gradient(135deg,#4E9B78,#C08A55);" onclick="autoSuggest()">
   <span style="font-size:11.5px;">🎯 자동설계</span>
@@ -2616,9 +2616,17 @@ function fitDensity(){
   if(window.innerWidth <= 420 || mainTab !== 'design'){ html.classList.remove('dense'); return; }
   if(window.innerHeight <= 520){ html.classList.add('dense'); return; }
   html.classList.remove('dense');
-  if(html.scrollHeight > html.clientHeight || document.body.scrollHeight > document.body.clientHeight){
+  if(html.scrollHeight > html.clientHeight || document.body.scrollHeight > document.body.clientHeight || basicRowWraps()){
     html.classList.add('dense');
   }
+}
+// 기본 정보 줄(나이~자동설계 버튼)이 두 줄로 넘어갔는지 — 실기기는 글꼴 폭이 달라 실측으로 판단
+function basicRowWraps(){
+  const row = document.querySelector('.basic-row');
+  if(!row || window.innerWidth < 600) return false;
+  const kids = [...row.children].filter(el=>el.offsetParent && el.id!=='fit90-box');
+  if(kids.length < 2) return false;
+  return kids[kids.length-1].offsetTop > kids[0].offsetTop + kids[0].offsetHeight/2;
 }
 
 /* ── 그래프 세로 크기를 화면에 맞춤 ──
