@@ -15,9 +15,9 @@ html{--topbar-h:50px;} /* top-bar 실제 높이 — 좁은 화면에서 버튼�
 /* 상단바↔탭, 탭↔첫 박스, 박스↔박스 간격을 전부 이 변수 하나로 통일(예전엔 8/10/5/4px 등
    제각각이라 들쭉날쭉해 보였음). 펼침+90도(가로, 높이 짧음)는 조금 더 좁게, 그래도 내용이
    넘치면(html.dense, JS의 fitDensity()) 한 번 더 좁힌다. */
-:root{--gap:8px; --bi-w:56px;}
+:root{--gap:8px; --bi-w:56px; --bi-h:22px;}
 @media (min-width:961px){ :root{--gap:6px;} }
-html.dense{--gap:5px; --bi-w:48px;}
+html.dense{--gap:5px; --bi-w:48px; --bi-h:18px;}
 html,body{height:100%;}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   background:#F2F2F7;font-size:14px;color:#222;
@@ -398,28 +398,31 @@ button{font-family:inherit;cursor:pointer;}
 /* 라벨을 입력칸과 같은 폭(--bi-w)으로 두고 가운데 정렬 — 전엔 라벨이 왼쪽 정렬이라
    입력칸 중심보다 라벨 중심이 8px 왼쪽으로 어긋나 보였음 */
 .basic-row .ilabel{font-size:9px;white-space:nowrap;width:var(--bi-w);display:flex;justify-content:center;}
-.basic-row .ival-input{width:var(--bi-w);font-size:12.5px;padding:3px 4px;}
+.basic-row .ival-input{width:var(--bi-w);height:var(--bi-h);box-sizing:border-box;font-size:12.5px;padding:3px 4px;}
 .basic-row .unit-tag{width:22px;font-size:9px;}
 .basic-row .suggest-btn{width:auto;min-width:88px;flex-shrink:0;margin:0;padding:6px 12px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   line-height:1.25;}
-/* "자동설계 상세 근거 보기" + 자동설계 버튼을 한 묶음으로 묶어 항상 근거 보기가 버튼
-   바로 왼쪽에 붙어 있게 하고(줄바꿈 때도 함께 이동), 이 묶음 자체를 basic-row 오른쪽
-   끝에 붙임. 펼쳐도 트리거(summary)의 위치·basic-row 레이아웃은 그대로 유지되도록,
-   내용(suggest-box)만 position:absolute로 행 전체 아래에 드롭다운처럼 띄움. */
-.basic-row-action{display:flex;align-items:center;gap:6px;flex-shrink:0;margin:0 0 0 auto;}
-/* "수익률/물가상승률 설정 보기"는 원래 패널 하나를 혼자 차지했는데, 자동설계 버튼 왼쪽에
-   이미 있던 빈 공간으로 옮겨와 "자동설계 상세 근거 보기" 아래 두 번째 줄로 쌓는다 —
-   패널 하나가 통째로 사라진 만큼 아래 계좌 카드 쪽에 여유를 줄 수 있음. */
-.basic-row-links{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;}
-.basic-row-links .tgl-banner{padding:2px 7px 2px 9px;font-size:10px;gap:4px;}
+/* "수익률·물가 설정" 스위치 + 자동설계 버튼 묶음을 basic-row 오른쪽 끝에 붙임 */
+.basic-row-action{display:flex;align-items:center;gap:8px;flex-shrink:0;margin:0 0 0 auto;}
+/* 스위치는 입력 항목과 같은 구조(빈 라벨 줄 + 컨트롤 줄)로 둬서 라벨 줄·입력칸 줄에 행이 맞고,
+   스위치 높이도 입력칸과 같게 해 위아래 선이 일치한다 */
+.basic-row-links{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
+.basic-row-links .ilabel{width:auto;}
+.basic-row-links .irow-ctrl{height:var(--bi-h);}
+.basic-row-links .tgl-banner{box-sizing:border-box;height:var(--bi-h);padding:0 7px 0 10px;font-size:10.5px;gap:5px;}
 .basic-row-links .tgl-banner .sw{width:22px;height:13px;}
 .basic-row-links .tgl-banner .sw::after{width:9px;height:9px;}
 .basic-row-links .tgl-banner.on .sw::after{left:11px;}
-.basic-row-detail{align-self:flex-start;flex-shrink:1;min-width:0;position:static;}
-.basic-row-detail > summary{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
-.basic-row-detail #suggest-box{position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:6;
-  max-height:60vh;overflow-y:auto;}
+/* 예상결과 차트 보기 탭 줄의 "자동설계 근거" 스위치 — 탭 알약과 같은 높이 */
+.chart-head .tabs .tgl-banner{padding:2px 7px 2px 10px;font-size:11px;gap:5px;margin-left:2px;}
+.chart-head .tabs .tgl-banner .sw{width:22px;height:13px;}
+.chart-head .tabs .tgl-banner .sw::after{width:9px;height:9px;}
+.chart-head .tabs .tgl-banner.on .sw::after{left:11px;}
+.basis-view{padding:2px 4px 6px;}
+.basis-view .suggest-result{margin:0;font-size:11.5px;}
+.basis-view .suggest-result ul{line-height:1.7;}
+.basis-empty{font-size:12px;color:#8e8e93;text-align:center;padding:40px 16px;}
 
 /* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ──
    align-items:start — 기본값(stretch)이면 ISA 카드가 옆의 priv-group(3카드+사적연금
@@ -832,11 +835,8 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
      여기로 옮겨 그 패널을 없애고, 생긴 여유는 아래 계좌 카드 자간·줄간격에 배분) -->
 <div class="basic-row-action">
 <div class="basic-row-links">
-<details class="collapsible basic-row-detail">
-  <summary>자동설계 근거</summary>
-  <div class="suggest-result" id="suggest-box"></div>
-</details>
-<button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button>
+  <span class="ilabel" aria-hidden="true">&nbsp;</span>
+  <div class="irow-ctrl"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button></div>
 </div>
 <button class="suggest-btn" style="background:linear-gradient(135deg,#4E9B78,#C08A55);" onclick="autoSuggest()">
   <span style="font-size:11.5px;">🎯 자동설계</span>
@@ -1352,6 +1352,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
         <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">자산 잔액</button>
         <button class="tab-btn" id="tb-sc" onclick="setAltView('sc')" title="낙관·비관 시나리오 비교">수익률 민감도</button>
         <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="완전소진 플랜 vs 필요분만 인출 플랜 비교">소진 vs 필요분</button>
+        <button type="button" class="tgl-banner" id="tb-basis" role="switch" aria-checked="false" data-target="basisView" onclick="toggleBasis(this)">자동설계 근거<span class="sw"></span></button>
       </div>
       <div class="legend" id="chart-legend"></div>
     </div>
@@ -1374,6 +1375,11 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
             <div class="alt-title">완전소진 vs 필요분만 인출</div>
             <div id="need-only-compare"></div>
           </div>
+        </div>
+        <!-- 자동설계 근거: 차트 자리에 같은 크기로 겹쳐 표시(레이아웃 높이 불변), 스위치로 여닫음 -->
+        <div class="chart-alt basis-view" id="basisView" style="display:none;">
+          <div class="basis-empty" id="basisEmpty">설계 탭에서 <b>자동설계</b>를 실행하면 계좌별 인출 순서·금액의 근거가 여기에 표시됩니다.</div>
+          <div class="suggest-result" id="suggest-box"></div>
         </div>
       </div>
     </div>
@@ -2053,7 +2059,7 @@ function autoSuggest(){
   <li>④ 농협 <b>${nhStartAge}세~ 월 ${nhMon}만</b>(오늘 기준) → ${p.life}세까지 물가증액 분산</li>
   ${mfStartAge > p.ret ? `<li>⚠️ 연금저축(농협·미래에셋)은 소득세법상 만 55세부터만 연금으로 수령 가능 — 은퇴 나이(${p.ret}세)가 55세 미만이라 <b>${p.ret}~54세는 ISA·안세공만으로</b> 생활비를 충당해야 합니다.</li>` : ''}
   ${tirpInGap ? `<li>(별도 트랙, 한도 무관) ${tirpDetailBody}</li>` : ''}
-  <li>공백기 첫해 월 합계 <b>${gapTotalWithPrin}만원</b>${prinMon>0?' <span style="opacity:.7;font-size:9px;">(연금자산 ${gapTotal}만 + 안세공 ${prinMon}만)</span>':''}
+  <li>공백기 첫해 월 합계 <b>${gapTotalWithPrin}만원</b>${prinMon>0?` <span style="opacity:.7;font-size:9px;">(연금자산 ${gapTotal}만 + 안세공 ${prinMon}만)</span>`:''}
     <div style="font-size:9px;color:#888;margin-top:1px;">생활비 ${target}만 대비 ${gapVsExp>=0?'+'+gapVsExp+'만 여유':gapVsExp+'만 부족'} (오늘 기준, 참고) · 세후 약 ${simRes.netGapMonthly}만원</div>
   </li>
   <li>공백기 사적연금 연 <b>${(privGap*12).toLocaleString()}만</b> ${privGap*12 <= p.plimit ? '→ '+pensionTaxRate(p.ret)+'% 분리과세 ✓' : '⚠️ 한도 초과 → 16.5% 분리과세 또는 종합과세'}</li>
@@ -2578,12 +2584,13 @@ function getP(){
   return p;
 }
 
-function setTab(t){ chartTab=t; _altView=null; upd(); }
+function setTab(t){ closeBasis(); chartTab=t; _altView=null; upd(); }
 
 /* ── 비교 보기(수익률 민감도·소진 vs 필요분) — 차트 자리에 겹쳐 표시 ──
    같은 탭을 다시 누르면 차트로 돌아감. 차트 자체는 뒤에서 계속 그려 둠(단계 카드 정렬 유지). */
 let _altView = null;   // null | 'sc' | 'need'
 function setAltView(v){
+  closeBasis();
   _altView = (_altView === v) ? null : v;
   applyViewState();
 }
@@ -2597,7 +2604,8 @@ function applyViewState(){
     document.getElementById('needWrap').style.display = _altView==='need' ? 'block' : 'none';
   }
   const lg = document.getElementById('chart-legend');
-  if(lg) lg.style.visibility = _altView ? 'hidden' : '';
+  const basisOn = document.getElementById('tb-basis')?.classList.contains('on');
+  if(lg) lg.style.visibility = (_altView || basisOn) ? 'hidden' : '';
   if(_altView){
     const tip = document.getElementById('chartTooltip'); if(tip) tip.style.display = 'none';
     if(_activeIdx !== null){ _activeIdx = null; if(mainChart) mainChart.draw(); }
@@ -3353,6 +3361,20 @@ function toggleBanner(btn){
   btn.setAttribute('aria-checked',on?'true':'false');
   const t=document.getElementById(btn.dataset.target);
   if(t) t.style.display=on?'':'none';
+}
+// 예상결과 "자동설계 근거" 스위치 — 차트 자리에 근거를 겹쳐 띄우고, 다른 차트 탭을 누르면 닫힌다
+function toggleBasis(btn){
+  toggleBanner(btn);
+  const on = btn.classList.contains('on');
+  document.getElementById('basisEmpty').style.display =
+    document.getElementById('suggest-box').classList.contains('show') ? 'none' : '';
+  const lg = document.getElementById('chart-legend');
+  if(lg) lg.style.visibility = (on || _altView) ? 'hidden' : '';
+  if(on){ const tip = document.getElementById('chartTooltip'); if(tip) tip.style.display = 'none'; }
+}
+function closeBasis(){
+  const b = document.getElementById('tb-basis');
+  if(b && b.classList.contains('on')) toggleBasis(b);
 }
 </script>
 </body>
