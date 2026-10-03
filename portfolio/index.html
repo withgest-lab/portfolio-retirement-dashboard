@@ -171,6 +171,9 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .type-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--color-text);white-space:nowrap;}
 .type-chip i{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
 .type-chip b{font-weight:800;color:var(--color-secondary);}
+/* ③ 제목과 자산유형 % 칩을 한 줄로(세로 공간 절약) — 좁으면 줄바꿈 */
+.dist-detail-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px;margin:10px 0 8px;}
+.dist-detail-head .type-chips{margin:0;justify-content:flex-start;}
 .dist-info{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-height:34px;margin-top:8px;padding:6px 10px;background:var(--color-section-bg);border-radius:var(--radius-sm);font-size:12px;}
 .dist-info .di-sw{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
 .dist-info .di-sub{color:var(--color-secondary);font-size:11.5px;}
@@ -1075,8 +1078,10 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
         <div class="dist-canvas-wrap"><canvas id="distAssetTypeCanvas" height="220"></canvas></div>
       </div>
     </div>
-    <div class="section-label" style="margin:10px 0 6px;">③ 자산유형별 세부 종목 비중</div>
-    <div id="distDetailChips" class="type-chips"></div>
+    <div class="dist-detail-head">
+      <div class="section-label" style="margin:0;">③ 자산유형별 세부 종목 비중</div>
+      <div id="distDetailChips" class="type-chips"></div>
+    </div>
     <div class="dist-canvas-wrap"><canvas id="distDetailCanvas" height="400"></canvas></div>
   </div>
 </div>
@@ -8409,9 +8414,9 @@ function computeAllocTmHeights(){
   const cardTop = (R(card).top - R(sc).top) + sc.scrollTop;
   const overhead = card.offsetHeight - rows*R(c1).height - R(cd).height;
   const avail = sc.clientHeight - cardTop - 12 - overhead;
-  if(avail < 340) return null;
-  const top = Math.round(Math.max(120, Math.min(220, avail*0.32/rows)));
-  return {top, detail: Math.max(220, Math.floor(avail - rows*top))};
+  // 펼침+90도처럼 세로가 짧아도(주소창 포함 500px대) 포기하지 않고 비율로 줄여 한 화면에 맞춘다(①② 최소 70, ③ 최소 150)
+  const top = Math.round(Math.max(70, Math.min(220, avail*0.30/rows)));
+  return {top, detail: Math.max(150, Math.floor(avail - rows*top))};
 }
 
 /* ════════════════════════════════════════
