@@ -231,6 +231,29 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .tgl-banner.on .sw{background:rgba(255,255,255,.35);}
 .tgl-banner.on .sw::after{left:12px;}
 .tgl-banner-row{display:flex;margin:8px 0 0;}
+/* 변화추이 상단 줄: 펼침 화면에선 항상 한 줄. 넘치면 fitChartTopRow()가 .cmp1→.cmp2 순으로 여백·글자를 줄인다 */
+.chart-head{position:relative;}
+.chart-top-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0;}
+.chart-top-row #periodTabs{margin-left:auto;flex-wrap:nowrap;flex-shrink:0;}
+.chart-top-row.cmp1{gap:4px;}
+.chart-top-row.cmp1 .tgl-banner{padding:3px 6px 3px 8px;gap:5px;}
+.chart-top-row.cmp1 .tgl-banner .sw{width:22px;height:13px;}
+.chart-top-row.cmp1 .tgl-banner .sw::after{width:9px;height:9px;}
+.chart-top-row.cmp1 .tgl-banner.on .sw::after{left:11px;}
+.chart-top-row.cmp1 #periodTabs button{padding:4px 4px;}
+.chart-top-row.cmp2 .tgl-banner{font-size:10px;padding:3px 5px 3px 7px;gap:4px;}
+.chart-top-row.cmp2 #periodTabs{padding:2px;}
+.chart-top-row.cmp2 #periodTabs button{padding:3px 3px;font-size:9.5px;}
+.chart-top-row.cmp3{flex-wrap:wrap;}
+@media(max-width:599px){ .chart-top-row{flex-wrap:wrap;} }
+/* 종목 선택: 그래프를 밀어내지 않는 iOS 팝오버(시트) — 열고 닫아도 그래프 크기 불변 */
+.chart-pick-pop{position:absolute;left:0;top:calc(100% + 6px);z-index:30;margin:0;
+  width:max-content;max-width:min(680px,100%);max-height:min(48vh,360px);overflow-y:auto;overscroll-behavior:contain;
+  background:var(--color-card);border:.5px solid rgba(60,60,67,.18);border-radius:14px;padding:10px;
+  box-shadow:0 12px 32px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.06);}
+.toggle-pill.sum-pill .dot{background:var(--color-text);}
+/* 넘친 게 스크롤 컨테이너의 빈 하단 여백뿐이면 스크롤하지 않는다(syncFitScroll) */
+.fit-noscroll{overflow-y:hidden!important;}
 
 /* ── 접이식 상세 섹션 ── */
 .collapsible summary{cursor:pointer;color:var(--color-secondary);font-weight:600;font-size:11px;
@@ -845,8 +868,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <!-- 토글 3개(종목 선택/종목별 수익률/스냅샷 이력)를 전부 이 줄에 모아 그래프 아래·카드 밖에
        따로 있던 배너 줄 2개를 없앴다 — 그만큼 그래프에 세로 공간을 더 줄 수 있음. 이 줄
        자체의 margin-bottom을 카드 padding(12px)과 맞춰 위/아래 공백이 같아지게 한다. -->
-  <div class="chart-top-row" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-    <div class="toggles" id="assetToggles" style="margin:0;"></div>
+  <div class="chart-head">
+  <div class="chart-top-row" id="chartTopRow">
+    <button type="button" class="tgl-banner" id="allViewToggleBtn" role="switch" aria-checked="false" onclick="toggleAll()">전체 보기<span class="sw"></span></button>
     <button type="button" class="tgl-banner" id="stockDetailToggleBtn" role="switch" aria-checked="false" data-target="assetTogglesDetail" onclick="toggleBanner(this)">종목 선택<span class="sw"></span></button>
     <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="statBar" data-onopen="scrollToStatBar" onclick="toggleBanner(this)">종목별 수익률<span class="sw"></span></button>
     <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="snapHistWrap" data-onopen="scrollToSnapHist" onclick="toggleBanner(this)">스냅샷 이력<span class="sw"></span></button>
@@ -864,8 +888,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <button onclick="setPeriod('ALL')">ALL</button>
     </div>
   </div>
-  <div class="toggles" id="assetTogglesDetail" style="display:none;margin-bottom:12px;"></div>
-  <div class="chart-wrap"><canvas id="lineChart" height="320"></canvas></div>
+  <div class="toggles chart-pick-pop" id="assetTogglesDetail" style="display:none;"></div>
+  </div>
+  <div class="chart-wrap" style="margin-top:6px;"><canvas id="lineChart" height="320"></canvas></div>
   <div class="stat-bar" id="statBar" style="display:none;margin-top:10px;"></div>
 </div>
 <div id="snapHistWrap" style="display:none;">
@@ -2743,6 +2768,45 @@ function getScroller(){
   return (pg.querySelector(':scope > .subtabbar') && sp) ? sp : pg;
 }
 function stickyTop(){ return 0; }
+
+// 한 화면에 다 들어가는데도 스크롤 컨테이너의 빈 하단 여백(padding-bottom) 때문에 터치하면 위아래로
+// 움직이며 스크롤바가 생기는 문제를 모든 페이지·서브탭에서 공통으로 막는다. 넘친 양이 그 빈 여백 이하이면
+// 스크롤을 끄고(.fit-noscroll), 실제 내용이 넘치면(접힌 화면 등) 다시 켠다. 콘텐츠 크기 변화는 ResizeObserver가 감지.
+function syncFitScroll(){
+  const sc = getScroller();
+  document.querySelectorAll('.fit-noscroll').forEach(el=>{ if(el!==sc) el.classList.remove('fit-noscroll'); });
+  if(!sc) return;
+  sc.classList.remove('fit-noscroll');
+  const pb = parseFloat(getComputedStyle(sc).paddingBottom) || 0;
+  if(sc.scrollHeight - sc.clientHeight <= pb + 1){ sc.classList.add('fit-noscroll'); sc.scrollTop = 0; }
+}
+let _fitScrollRaf = 0, _fitScrollerH = new WeakMap();
+function scheduleFitScroll(){
+  cancelAnimationFrame(_fitScrollRaf);
+  _fitScrollRaf = requestAnimationFrame(syncFitScroll);
+}
+if(typeof ResizeObserver==='function'){
+  const fitRO = new ResizeObserver(entries=>{
+    // 스크롤 컨테이너 자체 높이가 바뀌면(주소창 표시/숨김·회전) 변화추이 그래프를 남는 높이에 다시 맞춘다
+    let redrawChart = false;
+    entries.forEach(en=>{
+      const el = en.target;
+      if(!el.classList.contains('page') && !el.classList.contains('subpage')) return;
+      const h = el.clientHeight, prev = _fitScrollerH.get(el);
+      _fitScrollerH.set(el, h);
+      if(prev!=null && Math.abs(prev-h)>1 && el===getScroller() && el.id==='chartSubpage') redrawChart = true;
+    });
+    if(redrawChart && typeof drawLineChart==='function') drawLineChart();
+    scheduleFitScroll();
+  });
+  const observeFit = ()=>{
+    document.querySelectorAll('.page, .page > .subpage').forEach(el=>{
+      fitRO.observe(el);
+      [...el.children].forEach(ch=>{ if(!ch.classList.contains('subpage')) fitRO.observe(ch); });
+    });
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', observeFit); else observeFit();
+}
 
 // 변화추이 상단 토글(종목별 수익률·스냅샷 이력)을 켰을 때 그 내용으로 부드럽게 스크롤.
 // window.scrollIntoView는 안 쓴다(실제 스크롤 컨테이너는 body가 아니라 getScroller()가
@@ -4952,6 +5016,7 @@ function switchPage(pageId){
   resetScrollTop();
   if(typeof PAGE_RENDER_HOOKS[pageId]==='function') PAGE_RENDER_HOOKS[pageId]();
   scheduleSubtabbarClip();
+  scheduleFitScroll();
 }
 // window.scrollTo(0,0)만으로는 안 되는 경우가 있어(overflow-x:hidden을 html/body에
 // 걸면서 두 요소 모두 auto 스크롤 컨테이너가 될 수 있음 — 위 body{overflow-y:hidden}로
@@ -4981,6 +5046,7 @@ function switchSubPage(pageId, subId){
   const hook = SUBPAGE_RENDER_HOOKS[pageId+'_'+subId];
   if(typeof hook==='function') hook();
   scheduleSubtabbarClip();
+  scheduleFitScroll();
 }
 // subtabbar가 sticky로 고정된 상태에서, 그 바로 아래 subpage 콘텐츠가 완전히 가려지기
 // 전에 일부만 삐져나와 보이는 문제를 고정 크기 CSS 패치가 아니라 실측 기반으로 고친다.
@@ -8731,36 +8797,89 @@ function groupAssetsByName(){
   return order;
 }
 
+// 변화추이 오른쪽 라벨의 글자 크기·줄 간격·열 폭 결정. 큰 글자부터 내려가며
+// ① 전부 한 줄 ② 긴 이름만 두 줄(이름/%) 중 가용 높이에 들어가는 첫 조합을 고르고(9px까지),
+// 그래도 안 되면 ③ 한 줄 + 종목명 말줄임, 최후엔 최소 글자에서 간격을 가용 높이에 맞춘다.
+function planLineLabels(ctx, items, availH, maxW, W){
+  const n = items.length;
+  const fontAt = f => `bold ${f}px Pretendard,sans-serif`;
+  const fStart = W<450 ? 10 : (n<=6 ? 12 : 11);
+  const metrics = f => {
+    ctx.font = fontAt(f);
+    const lineH = Math.max(f+3, Math.round(f*1.55*2)/2);
+    const twoH = Math.round((f*1.24 + lineH)*2)/2;
+    const one = items.map(l=>ctx.measureText(l.label+' '+l._pctStr+l._afterStr).width);
+    const two = items.map(l=>Math.max(ctx.measureText(l.label).width, ctx.measureText(l._pctStr+l._afterStr).width));
+    return {lineH, twoH, one, two};
+  };
+  const modeMap = fn => new Map(items.map((l,i)=>[l, fn(i)]));
+  for(let f=fStart; f>=9; f-=0.5){
+    const m = metrics(f);
+    if(m.one.every(w=>w<=maxW) && n*m.lineH<=availH)
+      return {font:f, lineH:m.lineH, twoH:m.twoH, mode:modeMap(()=>'one'), width:Math.max(...m.one)};
+    const wide = m.one.map(w=>w>maxW);
+    const h2 = wide.reduce((s,w)=>s+(w?m.twoH:m.lineH), 0);
+    if(h2<=availH && m.two.every(w=>w<=maxW))
+      return {font:f, lineH:m.lineH, twoH:m.twoH, mode:modeMap(i=>wide[i]?'two':'one'),
+              width:Math.max(...m.one.map((w,i)=>wide[i]?m.two[i]:w))};
+  }
+  for(let f=fStart; f>=8; f-=0.5){
+    const m = metrics(f);
+    if(n*m.lineH<=availH)
+      return {font:f, lineH:m.lineH, twoH:m.twoH, mode:modeMap(()=>'one'), width:Math.min(maxW, Math.max(...m.one))};
+  }
+  const lineH = Math.max(8, availH/Math.max(1,n));
+  ctx.font = fontAt(8);
+  return {font:8, lineH, twoH:lineH, mode:modeMap(()=>'one'), width:maxW};
+}
+
+// 라벨 세로 배치: 각 라벨을 자기 선 끝점(target)에 최대한 가깝게 두되 슬롯(heights)끼리 겹치지 않고
+// [top,bot] 띠 안에 들어가게 한다. 누적 간격을 뺀 좌표에서 단조(PAV) 회귀 후 띠 경계로 자르면 최적해.
+function placeLabelsInBand(targets, heights, top, bot){
+  const n = targets.length;
+  if(!n) return [];
+  const c = [0];
+  for(let i=1;i<n;i++) c[i] = c[i-1] + (heights[i-1]+heights[i])/2;
+  const blocks = [];
+  targets.forEach((t,i)=>{
+    blocks.push({s:t-c[i], k:1});
+    while(blocks.length>1){
+      const b = blocks[blocks.length-1], a = blocks[blocks.length-2];
+      if(a.s/a.k <= b.s/b.k) break;
+      a.s += b.s; a.k += b.k; blocks.pop();
+    }
+  });
+  const z = [];
+  blocks.forEach(b=>{ for(let j=0;j<b.k;j++) z.push(b.s/b.k); });
+  const lo = top + heights[0]/2, hi = bot - heights[n-1]/2 - c[n-1];
+  return z.map((v,i)=> (lo>hi ? (lo+hi)/2 : Math.min(hi, Math.max(lo, v))) + c[i]);
+}
+
 function drawLineChart(){
   const cv=document.getElementById('lineChart');
   if(!cv) return;
+  fitChartTopRow(); // 상단 줄 높이가 캔버스 위치를 정하므로 먼저 한 줄로 맞춘다
   const dpr=window.devicePixelRatio||1;
   const W=cv.parentElement.clientWidth||900;
 
-  // 그래프 높이: 범례가 안 겹치는 최소 높이 vs 화면에 남는 높이 중 더 큰 쪽(최대 900px).
-  // 토글 2개를 맨 위로 옮겨 생긴 여유를 그래프가 자동으로 차지하게 함 — 종목 수로만
-  // 정하던 예전 방식은 화면이 커도 그래프가 작게 남았다.
-  const LINE_H = 18; // 레전드 줄 간격
-  const visibleGroupCount = groupAssetsByName().filter(g=>g.ids.some(id=>selectedAssets.has(id))).length;
-  const visibleCount = visibleGroupCount + (showSum?1:0);
-  const minH = Math.max(280, visibleCount * LINE_H + 120);
-  // 남는 높이는 실제 스크롤 컨테이너(getScroller() — body가 아니라 .subpage) 기준으로 재야
-  // 정확하다. getBoundingClientRect()는 뷰포트 기준이라 현재 스크롤 위치에 따라 값이
-  // 달라지는데, "컨테이너 안에서 캔버스까지의 거리(스크롤 불변)"로 바꿔 계산한다 —
-  // 그렇지 않으면 스크롤된 채로 다시 그릴 때마다(기간 변경 등) 그래프가 점점 커졌다.
+  // 그래프 높이: 종목 수·기간과 무관하게 항상 "화면에 남는 높이" 전부(세로 스크롤 없음).
+  // 라벨이 많으면 그래프를 키우는 대신 라벨 글자·간격을 줄여 맞춘다(아래 라벨 배치).
+  // 남는 높이는 스크롤 컨테이너(getScroller()) 안 캔버스 위치(스크롤 불변)로 잰다 — 뷰포트 기준이면
+  // 스크롤된 채 다시 그릴 때마다 커진다. 컨테이너의 빈 하단 여백(padding-bottom)은 syncFitScroll이 잘라 쓴다.
   const rect = cv.getBoundingClientRect();
   let fillH = 0;
   if(rect.width>0){
     const sc = (typeof getScroller==='function') ? getScroller() : null;
+    const BOTTOM_GAP = 24; // 카드 하단 패딩(12) + 화면 아래 숨 쉴 여백(12)
     if(sc){
       const contRect = sc.getBoundingClientRect();
       const contentTop = (rect.top - contRect.top) + sc.scrollTop;
-      fillH = Math.floor(sc.clientHeight - contentTop - 64); // 64px: 카드 하단 패딩(16)+페이지 하단 여백(48)
+      fillH = Math.floor(sc.clientHeight - contentTop - BOTTOM_GAP);
     } else {
-      fillH = Math.floor(window.innerHeight - rect.top - 64);
+      fillH = Math.floor(window.innerHeight - rect.top - BOTTOM_GAP);
     }
   }
-  const H = Math.min(900, Math.max(minH, fillH));
+  const H = Math.min(1400, Math.max(240, fillH));
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
   cv.style.width=W+'px'; cv.style.height=H+'px';
   const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
@@ -8768,11 +8887,9 @@ function drawLineChart(){
   // ── 레이아웃 ──
   const LNUM=52;
   const RNUM=12; // 오른쪽 Y축 없음, 최소 여백
-  const TOP=24;
-  const BOT=54;
+  const TOP=6;
+  const BOT=['1D','5D','1M'].includes(currentPeriod) ? 34 : 22; // X축 날짜 1줄/2줄(시각)
   const PAD_IN=16;
-  const RLABEL=Math.round(Math.min(160, W*0.38));
-  const LBL_FONT=W<450?8:9;
   const RMARGIN=8; // 종목 라벨 끝~박스 오른쪽 테두리 사이 여백
 
   const BL=LNUM, BT=TOP;
@@ -8780,7 +8897,7 @@ function drawLineChart(){
 
   const gL=BL+PAD_IN;
   const gT=BT+PAD_IN;
-  const gW=BW-PAD_IN-RLABEL;
+  let gW=BW-PAD_IN; // 라벨 열 폭(RLABEL)이 정해지면 줄어든다
   const gH=BH-PAD_IN*2;
   const MAX_XT=W<400?3:W<600?4:6;
 
@@ -8895,10 +9012,34 @@ function drawLineChart(){
     lines.unshift({label:currentPeriod+' 합계', vals:sumVals, absVals:rawSum,
       color:'#2c2c2e', lw:1.8, isSum:true, events:[]});
   }
-  if(!lines.length) return;
-
   const allPct=lines.flatMap(l=>l.vals).filter(v=>v!=null&&isFinite(v));
-  if(!allPct.length) return;
+  if(!lines.length || !allPct.length){
+    ctx.fillStyle='#FAFAFC';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(BL, BT, BW, BH, 10); ctx.fill(); } else ctx.fillRect(BL, BT, BW, BH);
+    ctx.fillStyle='#8e8e93'; ctx.font='13px Pretendard,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(lines.length ? '이 기간에 표시할 데이터가 없습니다' : '표시할 종목이 없습니다 — "전체 보기"를 켜거나 "종목 선택"에서 고르세요', BL+BW/2, BT+BH/2);
+    ctx.textBaseline='alphabetic';
+    cv._labelLayout = {n:0, overlaps:0};
+    return;
+  }
+
+  // ── 오른쪽 종목 라벨 계획: 선택 수·가용 높이에 맞춰 글자 크기·줄 간격·라벨 열 폭을 정한다 ──
+  // 종목이 적으면 크고 여유롭게, 많으면 촘촘하게. 그래프 높이는 늘리지 않으며 겹침은 허용하지 않는다.
+  lines.forEach(l=>{
+    const li = l.vals.reduce((acc,v,i)=>(v!=null&&isFinite(v))?i:acc, -1);
+    l._lp = li>=0 ? l.vals[li] : null;
+    if(l._lp==null) return;
+    l._pctStr = maskAmt((l._lp>=0?'+':'') + l._lp.toFixed(2) + '%');
+    // 애프터장 % (USD 종목에 한해, 계좌 병합 없이 단독 종목인 경우만)
+    const asset = (l.assetIds && l.assetIds.length===1) ? assets.find(a=>a.id===l.assetIds[0]) : null;
+    const afterPct = asset?.postMarketPct;
+    l._afterStr = (afterPct != null) ? ` (A ${maskAmt((afterPct>=0?'+':'')+afterPct.toFixed(2)+'%')})` : '';
+  });
+  const LBL_TOP = BT+4, LBL_BOT = BT+BH-4;
+  const lblMaxW = Math.round(Math.min(280, W*(W<600?0.34:0.28)));
+  const lblPlan = planLineLabels(ctx, lines.filter(l=>l._lp!=null), LBL_BOT-LBL_TOP, lblMaxW, W);
+  const RLABEL = Math.max(64, Math.ceil(lblPlan.width) + 10 + RMARGIN + 4);
+  gW = BW - PAD_IN - RLABEL;
 
   // 단일 Y축: 모든 값 포함
   // 작은 변화(-0.1%)와 큰 변화(+6%)가 모두 인지되도록 여백 충분히 확보
@@ -9032,95 +9173,51 @@ function drawLineChart(){
     }
   }
 
-  // ── 종목명+% (박스 오른쪽 여백, 겹침 방지) ──
+  // ── 종목명+% (박스 오른쪽 라벨 열) — lblPlan의 글자·슬롯으로 경계 안에 겹침 없이 배치 ──
   const LBL_X = gL + gW + 10;
-  // LINE_H는 위에서 이미 선언됨 (동적 높이 계산에 사용)
-  const labeled = lines.filter(l=>l._ly!=null).sort((a,b)=>a._ly-b._ly);
+  const labeled = lines.filter(l=>l._ly!=null && l._lp!=null).sort((a,b)=>a._ly-b._ly);
   if(labeled.length){
-    // 실제로 안전하게 그릴 수 있는 폭: 라벨 시작점(LBL_X, 박스 오른쪽에서 RLABEL만큼 안쪽 + 10px)부터
-    // 클리핑 경계(박스 오른쪽 테두리에서 RMARGIN만큼 안쪽)까지 — 기존엔 이 여백들을 빼지 않아
-    // 종목명이 테두리에서 잘려 보이는 경우가 있었다.
-    const maxW = RLABEL - 10 - RMARGIN;
-    ctx.font = `bold ${LBL_FONT}px Pretendard,sans-serif`;
-    ctx.textAlign = 'left';
-    // 종목명이 maxW보다 넓으면(글자 수가 많은 종목명 등) 잘리지 않도록 폰트를 줄여서 맞춘다
-    const fitFontSize = text => {
-      let size = LBL_FONT;
-      ctx.font = `bold ${size}px Pretendard,sans-serif`;
-      while(size > 6 && ctx.measureText(text).width > maxW){
-        size -= 0.5;
-        ctx.font = `bold ${size}px Pretendard,sans-serif`;
-      }
-      return size;
+    const f = lblPlan.font, maxW = lblPlan.width;
+    ctx.font = `bold ${f}px Pretendard,sans-serif`;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const slotH = l => lblPlan.mode.get(l)==='two' ? lblPlan.twoH : lblPlan.lineH;
+    const ys = placeLabelsInBand(labeled.map(l=>l._ly), labeled.map(slotH), LBL_TOP, LBL_BOT);
+    // 넓이 초과 시 종목명만 말줄임(% 값은 항상 보존)
+    const ellip = (name, suffix) => {
+      if(ctx.measureText(name+suffix).width <= maxW) return name+suffix;
+      let s = name;
+      while(s.length>1 && ctx.measureText(s+'…'+suffix).width > maxW) s = s.slice(0,-1);
+      return s+'…'+suffix;
     };
-
-    // 0단계: 겹침 계산 전에 라벨 텍스트와 한 줄/두 줄 여부를 먼저 확정
-    // (긴 종목명은 두 줄로 그려지므로, 한 줄 기준 간격만으로 밀어내면 옆 라벨과 겹친다)
-    labeled.forEach(l=>{
-      l._pctStr = maskAmt((l._lp>=0?'+':'') + l._lp.toFixed(2) + '%');
-      // 애프터장 % (USD 종목에 한해, 계좌 병합 없이 단독 종목인 경우만)
-      const asset = (l.assetIds && l.assetIds.length===1) ? assets.find(a=>a.id===l.assetIds[0]) : null;
-      const afterPct = asset?.postMarketPct;
-      l._afterStr = (afterPct != null)
-        ? ` (A ${maskAmt((afterPct>=0?'+':'')+afterPct.toFixed(2)+'%')})`
-        : '';
-      l._twoLine = ctx.measureText(l.label + ' ' + l._pctStr + l._afterStr).width > maxW;
-    });
-
-    // 1단계: 원래 위치 설정
-    labeled.forEach(l=>{ l._aly = l._ly; });
-
-    // 두 줄 라벨은 더 넓은 슬롯이 필요 — 인접한 두 라벨 중 더 큰 요구 간격을 사용
-    const need = l => l._twoLine ? LINE_H*1.7 : LINE_H;
-
-    // 2단계: 위→아래 겹침 해소 (아래로 밀기)
-    for(let i=1;i<labeled.length;i++){
-      const gap = Math.max(need(labeled[i-1]), need(labeled[i]));
-      if(labeled[i]._aly - labeled[i-1]._aly < gap)
-        labeled[i]._aly = labeled[i-1]._aly + gap;
-    }
-    // 3단계: 아래→위 겹침 해소 (위로 밀기, 그래프 영역 초과 방지)
-    for(let i=labeled.length-2;i>=0;i--){
-      const gap = Math.max(need(labeled[i]), need(labeled[i+1]));
-      if(labeled[i+1]._aly - labeled[i]._aly < gap)
-        labeled[i]._aly = labeled[i+1]._aly - gap;
-    }
-
-    // 4단계: 라벨들이 몰려있던 원래 위치 때문에 묶음 전체가 그래프 아래(또는 위) 경계를
-    // 벗어나면, 개별 라벨을 경계에 각각 밀어붙이는 대신(그러면 서로 겹침) 상대 간격을
-    // 유지한 채 묶음 전체를 위/아래로 이동시켜 경계 안에 들어오게 한다.
-    const boundTop = gT+6, boundBottom = gT+gH-4;
-    let shift = 0;
-    if(labeled[labeled.length-1]._aly + shift > boundBottom)
-      shift = boundBottom - labeled[labeled.length-1]._aly;
-    if(labeled[0]._aly + shift < boundTop)
-      shift = boundTop - labeled[0]._aly;
-    if(shift !== 0) labeled.forEach(l=>{ l._aly += shift; });
-
-    labeled.forEach(l=>{
-      const aly = Math.max(gT+6, Math.min(gT+gH-4, l._aly));
-
-      // 연결선 (위치 이동된 경우)
-      if(Math.abs(aly - l._ly) > 3){
+    let overlaps = 0, minGap = Infinity;
+    labeled.forEach((l,i)=>{
+      const y = ys[i];
+      if(i>0){
+        const gap = (y - slotH(l)/2) - (ys[i-1] + slotH(labeled[i-1])/2);
+        minGap = Math.min(minGap, gap);
+        if(gap < -0.5) overlaps++;
+      }
+      if(Math.abs(y - l._ly) > 3){ // 원래 끝점에서 옮겨졌으면 점선 연결
         ctx.strokeStyle = l.color; ctx.lineWidth = 0.5; ctx.setLineDash([2,2]);
-        ctx.beginPath(); ctx.moveTo(l._lx+4, l._ly); ctx.lineTo(LBL_X-2, aly); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(l._lx+4, l._ly); ctx.lineTo(LBL_X-2, y); ctx.stroke();
         ctx.setLineDash([]);
       }
-
       ctx.fillStyle = l.color;
-      if(!l._twoLine){
-        const oneLineText = l.label + ' ' + l._pctStr + l._afterStr;
-        fitFontSize(oneLineText);
-        ctx.fillText(oneLineText, LBL_X, aly+3);
+      const suffix = l._pctStr + l._afterStr;
+      if(lblPlan.mode.get(l)==='two'){
+        const off = f*0.62;
+        ctx.fillText(ellip(l.label, ''), LBL_X, y-off);
+        ctx.fillText(suffix, LBL_X, y+off);
       } else {
-        // 종목명과 % 두 줄로 (줄 간격을 폰트 크기에 맞춰 넉넉히)
-        fitFontSize(l.label);
-        ctx.fillText(l.label, LBL_X, aly-4);
-        fitFontSize(l._pctStr + l._afterStr);
-        ctx.fillText(l._pctStr + l._afterStr, LBL_X, aly+10);
+        ctx.fillText(ellip(l.label, ' '+suffix), LBL_X, y);
       }
-      ctx.font = `bold ${LBL_FONT}px Pretendard,sans-serif`; // 다음 라벨 측정을 위해 기본 폰트로 복원
     });
+    ctx.textBaseline = 'alphabetic';
+    cv._labelLayout = {n:labeled.length, font:f, lineH:lblPlan.lineH, twoH:lblPlan.twoH,
+      two:labeled.filter(l=>lblPlan.mode.get(l)==='two').length, rlabel:RLABEL, graphW:Math.round(gW),
+      minGap: isFinite(minGap)?+minGap.toFixed(1):null, overlaps,
+      top:+(ys[0]-slotH(labeled[0])/2).toFixed(1), bottom:+(ys[ys.length-1]+slotH(labeled[labeled.length-1])/2).toFixed(1),
+      bandTop:LBL_TOP, bandBot:LBL_BOT};
   }
 
   ctx.restore(); // ★ 클리핑 해제
@@ -9306,15 +9403,12 @@ function toggleBanner(btn){
 }
 
 function renderToggles(){
-  // "전체 선택"/"전체 해제"는 한 버튼으로 — 모두 선택+합계 표시 상태면 "전체 해제"(눌러서 다
-  // 지움), 아니면 "전체 선택"(눌러서 다 채움). toggleAll()은 정확히 이 동작을 하는
-  // 기존 함수(이전엔 호출하는 곳이 없던 죽은 코드)를 그대로 재사용.
+  // "전체 보기" 스위치: 켜짐 = 전 종목+합계 표시 상태. 누르면 toggleAll()(켜기=전부 선택, 끄기=전부 해제)
   const allSelected = assets.every(a=>selectedAssets.has(a.id)) && showSum;
-  document.getElementById('assetToggles').innerHTML=
-    `<button class="toggle-ctrl" onclick="toggleAll()" style="background:${allSelected?'#ff3b30':'#1c1c1e'};color:#fff">${allSelected?'전체 해제':'전체 선택'}</button>`+
-    `<button class="toggle-ctrl" onclick="toggleSum()" style="background:${showSum?'var(--color-accent)':'var(--color-section-bg)'};color:${showSum?'#fff':'var(--color-text)'}">합계</button>`;
-  // 종목별 개별 토글은 접이식 안에 — 선택 시 배경을 실색으로 채워 가독성 개선(연한 틴트+같은색 글자 조합 방지)
-  // 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시
+  const allBtn = document.getElementById('allViewToggleBtn');
+  if(allBtn){ allBtn.classList.toggle('on', allSelected); allBtn.setAttribute('aria-checked', allSelected?'true':'false'); }
+  // 종목 선택 팝오버: 합계가 맨 앞, 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시
+  const sumPill = `<button class="toggle-pill sum-pill ${showSum?'on':''}" onclick="toggleSum()"><span class="dot"></span>합계</button>`;
   const groupPills = groupAssetsByName().map((g,i)=>{
       const col = LINE_COLS[i%LINE_COLS.length];
       const on = g.ids.some(id=>selectedAssets.has(id));
@@ -9326,8 +9420,34 @@ function renderToggles(){
       return`<button class="toggle-pill ${on?'on':''}" onclick="toggleAsset('${a.id}')">
         <span class="dot" style="background:#8e8e93"></span>${a.name}</button>`;
     }).join('');
-  document.getElementById('assetTogglesDetail').innerHTML = groupPills + cashPills;
+  document.getElementById('assetTogglesDetail').innerHTML = sumPill + groupPills + cashPills;
+  fitChartTopRow();
 }
+
+// 상단 줄이 넘치면(글꼴·폭 차이) 여백→글자 순으로 단계적으로 줄여 펼침 화면에서 한 줄을 유지한다
+function fitChartTopRow(){
+  const row = document.getElementById('chartTopRow');
+  if(!row || !row.offsetParent) return;
+  row.classList.remove('cmp1','cmp2','cmp3');
+  if(window.innerWidth < 600) return;
+  const over = ()=> row.scrollWidth > row.clientWidth + 1;
+  if(over()) row.classList.add('cmp1');
+  if(over()) row.classList.add('cmp2');
+  if(over()) row.classList.add('cmp3'); // 그래도 넘치면 가로로 삐져나가기보다 줄바꿈
+}
+
+// 종목 선택 팝오버: 바깥을 누르거나 ESC면 닫는다(스위치 상태도 함께)
+function closeChartPickPop(){
+  const btn = document.getElementById('stockDetailToggleBtn');
+  if(btn && btn.classList.contains('on')) toggleBanner(btn);
+}
+document.addEventListener('pointerdown', e=>{
+  const pop = document.getElementById('assetTogglesDetail');
+  if(!pop || pop.style.display==='none') return;
+  if(pop.contains(e.target) || e.target.closest('#stockDetailToggleBtn')) return;
+  closeChartPickPop();
+}, true);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeChartPickPop(); });
 
 function toggleAsset(id){
   selectedAssets.has(id)?selectedAssets.delete(id):selectedAssets.add(id);
@@ -9779,13 +9899,14 @@ window.addEventListener('resize',()=>{
   resizeRedrawTimer = setTimeout(()=>{
     drawLineChart();
     refreshActiveViewCanvases();
+    scheduleFitScroll();
   }, 150);
 });
 
 // 회전(orientationchange)은 폭이 거의 같은 폴드 펼침 화면에서도 높이가 바뀌므로, 폭 필터 없이 항상 다시 맞춰 그린다
 window.addEventListener('orientationchange',()=>{
   clearTimeout(resizeRedrawTimer);
-  resizeRedrawTimer = setTimeout(()=>{ lastResizeWidth = window.innerWidth; drawLineChart(); refreshActiveViewCanvases(); }, 300);
+  resizeRedrawTimer = setTimeout(()=>{ lastResizeWidth = window.innerWidth; drawLineChart(); refreshActiveViewCanvases(); scheduleFitScroll(); }, 300);
 });
 
 (async function init(){
