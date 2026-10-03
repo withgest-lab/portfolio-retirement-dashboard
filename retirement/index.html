@@ -405,10 +405,8 @@ button{font-family:inherit;cursor:pointer;}
   line-height:1.25;}
 /* 자동설계 버튼을 basic-row 오른쪽 끝에 붙임 */
 .basic-row-action{display:flex;align-items:center;gap:8px;flex-shrink:0;margin:0 0 0 auto;}
-/* ISA 열: 그리드 행 높이만큼 늘어나는 세로 묶음 — ISA 카드는 자연 높이 그대로 두고(카드를 늘리지 않음),
-   남는 아래 빈 자리 맨 끝(카드 박스 좌측 하단 모서리)에 "수익률·물가 설정" 스위치를 둔다 */
-.isa-col{display:flex;flex-direction:column;align-self:stretch;min-width:0;}
-.rates-anchor{margin-top:auto;position:relative;align-self:flex-start;padding-top:6px;}
+/* "수익률·물가 설정" 스위치: 카드 박스 좌측 하단 모서리(2행 1열 — 게이지 아래 빈 자리 맨 끝) */
+.rates-anchor{position:relative;}
 .rates-anchor .tgl-banner{padding:3px 7px 3px 10px;font-size:10.5px;gap:5px;}
 .rates-anchor .tgl-banner .sw{width:22px;height:13px;}
 .rates-anchor .tgl-banner .sw::after{width:9px;height:9px;}
@@ -423,13 +421,16 @@ button{font-family:inherit;cursor:pointer;}
 .chart-main.basis-mode .phase-cards{display:none;}
 .basis-empty{font-size:12px;color:#8e8e93;text-align:center;padding:40px 16px;}
 
-/* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ──
-   align-items:start — 기본값(stretch)이면 ISA 카드가 옆의 priv-group(3카드+사적연금
-   합계 박스)이나 stack-group 중 더 긴 쪽 높이에 강제로 맞춰져, ISA 카드 안에 내용
-   없는 빈 여백이 크게 남아 밸런스가 깨져 보였음 — 각 열이 자기 내용만큼만 높이를
-   갖게 해서 불필요한 빈 공간을 없앤다(priv-cards 내부 3장은 아래에서 별도로 서로
-   맞춰서 그 안의 "같은 종류" 필드들끼리는 계속 정렬됨). */
-.acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;align-items:start;}
+/* ── 계좌 카드 그리드: 평평한 5열 ──
+   1행: 농협 · 미래에셋 · IRP 개인 · 퇴직연금 · ISA — 5장 모두 같은 5칸 행 구조(잔액/연납입·안세공/
+        3번째 칸/납입 시작·종료/수령·인출 시작)라 stretch로 높이만 맞추면 행과 하단 외곽이 전부 일직선.
+   2행: 사적연금 합계 게이지(1~3열, 위) + 수익률·물가 설정(1열, 아래 = 박스 좌하단) · 국민연금(5열, ISA 바로 아래).
+   2행 높이는 국민연금 카드가 정하고, 나머지는 자기 내용만큼만 차지한다. */
+.acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;align-items:stretch;}
+.acct-grid .c-isa{grid-column:5;grid-row:1;}
+.acct-grid .c-np{grid-column:5;grid-row:2;align-self:start;}
+.acct-grid .limit-gauge-wrap{grid-column:1 / 4;grid-row:2;align-self:start;margin:0;}
+.acct-grid .rates-anchor{grid-column:1 / 4;grid-row:2;align-self:end;justify-self:start;}
 .acct-card{border:1px solid #E8EAF0;border-radius:10px;overflow:hidden;background:#fff;min-width:0;
   display:flex;flex-direction:column;}
 .acct-head{display:flex;align-items:flex-start;gap:5px;font-size:11px;font-weight:700;padding:6px 7px;letter-spacing:.02em;
@@ -464,17 +465,6 @@ button{font-family:inherit;cursor:pointer;}
 /* 카드 하단 고정 안내 한 줄 — 카드가 늘어난 만큼 생기는 빈 공간을 정보로 채움 */
 .mini-note{margin-top:auto;font-size:9px;color:#8A90A0;line-height:1.5;
   background:#F0F2F5;border-radius:7px;padding:6px 7px;}
-
-/* ── 사적연금 그룹(농협·미래에셋·IRP) — 1,500만원 한도를 공유하는 3계좌를 배치만 묶고,
-   각 카드는 ISA·퇴직연금과 동일하게 개별 외곽 박스를 그대로 사용(공통 외곽 박스는 없음). ── */
-.priv-group{grid-column:span 3;background:transparent;display:flex;flex-direction:column;gap:6px;min-width:0;}
-.priv-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-width:0;}
-
-/* ── 퇴직연금+국민연금 묶음: 내용이 짧은 두 계좌를 한 슬롯에 위/아래로 쌓음 ── */
-.stack-group{display:flex;flex-direction:column;gap:6px;min-width:0;}
-/* 균등분할(flex:1 양쪽)은 overflow:hidden과 맞물려 내용 많은 위 카드가 눌려 문구가 잘리므로,
-   위 카드는 자연 높이를 쓰고 아래 카드만 남는 여유 공간을 흡수하도록 함 */
-.stack-group .acct-card:last-child{flex:1;}
 
 /* ── 화면에는 숨기되 계산에는 계속 쓰는 필드(납입시작/종료 나이 등) ── */
 .irow-hidden{display:none !important;}
@@ -534,8 +524,14 @@ button{font-family:inherit;cursor:pointer;}
   h1{font-size:13px;}
   table{font-size:9px;}
   th,td{padding:4px 2px;}
-  .acct-grid{grid-template-columns:1fr;}
-  .priv-group{grid-column:1;} /* span:3는 1열 그리드에서 폭 넘침을 유발하므로 강제로 1칸 */
+  /* 접힘: 1행만 3열(농협·미래에셋·IRP), 그 아래는 전체 폭 — 게이지 → 퇴직연금 → ISA → 국민연금 → 설정 스위치 */
+  .acct-grid{grid-template-columns:repeat(3,1fr);}
+  .acct-grid .limit-gauge-wrap{grid-column:1 / -1;grid-row:2;}
+  .acct-grid .c-tirp{grid-column:1 / -1;grid-row:3;}
+  .acct-grid .c-isa{grid-column:1 / -1;grid-row:4;}
+  .acct-grid .c-np{grid-column:1 / -1;grid-row:5;}
+  .acct-grid .rates-anchor{grid-column:1 / -1;grid-row:6;}
+  .c-isa .irow[aria-hidden]{display:none;} /* 전체 폭이라 맞출 옆 카드가 없음 — 정렬용 빈칸 불필요 */
   .inline-panel{padding:8px 10px 10px;}
   .health-input-row{flex-direction:column;align-items:flex-start;gap:2px;}
   .hir-hint{min-width:0;white-space:normal;overflow:visible;text-overflow:clip;}
@@ -566,9 +562,8 @@ button{font-family:inherit;cursor:pointer;}
   .acct-body .fv-row .ival-input,
   .acct-body .irow-ymon .ival-input{padding:2px 3px;}
   .acct-grid{gap:4px;}
-  .priv-cards{gap:4px;}
-  .priv-group{gap:4px;}
-  .stack-group{gap:4px;}
+  /* 카드 머리는 한 줄 고정 — 이름이 줄바꿈되면 그 카드만 본문이 내려가 옆 카드와 행이 어긋남 */
+  .acct-head .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .panel{padding:6px 10px;margin-bottom:var(--gap);}
   .panel.acct-panel{padding-top:4px;}
   .acct-panel .acct-grid{margin-top:0;}
@@ -577,7 +572,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* 폴드를 가로(landscape)로 돌렸을 때처럼 폭은 넓은데 뷰포트 높이가 짧은 상태 전용 추가 압축.
    위 폭 기준 압축만으론 짧은 높이에서 스크롤이 남을 수 있어 한 번 더 줄인다 — 카드 그리드
-   (가장 비중이 큰 stack-group: 퇴직연금+국민연금)를 중심으로 폰트·행간을 더 좁힌다.
+   (가장 긴 5열: ISA+국민연금)를 중심으로 폰트·행간을 더 좁힌다.
    고정 높이(max-height) 대신 JS(fitDensity())가 실제로 내용이 넘칠 때만 html.dense를
    붙인다 — 화면 높이는 표준 기기값과 실제 글꼴 렌더링이 달라 고정값으론 못 잡는 경우가
    있었다(일부 기기에서 펼침+90도에 세로 스크롤이 남던 문제). 폭이 좁은 접힌 화면(≤480)엔
@@ -600,9 +595,13 @@ html.dense .acct-body .fv-row .ival-input,
 html.dense .acct-body .irow-ymon .ival-input{font-size:10px;padding:1px 2px;}
 html.dense .acct-body .unit-tag,html.dense .acct-body .ymon-select{font-size:8px;}
 html.dense .acct-grid{gap:3px;}
-html.dense .priv-cards{gap:3px;}
-html.dense .priv-group{gap:3px;}
-html.dense .stack-group{gap:3px;}
+/* 압축 모드도 행 높이를 명시 — 안 하면 연납입+월 선택 행이 일반 행보다 3px 커져 IRP·퇴직연금·ISA의
+   납입·수령 행이 농협·미래에셋보다 내려감(일반 입력 = 월 선택 = 근속/퇴직소득세 = 18, 짝 입력 = 16) */
+html.dense .acct-body .ival-input{height:18px;}
+html.dense .acct-body .fv-row .ival-input,
+html.dense .acct-body .irow-ymon .ival-input{height:16px;}
+html.dense .acct-body .irow-ymon .ymon-select{height:18px;}
+html.dense .acct-body .fv-row.fv-eq .ival-input{font-size:11px;height:18px;}
 html.dense .fv-row{gap:2px;}
 html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 /* ── 설계 탭 "적당한 여유" 스케일(--sp, 0~1) — fitDensity()가 남는 세로 공간을 실측해 정한다.
@@ -618,7 +617,10 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   html:not(.dense) .acct-body .fv-row .ival-input,
   html:not(.dense) .acct-body .irow-ymon .ival-input{height:calc(18px + 4px*var(--sp,0));font-size:calc(11.5px + .8px*var(--sp,0));width:calc(44px + 3px*var(--sp,0));}
   html:not(.dense) .acct-body .irow-ymon .ymon-select{height:calc(20px + 4px*var(--sp,0));}
-  html:not(.dense) .acct-grid,html:not(.dense) .priv-cards,html:not(.dense) .priv-group,html:not(.dense) .stack-group{gap:calc(4px + 3px*var(--sp,0));}
+  /* 퇴직연금의 근속연수/퇴직소득세 줄은 이웃 카드의 "일반 행"(안세공 원금·IRP/ISA 스페이서) 자리 —
+     짝 입력칸 높이(18+4sp)를 쓰면 아래 납입·수령 행이 2px씩 어긋나므로 일반 입력 높이로 */
+  html:not(.dense) .acct-body .fv-row.fv-eq .ival-input{height:calc(20px + 4px*var(--sp,0));}
+  html:not(.dense) .acct-grid{gap:calc(4px + 3px*var(--sp,0));}
   html:not(.dense) .panel{padding-top:calc(6px + 3px*var(--sp,0));padding-bottom:calc(6px + 3px*var(--sp,0));}
   html:not(.dense) .panel.acct-panel{padding-top:calc(4px + 3px*var(--sp,0));}
 }
@@ -832,7 +834,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div class="irow-top">
     <span class="ilabel" title="현재 기준, 물가상승률 반영">월 생활비</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="exp" value="400" min="100" max="600" step="5" onblur="onBlurFix('exp')" oninput="syncSlider('exp');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="exp" value="400" min="100" max="600" step="5" onblur="onBlurFix('exp')" oninput="syncSlider('exp');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
   <input type="range" id="exp-r" min="100" max="600" step="5" value="400"  oninput="syncInput('exp');scheduleUpd()">
@@ -840,7 +842,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div class="irow-top">
     <span class="ilabel">사적연금 한도</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="plimit" value="1450" min="900" max="1500" step="50" onblur="onBlurFix('plimit')" oninput="syncSlider('plimit');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="plimit" value="1450" min="900" max="1500" step="50" onblur="onBlurFix('plimit')" oninput="syncSlider('plimit');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1450"  oninput="syncInput('plimit');scheduleUpd()">
@@ -859,15 +861,314 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div id="pfSyncStatus"></div>
 <div class="acct-grid">
 
-<div class="isa-col">
-<div class="acct-card" style="border-color:#D6ACB6;">
+<!-- 1행: 농협 · 미래에셋 · IRP 개인 · 퇴직연금 · ISA (같은 높이로 늘어나 하단 외곽이 일직선, 행 순서도 같음)
+     2행: 사적연금 합계 게이지(1~3열) + 수익률·물가 설정(좌하단) · 국민연금(5열, ISA 바로 아래) -->
+<div class="acct-card" style="border-color:#8FB89D;">
+<div class="acct-head" style="background:#EAF3EE;color:#2E5E47;"><span class="dot" style="background:#4E9B78;"></span><span class="name">농협 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-body">
+<div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">현재 잔액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nh" value="12000" min="0" max="50000" step="500" onblur="onBlurFix('nh')" oninput="syncSlider('nh');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="nh-r" min="0" max="50000" step="500" value="12000"  oninput="syncInput('nh');scheduleUpd()">
+</div><div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금 — 현재 잔액에 이미 포함된 금액입니다">안세공 원금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhprin" value="3000" min="0" max="20000" step="100" onblur="onBlurFix('nhprin')" oninput="syncSlider('nhprin');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="nhprin-r" min="0" max="20000" step="100" value="3000"  oninput="syncInput('nhprin');scheduleUpd()">
+</div><div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">월 납입액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhm" value="99" min="0" max="150" step="5" onblur="onBlurFix('nhm')" oninput="syncSlider('nhm');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="nhm-r" min="0" max="150" step="5" value="99"  oninput="syncInput('nhm');scheduleUpd()">
+</div><div class="fv-row">
+<div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('nhstart')" oninput="syncSlider('nhstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="nhstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('nhstart');scheduleUpd()">
+</div><div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhend" min="50" max="75" step="1" onblur="onBlurFix('nhend')" oninput="syncSlider('nhend');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" oninput="syncInput('nhend');scheduleUpd()">
+</div>
+</div>
+<div class="fv-row">
+<div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">수령 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhage" value="57" min="55" max="80" step="1" onblur="onBlurFix('nhage')" oninput="syncSlider('nhage');scheduleUpd()"><span class="unit-tag">세</span>
+      </div>
+  </div>
+  <input type="range" id="nhage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('nhage');scheduleUpd()">
+</div><div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">월 수령액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="nhpay" value="70" min="0" max="300" step="5" onblur="onBlurFix('nhpay')" oninput="syncSlider('nhpay');limitCheck('nhpay')"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="nhpay-r" min="0" max="300" step="5" value="70"  oninput="syncInput('nhpay');scheduleUpd()">
+</div>
+</div>
+</div>
+</div>
+
+<div class="acct-card" style="border-color:#7EBAB6;">
+<div class="acct-head" style="background:#E7F2F1;color:#2C5C59;"><span class="dot" style="background:#4C9793;"></span><span class="name">미래에셋 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-body">
+<div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">현재 잔액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mf" value="6000" min="0" max="30000" step="500" onblur="onBlurFix('mf')" oninput="syncSlider('mf');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="mf-r" min="0" max="30000" step="500" value="6000"  oninput="syncInput('mf');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금 — 현재 잔액에 이미 포함된 금액입니다">안세공 원금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfprin" value="200" min="0" max="20000" step="100" onblur="onBlurFix('mfprin')" oninput="syncSlider('mfprin');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="mfprin-r" min="0" max="20000" step="100" value="200"  oninput="syncInput('mfprin');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">월 납입액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfm" value="0" min="0" max="150" step="5" onblur="onBlurFix('mfm')" oninput="syncSlider('mfm');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="mfm-r" min="0" max="150" step="5" value="0"  oninput="syncInput('mfm');scheduleUpd()">
+</div><div class="fv-row">
+<div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('mfstart')" oninput="syncSlider('mfstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="mfstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('mfstart');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfend" min="50" max="75" step="1" onblur="onBlurFix('mfend')" oninput="syncSlider('mfend');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" oninput="syncInput('mfend');scheduleUpd()">
+</div>
+</div>
+<div class="fv-row">
+<div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">수령 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfage" value="57" min="55" max="80" step="1" onblur="onBlurFix('mfage')" oninput="syncSlider('mfage');scheduleUpd()"><span class="unit-tag">세</span>
+      </div>
+  </div>
+  <input type="range" id="mfage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('mfage');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">월 수령액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="mfpay" value="46" min="0" max="200" step="5" onblur="onBlurFix('mfpay')" oninput="syncSlider('mfpay');limitCheck('mfpay')"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="mfpay-r" min="0" max="200" step="5" value="46"  oninput="syncInput('mfpay');scheduleUpd()">
+</div>
+</div>
+</div>
+</div>
+
+<div class="acct-card" style="border-color:#8FB3D1;">
+<div class="acct-head" style="background:#E9F0F6;color:#33566F;"><span class="dot" style="background:#5D8AB0;"></span><span class="name">IRP 개인</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-body">
+<div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">현재 잔액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irp" value="400" min="0" max="20000" step="500" onblur="onBlurFix('irp')" oninput="syncSlider('irp');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="irp-r" min="0" max="20000" step="500" value="400"  oninput="syncInput('irp');scheduleUpd()">
+</div><div class="irow irp irow-ymon">
+  <div class="irow-top">
+    <span class="ilabel">연납입</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irpy" value="300" min="0" max="1200" step="50" onblur="onBlurFix('irpy')" oninput="syncSlider('irpy');scheduleUpd()"><span class="unit-tag">만</span>
+      <select class="ymon-select" id="irpymon" onchange="scheduleUpd()" title="연납입 하는 달">
+        <option value="1">1월</option><option value="2">2월</option><option value="3" selected>3월</option>
+        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+      </select>
+      </div>
+  </div>
+  <input type="range" id="irpy-r" min="0" max="1200" step="50" value="300"  oninput="syncInput('irpy');scheduleUpd()">
+</div><div class="irow irp" style="visibility:hidden;" aria-hidden="true">
+  <!-- 농협/미래에셋 카드의 "안세공 원금" 행과 같은 자리를 차지하는 투명 스페이서 —
+       IRP는 이 개념이 없지만, 5장이 나란히 놓이는 acct-grid 1행에서
+       이 행이 없으면 그 아래 "납입 시작/종료"·"수령 시작/월 수령액" 행들이 한 칸씩
+       위로 밀려 다른 카드와 안 맞아 보임(들쑥날쑥 방지용). -->
+  <div class="irow-top">
+    <span class="ilabel">-</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" value="0" tabindex="-1"><span class="unit-tag">만</span>
+    </div>
+  </div>
+</div><div class="fv-row">
+<div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irpstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="irpstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('irpstart');scheduleUpd()">
+</div><div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irpend" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="irpend-r" min="50" max="75" step="1" value="57" oninput="syncInput('irpend');scheduleUpd()">
+</div>
+</div>
+<div class="fv-row">
+<div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">수령 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irpage" value="70" min="55" max="80" step="1" onblur="onBlurFix('irpage')" oninput="syncSlider('irpage');scheduleUpd()"><span class="unit-tag">세</span>
+      </div>
+  </div>
+  <input type="range" id="irpage-r" min="55" max="80" step="1" value="70"  oninput="syncInput('irpage');scheduleUpd()">
+</div><div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">월 수령액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="irppay" value="0" min="0" max="150" step="5" onblur="onBlurFix('irppay')" oninput="syncSlider('irppay');limitCheck('irppay')"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="irppay-r" min="0" max="150" step="5" value="0"  oninput="syncInput('irppay');scheduleUpd()">
+</div>
+</div>
+</div>
+</div>
+
+<div class="acct-card c-tirp" style="border-color:#ABA1D4;">
+<div class="acct-head" style="background:#EFEDF6;color:#4F457F;"><span class="dot" style="background:#8478B8;"></span><span class="name">퇴직연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-body">
+<div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">현재 잔액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tirp" value="22000" min="0" max="100000" step="1000" onblur="onBlurFix('tirp')" oninput="syncSlider('tirp');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="tirp-r" min="0" max="100000" step="1000" value="22000"  oninput="syncInput('tirp');scheduleUpd()">
+</div><div class="irow dc irow-ymon">
+  <div class="irow-top">
+    <span class="ilabel">연간 DC 적립액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tdc" value="1000" min="0" max="3000" step="50" onblur="onBlurFix('tdc')" oninput="syncSlider('tdc');scheduleUpd()"><span class="unit-tag">만</span>
+      <select class="ymon-select" id="tdcymon" onchange="scheduleUpd()" title="연납입 하는 달">
+        <option value="1" selected>1월</option><option value="2">2월</option><option value="3">3월</option>
+        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+      </select>
+      </div>
+  </div>
+  <input type="range" id="tdc-r" min="0" max="3000" step="50" value="1000" oninput="syncInput('tdc');scheduleUpd()">
+</div><div class="fv-row fv-eq">
+<div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">근속연수</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tservice" value="10" min="1" max="45" step="1" onblur="onBlurFix('tservice')" oninput="syncSlider('tservice');scheduleUpd()"><span class="unit-tag">년</span>
+      </div>
+  </div>
+  <input type="range" id="tservice-r" min="1" max="45" step="1" value="10" oninput="syncInput('tservice');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel" title="퇴직소득세 추정치(일시금 기준, 자동계산)">퇴직소득세</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tirptax" value="2000" min="0" max="30000" step="100" onblur="onBlurFix('tirptax')" oninput="syncSlider('tirptax');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="tirptax-r" min="0" max="30000" step="100" value="2000" oninput="syncInput('tirptax');scheduleUpd()">
+</div>
+</div>
+<div class="fv-row">
+<div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">납입 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tdcstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('tdcstart')" oninput="syncSlider('tdcstart');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="tdcstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('tdcstart');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">납입 종료</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tdcend" min="50" max="75" step="1" onblur="onBlurFix('tdcend')" oninput="syncSlider('tdcend');scheduleUpd()"><span class="unit-tag">세</span>
+    </div>
+  </div>
+  <input type="range" id="tdcend-r" min="50" max="75" step="1" value="57" oninput="syncInput('tdcend');scheduleUpd()">
+</div>
+</div>
+<div class="fv-row">
+<div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">수령 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tage" value="65" min="55" max="80" step="1" onblur="onBlurFix('tage')" oninput="syncSlider('tage');scheduleUpd()"><span class="unit-tag">세</span>
+      </div>
+  </div>
+  <input type="range" id="tage-r" min="55" max="80" step="1" value="65"  oninput="syncInput('tage');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">월 수령액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="tm" value="100" min="10" max="500" step="10" onblur="onBlurFix('tm')" oninput="syncSlider('tm');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="tm-r" min="10" max="500" step="10" value="100"  oninput="syncInput('tm');scheduleUpd()">
+</div>
+</div>
+</div>
+</div>
+
+<div class="acct-card c-isa" style="border-color:#D6ACB6;">
 <div class="acct-head" style="background:#F5EBEE;color:#713F4C;"><span class="dot" style="background:#BC7B8B;"></span><span class="name">ISA</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('isa')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow isa">
   <div class="irow-top">
     <span class="ilabel">현재 잔액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isa" value="100" min="0" max="20000" step="500" onblur="onBlurFix('isa')" oninput="syncSlider('isa');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="isa" value="100" min="0" max="20000" step="500" onblur="onBlurFix('isa')" oninput="syncSlider('isa');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
   <input type="range" id="isa-r" min="0" max="20000" step="500" value="100"  oninput="syncInput('isa');scheduleUpd()">
@@ -875,7 +1176,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div class="irow-top">
     <span class="ilabel">연납입</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isay" value="2000" min="0" max="2000" step="100" onblur="onBlurFix('isay')" oninput="syncSlider('isay');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="isay" value="2000" min="0" max="2000" step="100" onblur="onBlurFix('isay')" oninput="syncSlider('isay');scheduleUpd()"><span class="unit-tag">만</span>
       <select class="ymon-select" id="isaymon" onchange="scheduleUpd()" title="연납입 하는 달">
         <option value="1" selected>1월</option><option value="2">2월</option><option value="3">3월</option>
         <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
@@ -885,6 +1186,15 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       </div>
   </div>
   <input type="range" id="isay-r" min="0" max="2000" step="100" value="2000"  oninput="syncInput('isay');scheduleUpd()">
+</div><div class="irow isa" style="visibility:hidden;" aria-hidden="true">
+  <!-- IRP 개인 카드와 같은 투명 스페이서 — 옆 4장의 3번째 칸(안세공 원금/근속연수) 자리를 비워 둬
+       ISA의 "납입 시작"·"인출 시작" 행이 다른 카드의 납입 시작·수령 시작 행과 같은 높이에 오게 함 -->
+  <div class="irow-top">
+    <span class="ilabel">-</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" value="0" tabindex="-1"><span class="unit-tag">만</span>
+    </div>
+  </div>
 </div><div class="fv-row">
 <div class="irow isa">
   <div class="irow-top">
@@ -917,13 +1227,21 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div class="irow-top">
     <span class="ilabel">월 인출액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isam" value="90" min="0" max="300" step="5" onblur="onBlurFix('isam')" oninput="syncSlider('isam');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="isam" value="90" min="0" max="300" step="5" onblur="onBlurFix('isam')" oninput="syncSlider('isam');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
   <input type="range" id="isam-r" min="0" max="300" step="5" value="90"  oninput="syncInput('isam');scheduleUpd()">
 </div>
 </div>
 </div>
+</div>
+
+<div class="limit-gauge-wrap">
+  <div class="limit-gauge-info">
+    <span class="limit-gauge-label">사적연금 합계 (농협 연금저축+미래에셋 연금저축+개인 IRP)</span>
+    <span class="limit-gauge-val" id="gauge-text">-</span>
+  </div>
+  <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#4E9B78;"></div></div>
 </div>
 <!-- 수익률·물가 설정: 카드 박스 좌측 하단 모서리(ISA 열 아래 빈 자리). 설정 창은 위로 뜨는 팝오버라 레이아웃 높이 불변 -->
 <div class="rates-anchor">
@@ -988,331 +1306,15 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 </div>
 </div>
-</div>
 
-<div class="priv-group">
-<div class="priv-cards">
-
-<div class="acct-card" style="border-color:#8FB89D;">
-<div class="acct-head" style="background:#EAF3EE;color:#2E5E47;"><span class="dot" style="background:#4E9B78;"></span><span class="name">농협 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
-<div class="acct-body">
-<div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">현재 잔액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nh" value="12000" min="0" max="50000" step="500" onblur="onBlurFix('nh')" oninput="syncSlider('nh');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="nh-r" min="0" max="50000" step="500" value="12000"  oninput="syncInput('nh');scheduleUpd()">
-</div><div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금 — 현재 잔액에 이미 포함된 금액입니다">안세공 원금</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhprin" value="3000" min="0" max="20000" step="100" onblur="onBlurFix('nhprin')" oninput="syncSlider('nhprin');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="nhprin-r" min="0" max="20000" step="100" value="3000"  oninput="syncInput('nhprin');scheduleUpd()">
-</div><div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">월 납입액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhm" value="99" min="0" max="150" step="5" onblur="onBlurFix('nhm')" oninput="syncSlider('nhm');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="nhm-r" min="0" max="150" step="5" value="99"  oninput="syncInput('nhm');scheduleUpd()">
-</div><div class="fv-row">
-<div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">납입 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('nhstart')" oninput="syncSlider('nhstart');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="nhstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('nhstart');scheduleUpd()">
-</div><div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">납입 종료</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhend" min="50" max="75" step="1" onblur="onBlurFix('nhend')" oninput="syncSlider('nhend');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" oninput="syncInput('nhend');scheduleUpd()">
-</div>
-</div>
-<div class="fv-row">
-<div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">수령 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhage" value="57" min="55" max="80" step="1" onblur="onBlurFix('nhage')" oninput="syncSlider('nhage');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-  </div>
-  <input type="range" id="nhage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('nhage');scheduleUpd()">
-</div><div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">월 수령액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhpay" value="70" min="0" max="300" step="5" onblur="onBlurFix('nhpay')" oninput="syncSlider('nhpay');limitCheck('nhpay')"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="nhpay-r" min="0" max="300" step="5" value="70"  oninput="syncInput('nhpay');scheduleUpd()">
-</div>
-</div>
-</div>
-</div>
-
-<div class="acct-card" style="border-color:#7EBAB6;">
-<div class="acct-head" style="background:#E7F2F1;color:#2C5C59;"><span class="dot" style="background:#4C9793;"></span><span class="name">미래에셋 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
-<div class="acct-body">
-<div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">현재 잔액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mf" value="6000" min="0" max="30000" step="500" onblur="onBlurFix('mf')" oninput="syncSlider('mf');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="mf-r" min="0" max="30000" step="500" value="6000"  oninput="syncInput('mf');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel" title="세액공제 받지 않은 비공제 납입원금 — 현재 잔액에 이미 포함된 금액입니다">안세공 원금</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfprin" value="200" min="0" max="20000" step="100" onblur="onBlurFix('mfprin')" oninput="syncSlider('mfprin');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="mfprin-r" min="0" max="20000" step="100" value="200"  oninput="syncInput('mfprin');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">월 납입액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfm" value="0" min="0" max="150" step="5" onblur="onBlurFix('mfm')" oninput="syncSlider('mfm');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="mfm-r" min="0" max="150" step="5" value="0"  oninput="syncInput('mfm');scheduleUpd()">
-</div><div class="fv-row">
-<div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">납입 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('mfstart')" oninput="syncSlider('mfstart');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="mfstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('mfstart');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">납입 종료</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfend" min="50" max="75" step="1" onblur="onBlurFix('mfend')" oninput="syncSlider('mfend');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" oninput="syncInput('mfend');scheduleUpd()">
-</div>
-</div>
-<div class="fv-row">
-<div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">수령 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfage" value="57" min="55" max="80" step="1" onblur="onBlurFix('mfage')" oninput="syncSlider('mfage');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-  </div>
-  <input type="range" id="mfage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('mfage');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">월 수령액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfpay" value="46" min="0" max="200" step="5" onblur="onBlurFix('mfpay')" oninput="syncSlider('mfpay');limitCheck('mfpay')"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="mfpay-r" min="0" max="200" step="5" value="46"  oninput="syncInput('mfpay');scheduleUpd()">
-</div>
-</div>
-</div>
-</div>
-
-<div class="acct-card" style="border-color:#8FB3D1;">
-<div class="acct-head" style="background:#E9F0F6;color:#33566F;"><span class="dot" style="background:#5D8AB0;"></span><span class="name">IRP 개인</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
-<div class="acct-body">
-<div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">현재 잔액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irp" value="400" min="0" max="20000" step="500" onblur="onBlurFix('irp')" oninput="syncSlider('irp');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="irp-r" min="0" max="20000" step="500" value="400"  oninput="syncInput('irp');scheduleUpd()">
-</div><div class="irow irp irow-ymon">
-  <div class="irow-top">
-    <span class="ilabel">연납입</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpy" value="300" min="0" max="1200" step="50" onblur="onBlurFix('irpy')" oninput="syncSlider('irpy');scheduleUpd()"><span class="unit-tag">만원</span>
-      <select class="ymon-select" id="irpymon" onchange="scheduleUpd()" title="연납입 하는 달">
-        <option value="1">1월</option><option value="2">2월</option><option value="3" selected>3월</option>
-        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
-        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
-        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
-      </select>
-      </div>
-  </div>
-  <input type="range" id="irpy-r" min="0" max="1200" step="50" value="300"  oninput="syncInput('irpy');scheduleUpd()">
-</div><div class="irow irp" style="visibility:hidden;" aria-hidden="true">
-  <!-- 농협/미래에셋 카드의 "안세공 원금" 행과 같은 자리를 차지하는 투명 스페이서 —
-       IRP는 이 개념이 없지만, 옆 3장(농협/미래에셋/IRP)이 나란히 놓이는 priv-cards에서
-       이 행이 없으면 그 아래 "납입 시작/종료"·"수령 시작/월 수령액" 행들이 한 칸씩
-       위로 밀려 다른 카드와 안 맞아 보임(들쑥날쑥 방지용). -->
-  <div class="irow-top">
-    <span class="ilabel">-</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" value="0" tabindex="-1"><span class="unit-tag">만원</span>
-    </div>
-  </div>
-</div><div class="fv-row">
-<div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">납입 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="irpstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('irpstart');scheduleUpd()">
-</div><div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">납입 종료</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpend" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="irpend-r" min="50" max="75" step="1" value="57" oninput="syncInput('irpend');scheduleUpd()">
-</div>
-</div>
-<div class="fv-row">
-<div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">수령 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpage" value="70" min="55" max="80" step="1" onblur="onBlurFix('irpage')" oninput="syncSlider('irpage');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-  </div>
-  <input type="range" id="irpage-r" min="55" max="80" step="1" value="70"  oninput="syncInput('irpage');scheduleUpd()">
-</div><div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">월 수령액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irppay" value="0" min="0" max="150" step="5" onblur="onBlurFix('irppay')" oninput="syncSlider('irppay');limitCheck('irppay')"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="irppay-r" min="0" max="150" step="5" value="0"  oninput="syncInput('irppay');scheduleUpd()">
-</div>
-</div>
-</div>
-</div>
-
-</div><!-- priv-cards -->
-
-<div class="limit-gauge-wrap">
-  <div class="limit-gauge-info">
-    <span class="limit-gauge-label">사적연금 합계 (농협 연금저축+미래에셋 연금저축+개인 IRP)</span>
-    <span class="limit-gauge-val" id="gauge-text">-</span>
-  </div>
-  <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#4E9B78;"></div></div>
-</div>
-
-</div><!-- priv-group -->
-
-<div class="stack-group">
-
-<div class="acct-card" style="border-color:#ABA1D4;">
-<div class="acct-head" style="background:#EFEDF6;color:#4F457F;"><span class="dot" style="background:#8478B8;"></span><span class="name">퇴직연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
-<div class="acct-body">
-<div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">현재 잔액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tirp" value="22000" min="0" max="100000" step="1000" onblur="onBlurFix('tirp')" oninput="syncSlider('tirp');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="tirp-r" min="0" max="100000" step="1000" value="22000"  oninput="syncInput('tirp');scheduleUpd()">
-</div><div class="irow dc irow-ymon">
-  <div class="irow-top">
-    <span class="ilabel">연간 DC 적립액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tdc" value="1000" min="0" max="3000" step="50" onblur="onBlurFix('tdc')" oninput="syncSlider('tdc');scheduleUpd()"><span class="unit-tag">만원</span>
-      <select class="ymon-select" id="tdcymon" onchange="scheduleUpd()" title="연납입 하는 달">
-        <option value="1" selected>1월</option><option value="2">2월</option><option value="3">3월</option>
-        <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
-        <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
-        <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
-      </select>
-      </div>
-  </div>
-  <input type="range" id="tdc-r" min="0" max="3000" step="50" value="1000" oninput="syncInput('tdc');scheduleUpd()">
-</div><div class="fv-row">
-<div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">납입 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tdcstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('tdcstart')" oninput="syncSlider('tdcstart');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="tdcstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('tdcstart');scheduleUpd()">
-</div><div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">납입 종료</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tdcend" min="50" max="75" step="1" onblur="onBlurFix('tdcend')" oninput="syncSlider('tdcend');scheduleUpd()"><span class="unit-tag">세</span>
-    </div>
-  </div>
-  <input type="range" id="tdcend-r" min="50" max="75" step="1" value="57" oninput="syncInput('tdcend');scheduleUpd()">
-</div>
-</div>
-<div class="fv-row">
-<div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">근속연수</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tservice" value="10" min="1" max="45" step="1" onblur="onBlurFix('tservice')" oninput="syncSlider('tservice');scheduleUpd()"><span class="unit-tag">년</span>
-      </div>
-  </div>
-  <input type="range" id="tservice-r" min="1" max="45" step="1" value="10" oninput="syncInput('tservice');scheduleUpd()">
-</div><div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel" title="퇴직소득세 추정치(일시금 기준, 자동계산)">퇴직소득세</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tirptax" value="2000" min="0" max="30000" step="100" onblur="onBlurFix('tirptax')" oninput="syncSlider('tirptax');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="tirptax-r" min="0" max="30000" step="100" value="2000" oninput="syncInput('tirptax');scheduleUpd()">
-</div>
-</div>
-<div class="fv-row">
-<div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">수령 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tage" value="65" min="55" max="80" step="1" onblur="onBlurFix('tage')" oninput="syncSlider('tage');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-  </div>
-  <input type="range" id="tage-r" min="55" max="80" step="1" value="65"  oninput="syncInput('tage');scheduleUpd()">
-</div><div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">월 수령액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tm" value="100" min="10" max="500" step="10" onblur="onBlurFix('tm')" oninput="syncSlider('tm');scheduleUpd()"><span class="unit-tag">만원</span>
-      </div>
-  </div>
-  <input type="range" id="tm-r" min="10" max="500" step="10" value="100"  oninput="syncInput('tm');scheduleUpd()">
-</div>
-</div>
-</div>
-</div>
-
-<div class="acct-card" style="border-color:#D8B78C;">
+<div class="acct-card c-np" style="border-color:#D8B78C;">
 <div class="acct-head" style="background:#F5EEE3;color:#71501F;"><span class="dot" style="background:#C08A55;"></span><span class="name">국민연금</span></div>
 <div class="acct-body">
 <div class="irow np">
   <div class="irow-top">
     <span class="ilabel">예상액(65세 기준)</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npbase" value="170" min="50" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="npbase" value="170" min="50" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
   <input type="range" id="npbase-r" min="50" max="300" step="5" value="170"  oninput="syncInput('npbase');scheduleUpd()">
@@ -1331,7 +1333,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div class="irow-top">
     <span class="ilabel" title="조기수령(65세 미만) 1년당 -6%, 연기수령(65세 초과) 1년당 +7.2% 자동 반영">실제 수령액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="np" value="170" min="0" max="500" step="1" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="ival-input" type="number" id="np" value="170" min="0" max="500" step="1" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
   <input type="range" id="np-r" min="0" max="500" step="1" value="170"  oninput="syncInput('np');scheduleUpd()">
@@ -1339,8 +1341,6 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 </div>
 </div>
-
-</div><!-- stack-group -->
 
 </div><!-- acct-grid -->
 </div>
@@ -2674,6 +2674,11 @@ function designFits(){
   }
   for(const c of document.querySelectorAll('#designTab .fv-row .irow-ctrl')){
     if(c.offsetParent && c.scrollWidth > c.clientWidth + 1) return false;
+  }
+  // 입력칸 옆 단위(만/세/년)가 다음 줄로 밀려 그 칸만 2줄이 되면 안 됨(--sp 확대가 원인이 되지 않게)
+  for(const c of document.querySelectorAll('#designTab .acct-body .irow-ctrl')){
+    const i = c.querySelector('.ival-input'), u = c.querySelector('.unit-tag');
+    if(i && u && i.offsetParent && u.offsetTop >= i.offsetTop + i.offsetHeight - 2) return false;
   }
   return true;
 }
