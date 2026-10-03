@@ -9306,11 +9306,12 @@ function toggleBanner(btn){
 }
 
 function renderToggles(){
-  const allSelected = assets.every(a=>selectedAssets.has(a.id));
-  const noneSelected = assets.every(a=>!selectedAssets.has(a.id));
+  // "전체 선택"/"전체 해제"는 한 버튼으로 — 모두 선택+합계 표시 상태면 "전체 해제"(눌러서 다
+  // 지움), 아니면 "전체 선택"(눌러서 다 채움). toggleAll()은 정확히 이 동작을 하는
+  // 기존 함수(이전엔 호출하는 곳이 없던 죽은 코드)를 그대로 재사용.
+  const allSelected = assets.every(a=>selectedAssets.has(a.id)) && showSum;
   document.getElementById('assetToggles').innerHTML=
-    `<button class="toggle-ctrl" onclick="selectAll()" style="background:${allSelected&&showSum?'#1c1c1e':'var(--color-section-bg)'};color:${allSelected&&showSum?'#fff':'var(--color-text)'}">전체 선택</button>`+
-    `<button class="toggle-ctrl" onclick="deselectAll()" style="background:${noneSelected&&!showSum?'#ff3b30':'var(--color-section-bg)'};color:${noneSelected&&!showSum?'#fff':'var(--color-text)'}">전체 해제</button>`+
+    `<button class="toggle-ctrl" onclick="toggleAll()" style="background:${allSelected?'#ff3b30':'#1c1c1e'};color:#fff">${allSelected?'전체 해제':'전체 선택'}</button>`+
     `<button class="toggle-ctrl" onclick="toggleSum()" style="background:${showSum?'var(--color-accent)':'var(--color-section-bg)'};color:${showSum?'#fff':'var(--color-text)'}">합계</button>`;
   // 종목별 개별 토글은 접이식 안에 — 선택 시 배경을 실색으로 채워 가독성 개선(연한 틴트+같은색 글자 조합 방지)
   // 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시

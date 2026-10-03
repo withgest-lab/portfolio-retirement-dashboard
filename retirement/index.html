@@ -263,7 +263,7 @@ input[type=range]:hover::-moz-range-thumb{background:#555;}
 .limit-gauge-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   color:#2E5E47;opacity:.75;}
 .limit-gauge-val{font-weight:700;font-size:10px;color:#2E5E47;
-  white-space:normal;line-height:1.4;}
+  white-space:normal;line-height:1.5;letter-spacing:.01em;}
 .limit-gauge{height:5px;border-radius:3px;background:#E8EAF0;overflow:hidden;}
 .limit-gauge-fill{height:100%;border-radius:3px;transition:width .3s,background .3s;}
 
@@ -408,7 +408,15 @@ button{font-family:inherit;cursor:pointer;}
    끝에 붙임. 펼쳐도 트리거(summary)의 위치·basic-row 레이아웃은 그대로 유지되도록,
    내용(suggest-box)만 position:absolute로 행 전체 아래에 드롭다운처럼 띄움. */
 .basic-row-action{display:flex;align-items:center;gap:6px;flex-shrink:0;margin:0 0 0 auto;}
-.basic-row-detail{align-self:center;flex-shrink:1;min-width:0;position:static;}
+/* "수익률/물가상승률 설정 보기"는 원래 패널 하나를 혼자 차지했는데, 자동설계 버튼 왼쪽에
+   이미 있던 빈 공간으로 옮겨와 "자동설계 상세 근거 보기" 아래 두 번째 줄로 쌓는다 —
+   패널 하나가 통째로 사라진 만큼 아래 계좌 카드 쪽에 여유를 줄 수 있음. */
+.basic-row-links{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;}
+.basic-row-links .tgl-banner{padding:2px 7px 2px 9px;font-size:10px;gap:4px;}
+.basic-row-links .tgl-banner .sw{width:22px;height:13px;}
+.basic-row-links .tgl-banner .sw::after{width:9px;height:9px;}
+.basic-row-links .tgl-banner.on .sw::after{left:11px;}
+.basic-row-detail{align-self:flex-start;flex-shrink:1;min-width:0;position:static;}
 .basic-row-detail > summary{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
 .basic-row-detail #suggest-box{position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:6;
   max-height:60vh;overflow-y:auto;}
@@ -422,16 +430,18 @@ button{font-family:inherit;cursor:pointer;}
 .acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;align-items:start;}
 .acct-card{border:1px solid #E8EAF0;border-radius:10px;overflow:hidden;background:#fff;min-width:0;
   display:flex;flex-direction:column;}
-.acct-head{display:flex;align-items:flex-start;gap:5px;font-size:11px;font-weight:700;padding:6px 7px;
+.acct-head{display:flex;align-items:flex-start;gap:5px;font-size:11px;font-weight:700;padding:6px 7px;letter-spacing:.02em;
   line-height:1.3;word-break:keep-all;}
 .acct-head .dot{width:6px;height:6px;border-radius:2px;flex-shrink:0;margin-top:3px;}
 .acct-head .name{flex:1;min-width:0;}
-.acct-body{padding:5px 6px 6px;display:flex;flex-direction:column;gap:3px;flex:1;justify-content:flex-start;}
+/* 패널 하나(수익률/물가상승률 설정 보기)를 자동설계 버튼 옆으로 옮기며 생긴 여유를 여기
+   자간·줄간격에 배분 — 카드 간격은 그대로 두고 카드 안 글자가 조금 더 여유 있게 보이도록 */
+.acct-body{padding:5px 6px 6px;display:flex;flex-direction:column;gap:3px;flex:1;justify-content:flex-start;line-height:1.35;}
 .acct-body .irow{margin-bottom:0;padding-right:0;}
 .acct-body .irow-top{display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0;}
-.acct-body .ilabel{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.acct-body .ilabel{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;}
 .acct-body .irow-ctrl{justify-content:flex-start;}
-.acct-body .ival-input{width:64px;font-size:12.5px;padding:3px 5px;}
+.acct-body .ival-input{width:64px;font-size:12.5px;padding:3px 5px;letter-spacing:.015em;}
 .acct-body .unit-tag{width:auto;}
 .acct-body .ymon-select{width:auto;font-size:10.5px;padding:3px 1px;}
 /* 연납입 입력칸 + "몇 월" select가 같은 줄에 반드시 함께 들어가야 하는 행 — 카드 폭이
@@ -816,13 +826,18 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1450"  oninput="syncInput('plimit');scheduleUpd()">
 </div>
-<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. "자동설계 상세 근거 보기"는
-     항상 자동설계 버튼 바로 왼쪽에 붙어 있도록 버튼과 한 묶음으로 감싸 줄바꿈 때도 함께 이동함 -->
+<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. "자동설계 상세 근거 보기"·
+     "수익률/물가상승률 설정 보기"는 항상 자동설계 버튼 바로 왼쪽에 세로로 묶여 있도록
+     감싸 줄바꿈 때도 함께 이동함(예전엔 설정 보기가 패널 하나를 통째로 혼자 차지했음 —
+     여기로 옮겨 그 패널을 없애고, 생긴 여유는 아래 계좌 카드 자간·줄간격에 배분) -->
 <div class="basic-row-action">
+<div class="basic-row-links">
 <details class="collapsible basic-row-detail">
   <summary>자동설계 상세 근거 보기</summary>
   <div class="suggest-result" id="suggest-box"></div>
 </details>
+<button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률 / 물가상승률 설정 보기<span class="sw"></span></button>
+</div>
 <button class="suggest-btn" style="background:linear-gradient(135deg,#4E9B78,#C08A55);" onclick="autoSuggest()">
   <span style="font-size:11.5px;">🎯 자동설계</span>
   <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
@@ -830,6 +845,65 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 </div>
 <div class="suggest-result" id="fit90-box"></div>
+<div id="ratesWrap" class="tgl-body" style="display:none;">
+<div class="sec-label" style="margin-top:8px;">계좌별 수익률</div>
+<div class="rates-fields">
+<div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">농협 연금저축</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">미래에셋 연금저축</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
+</div><div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">미래에셋 IRP</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">퇴직연금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
+</div><div class="irow isa">
+  <div class="irow-top">
+    <span class="ilabel">ISA</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
+</div>
+</div>
+<hr class="div">
+<div class="sec-label">물가상승률</div>
+<div class="rates-fields">
+<div class="irow exp">
+  <div class="irow-top">
+    <span class="ilabel">물가상승률</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
+</div>
+</div>
+</div>
 </div>
 
 <div class="panel acct-panel">
@@ -1255,69 +1329,6 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div><!-- stack-group -->
 
 </div><!-- acct-grid -->
-</div>
-
-<div class="panel">
-<button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률 / 물가상승률 설정 보기<span class="sw"></span></button>
-<div id="ratesWrap" class="tgl-body" style="display:none;">
-<div class="sec-label" style="margin-top:8px;">계좌별 수익률</div>
-<div class="rates-fields">
-<div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">농협 연금저축</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">미래에셋 연금저축</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
-</div><div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">미래에셋 IRP</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
-</div><div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">퇴직연금</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
-</div><div class="irow isa">
-  <div class="irow-top">
-    <span class="ilabel">ISA</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
-</div>
-</div>
-<hr class="div">
-<div class="sec-label">물가상승률</div>
-<div class="rates-fields">
-<div class="irow exp">
-  <div class="irow-top">
-    <span class="ilabel">물가상승률</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
-</div>
-</div>
-</div>
 </div>
 
 </div><!-- left-panel -->
