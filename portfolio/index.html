@@ -493,6 +493,13 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   .index-tile-name{font-size:13px;}
   .index-tile .index-val{font-size:16px;}
   .index-tile .index-chg{font-size:14px;}
+  /* 한국·환율을 같은 줄에 — 미국 6칸과 같은 칸 크기로 나란히 두어 3줄→2줄로 줄인다.
+     각 그룹(.index-group)이 6칸 중 자기 종목 수(--n)만큼만 차지하고, 그 안의 타일은
+     그 N칸을 다시 똑같은 폭으로 나눠 미국 타일과 칸 크기가 맞게 한다. */
+  .index-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:14px;}
+  .index-group{grid-column:span var(--n,2);min-width:0;}
+  .index-group .index-tiles{grid-template-columns:repeat(var(--n,2),minmax(0,1fr));}
+  .index-row .index-group-title{margin-top:0;}
 }
 .index-tile{background:var(--color-card);border:1px solid var(--color-border);border-radius:14px;padding:12px 14px 12px;min-width:0;}
 .index-tile-name{font-size:15px;font-weight:500;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -835,9 +842,14 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 <!-- 자산변화추이 -->
 <div class="subpage active" data-sub="chart" id="chartSubpage">
 <div class="card">
-  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+  <!-- 토글 3개(종목 선택/종목별 수익률/스냅샷 이력)를 전부 이 줄에 모아 그래프 아래·카드 밖에
+       따로 있던 배너 줄 2개를 없앴다 — 그만큼 그래프에 세로 공간을 더 줄 수 있음. 이 줄
+       자체의 margin-bottom을 카드 padding(12px)과 맞춰 위/아래 공백이 같아지게 한다. -->
+  <div class="chart-top-row" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
     <div class="toggles" id="assetToggles" style="margin:0;"></div>
-    <button type="button" class="tgl-banner" id="stockDetailToggleBtn" role="switch" aria-checked="false" data-target="assetTogglesDetail" onclick="toggleBanner(this)">상세 종목 선택 하기<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" id="stockDetailToggleBtn" role="switch" aria-checked="false" data-target="assetTogglesDetail" onclick="toggleBanner(this)">종목 선택<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="statBar" data-onopen="scrollToStatBar" onclick="toggleBanner(this)">종목별 수익률<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="snapHistWrap" data-onopen="scrollToSnapHist" onclick="toggleBanner(this)">스냅샷 이력<span class="sw"></span></button>
     <div class="period-tabs period-tabs-sm" id="periodTabs" style="margin-left:auto;">
       <button onclick="setPeriod('1D')" class="active">1D</button>
       <button onclick="setPeriod('5D')">5D</button>
@@ -852,12 +864,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       <button onclick="setPeriod('ALL')">ALL</button>
     </div>
   </div>
-  <div class="toggles" id="assetTogglesDetail" style="display:none;margin-top:6px;"></div>
-  <div class="chart-wrap" style="margin-top:0;"><canvas id="lineChart" height="320"></canvas></div>
-  <div class="tgl-banner-row"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="statBar" onclick="toggleBanner(this)">상세 종목별 수익률 보기<span class="sw"></span></button></div>
-  <div class="stat-bar" id="statBar" style="display:none;"></div>
+  <div class="toggles" id="assetTogglesDetail" style="display:none;margin-bottom:12px;"></div>
+  <div class="chart-wrap"><canvas id="lineChart" height="320"></canvas></div>
+  <div class="stat-bar" id="statBar" style="display:none;margin-top:10px;"></div>
 </div>
-<div class="tgl-banner-row" style="margin-left:13px;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="snapHistWrap" onclick="toggleBanner(this)">스냅샷 이력 보기<span class="sw"></span></button></div>
 <div id="snapHistWrap" style="display:none;">
   <div class="card" style="margin-top:10px;">
     <div class="snap-header">
@@ -2733,6 +2743,18 @@ function getScroller(){
   return (pg.querySelector(':scope > .subtabbar') && sp) ? sp : pg;
 }
 function stickyTop(){ return 0; }
+
+// 변화추이 상단 토글(종목별 수익률·스냅샷 이력)을 켰을 때 그 내용으로 부드럽게 스크롤.
+// window.scrollIntoView는 안 쓴다(실제 스크롤 컨테이너는 body가 아니라 getScroller()가
+// 돌려주는 .subpage — body를 건드리면 sticky 탭바가 밀려 사라짐, 위 resetScrollTop 참고).
+function scrollWithin(el){
+  const sc = getScroller();
+  if(!sc || !el) return;
+  const top = sc.scrollTop + (el.getBoundingClientRect().top - sc.getBoundingClientRect().top) - 10;
+  sc.scrollTo({top, behavior:'smooth'});
+}
+function scrollToStatBar(){ requestAnimationFrame(()=>scrollWithin(document.getElementById('statBar'))); }
+function scrollToSnapHist(){ requestAnimationFrame(()=>scrollWithin(document.getElementById('snapHistWrap'))); }
 function stockChartLayout(){
   const sc = getScroller();
   const A = (sc && sc.clientHeight > 200) ? sc.clientHeight : window.innerHeight - 150;
@@ -8323,14 +8345,25 @@ function renderIndexTile(idx, i){
       <div class="index-chg ${cls}">${idx.chg!=null?(idx.chg>=0?'+':'')+idx.chg.toFixed(2)+'%':'조회 중...'}</div>
     </div>`;
 }
-// 미국 → 한국 → 환율 순으로 한 화면에 소제목 + 타일 그리드로 나열(환율도 지수와 같은 타일)
+// 미국은 한 줄, 한국·환율은 폭 601px 이상에서 같은 줄에 나란히(3줄→2줄, .index-row 참고) —
+// 좁은 화면(접힘)에서는 CSS가 각 .index-group을 그냥 세로로 쌓아 기존과 동일하게 보인다.
 function renderIndices(){
   const el = document.getElementById('indexTiles');
   if(!el) return;
-  el.innerHTML = ['us','kr','fx'].map(g=>{
-    const tiles = indices.map((idx,i)=>idx.group===g ? renderIndexTile(idx,i) : '').join('');
-    return tiles ? `<div class="index-group-title">${GROUP_TITLE[g]}</div><div class="index-tiles">${tiles}</div>` : '';
-  }).join('');
+  const block = g=>{
+    const list = indices.map((idx,i)=>({idx,i})).filter(({idx})=>idx.group===g);
+    if(!list.length) return '';
+    const tiles = list.map(({idx,i})=>renderIndexTile(idx,i)).join('');
+    return `<div class="index-group-title">${GROUP_TITLE[g]}</div><div class="index-tiles">${tiles}</div>`;
+  };
+  const krHtml = block('kr'), fxHtml = block('fx');
+  const krN = indices.filter(idx=>idx.group==='kr').length;
+  const fxN = indices.filter(idx=>idx.group==='fx').length;
+  el.innerHTML = block('us') +
+    ((krHtml || fxHtml) ? `<div class="index-row">` +
+      (krHtml ? `<div class="index-group" style="--n:${krN}">${krHtml}</div>` : '') +
+      (fxHtml ? `<div class="index-group" style="--n:${fxN}">${fxHtml}</div>` : '') +
+      `</div>` : '');
 }
 
 // INDEX_LIST 전체를 한꺼번에 쏘면(각각 최대 3개 프록시 조합) 페이지 로드 시점에
@@ -8704,12 +8737,30 @@ function drawLineChart(){
   const dpr=window.devicePixelRatio||1;
   const W=cv.parentElement.clientWidth||900;
 
-  // 종목 수에 따라 그래프 높이 동적 결정
+  // 그래프 높이: 범례가 안 겹치는 최소 높이 vs 화면에 남는 높이 중 더 큰 쪽(최대 900px).
+  // 토글 2개를 맨 위로 옮겨 생긴 여유를 그래프가 자동으로 차지하게 함 — 종목 수로만
+  // 정하던 예전 방식은 화면이 커도 그래프가 작게 남았다.
   const LINE_H = 18; // 레전드 줄 간격
   const visibleGroupCount = groupAssetsByName().filter(g=>g.ids.some(id=>selectedAssets.has(id))).length;
   const visibleCount = visibleGroupCount + (showSum?1:0);
-  const minH = Math.max(400, visibleCount * LINE_H + 120);
-  const H = Math.min(minH, 700); // 최대 700px
+  const minH = Math.max(280, visibleCount * LINE_H + 120);
+  // 남는 높이는 실제 스크롤 컨테이너(getScroller() — body가 아니라 .subpage) 기준으로 재야
+  // 정확하다. getBoundingClientRect()는 뷰포트 기준이라 현재 스크롤 위치에 따라 값이
+  // 달라지는데, "컨테이너 안에서 캔버스까지의 거리(스크롤 불변)"로 바꿔 계산한다 —
+  // 그렇지 않으면 스크롤된 채로 다시 그릴 때마다(기간 변경 등) 그래프가 점점 커졌다.
+  const rect = cv.getBoundingClientRect();
+  let fillH = 0;
+  if(rect.width>0){
+    const sc = (typeof getScroller==='function') ? getScroller() : null;
+    if(sc){
+      const contRect = sc.getBoundingClientRect();
+      const contentTop = (rect.top - contRect.top) + sc.scrollTop;
+      fillH = Math.floor(sc.clientHeight - contentTop - 64); // 64px: 카드 하단 패딩(16)+페이지 하단 여백(48)
+    } else {
+      fillH = Math.floor(window.innerHeight - rect.top - 64);
+    }
+  }
+  const H = Math.min(900, Math.max(minH, fillH));
   cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
   cv.style.width=W+'px'; cv.style.height=H+'px';
   const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
@@ -8876,44 +8927,52 @@ function drawLineChart(){
   const toYR=toYL; // 단일 Y축: 오른쪽도 왼쪽 축 동일 사용
   const TICK=5; // tick 길이
 
-  // ── 왼쪽 Y축 숫자 + tick (박스 밖 왼쪽) ──
+  // ── iOS풍 세련화: 둥근 헤어라인 박스 + 옅은 바탕, tick 제거, 격자는 박스 끝까지 ──
+  // 외곽 박스: 진한 사각 테두리 대신 둥근 모서리 0.5px 헤어라인 + 아주 옅은 바탕(플롯 영역)
+  const BOXR = 10;
+  ctx.fillStyle = '#FAFAFC';
+  if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(BL, BT, BW, BH, BOXR); ctx.fill(); }
+  else ctx.fillRect(BL, BT, BW, BH);
+
+  // ── 왼쪽 Y축 숫자(박스 밖 왼쪽, tick 선 없이 숫자만 — 격자선 높이에 맞춰 표시) ──
   ctx.fillStyle='#8e8e93'; ctx.font='10px Pretendard,sans-serif';
-  ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=0.8;
   for(let r=0;r<=4;r++){
     const y=gT+(r/4)*gH;
     const v=Lmax-(r/4)*Lrng;
-    // tick 선 (박스 왼쪽 벽에서 왼쪽으로)
-    ctx.beginPath(); ctx.moveTo(BL,y); ctx.lineTo(BL-TICK,y); ctx.stroke();
     ctx.textAlign='right';
     ctx.fillText(maskAmt((v>=0?'+':'')+v.toFixed(2)+'%'), BL-TICK-3, y+4);
   }
 
-  // 오른쪽 Y축 제거 (단일 Y축, 왼쪽만 표시)
-  // tick만 작게 표시 (박스 경계 표시용)
-  for(let r=0;r<=4;r++){
-    const y=gT+(r/4)*gH;
-    ctx.beginPath(); ctx.moveTo(BL+BW,y); ctx.lineTo(BL+BW+2,y); ctx.stroke();
-  }
-
-  // ── 외곽 박스 ──
-  ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=1.0;
-  ctx.strokeRect(BL, BT, BW, BH);
+  // ── 외곽 박스(둥근 헤어라인) ──
+  ctx.strokeStyle='rgba(60,60,67,0.14)'; ctx.lineWidth=0.5;
+  if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(BL+0.25, BT+0.25, BW-0.5, BH-0.5, BOXR); ctx.stroke(); }
+  else ctx.strokeRect(BL, BT, BW, BH);
 
   // ── 박스 안 (클리핑) ──
   ctx.save();
   ctx.beginPath(); ctx.rect(BL+0.5,BT+0.5,BW-1-RMARGIN,BH-1); ctx.clip();
 
-  // 그리드
-  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
+  // 그리드: 박스 안쪽 여백(gL~gL+gW)이 아니라 박스 테두리 끝까지(BL~BL+BW) 그어 iOS 주식 앱처럼 꽉 차 보이게
+  ctx.strokeStyle='rgba(60,60,67,0.08)'; ctx.lineWidth=1;
   for(let r=0;r<=4;r++){
     const y=gT+(r/4)*gH;
-    ctx.beginPath(); ctx.moveTo(gL,y); ctx.lineTo(gL+gW,y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(BL,y); ctx.lineTo(BL+BW,y); ctx.stroke();
   }
-  // 0% 기준선
+  // 0% 기준선 — 끝이 둥근 옅은 점선
   if(Lmin<=0&&Lmax>=0){
-    ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=1; ctx.setLineDash([3,2]);
-    ctx.beginPath(); ctx.moveTo(gL,toYL(0)); ctx.lineTo(gL+gW,toYL(0)); ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.strokeStyle='rgba(60,60,67,0.35)'; ctx.lineWidth=1; ctx.lineCap='round'; ctx.setLineDash([2,4]);
+    ctx.beginPath(); ctx.moveTo(BL,toYL(0)); ctx.lineTo(BL+BW,toYL(0)); ctx.stroke();
+    ctx.setLineDash([]); ctx.lineCap='butt';
+  }
+  // 날짜 눈금 위치에 아주 옅은 세로 격자(시점 구분용) — 데이터 선보다 먼저 그려 뒤에 깔리게 함.
+  // 실제 날짜 글자(아래 X축 섹션)보다 겹침 방지 없이 더 촘촘히 찍어도 선 자체는 거의 안 보일
+  // 만큼 옅어서 문제 없음.
+  const xT=Math.max(2,Math.min(MAX_XT,chartHistory.length));
+  ctx.strokeStyle='rgba(60,60,67,0.05)'; ctx.lineWidth=1;
+  for(let i=0;i<xT;i++){
+    const idx=xT>1?Math.round(i/(xT-1)*(chartHistory.length-1)):0;
+    const x=toX(idx);
+    ctx.beginPath(); ctx.moveTo(x,BT); ctx.lineTo(x,BT+BH); ctx.stroke();
   }
 
   // ── 선 그리기 + 끝점 (클리핑 안) ──
@@ -9066,9 +9125,8 @@ function drawLineChart(){
 
   ctx.restore(); // ★ 클리핑 해제
 
-  // ── X축 날짜 (겹침 방지) ──
+  // ── X축 날짜 (겹침 방지) ── xT는 위 세로 격자 블록과 동일한 값을 재사용
   ctx.font='10px Pretendard,sans-serif'; ctx.fillStyle='#8e8e93';
-  const xT=Math.max(2,Math.min(MAX_XT,chartHistory.length));
   const xPositions=[];
   for(let i=0;i<xT;i++){
     const idx=xT>1?Math.round(i/(xT-1)*(chartHistory.length-1)):0;

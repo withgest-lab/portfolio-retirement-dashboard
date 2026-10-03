@@ -12,6 +12,12 @@
 /* ── 리셋 & 기본 ── */
 *{box-sizing:border-box;margin:0;padding:0;}
 html{--topbar-h:50px;} /* top-bar 실제 높이 — 좁은 화면에서 버튼이 2줄로 줄바꿈되면 JS(syncTopBarPad)가 재조정 */
+/* 상단바↔탭, 탭↔첫 박스, 박스↔박스 간격을 전부 이 변수 하나로 통일(예전엔 8/10/5/4px 등
+   제각각이라 들쭉날쭉해 보였음). 펼침+90도(가로, 높이 짧음)는 조금 더 좁게, 그래도 내용이
+   넘치면(html.dense, JS의 fitDensity()) 한 번 더 좁힌다. */
+:root{--gap:8px; --bi-w:56px;}
+@media (min-width:961px){ :root{--gap:6px;} }
+html.dense{--gap:5px; --bi-w:48px;}
 html,body{height:100%;}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   background:#F2F2F7;font-size:14px;color:#222;
@@ -46,7 +52,7 @@ h1{font-size:16px;font-weight:700;color:#111;}
 /* ── 메트릭 바(요약 카드): 세로 높이 최소화 — 라벨+값을 한 줄로(1단) 압축, 카드 폭을
    넓게 쓰도록 바깥 padding·카드 간 gap을 최소화 ── */
 .metrics-bar{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);
-  gap:4px;padding:0 0 10px;background:#F2F2F7;}
+  gap:4px;padding:0 0 var(--gap);background:#F2F2F7;}
 /* align-items:center — baseline이면 값 옆 배지(사적연금 카드)처럼 줄 높이가 큰 카드만 글자가
    내려가 옆 카드("자산 소진 예상" 등)와 수평이 어긋났다. 라벨·값 묶음을 카드 세로 가운데로 */
 .mcard{background:#fff;border:1px solid #E8EAF0;border-radius:9px;padding:5px 6px;
@@ -101,15 +107,16 @@ h1{font-size:16px;font-weight:700;color:#111;}
 .main-layout{display:flex;flex-direction:column;}
 
 /* ── 입력 패널(상단) ── */
-.left-panel{padding:8px 10px 10px;background:#F2F2F7;}
+.left-panel{padding:var(--gap) 10px var(--gap);background:#F2F2F7;}
+.left-panel > .panel:last-child{margin-bottom:0;}
 
 /* ── 결과 패널(하단) ── — 좌우 padding을 .main-tabs의 margin(10px)과 맞춰,
    메트릭 카드·차트 카드의 좌우 가장자리가 위 탭 버튼과 수직으로 나란히 정렬되게 한다. */
-.right-panel{padding:8px 10px 10px;}
+.right-panel{padding:var(--gap) 10px var(--gap);}
 
 /* ── 카드 패널 ── */
 .panel{background:#fff;border:1px solid #E8EAF0;border-radius:10px;
-  padding:7px 14px 8px 12px;margin-bottom:5px;}
+  padding:7px 14px 8px 12px;margin-bottom:var(--gap);}
 .panel-title{font-size:12px;font-weight:700;color:#333;
   margin-bottom:5px;padding-bottom:4px;border-bottom:2px solid #F0F2F5;
   display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
@@ -295,7 +302,7 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 /* ── 최상위 탭: 설계 / 예상결과 ── */
 /* 좌우 여백을 .left-panel의 좌우 padding(10px)과 맞춰, 아래 "기본 정보" 패널 카드의
    가로 폭·좌우 가장자리와 탭 버튼 줄이 수직으로 나란히 정렬되게 한다. */
-.main-tabs{display:flex;gap:6px;margin:0 0 2px;padding:10px 10px 6px;position:sticky;top:var(--topbar-h);z-index:20;background:#F2F2F7;}
+.main-tabs{display:flex;gap:6px;margin:0;padding:var(--gap) 10px 0;position:sticky;top:var(--topbar-h);z-index:20;background:#F2F2F7;}
 .main-tabs .tab-btn{flex:1 1 0;min-width:0;padding:6px 6px;font-size:13px;border-radius:999px;text-align:center;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .main-tabs .tab-btn.on{background:rgba(0,122,255,.14);color:#007aff;}
 /* 세금 상식은 실행 탭이 아닌 가이드 — 작게, 맨 오른쪽에 */
@@ -323,7 +330,7 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 /* 차트 카드는 예외: overflow-x:hidden은 CSS 규칙상 overflow-y를 auto로 만들어 카드가 스크롤
    컨테이너가 되고, 차트보다 큰 팝업이 카드 안에서 잘리며 세로 스크롤바가 생겼다. 차트 카드는
    넘쳐도 그대로 보이게 하고, 표가 들어가는 펼침 영역만 따로 가로넘침을 막는다. */
-.chart-wrap.chart-main{overflow:visible;}
+.chart-wrap.chart-main{overflow:visible;margin-bottom:0;} /* 이 탭의 마지막 박스 — 아래 여백은 .right-panel의 패딩(--gap)이 맡아 다른 탭과 간격이 같아짐 */
 /* 차트 상단: 보기 탭 4개 + 범례 */
 .chart-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 8px;margin-bottom:6px;}
 .chart-head .tabs{flex-wrap:wrap;}
@@ -332,11 +339,9 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 .chart-alt{position:absolute;inset:0;background:#fff;z-index:110;overflow-y:auto;overflow-x:hidden;padding:2px 2px 4px;}
 .chart-alt .alt-title{font-size:11px;font-weight:700;color:#555;margin:2px 0 8px;}
 .chart-alt table{font-size:12px;}
-/* 펼침+90도(가로, 높이 짧음) 전용: 위쪽 세로 여백을 줄여 그만큼 그래프에 줌(fitChartHeight가 자동 반영) */
+/* 펼침+90도(가로, 높이 짧음) 전용: 간격은 맨 위 --gap:6px가 이미 처리. 차트 카드 안쪽
+   여백만 추가로 줄여 그만큼 그래프에 준다(fitChartHeight가 자동 반영). */
 @media (min-width:961px){
-  .main-tabs{padding:6px 10px 4px;}
-  .right-panel{padding-top:4px;}
-  .metrics-bar{padding-bottom:6px;}
   .chart-wrap.chart-main{padding:8px 12px;}
   .chart-head{margin-bottom:3px;}
   .phase-card{padding:4px 7px;}
@@ -390,8 +395,10 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;position:relative;}
 .basic-row .irow{margin-bottom:0;min-width:0;}
 .basic-row .irow-top{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:0;}
-.basic-row .ilabel{font-size:9px;white-space:nowrap;}
-.basic-row .ival-input{width:56px;font-size:12.5px;padding:3px 4px;}
+/* 라벨을 입력칸과 같은 폭(--bi-w)으로 두고 가운데 정렬 — 전엔 라벨이 왼쪽 정렬이라
+   입력칸 중심보다 라벨 중심이 8px 왼쪽으로 어긋나 보였음 */
+.basic-row .ilabel{font-size:9px;white-space:nowrap;width:var(--bi-w);display:flex;justify-content:center;}
+.basic-row .ival-input{width:var(--bi-w);font-size:12.5px;padding:3px 4px;}
 .basic-row .unit-tag{width:22px;font-size:9px;}
 .basic-row .suggest-btn{width:auto;min-width:88px;flex-shrink:0;margin:0;padding:6px 12px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
@@ -473,7 +480,7 @@ button{font-family:inherit;cursor:pointer;}
 
 /* ── 인라인 패널 공용(모달 아님, 대시보드 흐름 안에서 펼침/접힘) — "세금 상식"·"건보료 설계" 둘 다 사용 ── */
 .inline-panel{display:none;flex:0 0 auto;background:#fff;border:1px solid #E8EAF0;border-radius:10px;
-  margin:8px 10px 8px;padding:10px 14px 12px;scroll-margin-top:calc(var(--topbar-h) + 6px);}
+  margin:var(--gap) 10px;padding:10px 14px 12px;scroll-margin-top:calc(var(--topbar-h) + 6px);}
 .inline-panel.show{display:block;}
 .inline-panel-title{font-size:12px;font-weight:700;color:#333;margin-bottom:4px;}
 .health-ref-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0;padding:5px 8px;background:#F8F9FB;border-radius:6px;}
@@ -550,43 +557,42 @@ button{font-family:inherit;cursor:pointer;}
   .priv-cards{gap:4px;}
   .priv-group{gap:4px;}
   .stack-group{gap:4px;}
-  .panel{padding:6px 10px;margin-bottom:4px;}
+  .panel{padding:6px 10px;margin-bottom:var(--gap);}
   .panel.acct-panel{padding-top:4px;}
   .acct-panel .acct-grid{margin-top:0;}
   .basic-row .irow-top{padding:3px 0;}
 }
 
 /* 폴드를 가로(landscape)로 돌렸을 때처럼 폭은 넓은데 뷰포트 높이가 짧은 상태 전용 추가 압축.
-   위 폭 기준 압축만으론 짧은 높이에서 스크롤이 남아 한 번 더 줄인다 — 카드 그리드(가장
-   비중이 큰 stack-group: 퇴직연금+국민연금)를 중심으로 폰트·행간을 더 좁힌다. 세로로
-   펼친 상태(411~900px, 높이 충분)는 이 블록의 영향을 받지 않도록 max-height로 제한. */
-@media (min-width:411px) and (max-height:520px){
-  .top-bar{padding:4px 10px;}
-  .tax-guide-btn{height:32px;padding:0 12px;font-size:12.5px;}
-  h1{font-size:13px;}
-  .main-tabs{margin:0 0 2px;padding:5px 10px 4px;}
-  .main-tabs .tab-btn{padding:4px 1px;font-size:10.5px;}
-  .left-panel{padding:5px 10px 6px;}
-  .panel{padding:4px 8px;margin-bottom:3px;}
-  .basic-row .ilabel{font-size:8px;}
-  .basic-row .ival-input{width:48px;font-size:11px;padding:2px 3px;}
-  .acct-head{padding:2px 5px;font-size:10px;}
-  .acct-head .dot{margin-top:2px;}
-  .acct-body{padding:2px 4px 2px;gap:1px;}
-  .acct-body .ilabel{font-size:8.5px;line-height:1.1;}
-  .acct-body .irow-top{gap:1px;}
-  .acct-body .irow{margin-bottom:0;}
-  .acct-body .ival-input{font-size:11px;padding:1px 3px;}
-  .acct-body .fv-row .ival-input,
-  .acct-body .irow-ymon .ival-input{font-size:10px;padding:1px 2px;}
-  .acct-body .unit-tag,.acct-body .ymon-select{font-size:8px;}
-  .acct-grid{gap:3px;}
-  .priv-cards{gap:3px;}
-  .priv-group{gap:3px;}
-  .stack-group{gap:3px;}
-  .fv-row{gap:2px;}
-  .collapsible summary{padding:2px 0;font-size:11px;}
-}
+   위 폭 기준 압축만으론 짧은 높이에서 스크롤이 남을 수 있어 한 번 더 줄인다 — 카드 그리드
+   (가장 비중이 큰 stack-group: 퇴직연금+국민연금)를 중심으로 폰트·행간을 더 좁힌다.
+   고정 높이(max-height) 대신 JS(fitDensity())가 실제로 내용이 넘칠 때만 html.dense를
+   붙인다 — 화면 높이는 표준 기기값과 실제 글꼴 렌더링이 달라 고정값으론 못 잡는 경우가
+   있었다(일부 기기에서 펼침+90도에 세로 스크롤이 남던 문제). 폭이 좁은 접힌 화면(≤480)엔
+   JS가 아예 이 클래스를 붙이지 않음(다른 압축 방식을 이미 씀). */
+html.dense .top-bar{padding:4px 10px;}
+html.dense .tax-guide-btn{height:32px;padding:0 12px;font-size:12.5px;}
+html.dense h1{font-size:13px;}
+html.dense .main-tabs .tab-btn{padding:4px 1px;font-size:10.5px;}
+html.dense .panel{padding:4px 8px;margin-bottom:var(--gap);}
+html.dense .basic-row .ilabel{font-size:8px;}
+html.dense .basic-row .ival-input{width:var(--bi-w);font-size:11px;padding:2px 3px;}
+html.dense .acct-head{padding:2px 5px;font-size:10px;}
+html.dense .acct-head .dot{margin-top:2px;}
+html.dense .acct-body{padding:2px 4px 2px;gap:1px;}
+html.dense .acct-body .ilabel{font-size:8.5px;line-height:1.1;}
+html.dense .acct-body .irow-top{gap:1px;}
+html.dense .acct-body .irow{margin-bottom:0;}
+html.dense .acct-body .ival-input{font-size:11px;padding:1px 3px;}
+html.dense .acct-body .fv-row .ival-input,
+html.dense .acct-body .irow-ymon .ival-input{font-size:10px;padding:1px 2px;}
+html.dense .acct-body .unit-tag,html.dense .acct-body .ymon-select{font-size:8px;}
+html.dense .acct-grid{gap:3px;}
+html.dense .priv-cards{gap:3px;}
+html.dense .priv-group{gap:3px;}
+html.dense .stack-group{gap:3px;}
+html.dense .fv-row{gap:2px;}
+html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 /* 개인정보 숨기기(html.privacy-on, 포트폴리오 앱 토글을 따름): 설계 화면에 기입한 값과 슬라이더 손잡이를 가린다(입력·수정은 가능) */
 .privacy-on .ival-input,.privacy-on .hir-input,.privacy-on .ymon-select{color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 .privacy-on input[type=range]{visibility:hidden;}
@@ -2587,20 +2593,67 @@ function applyViewState(){
   }
 }
 
+/* ── 설계 탭 밀도 압축(html.dense) — 실제로 세로가 넘칠 때만 ──
+   예전엔 "화면 높이 520px 이하"라는 고정값으로만 켰는데, 실기기는 주소창 높이·기본
+   한글 글꼴(안드로이드 Noto, 줄간격이 더 큼) 차이로 520px보다 높아도 넘칠 수 있었다
+   (펼침+90도에서 세로 스크롤이 남던 원인). body.scrollHeight(실제 내용 높이)가
+   body.clientHeight(보이는 높이)보다 크면 그때그때 dense를 붙인다. 420px 이하(접힘)는
+   이미 다른 방식(가로 1열)으로 압축하므로 대상 아님. 420~520px는 폰트가 더 커도 항상
+   빠듯하므로 기존처럼 무조건 켠다(넘침 측정 전에 먼저 눌러 깜빡임 방지). */
+function fitDensity(){
+  const html = document.documentElement;
+  if(window.innerWidth <= 420 || mainTab !== 'design'){ html.classList.remove('dense'); return; }
+  if(window.innerHeight <= 520){ html.classList.add('dense'); return; }
+  html.classList.remove('dense');
+  if(html.scrollHeight > html.clientHeight || document.body.scrollHeight > document.body.clientHeight){
+    html.classList.add('dense');
+  }
+}
+
 /* ── 그래프 세로 크기를 화면에 맞춤 ──
    예상결과 탭 맨 아래와 화면 아래 사이에 남는 높이만큼 차트를 늘리거나 줄여, 펼침·펼침+90도
    어느 쪽이든 스크롤 없이 화면을 꽉 채움. 접힌 화면(≤480)은 CSS 기본 높이(스크롤 허용). */
-let _fitTimer = null;
 function fitChartHeight(){
   const wrap = document.querySelector('.chart-canvas-wrap'), rt = document.getElementById('resultTab');
   if(!wrap || !rt || rt.style.display === 'none') return;
   if(window.innerWidth <= 480){ wrap.style.height = ''; return; }
+  const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 6;
   const cur = wrap.getBoundingClientRect().height;
   const bottom = rt.getBoundingClientRect().bottom + window.scrollY;
-  const next = Math.max(230, Math.min(620, Math.floor(cur + (window.innerHeight - bottom - 6))));
+  let next = Math.max(170, Math.min(620, Math.floor(cur + (window.innerHeight - bottom - gap))));
+  // 그래도 body가 넘치면(글꼴·아이콘 변환 등으로 다른 요소가 늦게 커진 경우) 넘친 만큼 더 줄임
+  const overflow = document.body.scrollHeight - document.body.clientHeight;
+  if(overflow > 0) next = Math.max(170, next - overflow - 2);
   if(Math.abs(next - cur) >= 2) wrap.style.height = next + 'px';
 }
-window.addEventListener('resize', ()=>{ clearTimeout(_fitTimer); _fitTimer = setTimeout(fitChartHeight, 150); });
+
+// 렌더링 뒤 아이콘 변환(shared/icons.js MutationObserver)·글꼴 로드·회전 등으로 카드 높이가
+// 나중에 바뀌어도 다시 맞춘다. 2px 미만 변화는 무시(반복 트리거 방지).
+let _fitTimer = null;
+function scheduleFit(){ clearTimeout(_fitTimer); _fitTimer = setTimeout(()=>{ fitDensity(); if(mainTab==='result') fitChartHeight(); }, 150); }
+window.addEventListener('resize', scheduleFit);
+(function(){
+  if(typeof ResizeObserver !== 'function') return;
+  const sizes = new WeakMap();
+  const ro = new ResizeObserver(entries=>{
+    let changed = false;
+    entries.forEach(e=>{
+      const h = e.contentRect.height, prev = sizes.get(e.target);
+      if(prev === undefined || Math.abs(h - prev) >= 2){ sizes.set(e.target, h); changed = true; }
+    });
+    if(changed) scheduleFit();
+  });
+  window.addEventListener('DOMContentLoaded', ()=>{
+    ['.metrics-bar','#phase-cards','.chart-head','#designTab'].forEach(sel=>{
+      const el = document.querySelector(sel); if(el) ro.observe(el);
+    });
+  });
+  if(document.readyState !== 'loading'){
+    ['.metrics-bar','#phase-cards','.chart-head','#designTab'].forEach(sel=>{
+      const el = document.querySelector(sel); if(el) ro.observe(el);
+    });
+  }
+})();
 
 // 최상위 탭: 설계(입력 폼) / 예상결과(차트·시나리오) — 캔버스 차트는 display:none인 상태에서
 // 그려지면 크기가 0으로 굳어버리므로, 결과 탭으로 전환할 때는 항상 upd()를 다시 호출해
@@ -2617,6 +2670,7 @@ function setMainTab(t){
   document.getElementById('taxGuidePanel').classList.toggle('show', t==='tax');
   if(t==='result') upd();
   if(t==='health') renderHealthPanel();
+  requestAnimationFrame(()=>{ fitDensity(); if(t==='result') fitChartHeight(); });
 }
 
 // "예상 건보료 계산하기" 버튼 클릭 시 — 이미 실시간으로도 갱신되지만, 버튼을 눌렀을 때
@@ -3253,6 +3307,7 @@ function applyHideAmounts(on){
 window.addEventListener('storage', e=>{ if(e.key===HIDE_AMOUNTS_KEY) applyHideAmounts(e.newValue==='1'); });
 
 if(!loadState()) upd(); else upd();
+requestAnimationFrame(fitDensity);
 applyInputTags();
 maskSubtree(document.body);
 
