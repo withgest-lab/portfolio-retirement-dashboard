@@ -254,6 +254,10 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .toggle-pill.sum-pill .dot{background:var(--color-text);}
 /* 넘친 게 스크롤 컨테이너의 빈 하단 여백뿐이면 스크롤하지 않는다(syncFitScroll) */
 .fit-noscroll{overflow-y:hidden!important;}
+/* 스냅샷 이력 모드: 그래프를 숨기고 이력이 화면을 차지 — 기간 탭은 그래프 전용이라 흐리게 */
+#chartSubpage.snap-mode .chart-wrap{display:none;}
+#chartSubpage.snap-mode #periodTabs{opacity:.35;pointer-events:none;}
+#chartSubpage.snap-mode #snapHistWrap > .card{margin-top:0!important;}
 
 /* ── 접이식 상세 섹션 ── */
 .collapsible summary{cursor:pointer;color:var(--color-secondary);font-weight:600;font-size:11px;
@@ -277,7 +281,6 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .chart-wrap canvas{-webkit-touch-callout:none;user-select:none;}
 #assetTbody{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 canvas#lineChart{width:100%!important;display:block;}
-.stat-bar{margin-top:12px;}
 .stat-item{min-width:110px;}
 .stat-item .stat-lbl{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--color-secondary);}
 .stat-item .stat-lbl .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
@@ -429,11 +432,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .donut-center .dc-val{font-size:15px;font-weight:800;letter-spacing:-.03em;}
 .donut-legend{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;margin-top:12px;max-width:320px;}
 /* 비중현황: 2열 그리드(윗줄 투자시장·계좌유형 / 아랫줄 자산유형·종목 비중). minmax(0,1fr)+min-width:0으로 가로 스크롤 방지 */
-.alloc-banner{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-.alloc-banner .summary-grid{display:block;margin:0;flex:0 1 auto;}
-.alloc-banner .summary-grid.compact .sum-card{display:flex;align-items:baseline;gap:8px;padding:5px 12px;}
-.alloc-banner .summary-grid.compact .sum-lbl{margin:0;font-size:10px;white-space:nowrap;}
-.alloc-banner .summary-grid.compact .sum-val{font-size:15px;white-space:nowrap;}
+.alloc-card{position:relative;}
+.alloc-view-tabs{position:absolute;top:10px;right:12px;z-index:5;}
 .alloc-grid{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);gap:14px 20px;align-items:start;}
 .alloc-left{min-width:0;display:flex;flex-direction:column;gap:14px;}
 .alloc-right{min-width:0;display:flex;flex-direction:column;}
@@ -533,6 +533,16 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .index-spark-empty{height:40px;margin:6px 0 8px;}
 .index-tile .index-val{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.2;white-space:nowrap;}
 .index-tile .index-chg{font-size:17px;font-weight:500;margin-top:2px;white-space:nowrap;}
+.notice.index-note{font-size:10.5px;margin-top:8px;padding:0;}
+/* 시장지표 한 화면 맞춤: 넘칠 때만 fitIndicesLayout()이 단계적으로 줄인다 */
+#indexCard.idx-cmp1 .index-spark,#indexCard.idx-cmp1 .index-spark-empty{height:28px;margin:4px 0 5px;}
+#indexCard.idx-cmp1 .index-tile{padding:7px 8px;}
+#indexCard.idx-cmp1 .index-group-title{margin:8px 2px 4px;}
+#indexCard.idx-cmp1 .index-row{margin-top:8px;}
+#indexCard.idx-cmp2 .index-tile-name{font-size:12px;}
+#indexCard.idx-cmp2 .index-tile .index-val{font-size:14.5px;}
+#indexCard.idx-cmp2 .index-tile .index-chg{font-size:12.5px;}
+#indexCard.idx-cmp2 .index-spark,#indexCard.idx-cmp2 .index-spark-empty{height:22px;margin:3px 0 4px;}
 @media (max-width:600px){
   .index-tiles{gap:8px;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));}
   .index-tile{padding:10px 11px;border-radius:12px;}
@@ -858,7 +868,6 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
       </div>
     </div>
     <div class="chart-wrap"><canvas id="qvTreemapCanvas" height="300"></canvas></div>
-    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 색=수익률(초록 이익/빨강 손실). '기간별 주가 변화율'은 선택한 기간 동안의 주가 변화이고, '총수익률 (평단 대비)'은 기간과 무관하게 내 평균 매입가 대비 현재 수익률이라 기간 탭이 흐리게 비활성화됩니다. 1D는 '오늘 국내장(09:00) + 오늘 밤 미국장'을 하루로 묶습니다(금요일 국장+미장은 다음 월요일 국장 개장 전까지 유지). 클릭하면 포트폴리오의 해당 종목 상세로 이동합니다.</div>
   </div>
 </div>
 
@@ -871,9 +880,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   <div class="chart-head">
   <div class="chart-top-row" id="chartTopRow">
     <button type="button" class="tgl-banner" id="allViewToggleBtn" role="switch" aria-checked="false" onclick="toggleAll()">전체 보기<span class="sw"></span></button>
-    <button type="button" class="tgl-banner" id="stockDetailToggleBtn" role="switch" aria-checked="false" data-target="assetTogglesDetail" onclick="toggleBanner(this)">종목 선택<span class="sw"></span></button>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="statBar" data-onopen="scrollToStatBar" onclick="toggleBanner(this)">종목별 수익률<span class="sw"></span></button>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="snapHistWrap" data-onopen="scrollToSnapHist" onclick="toggleBanner(this)">스냅샷 이력<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" id="stockDetailToggleBtn" role="switch" aria-checked="false" data-target="assetTogglesDetail" onclick="toggleChartPop(this)">종목 선택<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" id="statToggleBtn" role="switch" aria-checked="false" data-target="statBar" onclick="toggleChartPop(this)">종목별 수익률<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" id="snapToggleBtn" role="switch" aria-checked="false" data-target="snapHistWrap" onclick="toggleSnapMode(this)">스냅샷 이력<span class="sw"></span></button>
     <div class="period-tabs period-tabs-sm" id="periodTabs" style="margin-left:auto;">
       <button onclick="setPeriod('1D')" class="active">1D</button>
       <button onclick="setPeriod('5D')">5D</button>
@@ -889,9 +898,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
     </div>
   </div>
   <div class="toggles chart-pick-pop" id="assetTogglesDetail" style="display:none;"></div>
+  <div class="stat-bar chart-pick-pop" id="statBar" style="display:none;"></div>
   </div>
   <div class="chart-wrap" style="margin-top:6px;"><canvas id="lineChart" height="320"></canvas></div>
-  <div class="stat-bar" id="statBar" style="display:none;margin-top:10px;"></div>
 </div>
 <div id="snapHistWrap" style="display:none;">
   <div class="card" style="margin-top:10px;">
@@ -934,13 +943,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 <!-- 비중 현황 -->
 <div class="subpage" data-sub="alloc">
-<div class="card">
-  <div class="alloc-banner">
-    <div class="summary-grid compact" id="summaryGrid"></div>
-    <div class="period-tabs" id="allocViewTabs">
-      <button class="active" onclick="setAllocView('donut')">도넛</button>
-      <button onclick="setAllocView('treemap')">트리맵</button>
-    </div>
+<div class="card alloc-card">
+  <!-- 도넛/트리맵 선택: 카드 우상단 모서리(두 뷰 같은 위치) — 별도 배너 줄 없이 내용이 카드 맨 위부터 시작 -->
+  <div class="period-tabs alloc-view-tabs" id="allocViewTabs">
+    <button class="active" onclick="setAllocView('donut')">도넛</button>
+    <button onclick="setAllocView('treemap')">트리맵</button>
   </div>
   <div id="allocDonutView">
   <!-- 배치: 왼쪽 세로 [투자시장/계좌유형/자산유형] · 오른쪽 [세부 종목 비중] · 아래 전폭 [종목 비중 막대] — 좁은 화면(<600px)은 1열 -->
@@ -1010,7 +1017,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   </div>
   </div>
   <div id="allocTreemapView" style="display:none;">
-    <div class="section-label" style="margin:0 0 12px;">자산군 분포</div>
+    <div class="section-label" style="margin:6px 0 10px;">자산군 분포</div>
     <div class="dist-top-grid">
       <div class="dist-cell">
         <div class="mt-label">① 투자시장 분포</div>
@@ -1021,21 +1028,18 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
         <div class="dist-canvas-wrap"><canvas id="distAssetTypeCanvas" height="220"></canvas></div>
       </div>
     </div>
-    <div class="section-label" style="margin:18px 0 10px;">③ 자산유형별 세부 종목 비중</div>
+    <div class="section-label" style="margin:10px 0 6px;">③ 자산유형별 세부 종목 비중</div>
     <div id="distDetailChips" class="type-chips"></div>
     <div class="dist-canvas-wrap"><canvas id="distDetailCanvas" height="400"></canvas></div>
-    <div id="distDetailInfo" class="dist-info"></div>
-    <div class="notice" style="text-align:center;">💡 사각형 크기=평가금액, 표시 %=총 자산 대비. ①②는 투자시장·자산유형 고유색, ③은 전체 사각형이 총 자산 100%이고 자산유형 블록 안에 실제 종목이 크기순으로 나뉩니다(같은 이름은 계좌가 달라도 합산).</div>
   </div>
 </div>
 </div>
 
 <!-- 글로벌 시장 -->
 <div class="subpage" data-sub="indices">
-<div class="card" style="max-width:1000px;">
-  <div class="section-label">글로벌 시장</div>
+<div class="card" id="indexCard" style="max-width:1000px;">
   <div id="indexTiles"></div>
-  <div class="notice">※ 야후 파이낸스 기준 (15~20분 지연). 5분마다 자동 갱신됩니다.</div>
+  <div class="notice index-note">※ 야후 파이낸스 기준 (15~20분 지연). 5분마다 자동 갱신됩니다.</div>
 </div>
 </div>
 
@@ -2772,6 +2776,14 @@ function stickyTop(){ return 0; }
 // 한 화면에 다 들어가는데도 스크롤 컨테이너의 빈 하단 여백(padding-bottom) 때문에 터치하면 위아래로
 // 움직이며 스크롤바가 생기는 문제를 모든 페이지·서브탭에서 공통으로 막는다. 넘친 양이 그 빈 여백 이하이면
 // 스크롤을 끄고(.fit-noscroll), 실제 내용이 넘치면(접힌 화면 등) 다시 켠다. 콘텐츠 크기 변화는 ResizeObserver가 감지.
+// 스크롤 컨테이너 높이가 바뀌면(주소창 표시/숨김·회전) "남는 높이를 채우는" 화면들을 다시 맞춘다
+function refitScrollerContent(el){
+  const sub = el.dataset && el.dataset.sub;
+  if(sub==='chart'){ drawLineChart(); fitSnapHeight(); }
+  else if(sub==='summary') drawQuickViewTreemap();
+  else if(sub==='alloc') renderDonuts();
+  else if(sub==='indices') fitIndicesLayout();
+}
 function syncFitScroll(){
   const sc = getScroller();
   document.querySelectorAll('.fit-noscroll').forEach(el=>{ if(el!==sc) el.classList.remove('fit-noscroll'); });
@@ -2787,16 +2799,16 @@ function scheduleFitScroll(){
 }
 if(typeof ResizeObserver==='function'){
   const fitRO = new ResizeObserver(entries=>{
-    // 스크롤 컨테이너 자체 높이가 바뀌면(주소창 표시/숨김·회전) 변화추이 그래프를 남는 높이에 다시 맞춘다
-    let redrawChart = false;
+    // 스크롤 컨테이너 자체 높이가 바뀌면(주소창 표시/숨김·회전) 남는 높이를 채우는 화면들을 다시 맞춘다
+    let refit = null;
     entries.forEach(en=>{
       const el = en.target;
       if(!el.classList.contains('page') && !el.classList.contains('subpage')) return;
       const h = el.clientHeight, prev = _fitScrollerH.get(el);
       _fitScrollerH.set(el, h);
-      if(prev!=null && Math.abs(prev-h)>1 && el===getScroller() && el.id==='chartSubpage') redrawChart = true;
+      if(prev!=null && Math.abs(prev-h)>1 && el===getScroller()) refit = el;
     });
-    if(redrawChart && typeof drawLineChart==='function') drawLineChart();
+    if(refit) refitScrollerContent(refit);
     scheduleFitScroll();
   });
   const observeFit = ()=>{
@@ -2808,17 +2820,6 @@ if(typeof ResizeObserver==='function'){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', observeFit); else observeFit();
 }
 
-// 변화추이 상단 토글(종목별 수익률·스냅샷 이력)을 켰을 때 그 내용으로 부드럽게 스크롤.
-// window.scrollIntoView는 안 쓴다(실제 스크롤 컨테이너는 body가 아니라 getScroller()가
-// 돌려주는 .subpage — body를 건드리면 sticky 탭바가 밀려 사라짐, 위 resetScrollTop 참고).
-function scrollWithin(el){
-  const sc = getScroller();
-  if(!sc || !el) return;
-  const top = sc.scrollTop + (el.getBoundingClientRect().top - sc.getBoundingClientRect().top) - 10;
-  sc.scrollTo({top, behavior:'smooth'});
-}
-function scrollToStatBar(){ requestAnimationFrame(()=>scrollWithin(document.getElementById('statBar'))); }
-function scrollToSnapHist(){ requestAnimationFrame(()=>scrollWithin(document.getElementById('snapHistWrap'))); }
 function stockChartLayout(){
   const sc = getScroller();
   const A = (sc && sc.clientHeight > 200) ? sc.clientHeight : window.innerHeight - 150;
@@ -4046,6 +4047,7 @@ function renderSnaps(){
     </tr>`;
   }).join('');
 
+  if(wrap && document.getElementById('chartSubpage')?.classList.contains('snap-mode')){ requestAnimationFrame(fitSnapHeight); return; }
   if(wrap){
     requestAnimationFrame(()=>{
       const recentRows = tb.querySelectorAll('tr[data-recent="true"]');
@@ -7040,11 +7042,6 @@ SUBPAGE_RENDER_HOOKS['returns_yearly'] = renderYearlyReturns;
    요약 카드
 ════════════════════════════════════════ */
 
-function renderSummary(){
-  // 비중현황 트리맵 위 요약은 총 평가금액 카드 하나만 둔다
-  document.getElementById('summaryGrid').innerHTML =
-    `<div class="sum-card"><div class="sum-lbl">총 평가금액</div><div class="sum-val">${fmtEval(totalEv())}</div></div>`;
-}
 
 /* ════════════════════════════════════════
    도넛 + 막대 차트
@@ -8066,7 +8063,17 @@ function syncQuickViewPeriodTabs(){
 }
 function drawQuickViewTreemap(){
   syncQuickViewPeriodTabs();
-  renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), 280, goToStockDetail, undefined, qvHighlightId);
+  // 펼침 화면: 트리맵이 남는 화면 높이를 전부 쓴다(세로 스크롤 없음). 접힘(<600px)은 기존 280px
+  const cv = document.getElementById('qvTreemapCanvas');
+  const h = window.innerWidth < 600 ? 280 : Math.max(240, remainingHeight(cv, 31) || 280);
+  renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), h, goToStockDetail, undefined, qvHighlightId);
+}
+// 스크롤 컨테이너(getScroller()) 안에서 el의 위쪽부터 화면 아래까지 남는 높이(스크롤 위치 불변). bottomGap = 카드 하단 패딩+여백
+function remainingHeight(el, bottomGap){
+  const sc = getScroller();
+  if(!el || !sc || !el.offsetParent) return 0;
+  const top = (el.getBoundingClientRect().top - sc.getBoundingClientRect().top) + sc.scrollTop;
+  return Math.floor(sc.clientHeight - top - bottomGap);
 }
 
 /* ── 자산군 분포 (비중현황 > 트리맵) ─────────────────────────────────
@@ -8244,11 +8251,16 @@ function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg, retStr)
 let detailTmSel = null;      // 선택된 셀 키 "유형|종목명"
 let detailTmCells = [];      // 히트테스트용
 let detailHeads = [];        // 자산유형 헤더 띠(잘렸을 때 말풍선용)
-function detailTreemapHeight(W){ return W<560 ? donutClamp(Math.round(W*1.35),440,640) : donutClamp(Math.round(W*0.6),340,620); }
+// 한 화면 맞춤(fitAllocTreemapLayout)이 정한 높이가 있으면 그 값을, 없으면(접힘) 폭 비례 기본값
+let allocTmHeights = null; // {top, detail}
+function detailTreemapHeight(W){
+  if(allocTmHeights) return allocTmHeights.detail;
+  return W<560 ? donutClamp(Math.round(W*1.35),440,640) : donutClamp(Math.round(W*0.6),340,620);
+}
 function drawDetailTreemap(){
   const canvas = document.getElementById('distDetailCanvas');
   if(!canvas || canvas.offsetParent===null) return;
-  const chipsEl = document.getElementById('distDetailChips'), infoEl = document.getElementById('distDetailInfo');
+  const chipsEl = document.getElementById('distDetailChips');
   const positive = assets.filter(a=>evKRW(a)>0);
   const tree = buildAssetClassTree(positive);
   const total = tree.reduce((s,t)=>s+t.value,0);
@@ -8261,12 +8273,11 @@ function drawDetailTreemap(){
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
   detailTmCells = []; detailHeads = [];
-  const tinyCells = [];   // 면적이 너무 작아 사각형으로 못 그린 종목(아래 안내 줄에 이름으로 표시)
+  const tinyCells = [];   // 면적이 너무 작아 사각형으로 못 그린 종목(자산유형 헤더를 누르면 말풍선에 이름으로 표시)
   if(!tree.length){
     ctx.fillStyle='#8e8e93'; ctx.font='12px Pretendard'; ctx.textAlign='center';
     ctx.fillText('보유종목이 없습니다', W/2, H/2);
     canvas.onclick = canvas.onpointermove = null;
-    if(infoEl) infoEl.textContent='';
     return;
   }
   const rr = (x,y,w,h,r)=>{
@@ -8289,13 +8300,13 @@ function drawDetailTreemap(){
       ctx.font='800 11.5px Pretendard,-apple-system,sans-serif';
       const rets = returnText(t.agg), amt = fmt(t.value), shortRets = rets.replace(/^\(([^,)]*).*$/, '($1)');
       const wOf = str=>ctx.measureText(str).width;
-      const lefts = [t.key+' '+pct0, t.key], rights = [amt+' '+rets, rets, shortRets];
-      let L=null, R=null;
-      outer: for(const r of rights){ for(const l of lefts){ if(wOf(l)+wOf(r)+24<=bw){ L=l; R=r; break outer; } } }
-      let trunc = R!==rights[0];
-      if(L===null){ L=fitCanvasText(ctx,t.key,Math.max(10,bw-14-wOf('…')-8)); R='…'; trunc=true; }
+      // 왼쪽 "유형 xx%"는 항상 유지하고, 폭이 모자라면 오른쪽(금액+수익 → 수익 → 짧은 수익 → 없음)부터 줄인다
+      const L1 = t.key+' '+pct0, rights = [amt+' '+rets, rets, shortRets, ''];
+      let L = L1, R = rights.find(r=> wOf(L1) + (r ? wOf(r)+24 : 14) <= bw);
+      if(R===undefined){ R=''; L = fitCanvasText(ctx, t.key, Math.max(10, bw-14-wOf(' '+pct0))) + ' ' + pct0; }
+      const trunc = R!==rights[0];
       ctx.textAlign='left'; ctx.fillText(L, bx+7, by+HEAD/2+1);
-      ctx.textAlign='right'; ctx.fillText(R, bx+bw-7, by+HEAD/2+1);
+      if(R){ ctx.textAlign='right'; ctx.fillText(R, bx+bw-7, by+HEAD/2+1); }
       detailHeads.push({x:bx,y:by,w:bw,h:HEAD,t,pct:pct0,trunc});
     }
     const ix=bx+2, iy=by+HEAD+2, iw=bw-4, ih=bh-HEAD-4;
@@ -8318,43 +8329,64 @@ function drawDetailTreemap(){
     return detailTmCells.find(c=>mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h);
   };
   const select = c=>{ if(c && c.key!==detailTmSel){ detailTmSel=c.key; drawDetailTreemap(); } };
+  const cellBubble = c=>{
+    const cur = detailTmCells.find(x=>x.key===c.key); if(!cur) return;
+    showTmBubble(canvas, cur, [cur.child.label, cur.type.key+' · 총자산의 '+cur.pct, fmt(cur.child.value)+' '+returnText(cur.child.agg), '한 번 더 누르면 종목 상세'], cur.key);
+  };
+  const goDetail = c=>{
+    const top = c.child.names && c.child.names.length>1 ? c.child.names.slice().sort((a,b)=>b.value-a.value)[0].ids[0] : c.child.ids[0];
+    hideTmBubble(); goToStockDetail(top);
+  };
   canvas.style.cursor='pointer';
+  // 셀 정보는 아래 카드 대신 떠 있는 말풍선으로(레이아웃 공간 0). 선택된 셀을 한 번 더 누르면 종목 상세로 이동.
   canvas.onclick = e=>{
     const c = hit(e);
     const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-    const hd = detailHeads.find(h=>h.trunc && mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h);
-    select(c);
-    const cur = c && detailTmCells.find(x=>x.key===c.key);
-    if(hd){ showTmBubble(canvas, hd, [hd.t.key+' '+hd.pct, fmt(hd.t.value), returnText(hd.t.agg)], 'H|'+hd.t.key); }
-    else if(cur && cur.trunc){ showTmBubble(canvas, cur, [cur.child.label, cur.type.key+' · 총자산의 '+cur.pct, fmt(cur.child.value)+' '+returnText(cur.child.agg)], cur.key); }
-    else hideTmBubble();
+    const hd = detailHeads.find(h=>mx>=h.x&&mx<=h.x+h.w&&my>=h.y&&my<=h.y+h.h);
+    if(hd){
+      const tiny = tinyCells.filter(tc=>hd.t.children.includes(tc)).map(tc=>tc.label+' '+sharePctText(tc.value,total));
+      showTmBubble(canvas, hd, [hd.t.key+' '+hd.pct, fmt(hd.t.value)+' '+returnText(hd.t.agg)].concat(tiny.length?['작아서 못 그린 종목: '+tiny.join(', ')]:[]), 'H|'+hd.t.key);
+      return;
+    }
+    if(!c){ hideTmBubble(); return; }
+    if(c.key===detailTmSel && (e.pointerType==='mouse' || tmBubbleKey===c.key)){ goDetail(c); return; }
+    select(c); cellBubble(c);
   };
-  canvas.onpointermove = e=>{ if(e.pointerType==='mouse') select(hit(e)); };
-  const sel = detailTmCells.find(c=>c.key===detailTmSel);
-  if(infoEl){
-    // 운용사가 여럿 합쳐진 슬라이스(같은 지수를 TIGER/KODEX 등 여러 운용사 상품으로 나눠 보유)는
-    // "상세 ›" 버튼 하나로 임의의 한 종목으로 보내지 않고, 운용사별 종목을 골라 이동할 수 있게 한다.
-    const detailNav = sel && (sel.child.names.length>1
-      ? `<span class="di-issuer-pick">${sel.child.names.slice().sort((a,b)=>b.value-a.value)
-          .map(n=>`<button class="btn btn-ghost di-go" onclick="goToStockDetail('${n.ids[0]}')">${dispName(n.name)} ›</button>`).join('')}</span>`
-      : `<button class="btn btn-ghost di-go" onclick="goToStockDetail('${sel.child.ids[0]}')">상세 ›</button>`);
-    infoEl.innerHTML = sel
-      ? `<span class="di-sw" style="background:${sel.col};"></span><b>${sel.child.label}</b> <span class="di-sub">${sel.type.key} · ${fmt(sel.child.value)} ${returnText(sel.child.agg)} · 총자산의 ${sel.pct}</span> ${detailNav}`
-      : '<span class="di-sub">사각형을 누르면(마우스는 올리면) 종목 이름·금액·비중이 여기에 표시됩니다</span>';
-    if(tinyCells.length) infoEl.innerHTML += `<span class="di-tiny">※ 너무 작아 그리지 못한 종목: ${tinyCells.map(c=>`${c.label} ${sharePctText(c.value,total)} ${returnText(c.agg)}`).join(', ')}</span>`;
-  }
+  canvas.onpointermove = e=>{ if(e.pointerType==='mouse'){ const c=hit(e); if(c){ select(c); cellBubble(c); } } };
 }
 function drawAssetClassDistribution(){
   const positive = assets.filter(a=>evKRW(a)>0);
   const total = positive.reduce((s,a)=>s+evKRW(a),0);
   const onClick = id=>{ if(id) goToStockDetail(id); };
   const empty = '표시할 자산이 없습니다';
-
-  // ① 투자시장 ② 자산유형
-  renderTreemapCanvas('distMarketCanvas',    distBuildItems(positive, distMarketKey,    distMarketLabel, distMarketColor, total), 220, onClick, empty);
-  renderTreemapCanvas('distAssetTypeCanvas', distBuildItems(positive, distAssetTypeKey, k=>k,            distTypeColor,   total), 220, onClick, empty);
-  // ③ 자산유형별 세부 종목 비중
-  drawDetailTreemap();
+  const draw = ()=>{
+    const topH = allocTmHeights ? allocTmHeights.top : 220;
+    // ① 투자시장 ② 자산유형
+    renderTreemapCanvas('distMarketCanvas',    distBuildItems(positive, distMarketKey,    distMarketLabel, distMarketColor, total), topH, onClick, empty);
+    renderTreemapCanvas('distAssetTypeCanvas', distBuildItems(positive, distAssetTypeKey, k=>k,            distTypeColor,   total), topH, onClick, empty);
+    // ③ 자산유형별 세부 종목 비중
+    drawDetailTreemap();
+  };
+  allocTmHeights = null; draw();
+  const fit = computeAllocTmHeights();
+  if(fit){ allocTmHeights = fit; draw(); }
+}
+// 비중현황 트리맵을 펼침 화면에서 세로 스크롤 없이 한 화면에: 지금 그려진 높이로 캔버스 외 고정 높이(overhead)를
+// 재고, 남는 높이를 ①②(약 32%, 120~220px)와 ③(나머지)에 나눈다. 접힘(<600px)은 기존 폭 비례 높이(스크롤 허용).
+function computeAllocTmHeights(){
+  const view = document.getElementById('allocTreemapView');
+  if(!view || !view.offsetParent || window.innerWidth < 600) return null;
+  const sc = getScroller(), card = view.closest('.card');
+  const c1 = document.getElementById('distMarketCanvas'), c2 = document.getElementById('distAssetTypeCanvas'), cd = document.getElementById('distDetailCanvas');
+  if(!sc || !card || !c1 || !c2 || !cd) return null;
+  const R = el=>el.getBoundingClientRect();
+  const rows = Math.abs(R(c1).top - R(c2).top) > 2 ? 2 : 1;
+  const cardTop = (R(card).top - R(sc).top) + sc.scrollTop;
+  const overhead = card.offsetHeight - rows*R(c1).height - R(cd).height;
+  const avail = sc.clientHeight - cardTop - 12 - overhead;
+  if(avail < 340) return null;
+  const top = Math.round(Math.max(120, Math.min(220, avail*0.32/rows)));
+  return {top, detail: Math.max(220, Math.floor(avail - rows*top))};
 }
 
 /* ════════════════════════════════════════
@@ -8430,6 +8462,20 @@ function renderIndices(){
       (krHtml ? `<div class="index-group" style="--n:${krN}">${krHtml}</div>` : '') +
       (fxHtml ? `<div class="index-group" style="--n:${fxN}">${fxHtml}</div>` : '') +
       `</div>` : '');
+  fitIndicesLayout();
+}
+// 시장지표를 펼침 화면에서 세로 스크롤 없이: 넘친 양이 스크롤러의 빈 하단 여백을 넘으면 .idx-cmp1 → .idx-cmp2 순으로 줄인다
+function fitIndicesLayout(){
+  const card = document.getElementById('indexCard');
+  if(!card || !card.offsetParent) return;
+  card.classList.remove('idx-cmp1','idx-cmp2');
+  if(window.innerWidth < 600) return;
+  const sc = getScroller(); if(!sc) return;
+  const pb = parseFloat(getComputedStyle(sc).paddingBottom) || 0;
+  const over = ()=> sc.scrollHeight - sc.clientHeight > pb + 1;
+  if(over()) card.classList.add('idx-cmp1');
+  if(over()) card.classList.add('idx-cmp2');
+  scheduleFitScroll();
 }
 
 // INDEX_LIST 전체를 한꺼번에 쏘면(각각 최대 3개 프록시 조합) 페이지 로드 시점에
@@ -8859,6 +8905,8 @@ function drawLineChart(){
   const cv=document.getElementById('lineChart');
   if(!cv) return;
   fitChartTopRow(); // 상단 줄 높이가 캔버스 위치를 정하므로 먼저 한 줄로 맞춘다
+  ['stockDetailToggleBtn','statToggleBtn'].forEach(id=>{ const b=document.getElementById(id); if(b && b.classList.contains('on')) positionChartPop(b); });
+  fitSnapHeight();
   const dpr=window.devicePixelRatio||1;
   const W=cv.parentElement.clientWidth||900;
 
@@ -9267,7 +9315,7 @@ function renderStatBar(){
   ];
   if(!items.length){bar.innerHTML='';return;}
 
-  bar.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:4px;">'+
+  bar.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px 20px;">'+
   items.map(item=>{
     if(!item){
       // 합계: drawLineChart와 동일 — 자산별 pct의 현재평가금액 가중평균
@@ -9436,18 +9484,55 @@ function fitChartTopRow(){
   if(over()) row.classList.add('cmp3'); // 그래도 넘치면 가로로 삐져나가기보다 줄바꿈
 }
 
-// 종목 선택 팝오버: 바깥을 누르거나 ESC면 닫는다(스위치 상태도 함께)
-function closeChartPickPop(){
-  const btn = document.getElementById('stockDetailToggleBtn');
-  if(btn && btn.classList.contains('on')) toggleBanner(btn);
+// 변화추이 상단 팝오버(종목 선택·종목별 수익률): 자기 버튼 바로 아래에 카드로 떠서 그래프 위에만 겹친다(그래프 크기 불변).
+// 하나를 열면 다른 하나는 닫히고, 바깥을 누르거나 ESC면 닫힌다.
+const CHART_POP_BTNS = ['stockDetailToggleBtn','statToggleBtn'];
+function positionChartPop(btn){
+  const pop = document.getElementById(btn.dataset.target), head = btn.closest('.chart-head');
+  if(!pop || !head || pop.style.display==='none') return;
+  const left = btn.getBoundingClientRect().left - head.getBoundingClientRect().left;
+  pop.style.left = Math.max(0, Math.min(left, head.clientWidth - pop.offsetWidth)) + 'px';
+}
+function toggleChartPop(btn){
+  const opening = !btn.classList.contains('on');
+  if(opening) closeChartPickPop(btn.id);
+  toggleBanner(btn);
+  if(opening) positionChartPop(btn);
+}
+function closeChartPickPop(exceptId){
+  CHART_POP_BTNS.forEach(id=>{
+    if(id===exceptId) return;
+    const b = document.getElementById(id);
+    if(b && b.classList.contains('on')) toggleBanner(b);
+  });
 }
 document.addEventListener('pointerdown', e=>{
-  const pop = document.getElementById('assetTogglesDetail');
-  if(!pop || pop.style.display==='none') return;
-  if(pop.contains(e.target) || e.target.closest('#stockDetailToggleBtn')) return;
-  closeChartPickPop();
+  CHART_POP_BTNS.forEach(id=>{
+    const b = document.getElementById(id), pop = b && document.getElementById(b.dataset.target);
+    if(!pop || pop.style.display==='none') return;
+    if(pop.contains(e.target) || e.target.closest('#'+id)) return;
+    toggleBanner(b);
+  });
 }, true);
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeChartPickPop(); });
+
+// 스냅샷 이력: 켜면 그래프를 숨기고 이력 표가 남는 화면 높이를 전부 쓴다(표 안에서만 스크롤)
+function toggleSnapMode(btn){
+  toggleBanner(btn);
+  const on = btn.classList.contains('on'), sp = document.getElementById('chartSubpage');
+  sp.classList.toggle('snap-mode', on);
+  if(on){ closeChartPickPop(); renderSnaps(); requestAnimationFrame(fitSnapHeight); }
+  else { renderSnaps(); drawLineChart(); }
+}
+function fitSnapHeight(){
+  const sp = document.getElementById('chartSubpage'), wrap = document.getElementById('snapWrap');
+  if(!sp || !wrap || !sp.classList.contains('snap-mode') || !wrap.offsetParent) return;
+  const sc = getScroller(); if(!sc) return;
+  const top = (wrap.getBoundingClientRect().top - sc.getBoundingClientRect().top) + sc.scrollTop;
+  const CARD_BOTTOM = 16 + 12; // 스냅샷 카드 하단 패딩 + 화면 아래 여백
+  wrap.style.maxHeight = Math.max(160, Math.floor(sc.clientHeight - top - CARD_BOTTOM)) + 'px';
+  wrap.style.overflowY = 'auto';
+}
 
 function toggleAsset(id){
   selectedAssets.has(id)?selectedAssets.delete(id):selectedAssets.add(id);
@@ -9862,7 +9947,7 @@ setInterval(async()=>{
 function renderAll(){
   privDictReset();
   recalcBondValuations();
-  renderTable();renderSummary();renderDonuts();
+  renderTable();renderDonuts();
   buildChartHistory();renderToggles();
   // 환율 표시 갱신
   const fx = document.getElementById('fxDisplay');
