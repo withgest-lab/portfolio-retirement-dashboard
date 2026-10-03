@@ -126,6 +126,8 @@ h1{font-size:16px;font-weight:700;color:#111;}
 .pf-sync-btn:hover{opacity:1;}
 .pf-sync-btn:active{transform:scale(0.96);}
 #pfSyncStatus{font-size:11px;color:#8A8A8A;min-height:14px;padding:0 2px 4px;}
+/* 평소엔 비어 있는데(🔗 연동 시에만 문구) 18px을 차지해 자동설계 줄~계좌 카드 사이가 벌어졌음 */
+#pfSyncStatus:empty{display:none;}
 
 /* ── 단일 irow ── */
 .irow{margin-bottom:2px;padding-right:2px;}
@@ -293,16 +295,36 @@ hr.div{border:none;border-top:1px dashed #EEF0F4;margin:6px 0;}
 .main-tabs #mtb-tax{flex:0 0 auto;margin-left:auto;padding:4px 10px;font-size:11px;font-weight:600;}
 @media (max-width:480px){ .main-tabs .tab-btn .t-x{display:none;} }
 @media (max-width:420px){ .main-tabs .tab-btn .t-e{display:none;} }
-.phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
-.phase-card{border-radius:7px;padding:6px 8px;min-width:0;} /* min-width:0 → 글자잘림 방지 */
-.phase-card-title{font-size:11px;font-weight:700;margin-bottom:4px;
+.phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;}
+/* 차트 나이 구간에 맞춰 정렬된 상태(alignPhaseCards): 열 폭을 px로 주고 카드 사이 틈은
+   각 카드 안쪽 여백으로 만들어 카드 외곽선이 정확히 경계에 오게 함 */
+.phase-cards.aligned{gap:0;}
+.phase-cards.aligned .phase-card{margin:0 1.5px;}
+.phase-cards.aligned .phase-card:first-child{margin-left:0;}
+.phase-cards.aligned .phase-card:last-child{margin-right:0;}
+.phase-card{border-radius:7px;padding:5px 7px;min-width:0;cursor:pointer;
+  border:1px solid transparent;transition:border-color .15s,box-shadow .15s;} /* min-width:0 → 글자잘림 방지 */
+.phase-card.sel{box-shadow:0 0 0 1.5px var(--ph-c,#007aff) inset;}
+.phase-card-title{font-size:11px;font-weight:700;margin-bottom:3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.phase-card-range{display:block;font-weight:400;font-size:9px;opacity:.75;margin-top:1px;}
+.phase-card-range{display:inline;font-weight:400;font-size:9px;opacity:.75;margin-left:5px;}
 .phase-card-item{font-size:10px;color:#555;margin-bottom:2px;
   display:flex;gap:3px;align-items:flex-start;
   word-break:keep-all;line-height:1.3;} /* 줄바꿈 허용 */
 /* 테이블: 좁은 화면 overflow 방지 */
 .chart-wrap{overflow-x:hidden;}
+/* 차트 카드는 예외: overflow-x:hidden은 CSS 규칙상 overflow-y를 auto로 만들어 카드가 스크롤
+   컨테이너가 되고, 차트보다 큰 팝업이 카드 안에서 잘리며 세로 스크롤바가 생겼다. 차트 카드는
+   넘쳐도 그대로 보이게 하고, 표가 들어가는 펼침 영역만 따로 가로넘침을 막는다. */
+.chart-wrap.chart-main{overflow:visible;}
+.chart-main .tgl-body{overflow-x:hidden;margin-top:6px;}
+/* 토글 줄(수익률 민감도·완전소진 비교) — 차트 카드 안, 작게 */
+.tgl-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.tgl-row .tgl-banner{padding:2px 7px 2px 9px;font-size:10px;gap:4px;}
+.tgl-row .tgl-banner .sw{width:22px;height:13px;}
+.tgl-row .tgl-banner .sw::after{width:9px;height:9px;}
+.tgl-row .tgl-banner.on .sw::after{left:11px;}
+#resultTab > .note{margin-top:3px;}
 table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed;}
 th{padding:5px 4px;text-align:right;font-weight:600;color:#AAB0BB;
   border-bottom:1.5px solid #eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -315,18 +337,24 @@ tr.cur-row{background:#FAFFFE;}
 button{font-family:inherit;cursor:pointer;}
 
 /* ── 커스텀 툴팁: 밝고 화사한 카드형 팝업 ── */
+/* 줄간격·여백을 줄이고 계좌 항목을 2열로 배치해 차트 최소 높이(180px) 안에 들어가게 함 */
 .chart-tooltip{position:absolute;pointer-events:none;
   background:#fff;border:1px solid #EEF0F4;
-  border-radius:10px;padding:9px 12px;font-size:12px;color:#334155;
-  line-height:1.7;box-shadow:0 8px 26px rgba(15,23,42,0.14);
-  min-width:180px;z-index:100;transition:opacity .15s;}
-.chart-tooltip .tt-total{font-size:13px;font-weight:700;margin-bottom:4px;
-  padding-bottom:4px;border-bottom:1px solid #F0F2F5;color:#111;}
-.chart-tooltip .tt-exp{font-size:11px;margin-bottom:2px;color:#64748B;}
-.chart-tooltip .tt-net{font-size:11px;font-weight:700;margin-bottom:5px;
-  padding-bottom:4px;border-bottom:1px solid #F0F2F5;}
+  border-radius:10px;padding:7px 10px;font-size:12px;color:#334155;
+  line-height:1.4;box-shadow:0 8px 26px rgba(15,23,42,0.14);
+  min-width:180px;max-width:270px;z-index:100;transition:opacity .15s;}
+.chart-tooltip .tt-total{font-size:12px;font-weight:700;margin-bottom:3px;
+  padding-bottom:3px;border-bottom:1px solid #F0F2F5;color:#111;white-space:nowrap;}
+.chart-tooltip .tt-exp{font-size:11px;margin-bottom:1px;color:#64748B;}
+.chart-tooltip .tt-net{font-size:11px;font-weight:700;margin-bottom:3px;
+  padding-bottom:3px;border-bottom:1px solid #F0F2F5;}
+.chart-tooltip .tt-sep{height:1px;background:#F0F2F5;margin:3px 0;}
+.chart-tooltip .tt-grid{display:grid;grid-template-columns:auto auto;column-gap:10px;row-gap:1px;}
 .chart-tooltip .tt-row{display:flex;align-items:center;gap:4px;
-  font-size:11px;color:#475569;}
+  font-size:11px;color:#475569;white-space:nowrap;}
+.chart-tooltip .tt-row.full{grid-column:1 / -1;}
+.chart-tooltip .tt-act{font-size:11px;color:#334155;white-space:nowrap;}
+.chart-tooltip .tt-goal{font-size:11px;font-weight:700;color:#007aff;margin-top:3px;}
 .chart-tooltip .tt-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
 
 /* ── 기본 정보: 가로 배치 — 항목이 6개+버튼이라 폴드 펼침(~900px)에서 한 줄에
@@ -495,6 +523,8 @@ button{font-family:inherit;cursor:pointer;}
   .priv-group{gap:4px;}
   .stack-group{gap:4px;}
   .panel{padding:6px 10px;margin-bottom:4px;}
+  .panel.acct-panel{padding-top:4px;}
+  .acct-panel .acct-grid{margin-top:0;}
   .basic-row .irow-top{padding:3px 0;}
 }
 
@@ -768,7 +798,7 @@ button{font-family:inherit;cursor:pointer;}
 <div class="suggest-result" id="fit90-box"></div>
 </div>
 
-<div class="panel">
+<div class="panel acct-panel">
 <div id="pfSyncStatus"></div>
 <div class="acct-grid">
 
@@ -1266,8 +1296,10 @@ button{font-family:inherit;cursor:pointer;}
     <div class="mcard"><div class="mlabel">사적연금 연수령</div><div class="mval-row"><span class="mval" id="m3">-</span><span id="m3b"></span></div></div>
     <div class="mcard"><div class="mlabel">자산 소진 예상</div><div class="mval-row"><span class="mval" id="m4">-</span><span class="msub" id="m4s">-</span></div></div>
   </div>
-  <div class="chart-wrap">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:9px;">
+  <!-- 차트·단계 카드·토글을 한 카드에 담아 사이 빈 공간을 없앰(한 화면에 들어오게) —
+       카드가 차트와 같은 기준 좌표라 단계 카드 좌우 외곽을 차트 나이 구간에 맞추기도 쉬움 -->
+  <div class="chart-wrap chart-main">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
       <div class="tabs">
         <button class="tab-btn on" id="tb-flow" onclick="setTab('flow')">월 현금흐름</button>
         <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">자산 잔액</button>
@@ -1280,12 +1312,8 @@ button{font-family:inherit;cursor:pointer;}
         <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
       </div>
     </div>
-  </div>
-  <div class="chart-wrap">
     <div class="phase-cards" id="phase-cards"></div>
-  </div>
-  <div class="chart-wrap">
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <div class="tgl-row">
       <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="scWrap" onclick="toggleBanner(this)" title="낙관·비관 시나리오 비교">수익률 민감도 체크<span class="sw"></span></button>
       <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="needWrap" onclick="toggleBanner(this)">완전소진 vs 필요분만 비교<span class="sw"></span></button>
     </div>
@@ -1355,6 +1383,156 @@ const activeIndexHighlightPlugin = {
   }
 };
 Chart.register(activeIndexHighlightPlugin);
+
+/* ── 인생 타임라인(현재 나이 → 은퇴 → 기대수명)과 단계 구간 표시 ──
+   차트 x축은 "현재 나이 ~ 기대수명" 한 칸=1년(두 탭 모두 offset:true로 칸 중앙 정렬)이라
+   나이 a의 칸 왼쪽 경계 = chartArea.left + (a-첫나이)*칸폭 으로 두 탭에서 똑같이 계산된다.
+   - 선·배경은 막대 "뒤"(beforeDatasetsDraw), 글자는 "맨 위"(afterDatasetsDraw)에 그려
+     막대가 선에 잘리거나 글자가 선에 가리지 않게 함
+   - 세로선은 상단 라벨 띠(TL_BAND) 아래부터만 그려 라벨·x축 글자를 가로지르지 않음
+   - 스타일은 iOS 차트 느낌: 1px 헤어라인, 끝이 둥근 짧은 점선, 옅은 틴트 */
+const TL_BAND = 18;            // 상단 라벨 띠 높이(px) — y축 grace로 막대와 겹치지 않게 확보
+const PHASE_COLOR = {acc:'#33566F', gap:'#71501F', full:'#2E5E47'};
+let _chartP = null;            // drawChart 시점의 p(현재/은퇴/국민연금/기대수명 나이)
+let _selectedPhase = null;     // 단계 카드 선택('acc'|'gap'|'full') — 탭 전환·재렌더에도 유지
+
+function hexA(hex, a){
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+
+// 단계별 x 구간(캔버스 CSS px). 길이가 0인 단계(이미 은퇴, 국민연금이 은퇴보다 빠름 등)는 제외.
+function phaseGeom(chart){
+  const p = _chartP, area = chart && chart.chartArea;
+  if(!p || !area || !_chartRows.length) return null;
+  const first = _chartRows[0].age, n = _chartRows.length;
+  const slot = (area.right - area.left) / n;
+  const bx = age => area.left + Math.max(0, Math.min(n, age - first)) * slot;
+  const npEff = Math.max(p.ret, Math.min(p.npage, p.life + 1));
+  const segs = [
+    {key:'acc',  x0:bx(first),   x1:bx(p.ret)},
+    {key:'gap',  x0:bx(p.ret),   x1:bx(npEff)},
+    {key:'full', x0:bx(npEff),   x1:area.right},
+  ].filter(s => s.x1 - s.x0 > 0.5);
+  return {area, slot, first, n, bx, segs};
+}
+
+const phaseRangePlugin = {
+  id: 'phaseRange',
+  beforeDatasetsDraw(chart){
+    const g = phaseGeom(chart); if(!g) return;
+    const p = _chartP, a = g.area, ctx = chart.ctx, top = a.top + TL_BAND;
+    ctx.save();
+    // 은퇴 전 구간 옅은 배경 + 은퇴 경계 실선(iOS separator 계열)
+    const acc = g.segs.find(s => s.key === 'acc');
+    if(acc){
+      ctx.fillStyle = 'rgba(51,86,111,0.05)';
+      ctx.fillRect(acc.x0, a.top, acc.x1 - acc.x0, a.bottom - a.top);
+      ctx.strokeStyle = 'rgba(60,60,67,0.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(Math.round(acc.x1)+0.5, top); ctx.lineTo(Math.round(acc.x1)+0.5, a.bottom); ctx.stroke();
+    }
+    // 선택된 단계: 구간 틴트 + 시작·끝 점선
+    const sel = _selectedPhase && g.segs.find(s => s.key === _selectedPhase);
+    if(sel){
+      const c = PHASE_COLOR[sel.key];
+      ctx.fillStyle = hexA(c, 0.06);
+      ctx.fillRect(sel.x0, top, sel.x1 - sel.x0, a.bottom - top);
+      ctx.strokeStyle = hexA(c, 0.7); ctx.lineWidth = 1; ctx.lineCap = 'round'; ctx.setLineDash([2,4]);
+      [sel.x0, sel.x1].forEach(x => {
+        const xx = Math.min(a.right - 0.5, Math.max(a.left + 0.5, Math.round(x) + 0.5));
+        ctx.beginPath(); ctx.moveTo(xx, top); ctx.lineTo(xx, a.bottom); ctx.stroke();
+      });
+    }
+    ctx.restore();
+  },
+  afterDatasetsDraw(chart){
+    const g = phaseGeom(chart); if(!g) return;
+    const p = _chartP, a = g.area, ctx = chart.ctx;
+    ctx.save();
+    ctx.font = '600 10px -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+    ctx.textBaseline = 'middle';
+    const H = 15, PAD = 6, cy = a.top + 1 + H/2, boxes = [];
+    const fits = (x0, w) => x0 >= a.left + 1 && x0 + w <= a.right - 1 && boxes.every(b => x0 + w + 4 <= b.x || x0 >= b.x + b.w + 4);
+    const draw = (x0, w, text, color, dot) => {
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(x0, cy - H/2, w, H, 7); else ctx.rect(x0, cy - H/2, w, H);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(60,60,67,0.12)'; ctx.lineWidth = 0.5; ctx.stroke();
+      let tx = x0 + PAD;
+      if(dot){ ctx.fillStyle = '#007AFF'; ctx.beginPath(); ctx.arc(tx + 3, cy, 3, 0, Math.PI*2); ctx.fill(); tx += 9; }
+      ctx.fillStyle = color; ctx.fillText(text, tx, cy + 0.5);
+      boxes.push({x:x0, y:cy - H/2, w, h:H});
+    };
+    const widthOf = (t, dot) => ctx.measureText(t).width + PAD*2 + (dot ? 9 : 0);
+    // 후보 문구를 긴 것부터 시도해 들어가는 첫 번째를 그린다(안 들어가면 생략)
+    const place = (cands, x0Fn, color, dot) => {
+      for(const t of cands){ const w = widthOf(t, dot), x0 = x0Fn(w); if(fits(x0, w)){ draw(x0, w, t, color, dot); return true; } }
+      return false;
+    };
+    const acc = g.segs.find(s => s.key === 'acc');
+    if(acc){
+      const yrs = p.ret - p.age, rest = p.life - p.ret;
+      // ① 지금 나이 + 일할 기간(왼쪽 끝부터) ② 은퇴 경계 바로 오른쪽부터 은퇴 나이 + 남은 인생
+      place(['지금 '+p.age+'세 · 일할 기간 '+yrs+'년 남음', '지금 '+p.age+'세 · '+yrs+'년 남음', p.age+'세 · '+yrs+'년'],
+            () => a.left + 2, '#1c1c1e', true);
+      const startR = Math.max(acc.x1 + 4, boxes.length ? boxes[0].x + boxes[0].w + 6 : 0);
+      place([p.ret+'세 은퇴 · 남은 인생 '+rest+'년 (~'+p.life+'세)', p.ret+'세 은퇴 · '+rest+'년 (~'+p.life+'세)', p.ret+'세 은퇴'],
+            () => startR, '#3A3A3C', false);
+    } else {
+      const idx = Math.max(0, p.age - g.first);
+      place(['지금 '+p.age+'세 · 남은 인생 '+Math.max(0, p.life - p.age)+'년', '지금 '+p.age+'세'],
+            () => Math.max(a.left + 2, a.left + idx * g.slot), '#1c1c1e', true);
+    }
+    window._timelineLabelBoxes = boxes;   // 검증용(겹침·막대와의 간섭 확인)
+    ctx.restore();
+  }
+};
+Chart.register(phaseRangePlugin);
+
+// 단계 카드 클릭 → 차트에 그 기간 시작·끝 점선(다시 누르면 해제)
+function selectPhase(key){
+  _selectedPhase = (_selectedPhase === key) ? null : key;
+  document.querySelectorAll('#phase-cards .phase-card').forEach(c => c.classList.toggle('sel', c.dataset.ph === _selectedPhase));
+  if(mainChart) mainChart.draw();
+}
+
+// 단계 카드 좌우 외곽을 차트의 해당 나이 구간 경계에 수직 정렬(가능할 때만).
+// 접힌 화면(카드가 쌓이는 폭)이나 카드가 너무 좁아지는 경우는 기본 3등분 그리드 그대로.
+function alignPhaseCards(){
+  const el = document.getElementById('phase-cards');
+  if(!el) return;
+  el.classList.remove('aligned');
+  el.style.gridTemplateColumns = ''; el.style.paddingLeft = ''; el.style.paddingRight = '';
+  // 이미 은퇴해 적립기 카드가 없으면 기본 3등분 대신 카드 수만큼 균등(접힘 1열은 CSS 그대로)
+  if(el.children.length !== 3 && window.innerWidth > 410) el.style.gridTemplateColumns = 'repeat('+el.children.length+',1fr)';
+  const g = mainChart && phaseGeom(mainChart);
+  if(!g || window.innerWidth <= 480 || g.segs.length !== el.children.length) return;
+  if(g.segs.some(s => s.x1 - s.x0 < 96)) return;
+  const off = mainChart.canvas.getBoundingClientRect().left - el.getBoundingClientRect().left;
+  const W = el.getBoundingClientRect().width;
+  const L = off + g.segs[0].x0, R = W - (off + g.segs[g.segs.length-1].x1);
+  if(L < 0 || R < 0) return;
+  el.style.paddingLeft = L + 'px'; el.style.paddingRight = R + 'px';
+  el.style.gridTemplateColumns = g.segs.map(s => (s.x1 - s.x0) + 'px').join(' ');
+  el.classList.add('aligned');
+}
+
+// 팝업 위치: 내용을 채운 뒤 실제 크기로 재서 차트 영역 안에 들어오게(좌우·위아래 클램프)
+function placeTooltip(tip, chart, idx){
+  const wrap = chart.canvas.parentElement;
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  tip.style.visibility = 'hidden'; tip.style.display = 'block';
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  const pt = chart.getDatasetMeta(0).data[idx];
+  const px = pt ? pt.x : W/2;
+  let x = px + 12;
+  if(x + tw > W - 4) x = px - tw - 12;
+  x = Math.max(4, Math.min(x, W - tw - 4));
+  tip.style.left = x + 'px';
+  tip.style.top = Math.max(4, Math.min(8, H - th - 4)) + 'px';
+  tip.style.visibility = ''; tip.style.opacity = '0.97';
+}
 
 let chartTab='flow', mainChart=null;
 
@@ -2148,6 +2326,59 @@ function simulate(p, adj){
            gapMonthly, fullMonthly, netGapMonthly, netFullMonthly, privAnnual, runway, rows };
 }
 
+/* ── 은퇴 전(적립기) 연도별 행 — 차트 표시 전용 ──
+   simulate()는 은퇴~기대수명만 계산하고 메트릭·런웨이가 그 결과에 묶여 있어 건드리지 않는다.
+   차트만 "현재 나이부터" 그리도록 은퇴 전 각 해의 납입 계획과 그해 말 잔액을 따로 만든다.
+   잔액은 simulate()와 같은 함수·같은 인자로 계산하되 retAge만 age+1로 바꿔(=그해 말) 은퇴
+   시점 값(simulate의 nhFV 등)과 그대로 이어지게 한다(안세공 원금 제외 규칙도 동일). */
+function buildAccRows(p, adj){
+  adj = adj || SA.base;
+  const rows = [];
+  if(p.ret <= p.age) return rows;
+  const rNh=p.rnh+adj.r, rMf=p.rmf+adj.r, rIrp=p.rirp+adj.r, rTirp=p.rtirp+adj.r, rIsa=p.risa+adj.r;
+  const nhPrinEff = Math.min(p.nhprin||0, p.nh||0);
+  const mfPrinEff = Math.min(p.mfprin||0, p.mf||0);
+  const win = {
+    nh:  [Math.max(p.age,p.nhstart),  Math.min(p.ret-1,p.nhend)],
+    mf:  [Math.max(p.age,p.mfstart),  Math.min(p.ret-1,p.mfend)],
+    irp: [Math.max(p.age,p.irpstart), Math.min(p.ret-1,p.irpend)],
+    isa: [Math.max(p.age,p.isastart), Math.min(p.ret-1,p.isaend)],
+    dc:  [Math.max(p.age,p.tdcstart), Math.min(p.ret-1,p.tdcend)],
+  };
+  const on = (k,age)=> age>=win[k][0] && age<=win[k][1];
+  const r1 = v => Math.round(v/10000*10)/10; // 만원 → 억(소수 1자리)
+  let prevTotal = (p.nh-nhPrinEff)+(p.mf-mfPrinEff)+p.irp+p.tirp+p.isa;
+  for(let age=p.age; age<p.ret; age++){
+    const end = age+1;
+    const nhB  = calcMonthlyDepositFV(p.nh-nhPrinEff, p.nhm, win.nh[0], win.nh[1], p.age, end, rNh);
+    const mfB  = calcMonthlyDepositFV(p.mf-mfPrinEff, p.mfm, win.mf[0], win.mf[1], p.age, end, rMf);
+    const irpB = calcISA_FV(p.irp,  p.irpy, p.age, win.irp[0], win.irp[1], end, rIrp,  undefined, p.irpymon);
+    const tirpB= calcISA_FV(p.tirp, p.tdc,  p.age, win.dc[0],  win.dc[1],  end, rTirp, undefined, p.tdcymon);
+    const isaB = calcISA_FV(p.isa,  p.isay, p.age, win.isa[0], win.isa[1], end, rIsa,  'isa',     p.isaymon);
+    const dep = {
+      nh:  on('nh',age)  ? p.nhm  : 0,   // 월
+      mf:  on('mf',age)  ? p.mfm  : 0,   // 월
+      irp: on('irp',age) ? p.irpy : 0,   // 연(일시납)
+      isa: on('isa',age) ? p.isay : 0,   // 연(일시납)
+      dc:  on('dc',age)  ? p.tdc  : 0,   // 연(회사 적립)
+    };
+    const depYearTotal  = (dep.nh+dep.mf)*12 + dep.irp + dep.isa + dep.dc;
+    const total = nhB+mfB+irpB+tirpB+isaB;
+    rows.push({
+      age, label:age+'세', phase:'acc', yearsLeft:p.ret-age, dep,
+      // 월 현금흐름 막대(월 환산 납입액) — 은퇴 후 인출 막대와 같은 계좌 데이터셋에 연한 톤으로 표시
+      nhDep:dep.nh, mfDep:dep.mf, irpDep:Math.round(dep.irp/12), isaDep:Math.round(dep.isa/12), dcDep:Math.round(dep.dc/12),
+      depYearTotal, depMonthTotal:Math.round(depYearTotal/12),
+      gain: Math.round(total - prevTotal - depYearTotal),
+      totalB: r1(total),
+      privB: r1(nhB+mfB+irpB), nhB_억:r1(nhB), mfB_억:r1(mfB), irpB_억:r1(irpB),
+      tirpB: r1(tirpB), isaB: r1(isaB),
+    });
+    prevTotal = total;
+  }
+  return rows;
+}
+
 
 
 
@@ -2378,57 +2609,30 @@ function renderAssetTooltip(idx){
   const tirp  = row.tirpB   || 0;
   const isa   = row.isaB    || 0;
   const total = Math.round((privTotal + tirp + isa) * 10) / 10;
-  const p = getP();
+  const p = _chartP || getP();
+  const dot = c => `<span class="tt-dot" style="background:${c}"></span>`;
 
-  // 예전 오른쪽 상시 패널(#assetDetail)에만 있던 "왜 이렇게 움직이나요" 설명을
-  // 팝업 폭(185px)에 맞게 한 줄씩 압축해 옮김 — 상시 패널 삭제로 정보가 사라지지 않게
+  // 계좌 잔액은 2열(연금저축 합계만 한 줄 전체)로 줄여 차트 높이 안에 들어가게 함.
+  // 맨 아래 한 줄 설명: 은퇴 전은 "얼마나 남았고 얼마씩 넣는 중", 은퇴 후는 소진 패턴.
+  const notes = row.phase === 'acc'
+    ? `<div class="tt-exp">💡 은퇴까지 ${row.yearsLeft}년 · 연 ${row.depYearTotal.toLocaleString()}만 납입 중</div>`
+    : `<div class="tt-exp">💡 연금저축: 순서대로 인출, ${p.life}세 0원</div>
+       <div class="tt-exp">💡 퇴직연금: ${p.tage}세부터 인출, ${p.life}세 소진</div>
+       <div class="tt-exp">💡 ISA: 공백기(${p.ret}~${p.npage}세) 집중 인출</div>`;
   tip.innerHTML = `
-    <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 총 자산 <b style="color:#4F457F">${total}억원</b></div>
-    <div style="height:1px;background:#F0F2F5;margin:5px 0;"></div>
-    <div class="tt-row" style="margin-bottom:4px;">
-      <span class="tt-dot" style="background:${C.nh.line}"></span>
-      <span style="font-weight:700;">연금저축 합계 ${privTotal}억</span>
+    <div class="tt-total">📅 ${row.label}${row.phase==='acc'?' (은퇴 전)':''} &nbsp;|&nbsp; 총 자산 <b style="color:#4F457F">${total}억원</b></div>
+    <div class="tt-grid">
+      <div class="tt-row full">${dot(C.nh.line)}<b>연금저축 합계 ${privTotal}억</b></div>
+      <div class="tt-row">${dot(C.nh.line)}농협 ${nhB}억</div>
+      <div class="tt-row">${dot(C.mf.line)}미래에셋 ${mfB}억</div>
+      <div class="tt-row">${dot(C.irp.line)}IRP개인 ${irpB2}억</div>
+      <div class="tt-row">${dot(C.dc.line)}<b>퇴직연금 ${tirp}억</b></div>
+      <div class="tt-row">${dot(C.isa.line)}<b>ISA ${isa}억</b></div>
     </div>
-    <div class="tt-row" style="padding-left:11px;">
-      <span class="tt-dot" style="background:${C.nh.line}"></span>
-      <span>농협: ${nhB}억</span>
-    </div>
-    <div class="tt-row" style="padding-left:11px;">
-      <span class="tt-dot" style="background:${C.mf.line}"></span>
-      <span>미래에셋: ${mfB}억</span>
-    </div>
-    <div class="tt-row" style="padding-left:11px;margin-bottom:4px;">
-      <span class="tt-dot" style="background:${C.irp.line}"></span>
-      <span>IRP개인납입: ${irpB2}억</span>
-    </div>
-    <div class="tt-row" style="margin-bottom:2px;">
-      <span class="tt-dot" style="background:${C.dc.line}"></span>
-      <span style="font-weight:700;">퇴직연금: ${tirp}억</span>
-    </div>
-    <div class="tt-row">
-      <span class="tt-dot" style="background:${C.isa.line}"></span>
-      <span style="font-weight:700;">ISA: ${isa}억</span>
-    </div>
-    <div style="height:1px;background:#F0F2F5;margin:5px 0;"></div>
-    <div class="tt-exp">💡 연금저축: 은퇴 후 미래에셋→농협·IRP 순 인출, ${p.life}세에 0원</div>
-    <div class="tt-exp">💡 퇴직연금: ${p.tage}세부터 인출, ${p.life}세에 소진</div>
-    <div class="tt-exp">💡 ISA: 공백기(${p.ret}~${p.npage}세)에 집중 인출</div>
+    <div class="tt-sep"></div>
+    ${notes}
   `;
-
-  // 위치: 해당 인덱스의 x좌표 기준, 수직 상단 고정
-  const wrapRect = chart.canvas.parentElement.getBoundingClientRect();
-  const tipW = 185;
-  const meta = chart.getDatasetMeta(0);
-  const pt   = meta.data[idx];
-  let x = pt ? pt.x + 12 : 40;
-  if(x + tipW > wrapRect.width - 8) x = (pt ? pt.x : 40) - tipW - 12;
-  x = Math.max(4, x);
-
-  tip.style.left      = x + 'px';
-  tip.style.top       = '8px';
-  tip.style.display   = 'block';
-  tip.style.opacity   = '0.95';
-  tip.style.transition= 'left 0.12s ease';
+  placeTooltip(tip, chart, idx);
 
   _activeIdx = idx;
   chart.draw();
@@ -2458,6 +2662,31 @@ function showCustomTooltip(evt, activeEls, chart){
   _activeIdx = idx;
   if(chart) chart.draw();
 
+  // 은퇴 전 막대: "은퇴 준비 액션" — 올해 실제로 하는 납입·적립과 그 결과(연말 자산)
+  if(row.phase === 'acc'){
+    const p = _chartP || getP();
+    const d = row.dep, m = v => (v>=1 && v<=12 ? v : 1) + '월';
+    const acts = [
+      d.nh  > 0 && {c:C.nh.line,  t:`농협 연금저축 매월 ${d.nh.toLocaleString()}만`},
+      d.mf  > 0 && {c:C.mf.line,  t:`미래에셋 연금저축 매월 ${d.mf.toLocaleString()}만`},
+      d.irp > 0 && {c:C.irp.line, t:`IRP ${m(p.irpymon)} ${d.irp.toLocaleString()}만 일시납`},
+      d.isa > 0 && {c:C.isa.line, t:`ISA ${m(p.isaymon)} ${d.isa.toLocaleString()}만 일시납`},
+      d.dc  > 0 && {c:C.dc.line,  t:`퇴직연금 DC ${m(p.tdcymon)} ${d.dc.toLocaleString()}만 회사 적립`},
+    ].filter(Boolean);
+    const gain = row.gain >= 0 ? `+${row.gain.toLocaleString()}만` : `${row.gain.toLocaleString()}만`;
+    tip.innerHTML = `
+      <div class="tt-total">📅 ${row.label} &nbsp;·&nbsp; 은퇴까지 <b style="color:#007AFF">${row.yearsLeft}년</b></div>
+      <div class="tt-exp" style="color:#4F457F;">💸 올해 납입 연 <b>${row.depYearTotal.toLocaleString()}만원</b> (월 ${row.depMonthTotal.toLocaleString()}만)</div>
+      <div class="tt-exp">📈 연말 자산 <b style="color:#2E5E47">${row.totalB}억</b> (수익 ${gain})</div>
+      <div class="tt-sep"></div>
+      ${acts.length ? acts.map(a=>`<div class="tt-row tt-act"><span class="tt-dot" style="background:${a.c}"></span>${a.t}</div>`).join('')
+                    : '<div class="tt-exp">올해 예정된 납입 없음 — 운용 수익만 쌓이는 해</div>'}
+      <div class="tt-goal">🎯 ${p.ret}세 은퇴까지 ${row.yearsLeft}번 더 하면 완성</div>
+    `;
+    placeTooltip(tip, chart, idx);
+    return;
+  }
+
   const totalInc = row.totalInc || 0;
   const curExp   = row.curExp   || 0;
   const net      = totalInc - curExp;
@@ -2476,31 +2705,19 @@ function showCustomTooltip(evt, activeEls, chart){
   ];
   items.forEach(it=>{
     if((it.val||0)>0){
-      rows_html += `<div class="tt-row"><span class="tt-dot" style="background:${it.dot}"></span>${it.label}: <b>${it.val}만</b></div>`;
+      rows_html += `<div class="tt-row"><span class="tt-dot" style="background:${it.dot}"></span>${it.label} <b>${it.val}만</b></div>`;
     }
   });
 
+  // 계좌 항목은 2열 — 최대 7줄이 4줄로 줄어 차트 최소 높이(180px) 안에 들어감
   tip.innerHTML = `
     <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 월 수령 합계 <b style="color:#3F7A5E">${totalInc}만원</b></div>
     <div class="tt-exp" style="color:#4F457F;">💸 세후(세금 차감) 약 <b>${row.netInc}만원</b></div>
     <div class="tt-exp">📉 월 생활비 예측: <b style="color:#A8493C">${curExp}만원</b></div>
     <div class="tt-net" style="color:${netColor};">${net>=0?'✅':'⚠️'} ${netLabel}</div>
-    ${rows_html}
+    <div class="tt-grid">${rows_html}</div>
   `;
-
-  // 위치 계산
-  const canvasRect = chart.canvas.getBoundingClientRect();
-  const wrapRect   = chart.canvas.parentElement.getBoundingClientRect();
-  const meta = chart.getDatasetMeta(0);
-  const bar  = meta.data[idx];
-  let x = bar ? bar.x + 10 : evt.x - wrapRect.left;
-  let y = 8;
-  // 오른쪽 넘치면 왼쪽으로
-  if(x + 200 > wrapRect.width) x = x - 220;
-  tip.style.left   = x + 'px';
-  tip.style.top    = y + 'px';
-  tip.style.display= 'block';
-  tip.style.opacity= '0.95';
+  placeTooltip(tip, chart, idx);
 }
 
 // 자산 잔액 탭: mousemove로 가장 가까운 포인트 자동 감지
@@ -2551,11 +2768,23 @@ document.addEventListener('mousemove', function(e){
 
 let _chartRows = []; // 툴팁용 전역 rows 캐시
 
-function drawChart(rows){
+function drawChart(rows, p){
   _chartRows = rows; // 툴팁에서 접근
+  _chartP = p || getP();
   _activeIdx = null; // 재렌더링 시 이전 선택 강조 초기화(인덱스가 더 이상 유효하지 않을 수 있음)
   if(mainChart){ mainChart.destroy(); mainChart=null; }
+  // 파괴된 자산잔액 차트 참조가 남아 있으면, 차트 밖으로 손가락/마우스가 나갈 때 그 차트를
+  // 다시 그리려다 "getContext of null" 에러가 남(월 현금흐름 탭에서 단계 카드를 누를 때 재현)
+  _assetChartRef = null;
+  // 입력이 바뀌어 다시 그릴 때 이전 팝업이 옛 숫자로 남아 있지 않게 닫음
+  const tipEl = document.getElementById('chartTooltip');
+  if(tipEl) tipEl.style.display = 'none';
   const ctx=document.getElementById('mainChart').getContext('2d');
+  const isAcc = r => r.phase === 'acc';
+  const hasAcc = rows.some(isAcc);
+  // 은퇴 전(납입)은 같은 계좌색의 연한 톤, 은퇴 후(인출)는 기존 진한 톤
+  const tone = key => rows.map(r => isAcc(r) ? hexA(C[key].line, 0.35) : C[key].fill);
+  const onResize = () => requestAnimationFrame(alignPhaseCards);
 
   if(chartTab==='flow'){
     document.getElementById('chart-legend').innerHTML=[
@@ -2567,30 +2796,32 @@ function drawChart(rows){
       {c:C.isa.fill,l:'ISA인출'},
       {c:C.prin.fill,l:'안세공 비과세인출'},
       {c:C.exp.line,l:'생활비예측(선)',dashed:true},
-    ].map(x=>`<span class="leg-item"><span class="leg-swatch" style="${x.dashed?'background:transparent;border:2px dashed '+x.c+';':'background:'+x.c+';'}"></span>${x.l}</span>`).join('');
+    ].concat(hasAcc ? [{c:'rgba(120,120,128,0.28)', l:'연한 색=은퇴 전 납입'}] : [])
+     .map(x=>`<span class="leg-item"><span class="leg-swatch" style="${x.dashed?'background:transparent;border:2px dashed '+x.c+';':'background:'+x.c+';'}"></span>${x.l}</span>`).join('');
 
     mainChart=new Chart(ctx,{type:'bar',
       data:{labels:rows.map(r=>r.label), datasets:[
-        {label:'농협연금저축(세공)',    data:rows.map(r=>r.nhInc),   backgroundColor:C.nh.fill, stack:'s'},
-        {label:'미래에셋연금저축(세공)',data:rows.map(r=>r.mfInc),   backgroundColor:C.mf.fill, stack:'s'},
-        {label:'IRP(개인납입)',   data:rows.map(r=>r.irpInc),  backgroundColor:C.irp.fill,stack:'s'},
-        {label:'국민연금',         data:rows.map(r=>r.npInc),   backgroundColor:C.np.fill, stack:'s'},
-        {label:'퇴직IRP',          data:rows.map(r=>r.tirpInc), backgroundColor:C.dc.fill, stack:'s'},
-        {label:'ISA인출',          data:rows.map(r=>r.isaInc),  backgroundColor:C.isa.fill,stack:'s'},
-        {label:'안세공 비과세인출', data:rows.map(r=>r.prinInc), backgroundColor:C.prin.fill,stack:'s'},
-        {label:'생활비예측(선)',           data:rows.map(r=>r.curExp),
+        {label:'농협연금저축(세공)',    data:rows.map(r=>isAcc(r)?r.nhDep:r.nhInc),   backgroundColor:tone('nh'), stack:'s'},
+        {label:'미래에셋연금저축(세공)',data:rows.map(r=>isAcc(r)?r.mfDep:r.mfInc),   backgroundColor:tone('mf'), stack:'s'},
+        {label:'IRP(개인납입)',   data:rows.map(r=>isAcc(r)?r.irpDep:r.irpInc),  backgroundColor:tone('irp'),stack:'s'},
+        {label:'국민연금',         data:rows.map(r=>isAcc(r)?0:r.npInc),         backgroundColor:tone('np'), stack:'s'},
+        {label:'퇴직IRP',          data:rows.map(r=>isAcc(r)?r.dcDep:r.tirpInc), backgroundColor:tone('dc'), stack:'s'},
+        {label:'ISA인출',          data:rows.map(r=>isAcc(r)?r.isaDep:r.isaInc), backgroundColor:tone('isa'),stack:'s'},
+        {label:'안세공 비과세인출', data:rows.map(r=>isAcc(r)?0:r.prinInc),        backgroundColor:tone('prin'),stack:'s'},
+        {label:'생활비예측(선)',           data:rows.map(r=>isAcc(r)?null:r.curExp),
           type:'line',borderColor:C.exp.line,borderWidth:2.5,borderDash:[5,3],
           pointRadius:3,pointHoverRadius:6,pointBackgroundColor:C.exp.line,
           pointBorderColor:'#fff',pointBorderWidth:1.5,
           fill:false,order:0}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,
+      options:{responsive:true,maintainAspectRatio:false,onResize,
         plugins:{legend:{display:false},tooltip:{enabled:false},
           annotation:{}},
         onHover:(evt,els,chart)=>showCustomTooltip(evt,els,chart),
         scales:{
-          x:{stacked:true,ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true},grid:{display:false}},
-          y:{stacked:true,ticks:{font:{size:9},callback:v=>hideAmounts?'••':v+'만'},grid:{color:'rgba(0,0,0,0.04)'}}
+          x:{stacked:true,offset:true,ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true},grid:{display:false}},
+          // grace: 상단 타임라인 라벨 띠(TL_BAND)와 막대가 겹치지 않게 헤드룸 확보
+          y:{stacked:true,grace:'12%',ticks:{font:{size:9},callback:v=>hideAmounts?'••':v+'만'},grid:{color:'rgba(0,0,0,0.04)'}}
         }}
     });
 
@@ -2614,7 +2845,7 @@ function drawChart(rows){
           pointBackgroundColor:C.isa.line,pointBorderColor:'#fff',pointBorderWidth:1,
           pointHoverBackgroundColor:C.isa.line,pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2},
       ]},
-      options:{responsive:true,maintainAspectRatio:false,
+      options:{responsive:true,maintainAspectRatio:false,onResize,
         plugins:{legend:{display:false},tooltip:{enabled:false}},
         // 데스크탑은 mousemove 이벤트로 가장 가까운 포인트 감지(아래),
         // 터치 기기는 Chart.js 자체 인터랙션이 tap을 정상 인식하도록 onHover도 함께 사용
@@ -2628,8 +2859,9 @@ function drawChart(rows){
           }
         },
         scales:{
-          x:{ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true},grid:{display:false}},
-          y:{ticks:{font:{size:9},callback:v=>hideAmounts?'••':v+'억'},grid:{color:'rgba(0,0,0,0.04)'}}
+          // offset:true — 막대 차트처럼 점을 칸 중앙에 둬 두 탭의 나이 경계 좌표를 같게 함
+          x:{offset:true,ticks:{font:{size:9},maxTicksLimit:10,autoSkip:true},grid:{display:false}},
+          y:{beginAtZero:true,grace:'12%',ticks:{font:{size:9},callback:v=>hideAmounts?'••':v+'억'},grid:{color:'rgba(0,0,0,0.04)'}}
         }}
     });
     _assetChartRef = mainChart; // mousemove 툴팁용 참조 저장
@@ -2779,38 +3011,42 @@ function upd(){
     document.getElementById('m4s').textContent='(조기 소진)';
   }
 
-  // 차트
-  drawChart(res.rows);
+  // 차트 — 은퇴 전(현재 나이~은퇴 직전) 행을 앞에 붙여 "지금 → 은퇴 → 기대수명" 전체를 그림.
+  // 메트릭·런웨이·시나리오는 계속 res.rows(은퇴 후)만 사용.
+  drawChart(buildAccRows(p).concat(res.rows), p);
 
-  // 시기별 카드 — 예전 색깔 띠(phase-bar)는 나이 범위만 담고 있어 카드 제목에 합치고
-  // 삭제(세로 공간 확보). 공백기·완성기의 월 금액은 차트 팝업과 겹쳐 빼고, 순서·개시
-  // 나이·세금 성격만 남긴다(적립기 납입액은 다른 곳에 없는 정보라 유지).
+  // 시기별 카드 — 나이 범위·기간은 제목 오른쪽에. 금액은 차트 팝업이 담당하고 카드는
+  // 순서·개시 나이·세금 성격만(겹침 방지·좁아진 카드 폭 대응). 차트 구간과 같은 규칙으로
+  // 길이 0인 단계는 빼서 phaseGeom()의 구간 수와 카드 수를 맞춘다(정렬용).
+  const npEff = Math.max(p.ret, Math.min(p.npage, p.life + 1));
   document.getElementById('phase-cards').innerHTML=[
-    {ph:'적립기',range:p.age+'~'+p.ret+'세',c:'#33566F',bg:'#E9F0F6',items:[
-      {dot:C.nh.line, t:'농협 연금저축 월 '+p.nhm+'만 납입'},
-      {dot:C.mf.line, t:'미래에셋 연금저축 월 '+p.mfm+'만 납입'},
-      {dot:C.irp.line,t:'IRP 개인납입 연 '+p.irpy+'만 (일시납)'},
-      {dot:C.isa.line,t:'ISA 연 '+p.isay.toLocaleString()+'만 일시납'},
-      {dot:C.dc.line, t:'퇴직IRP DC 운용중 (은퇴 후 이전)'},
+    p.ret > p.age && {key:'acc', ph:'적립기',range:p.age+'~'+p.ret+'세 · '+(p.ret-p.age)+'년',bg:'#E9F0F6',items:[
+      {dot:C.nh.line, t:'농협·미래에셋 연금저축 월 납입'},
+      {dot:C.isa.line,t:'IRP·ISA 연 일시납'},
+      {dot:C.dc.line, t:'퇴직IRP DC 회사 적립'},
+      {dot:'transparent', t:'<b style="color:#007AFF;">🎯 은퇴까지 '+(p.ret-p.age)+'년</b>'},
     ]},
-    {ph:'공백기',range:p.ret+'~'+p.npage+'세',c:'#71501F',bg:'#F5EEE3',items:[
+    npEff > p.ret && {key:'gap', ph:'공백기',range:p.ret+'~'+p.npage+'세 · '+(p.npage-p.ret)+'년',bg:'#F5EEE3',items:[
       {dot:C.isa.line,t:'① ISA ('+p.isaage+'세~) 🥇 비과세'},
-      {dot:C.mf.line, t:'② 미래에셋 연금저축(세공) ('+p.mfage+'세~) 🥈'},
-      {dot:C.nh.line, t:'③ 농협 연금저축(세공) ('+p.nhage+'세~) 🥉'},
-      {dot:C.prin.line,t:'④ 안세공(비공제) 💎 비과세·한도 미포함'},
-      {dot:C.irp.line,t:'IRP개인납입 — 미래에셋 소진 후('+p.irpage+'세~) 시작'},
-      {dot:C.dc.line, t:'퇴직IRP — 계속 운용, '+p.tage+'세 개시'},
+      {dot:C.mf.line, t:'② 미래에셋(세공) ('+p.mfage+'세~) 🥈'},
+      {dot:C.nh.line, t:'③ 농협(세공) ('+p.nhage+'세~) 🥉'},
+      {dot:C.prin.line,t:'④ 안세공 💎 비과세·한도외'},
+      {dot:C.irp.line,t:'IRP — 미래에셋 소진 후 '+p.irpage+'세~'},
+      {dot:C.dc.line, t:'퇴직IRP — '+p.tage+'세 개시'},
     ]},
-    {ph:'완성기',range:p.npage+'~'+p.life+'세',c:'#2E5E47',bg:'#EAF3EE',items:[
+    {key:'full', ph:'완성기',range:npEff+'~'+p.life+'세 · '+(p.life-npEff)+'년',bg:'#EAF3EE',items:[
       {dot:C.np.line, t:'국민연금 ('+p.npage+'세~)'},
       {dot:C.nh.line, t:'농협+미래에셋+IRP 연금저축 유지'},
       {dot:C.dc.line, t:'퇴직IRP ('+p.tage+'세~, 한도무관)'},
       {dot:C.isa.line,t:'ISA 잔여분 보조'},
     ]},
-  ].map(ph=>'<div class="phase-card" style="background:'+ph.bg+';">'
-    +'<div class="phase-card-title" style="color:'+ph.c+';">'+ph.ph+'<span class="phase-card-range">'+ph.range+'</span></div>'
+  ].filter(Boolean).map(ph=>'<div class="phase-card'+(_selectedPhase===ph.key?' sel':'')+'" data-ph="'+ph.key+'" onclick="selectPhase(\''+ph.key+'\')" style="background:'+ph.bg+';--ph-c:'+PHASE_COLOR[ph.key]+';" title="누르면 차트에 이 기간을 점선으로 표시">'
+    +'<div class="phase-card-title" style="color:'+PHASE_COLOR[ph.key]+';">'+ph.ph+'<span class="phase-card-range">'+ph.range+'</span></div>'
     +ph.items.map(it=>'<div class="phase-card-item"><span style="width:7px;height:7px;border-radius:2px;background:'+it.dot+';display:inline-block;flex-shrink:0;margin-top:2px;"></span>'+it.t+'</div>').join('')
     +'</div>').join('');
+  // 선택돼 있던 단계가 이제 없으면(예: 은퇴 나이를 현재 나이 이하로) 선택 해제
+  if(_selectedPhase && !document.querySelector('#phase-cards [data-ph="'+_selectedPhase+'"]')) _selectedPhase = null;
+  alignPhaseCards();
 
   // 시나리오 비교
   const scList=['opt','base','pes'], scL={opt:'낙관',base:'기본',pes:'비관'};
