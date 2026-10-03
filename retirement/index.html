@@ -403,25 +403,24 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row .suggest-btn{width:auto;min-width:88px;flex-shrink:0;margin:0;padding:6px 12px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   line-height:1.25;}
-/* "수익률·물가 설정" 스위치 + 자동설계 버튼 묶음을 basic-row 오른쪽 끝에 붙임 */
+/* 자동설계 버튼을 basic-row 오른쪽 끝에 붙임 */
 .basic-row-action{display:flex;align-items:center;gap:8px;flex-shrink:0;margin:0 0 0 auto;}
-/* 스위치는 입력 항목과 같은 구조(빈 라벨 줄 + 컨트롤 줄)로 둬서 라벨 줄·입력칸 줄에 행이 맞고,
-   스위치 높이도 입력칸과 같게 해 위아래 선이 일치한다 */
-.basic-row-links{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;}
-.basic-row-links .ilabel{width:auto;}
-.basic-row-links .irow-ctrl{height:var(--bi-h);}
-.basic-row-links .tgl-banner{box-sizing:border-box;height:var(--bi-h);padding:0 7px 0 10px;font-size:10.5px;gap:5px;}
-.basic-row-links .tgl-banner .sw{width:22px;height:13px;}
-.basic-row-links .tgl-banner .sw::after{width:9px;height:9px;}
-.basic-row-links .tgl-banner.on .sw::after{left:11px;}
-/* 예상결과 차트 보기 탭 줄의 "자동설계 근거" 스위치 — 탭 알약과 같은 높이 */
-.chart-head .tabs .tgl-banner{padding:2px 7px 2px 10px;font-size:11px;gap:5px;margin-left:2px;}
-.chart-head .tabs .tgl-banner .sw{width:22px;height:13px;}
-.chart-head .tabs .tgl-banner .sw::after{width:9px;height:9px;}
-.chart-head .tabs .tgl-banner.on .sw::after{left:11px;}
+/* ISA 열: 그리드 행 높이만큼 늘어나는 세로 묶음 — ISA 카드는 자연 높이 그대로 두고(카드를 늘리지 않음),
+   남는 아래 빈 자리 맨 끝(카드 박스 좌측 하단 모서리)에 "수익률·물가 설정" 스위치를 둔다 */
+.isa-col{display:flex;flex-direction:column;align-self:stretch;min-width:0;}
+.rates-anchor{margin-top:auto;position:relative;align-self:flex-start;padding-top:6px;}
+.rates-anchor .tgl-banner{padding:3px 7px 3px 10px;font-size:10.5px;gap:5px;}
+.rates-anchor .tgl-banner .sw{width:22px;height:13px;}
+.rates-anchor .tgl-banner .sw::after{width:9px;height:9px;}
+.rates-anchor .tgl-banner.on .sw::after{left:11px;}
+/* 설정 창: 스위치 위로 뜨는 iOS 팝오버(레이아웃 높이 불변, 바깥 탭·ESC로 닫힘) */
+.rates-pop{position:absolute;left:0;bottom:calc(100% + 6px);z-index:40;width:max-content;max-width:min(360px,92vw);
+  background:#fff;border:.5px solid rgba(60,60,67,.18);border-radius:14px;padding:6px 14px 12px;
+  box-shadow:0 12px 32px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.06);}
 .basis-view{padding:2px 4px 6px;}
 .basis-view .suggest-result{margin:0;font-size:11.5px;}
 .basis-view .suggest-result ul{line-height:1.7;}
+.chart-main.basis-mode .phase-cards{display:none;}
 .basis-empty{font-size:12px;color:#8e8e93;text-align:center;padding:40px 16px;}
 
 /* ── 계좌 카드 그리드 (인출/수령 순서: ISA → 사적연금 → 퇴직연금 → 국민연금) ──
@@ -606,6 +605,23 @@ html.dense .priv-group{gap:3px;}
 html.dense .stack-group{gap:3px;}
 html.dense .fv-row{gap:2px;}
 html.dense .collapsible summary{padding:2px 0;font-size:11px;}
+/* ── 설계 탭 "적당한 여유" 스케일(--sp, 0~1) — fitDensity()가 남는 세로 공간을 실측해 정한다.
+   모든 카드에 같은 값으로만 적용(짧은 카드만 늘리지 않음)하고, 카드 사이 행 정렬이 깨지지 않도록
+   입력칸·월 선택의 높이를 명시값으로 같이 키운다(일반 입력 = 월 선택 = 20+4sp, 짝 입력 = 18+4sp →
+   연납입+월 선택 행과 일반 행 높이가 항상 같다). sp=0이면 기존 값과 완전히 같다. */
+@media (min-width:421px){
+  html:not(.dense) .acct-head{padding:calc(4px + 3px*var(--sp,0)) 6px;font-size:calc(11px + 1px*var(--sp,0));}
+  html:not(.dense) .acct-body{padding:calc(4px + 3px*var(--sp,0)) calc(5px + 2px*var(--sp,0));gap:calc(2px + 3px*var(--sp,0));}
+  html:not(.dense) .acct-body .irow-top{gap:calc(2px + 1px*var(--sp,0));}
+  html:not(.dense) .acct-body .ilabel{font-size:calc(9.5px + 1px*var(--sp,0));letter-spacing:calc(.01em + .015em*var(--sp,0));}
+  html:not(.dense) .acct-body .ival-input{height:calc(20px + 4px*var(--sp,0));font-size:calc(12.5px + 1px*var(--sp,0));width:calc(64px + 4px*var(--sp,0));letter-spacing:calc(.015em + .01em*var(--sp,0));}
+  html:not(.dense) .acct-body .fv-row .ival-input,
+  html:not(.dense) .acct-body .irow-ymon .ival-input{height:calc(18px + 4px*var(--sp,0));font-size:calc(11.5px + .8px*var(--sp,0));width:calc(44px + 3px*var(--sp,0));}
+  html:not(.dense) .acct-body .irow-ymon .ymon-select{height:calc(20px + 4px*var(--sp,0));}
+  html:not(.dense) .acct-grid,html:not(.dense) .priv-cards,html:not(.dense) .priv-group,html:not(.dense) .stack-group{gap:calc(4px + 3px*var(--sp,0));}
+  html:not(.dense) .panel{padding-top:calc(6px + 3px*var(--sp,0));padding-bottom:calc(6px + 3px*var(--sp,0));}
+  html:not(.dense) .panel.acct-panel{padding-top:calc(4px + 3px*var(--sp,0));}
+}
 /* 개인정보 숨기기(html.privacy-on, 포트폴리오 앱 토글을 따름): 설계 화면에 기입한 값과 슬라이더 손잡이를 가린다(입력·수정은 가능) */
 .privacy-on .ival-input,.privacy-on .hir-input,.privacy-on .ymon-select{color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 .privacy-on input[type=range]{visibility:hidden;}
@@ -829,15 +845,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   </div>
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1450"  oninput="syncInput('plimit');scheduleUpd()">
 </div>
-<!-- 자동설계 결과 요약은 위쪽 플랜 요약 배너에 표시됩니다. "자동설계 상세 근거 보기"·
-     "수익률/물가상승률 설정 보기"는 항상 자동설계 버튼 바로 왼쪽에 세로로 묶여 있도록
-     감싸 줄바꿈 때도 함께 이동함(예전엔 설정 보기가 패널 하나를 통째로 혼자 차지했음 —
-     여기로 옮겨 그 패널을 없애고, 생긴 여유는 아래 계좌 카드 자간·줄간격에 배분) -->
 <div class="basic-row-action">
-<div class="basic-row-links">
-  <span class="ilabel" aria-hidden="true">&nbsp;</span>
-  <div class="irow-ctrl"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button></div>
-</div>
 <button class="suggest-btn" style="background:linear-gradient(135deg,#4E9B78,#C08A55);" onclick="autoSuggest()">
   <span style="font-size:11.5px;">🎯 자동설계</span>
   <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
@@ -845,71 +853,13 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 </div>
 <div class="suggest-result" id="fit90-box"></div>
-<div id="ratesWrap" class="tgl-body" style="display:none;">
-<div class="sec-label" style="margin-top:8px;">계좌별 수익률</div>
-<div class="rates-fields">
-<div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">농협 연금저축</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">미래에셋 연금저축</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
-</div><div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">미래에셋 IRP</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
-</div><div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">퇴직연금</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
-</div><div class="irow isa">
-  <div class="irow-top">
-    <span class="ilabel">ISA</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
-</div>
-</div>
-<hr class="div">
-<div class="sec-label">물가상승률</div>
-<div class="rates-fields">
-<div class="irow exp">
-  <div class="irow-top">
-    <span class="ilabel">물가상승률</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
-</div>
-</div>
-</div>
 </div>
 
 <div class="panel acct-panel">
 <div id="pfSyncStatus"></div>
 <div class="acct-grid">
 
+<div class="isa-col">
 <div class="acct-card" style="border-color:#D6ACB6;">
 <div class="acct-head" style="background:#F5EBEE;color:#713F4C;"><span class="dot" style="background:#BC7B8B;"></span><span class="name">ISA</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('isa')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
@@ -971,6 +921,70 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       </div>
   </div>
   <input type="range" id="isam-r" min="0" max="300" step="5" value="90"  oninput="syncInput('isam');scheduleUpd()">
+</div>
+</div>
+</div>
+</div>
+<!-- 수익률·물가 설정: 카드 박스 좌측 하단 모서리(ISA 열 아래 빈 자리). 설정 창은 위로 뜨는 팝오버라 레이아웃 높이 불변 -->
+<div class="rates-anchor">
+<button type="button" class="tgl-banner" id="ratesToggleBtn" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button>
+<div id="ratesWrap" class="rates-pop" style="display:none;">
+<div class="sec-label">계좌별 수익률</div>
+<div class="rates-fields">
+<div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">농협 연금저축</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">미래에셋 연금저축</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
+</div><div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">미래에셋 IRP</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">퇴직연금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
+</div><div class="irow isa">
+  <div class="irow-top">
+    <span class="ilabel">ISA</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
+</div>
+</div>
+<hr class="div">
+<div class="sec-label">물가상승률</div>
+<div class="rates-fields">
+<div class="irow exp">
+  <div class="irow-top">
+    <span class="ilabel">물가상승률</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
+</div>
 </div>
 </div>
 </div>
@@ -1352,7 +1366,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
         <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">자산 잔액</button>
         <button class="tab-btn" id="tb-sc" onclick="setAltView('sc')" title="낙관·비관 시나리오 비교">수익률 민감도</button>
         <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="완전소진 플랜 vs 필요분만 인출 플랜 비교">소진 vs 필요분</button>
-        <button type="button" class="tgl-banner" id="tb-basis" role="switch" aria-checked="false" data-target="basisView" onclick="toggleBasis(this)">자동설계 근거<span class="sw"></span></button>
+        <button class="tab-btn" id="tb-basis" onclick="setAltView('basis')" title="자동설계 인출 순서·금액의 근거">자동설계 근거</button>
       </div>
       <div class="legend" id="chart-legend"></div>
     </div>
@@ -2584,28 +2598,40 @@ function getP(){
   return p;
 }
 
-function setTab(t){ closeBasis(); chartTab=t; _altView=null; upd(); }
+function setTab(t){ chartTab=t; _altView=null; upd(); }
 
 /* ── 비교 보기(수익률 민감도·소진 vs 필요분) — 차트 자리에 겹쳐 표시 ──
    같은 탭을 다시 누르면 차트로 돌아감. 차트 자체는 뒤에서 계속 그려 둠(단계 카드 정렬 유지). */
-let _altView = null;   // null | 'sc' | 'need'
+let _altView = null;   // null | 'sc' | 'need' | 'basis'
 function setAltView(v){
-  closeBasis();
   _altView = (_altView === v) ? null : v;
   applyViewState();
 }
 function applyViewState(){
   const on = _altView || chartTab;
-  ['flow','asset','sc','need'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
+  ['flow','asset','sc','need','basis'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
+  const cmp = _altView==='sc' || _altView==='need';
   const alt = document.getElementById('altView');
   if(alt){
-    alt.style.display = _altView ? 'block' : 'none';
+    alt.style.display = cmp ? 'block' : 'none';
     document.getElementById('scWrap').style.display   = _altView==='sc'   ? 'block' : 'none';
     document.getElementById('needWrap').style.display = _altView==='need' ? 'block' : 'none';
   }
+  // 자동설계 근거: 차트 자리에 겹쳐 보이고, 이때만 아래 단계 카드(적립기·공백기·완성기)를 숨겨 근거를 넓게 본다
+  const basis = _altView==='basis';
+  const bv = document.getElementById('basisView');
+  if(bv){
+    bv.style.display = basis ? 'block' : 'none';
+    document.getElementById('basisEmpty').style.display =
+      document.getElementById('suggest-box').classList.contains('show') ? 'none' : '';
+  }
+  const cm = document.querySelector('.chart-main');
+  if(cm && cm.classList.contains('basis-mode') !== basis){
+    cm.classList.toggle('basis-mode', basis);
+    requestAnimationFrame(()=>{ if(mainTab==='result') fitChartHeight(); requestAnimationFrame(()=>{ if(!basis) alignPhaseCards(); }); });
+  }
   const lg = document.getElementById('chart-legend');
-  const basisOn = document.getElementById('tb-basis')?.classList.contains('on');
-  if(lg) lg.style.visibility = (_altView || basisOn) ? 'hidden' : '';
+  if(lg) lg.style.visibility = _altView ? 'hidden' : '';
   if(_altView){
     const tip = document.getElementById('chartTooltip'); if(tip) tip.style.display = 'none';
     if(_activeIdx !== null){ _activeIdx = null; if(mainChart) mainChart.draw(); }
@@ -2621,13 +2647,48 @@ function applyViewState(){
    빠듯하므로 기존처럼 무조건 켠다(넘침 측정 전에 먼저 눌러 깜빡임 방지). */
 function fitDensity(){
   const html = document.documentElement;
+  html.style.setProperty('--sp', '0');
   if(window.innerWidth <= 420 || mainTab !== 'design'){ html.classList.remove('dense'); return; }
   if(window.innerHeight <= 520){ html.classList.add('dense'); return; }
   html.classList.remove('dense');
-  if(html.scrollHeight > html.clientHeight || document.body.scrollHeight > document.body.clientHeight || basicRowWraps()){
-    html.classList.add('dense');
+  if(!designFits()){ html.classList.add('dense'); return; }
+  // 남는 세로 공간이 있으면 카드 글자·간격을 "적당히"(상한 1) 넉넉하게 — 넘치지 않는 최대값을 이분 탐색
+  let lo = 0, hi = 1;
+  html.style.setProperty('--sp', '1');
+  if(designFits()) lo = 1;
+  else for(let i=0;i<7;i++){
+    const mid = (lo+hi)/2;
+    html.style.setProperty('--sp', mid.toFixed(3));
+    if(designFits()) lo = mid; else hi = mid;
   }
+  html.style.setProperty('--sp', lo.toFixed(3));
 }
+// 설계 탭이 한 화면에 들어가는지: 세로·가로 넘침 없음, 기본정보 한 줄, 연납입+월 선택 한 줄, 짝 입력칸이 칸 안에
+function designFits(){
+  const html = document.documentElement, body = document.body;
+  if(html.scrollHeight > html.clientHeight || body.scrollHeight > body.clientHeight) return false;
+  if(html.scrollWidth > html.clientWidth || basicRowWraps()) return false;
+  for(const r of document.querySelectorAll('#designTab .irow-ymon')){
+    const i = r.querySelector('.ival-input'), s = r.querySelector('select');
+    if(i && s && i.offsetParent && Math.abs(i.offsetTop - s.offsetTop) > 4) return false;
+  }
+  for(const c of document.querySelectorAll('#designTab .fv-row .irow-ctrl')){
+    if(c.offsetParent && c.scrollWidth > c.clientWidth + 1) return false;
+  }
+  return true;
+}
+// 수익률·물가 설정 팝오버: 바깥을 누르거나 ESC면 닫는다(스위치 상태도 함께)
+function closeRatesPop(){
+  const btn = document.getElementById('ratesToggleBtn');
+  if(btn && btn.classList.contains('on')) toggleBanner(btn);
+}
+document.addEventListener('pointerdown', e=>{
+  const pop = document.getElementById('ratesWrap');
+  if(!pop || pop.style.display==='none') return;
+  if(pop.contains(e.target) || e.target.closest('#ratesToggleBtn')) return;
+  closeRatesPop();
+}, true);
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeRatesPop(); });
 // 기본 정보 줄(나이~자동설계 버튼)이 두 줄로 넘어갔는지 — 실기기는 글꼴 폭이 달라 실측으로 판단
 function basicRowWraps(){
   const row = document.querySelector('.basic-row');
@@ -2647,7 +2708,8 @@ function fitChartHeight(){
   const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 6;
   const cur = wrap.getBoundingClientRect().height;
   const bottom = rt.getBoundingClientRect().bottom + window.scrollY;
-  let next = Math.max(170, Math.min(620, Math.floor(cur + (window.innerHeight - bottom - gap))));
+  const maxH = document.querySelector('.chart-main.basis-mode') ? 2000 : 620; // 근거 보기는 단계 카드를 숨기고 아래 끝까지
+  let next = Math.max(170, Math.min(maxH, Math.floor(cur + (window.innerHeight - bottom - gap))));
   // 그래도 body가 넘치면(글꼴·아이콘 변환 등으로 다른 요소가 늦게 커진 경우) 넘친 만큼 더 줄임
   const overflow = document.body.scrollHeight - document.body.clientHeight;
   if(overflow > 0) next = Math.max(170, next - overflow - 2);
@@ -3335,6 +3397,7 @@ window.addEventListener('storage', e=>{ if(e.key===HIDE_AMOUNTS_KEY) applyHideAm
 
 if(!loadState()) upd(); else upd();
 requestAnimationFrame(fitDensity);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>scheduleFit());
 applyInputTags();
 maskSubtree(document.body);
 
@@ -3361,20 +3424,6 @@ function toggleBanner(btn){
   btn.setAttribute('aria-checked',on?'true':'false');
   const t=document.getElementById(btn.dataset.target);
   if(t) t.style.display=on?'':'none';
-}
-// 예상결과 "자동설계 근거" 스위치 — 차트 자리에 근거를 겹쳐 띄우고, 다른 차트 탭을 누르면 닫힌다
-function toggleBasis(btn){
-  toggleBanner(btn);
-  const on = btn.classList.contains('on');
-  document.getElementById('basisEmpty').style.display =
-    document.getElementById('suggest-box').classList.contains('show') ? 'none' : '';
-  const lg = document.getElementById('chart-legend');
-  if(lg) lg.style.visibility = (on || _altView) ? 'hidden' : '';
-  if(on){ const tip = document.getElementById('chartTooltip'); if(tip) tip.style.display = 'none'; }
-}
-function closeBasis(){
-  const b = document.getElementById('tb-basis');
-  if(b && b.classList.contains('on')) toggleBasis(b);
 }
 </script>
 </body>
