@@ -78,32 +78,49 @@ h1{font-size:16px;font-weight:700;color:#1c1c1e;}
 /* ── 플랜 배너: 자동설계 결과 팝업 — 예상결과 화면 위에 떠서 오버랩되고,
    닫으면 그 아래에 이미 전환되어 있던 예상결과 화면이 바로 보인다 ── */
 .plan-banner{display:none;position:fixed;left:10px;right:10px;
-  top:calc(var(--topbar-h) + 8px);max-width:480px;margin:0 auto;z-index:250;
-  border-radius:14px;max-height:calc(100vh - var(--topbar-h) - 24px);overflow-y:auto;
+  top:calc(var(--topbar-h) + 8px);max-width:640px;margin:0 auto;z-index:250;
+  border-radius:16px;max-height:calc(100vh - var(--topbar-h) - 24px);overflow-y:auto;
   background:rgba(255,255,255,.96);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:.5px solid rgba(60,60,67,.18);
   box-shadow:0 12px 32px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.06);}
-.plan-banner.show{display:block;padding:10px 14px;}
+.plan-banner.show{display:block;padding:16px 18px 18px;}
 .plan-banner-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:240;}
 .plan-banner-backdrop.show{display:block;}
-.pb-title{font-size:13px;font-weight:700;color:#1c1c1e;
-  margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;}
-.pb-close{background:transparent;border:none;color:#8e8e93;
-  font-size:14px;cursor:pointer;padding:0;}
-.pb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;}
-.pb-card{background:rgba(118,118,128,.08);border:none;
-  border-radius:10px;padding:7px 10px;}
-.pb-label{font-size:10px;color:#8e8e93;margin-bottom:3px;}
-.pb-val{font-size:16px;font-weight:700;}
-.pb-sub{font-size:10px;margin-top:2px;}
-.pb-phases{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-.pb-phase{background:rgba(118,118,128,.06);border-radius:10px;padding:6px 9px;}
-.pb-phase-title{font-size:10px;font-weight:700;margin-bottom:4px;}
-.pb-phase-row{display:flex;align-items:center;gap:4px;font-size:11px;
-  color:#3c3c43;margin-bottom:2px;}
+.pb-title{font-size:14px;font-weight:700;color:#1c1c1e;white-space:nowrap;
+  padding-bottom:12px;margin-bottom:14px;border-bottom:.5px solid rgba(60,60,67,.12);
+  display:flex;align-items:center;justify-content:space-between;}
+.pb-close{background:rgba(118,118,128,.12);border:none;color:#636366;width:26px;height:26px;border-radius:50%;
+  font-size:12px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
+.pb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.pb-card{background:rgba(118,118,128,.08);border:none;border-radius:12px;padding:12px 14px;min-width:0;}
+.pb-label{font-size:11px;font-weight:600;color:#8e8e93;margin-bottom:4px;white-space:nowrap;}
+.pb-val{font-size:20px;font-weight:800;line-height:1.25;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.pb-extra{font-size:12px;font-weight:600;color:#8e8e93;margin-left:6px;}
+.pb-sub{font-size:11.5px;color:#636366;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:6px;}
+.pb-st{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.pb-st.ok{background:#34c759;} .pb-st.bad{background:#ff3b30;}
+.pb-phases{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.pb-phase{min-width:0;}
+.pb-phase-title{font-size:12px;font-weight:700;white-space:nowrap;padding-bottom:7px;margin-bottom:2px;border-bottom:.5px solid rgba(60,60,67,.12);}
+.pb-phase-row{display:flex;align-items:center;gap:7px;height:30px;font-size:12.5px;color:#1c1c1e;white-space:nowrap;
+  border-bottom:.5px solid rgba(60,60,67,.08);}
+.pb-phase-row:last-child{border-bottom:none;}
 .pb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.pb-insight{background:rgba(255,149,0,.12);border:none;
-  border-radius:10px;padding:6px 10px;margin-top:7px;font-size:11px;
-  color:#a05a00;line-height:1.6;}
+.pb-nm{font-weight:600;flex-shrink:0;}
+.pb-note{font-size:11px;color:#8e8e93;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.pb-amt{margin-left:auto;font-weight:700;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.pb-tips{margin-top:18px;background:rgba(118,118,128,.08);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:7px;}
+.pb-tip{font-size:12px;color:#3c3c43;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px;}
+.pb-tip::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;background:#007aff;}
+.pb-tip.warn::before{background:#ff9500;}
+@media (max-width:520px){
+  .plan-banner.show{padding:14px 14px 16px;}
+  .pb-grid{grid-template-columns:1fr;margin-bottom:14px;}
+  .pb-val{font-size:18px;}
+  .pb-phases{grid-template-columns:1fr;gap:14px;}
+  .pb-tip{white-space:normal;align-items:flex-start;}
+  .pb-tip::before{margin-top:5px;}
+}
 
 /* ── 메인 레이아웃: 입력(상단, 가로 활용) → 결과(하단, 전체폭) ── */
 .main-layout{display:flex;flex-direction:column;}
@@ -509,8 +526,6 @@ button{font-family:inherit;cursor:pointer;}
 /* 접힌 상태: ~410px */
 @media (max-width:410px){
   .metrics-bar{grid-template-columns:repeat(2,1fr);}
-  .pb-grid{grid-template-columns:repeat(2,1fr);}
-  .pb-phases{grid-template-columns:1fr;}
   .phase-cards{grid-template-columns:1fr;}
   h1{font-size:13px;}
   table{font-size:9px;}
@@ -641,20 +656,20 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="plan-banner-backdrop" id="planBannerBackdrop" onclick="closePlanBanner()"></div>
 <div class="plan-banner" id="planBanner">
   <div class="pb-title">
-    <span>✨ 세금·건보료 최소화 최적 인출 플랜 요약</span>
-    <button class="pb-close" onclick="closePlanBanner()">✕</button>
+    <span>세금·건보료 최소화 인출 플랜</span>
+    <button class="pb-close" onclick="closePlanBanner()" aria-label="닫기">✕</button>
   </div>
   <div class="pb-grid">
-    <div class="pb-card"><div class="pb-label">공백기 월 수령 합계</div><div class="pb-val" id="pb-gap-total" style="color:#248a3d">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">완성기 월 수령 합계</div><div class="pb-val" id="pb-full-total" style="color:#007aff">-</div><div class="pb-sub" id="pb-full-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">사적연금 연간 수령</div><div class="pb-val" id="pb-priv-annual" style="color:#c77700">-</div><div class="pb-sub" id="pb-priv-tax">-</div></div>
+    <div class="pb-card"><div class="pb-label">공백기 월 수령</div><div class="pb-val" id="pb-gap-total" style="color:#248a3d">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
+    <div class="pb-card"><div class="pb-label">완성기 월 수령</div><div class="pb-val" id="pb-full-total" style="color:#007aff">-</div><div class="pb-sub" id="pb-full-vs">-</div></div>
+    <div class="pb-card"><div class="pb-label">사적연금 연 수령</div><div class="pb-val" id="pb-priv-annual" style="color:#c77700">-</div><div class="pb-sub" id="pb-priv-tax">-</div></div>
     <div class="pb-card"><div class="pb-label">은퇴 시점 총 자산</div><div class="pb-val" id="pb-total-fv" style="color:#8944ab">-</div><div class="pb-sub" id="pb-runway">-</div></div>
   </div>
   <div class="pb-phases">
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-gap-title" style="color:#c77700;">🔶 공백기 인출 순서</div><div id="pb-gap-rows"></div></div>
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-full-title" style="color:#007aff;">🔷 완성기 수입원</div><div id="pb-full-rows"></div></div>
+    <div class="pb-phase"><div class="pb-phase-title" id="pb-gap-title" style="color:#c77700;">공백기 · 인출 순서</div><div id="pb-gap-rows"></div></div>
+    <div class="pb-phase"><div class="pb-phase-title" id="pb-full-title" style="color:#007aff;">완성기 · 수입원</div><div id="pb-full-rows"></div></div>
   </div>
-  <div class="pb-insight" id="pb-insight"></div>
+  <div class="pb-tips" id="pb-insight"></div>
 </div>
 
 <!-- 최상위 탭: 설계(입력) / 예상결과(차트) -->
@@ -2112,91 +2127,68 @@ function showPlanBanner(d){
   // 시뮬레이션으로 총자산·런웨이 가져오기
   const res = simulate(p, {r:0,inf:0});
 
-  // 카드값
-  document.getElementById('pb-gap-total').textContent  = d.gapTotal+'만원/월'
-    + (d.prinMon>0 ? ' (+안세공 '+d.prinMon+'만)' : '');
+  // 카드값 — 값 한 줄 + 상태 한 줄(색점+짧은 문구). 같은 내용을 하단에 다시 쓰지 않는다.
+  const pbSet = (id, html)=>{ document.getElementById(id).innerHTML = html; };
+  const pbSt  = (ok, text)=>`<span class="pb-st ${ok?'ok':'bad'}"></span>${text}`;
+  const pbMan = n=>(n>=0?'+':'−')+Math.abs(n)+'만';
   const gapNet  = d.gapTotalWithPrin - d.target;
-  document.getElementById('pb-gap-vs').textContent     =
-    (gapNet>=0 ? '✅ 생활비 대비 +'+gapNet+'만 여유' : '⚠️ 생활비 대비 '+gapNet+'만 부족') + ' (세후 약 '+res.netGapMonthly+'만)';
-  document.getElementById('pb-gap-vs').style.color     = gapNet>=0?'#248a3d':'#ff3b30';
-
   const fullNet = d.fullTotal - d.target;
 
-  document.getElementById('pb-full-total').textContent = d.fullTotal+'만원/월';
-  document.getElementById('pb-full-vs').textContent    =
-    (fullNet>=0 ? '✅ 생활비 대비 +'+fullNet+'만 여유' : '⚠️ 생활비 대비 '+fullNet+'만 부족') + ' (세후 약 '+res.netFullMonthly+'만)';
-  document.getElementById('pb-full-vs').style.color    = fullNet>=0?'#007aff':'#ff3b30';
+  pbSet('pb-gap-total', d.gapTotal+'만원/월' + (d.prinMon>0 ? `<span class="pb-extra">(+안세공 ${d.prinMon}만)</span>` : ''));
+  pbSet('pb-gap-vs', pbSt(gapNet>=0, `생활비 ${pbMan(gapNet)} ${gapNet>=0?'여유':'부족'} · 세후 약 ${res.netGapMonthly}만`));
+  pbSet('pb-full-total', d.fullTotal+'만원/월');
+  pbSet('pb-full-vs', pbSt(fullNet>=0, `생활비 ${pbMan(fullNet)} ${fullNet>=0?'여유':'부족'} · 세후 약 ${res.netFullMonthly}만`));
 
   const pct = Math.round(d.annualPriv/p.plimit*100);
-  document.getElementById('pb-priv-annual').textContent = d.annualPriv.toLocaleString()+'만원/년';
-  document.getElementById('pb-priv-tax').textContent    =
-    (d.limitOk ? '✅ 한도 '+pct+'% → '+pensionTaxRate(d.ret)+'% 분리과세' : '⚠️ 한도 '+pct+'% 초과 확인 필요');
-  document.getElementById('pb-priv-tax').style.color   = d.limitOk?'#c77700':'#ff3b30';
+  pbSet('pb-priv-annual', d.annualPriv.toLocaleString()+'만원/년');
+  pbSet('pb-priv-tax', pbSt(d.limitOk, d.limitOk ? `한도 ${pct}% · ${pensionTaxRate(d.ret)}% 분리과세` : `한도 ${pct}% · 한도 확인 필요`));
 
-  document.getElementById('pb-total-fv').textContent   = fmtW(res.totalFV)+'원';
   const rwOk = res.runway === p.life;
-  document.getElementById('pb-runway').textContent     =
-    rwOk ? '✅ '+p.life+'세까지 자산 유지' : '⚠️ '+res.runway+'세 자산 소진';
-  document.getElementById('pb-runway').style.color     = rwOk?'#8944ab':'#ff3b30';
+  pbSet('pb-total-fv', fmtW(res.totalFV)+'원');
+  pbSet('pb-runway', pbSt(rwOk, rwOk ? `${p.life}세까지 자산 유지` : `${res.runway}세에 자산 소진`));
 
   // 퇴직IRP는 세금 최적화 결과에 따라 공백기부터 시작할 수도 있어, 실제 시작 시점에
   // 맞는 목록(공백기/완성기)에만 넣는다(d.tage < d.npage 면 공백기 목록에)
   const tirpInGapBanner = d.tage < d.npage;
-  const tirpItem = {dot:'#af7ac5', label:'퇴직IRP', val:d.tirpMonSug+'만', note:d.tage+'세~ · 한도무관·퇴직소득세 분류과세'};
+  const tirpItem = {dot:'#af7ac5', label:'퇴직IRP', val:d.tirpMonSug+'만', note:d.tage+'세~ · 분류과세'};
+  // 메모는 한 줄(≤10자)로 — 긴 설명은 쓰지 않는다
+  const pbRows = items=>items.map(it=>
+    `<div class="pb-phase-row"><span class="pb-dot" style="background:${it.dot}"></span><span class="pb-nm">${it.label}</span><span class="pb-note">${it.note}</span><span class="pb-amt">${it.val}/월</span></div>`
+  ).join('');
 
   // 공백기 인출 순서
-  document.getElementById('pb-gap-title').textContent =
-    '🔶 공백기 ('+d.ret+'~'+d.npage+'세) 인출 순서';
+  pbSet('pb-gap-title', `공백기 ${d.ret}~${d.npage}세 · 인출 순서`);
   const gapItems = [
-    {dot:'#ff6482', label:'🥇 ISA', val:d.isaFinal+'만', note:'비과세·건보료 없음'},
-    {dot:'#32ade6', label:'🥈 미래에셋', val:d.mfMon+'만', note:'잔액 작은 것 먼저'},
-    {dot:'#34c759', label:'🥉 농협', val:d.nhMon+'만', note:'큰 잔액 장기 분산'},
-    {dot:'#5e8fd6', label:'IRP개인납입', val:d.irpMon > 0 ? d.irpMon+'만' : '준비 중', note:d.irpStartAge+'세~'},
+    {dot:'#ff6482', label:'ISA',          val:d.isaFinal+'만', note:'비과세'},
+    {dot:'#32ade6', label:'미래에셋',     val:d.mfMon+'만',    note:'작은 잔액 먼저'},
+    {dot:'#34c759', label:'농협',         val:d.nhMon+'만',    note:'장기 분산'},
+    {dot:'#5e8fd6', label:'IRP개인납입',  val:d.irpMon > 0 ? d.irpMon+'만' : '준비 중', note:d.irpStartAge+'세~'},
   ];
   if(tirpInGapBanner) gapItems.push(tirpItem);
-  document.getElementById('pb-gap-rows').innerHTML = gapItems.map(it=>
-    `<div class="pb-phase-row">
-      <span class="pb-dot" style="background:${it.dot}"></span>
-      <span><b>${it.label}</b> ${it.val}/월</span>
-      <span style="font-size:10px;color:#8e8e93;margin-left:3px;">${it.note}</span>
-    </div>`
-  ).join('');
+  pbSet('pb-gap-rows', pbRows(gapItems));
 
   // 완성기 수입원
-  document.getElementById('pb-full-title').textContent =
-    '🔷 완성기 ('+d.npage+'세~) 수입원';
+  pbSet('pb-full-title', `완성기 ${d.npage}세~ · 수입원`);
   const fullItems = [
-    {dot:'#ff9f0a', label:'국민연금', val:p.np+'만', note:d.npage+'세 정상수령'},
-    {dot:'#34c759', label:'농협연금저축', val:d.nhMon+'만', note:'전 구간 동일율·물가증액'},
-    {dot:'#5e8fd6', label:'IRP개인납입', val:d.irpMon+'만', note:d.irpStartAge+'세~ 미래에셋소진후'},
+    {dot:'#ff9f0a', label:'국민연금',     val:p.np+'만',      note:d.npage+'세~'},
+    {dot:'#34c759', label:'농협연금저축', val:d.nhMon+'만',   note:'물가반영'},
+    {dot:'#5e8fd6', label:'IRP개인납입',  val:d.irpMon+'만',  note:d.irpStartAge+'세~'},
   ];
-  // 완성기에도 계속 이어지는 소득이므로 시작 시점과 무관하게 항상 표시(공백기부터 시작했다면 문구만 보완)
-  fullItems.splice(1, 0, tirpInGapBanner ? {...tirpItem, note:tirpItem.note+' (공백기부터 계속)'} : tirpItem);
-  document.getElementById('pb-full-rows').innerHTML = fullItems.map(it=>
-    `<div class="pb-phase-row">
-      <span class="pb-dot" style="background:${it.dot}"></span>
-      <span><b>${it.label}</b> ${it.val}/월</span>
-      <span style="font-size:10px;color:#8e8e93;margin-left:3px;">${it.note}</span>
-    </div>`
-  ).join('');
+  // 완성기에도 계속 이어지는 소득이므로 시작 시점과 무관하게 항상 표시
+  fullItems.splice(1, 0, tirpItem);
+  pbSet('pb-full-rows', pbRows(fullItems));
 
-  // 인사이트 메시지
-  const insights = [];
-  if(gapNet>=0) insights.push('✅ 공백기 월 '+d.gapTotalWithPrin+'만원 — 생활비('+d.target+'만원) 대비 +'+gapNet+'만원 여유.');
-  else          insights.push('⚠️ 공백기 월 '+d.gapTotalWithPrin+'만원 — 생활비('+d.target+'만원) 대비 '+Math.abs(gapNet)+'만원 부족. ISA/안세공 추가 적립을 검토하세요.');
-  if(fullNet>=0) insights.push('✅ 완성기 월 '+d.fullTotal+'만원 — 생활비('+d.target+'만원) 대비 +'+fullNet+'만원 여유.');
-  else           insights.push('⚠️ 완성기 월 '+d.fullTotal+'만원 — 생활비('+d.target+'만원) 대비 '+Math.abs(fullNet)+'만원 부족. 국민연금 연기수령(1년당 +7.2%)을 검토하세요.');
-  if(d.limitOk) insights.push('✅ 사적연금 연 '+d.annualPriv.toLocaleString()+'만원 → 1,500만원 한도 이하, '+pensionTaxRate(d.ret)+'% 저율 분리과세 적용됩니다.');
-  if(!rwOk)    insights.push('⚠️ '+res.runway+'세에 자산 소진 예상 — 인출액이 자동 축소되었습니다.');
-  else         insights.push('🎯 '+p.life+'세(기대수명) 시점 자산이 0에 근접하도록 인출액이 최대화되었습니다.');
-  // 피부양자 소득 기준은 재산 구간에 따라 2,000/1,000/무조건 탈락으로 달라지므로, 항상 2,000만원으로
-  // 고정 안내하면 재산이 큰 사용자에게는 틀린 정보가 됨 — 현재 재산 과표 기준으로 실제 적용 기준을 표시
+  // 팁 — 카드 상태줄과 겹치는 문장은 두지 않고, 부족할 때의 행동 제안 + 건보료 팁만 한 줄씩
+  const tips = [];
+  if(gapNet<0)  tips.push({warn:1, t:`공백기 ${Math.abs(gapNet)}만 부족 · ISA·안세공 추가 적립을 검토하세요`});
+  if(fullNet<0) tips.push({warn:1, t:`완성기 ${Math.abs(fullNet)}만 부족 · 국민연금 연기수령(연 +7.2%)을 검토하세요`});
+  if(!rwOk)     tips.push({warn:1, t:`${res.runway}세 자산 소진 예상 · 인출액이 자동으로 줄었어요`});
+  // 피부양자 소득 기준은 재산 구간에 따라 2,000/1,000/무조건 탈락으로 달라지므로, 현재 재산 과표 기준으로 표시
   const depThreshold = p.realestate > 90000 ? null : (p.realestate > 54000 ? 1000 : 2000);
-  insights.push(depThreshold === null
-    ? '💡 재산 과세표준이 9억원을 넘어 소득과 무관하게 피부양자 자동 탈락 구간입니다 — 상단 "🏥 건보료 설계" 탭에서 예상 보험료를 확인하세요.'
-    : '💡 ISA·안세공 비과세 인출로 건보료 산정 소득을 낮춰 피부양자 유지(공적연금 등 소득 연 '+depThreshold.toLocaleString()+'만원 이하, 현재 재산 과표 기준)를 우선 검토하세요.');
-
-  document.getElementById('pb-insight').innerHTML = insights.join('<br>');
+  tips.push({warn:0, t: depThreshold === null
+    ? '재산 과표 9억 초과 · 소득과 무관하게 피부양자 탈락 · 건보료 탭에서 확인'
+    : `피부양자 유지: 공적연금 등 소득 연 ${depThreshold.toLocaleString()}만원 이하 · 건보료 탭에서 확인`});
+  pbSet('pb-insight', tips.map(x=>`<div class="pb-tip${x.warn?' warn':''}">${x.t}</div>`).join(''));
 }
 function closePlanBanner(){
   const banner = document.getElementById('planBanner');
