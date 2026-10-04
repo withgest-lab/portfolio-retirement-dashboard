@@ -896,6 +896,53 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:11.5%;}
 }
+/* ── 종목 상세 ⇄ 매매전략 비교 화면(#cmpView) ──
+   상단바(52px) 아래 전체를 덮는 시트. 펼침·90도는 [상세|나란히|전략], 접힘은 [상세|전략].
+   오른쪽 매매전략은 같은 origin의 ../signals/ 를 iframe(embed=1)으로 한 번만 띄우고 숨기기만 한다(재전환 즉시). */
+#cmpView{position:fixed;top:52px;left:0;right:0;bottom:0;z-index:99;display:none;flex-direction:column;background:var(--color-section-bg);}
+#cmpView.open{display:flex;}
+body.cmp-on{overflow:hidden;}
+.cmp-bar{flex:0 0 auto;display:flex;align-items:center;gap:8px;min-height:48px;padding:7px 12px;
+  background:rgba(255,255,255,.82);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);border-bottom:.5px solid rgba(60,60,67,.22);}
+.cmp-title{flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:7px;overflow:hidden;}
+.cmp-title b{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.cmp-title span{font-size:11px;color:var(--color-tertiary);white-space:nowrap;flex-shrink:0;}
+.cmp-seg{flex:0 0 auto;flex-wrap:nowrap;}
+.cmp-seg button{font-size:12.5px;font-weight:600;padding:5px 12px;color:var(--color-secondary);white-space:nowrap;}
+.cmp-seg button.active{color:var(--color-text);}
+.cmp-seg button.mode-buy.active{color:#ff3b30;}
+.cmp-seg button.mode-sell.active{color:#0a84ff;}
+.cmp-close{flex:0 0 auto;width:30px;height:30px;padding:0;}
+.cmp-body{flex:1 1 auto;min-height:0;display:grid;gap:8px;padding:8px;}
+.cmp-body.v-split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+.cmp-body.v-detail,.cmp-body.v-strat{grid-template-columns:minmax(0,1fr);}
+.cmp-body.v-detail .cmp-right,.cmp-body.v-strat .cmp-left{display:none;}
+.cmp-pane{position:relative;min-width:0;min-height:0;background:var(--color-card);border-radius:var(--radius);
+  border:.5px solid rgba(60,60,67,.12);box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden;}
+.cmp-left{overflow-y:auto;overscroll-behavior:contain;padding:14px 16px;}
+.cmp-right iframe{display:block;width:100%;height:100%;border:0;background:transparent;}
+html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-rotate(180deg);} /* 페이지 전체 반전 다크에서 전략 화면(자체 다크)은 되돌림 */
+.cmp-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:24px;
+  text-align:center;font-size:13px;color:var(--color-tertiary);background:var(--color-card);}
+.cmp-msg b{font-size:14px;color:var(--color-secondary);font-weight:600;}
+.cmp-dhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin-bottom:10px;}
+.cmp-dname{font-size:15px;font-weight:700;min-width:0;}
+.cmp-dsum{font-size:12px;color:var(--color-secondary);display:flex;gap:4px 12px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
+.cmp-dsum b{color:var(--color-text);font-weight:600;}
+.stock-dtools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.stock-dtools .period-tabs{margin-left:auto;}
+.cmp-open-btn:disabled{background:rgba(118,118,128,.12);color:var(--color-tertiary);cursor:default;}
+.stock-dtools .btn-return{display:none;}
+@media(max-width:480px){
+  .stock-dhead .btn-return{display:none;}
+  .stock-dtools .btn-return{display:inline-flex;}
+  .cmp-bar{gap:6px;padding:7px 10px;}
+  .cmp-seg .seg-split,.cmp-title span{display:none;}
+  .cmp-seg button{padding:5px 10px;}
+  .cmp-body{padding:0;gap:0;}
+  .cmp-pane{border-radius:0;border:0;box-shadow:none;}
+  .cmp-left{padding:12px 14px;}
+}
 </style>
 </head>
 <body>
@@ -2619,7 +2666,7 @@ let qvHighlightId = null;
 // 종목 상세로 들어온 출발 화면 — {type:'alloc', view, scrollY, sel}(비중현황) | null(변화 추이 트리맵·보유 종목 표 → 기본은 변화 추이).
 // "트리맵으로 가기"가 이 값을 보고 돌아갈 곳을 정한다. 종목 상세를 닫는 모든 경로는 closeStockDetail()로 함께 비운다.
 let stockDetailOrigin = null;
-function closeStockDetail(){ chartDetailId = null; stockDetailOrigin = null; }
+function closeStockDetail(){ chartDetailId = null; stockDetailOrigin = null; if(typeof cmp!=='undefined' && cmp.open) cmpCloseBtn(); }
 function resolveStockChartPeriod(id){
   if(treemapForcedChartId===id) return 'ALL';
   return stockChartRangeMap[id] || STOCK_CHART_DEFAULT_PERIOD;
@@ -3841,6 +3888,13 @@ function renderSnaps(){
    자산 목록
 ════════════════════════════════════════ */
 let editingId=null, quickTradeId=null, chartDetailId=null;
+// 종목 상세 ⇄ 매매전략 비교 화면 상태(아래 "종목 상세 ⇄ 매매전략 비교" 절)
+const CMP_VIEW_KEY = 'pf_cmp_view_v1';
+const cmp = {open:false, id:null, symb:null, via:null, frame:null, ready:false, frameSymb:null, frameMode:null,
+  pref: (()=>{ try{ const v=localStorage.getItem(CMP_VIEW_KEY); return ['split','detail','strat'].includes(v)?v:'split'; }catch(e){ return 'split'; } })(),
+  focus: 'strat',
+  mode: (()=>{ try{ return localStorage.getItem('kis-mode')==='sell'?'sell':'buy'; }catch(e){ return 'buy'; } })()};
+
 let editingTradeLogId=null;
 let editingPrincipalLedgerId=null;
 
@@ -4092,42 +4146,56 @@ function renderTable(){
     }
 
     // 종목별 가격 차트 (기능 A: 매수/매도 마커 오버레이) — 행 확장, 캔버스는 renderTable() 이후 비동기로 그려짐
-    if(chartDetailId===a.id){
+    if(chartDetailId===a.id && !cmp.open){   // 비교 화면이 열려 있으면 상세는 그쪽 왼쪽 칸에(같은 id 중복 방지)
       const SL = stockChartLayout();
       rows+=`<tr class="tr-full" style="background:var(--color-card);">
-        <td colspan="12" style="padding:14px 16px;" onclick="event.stopPropagation()">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
-            <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 <span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span></div>
-            <button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">${stockDetailOrigin&&stockDetailOrigin.type==='alloc'?'← 비중현황으로 가기':'← 트리맵으로 가기'}</button>
-          </div>
-          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-            <div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>
-          </div>
-          <div class="chart-wrap" style="position:relative;">
-            <canvas id="stockChart_${a.id}" height="${SL.chartH}" data-h="${SL.chartH}"></canvas>
-            <div id="stockChartTip_${a.id}" class="chart-tip-bubble" style="display:none;"></div>
-          </div>
-          <div id="stockChartStats_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-top:6px;"></div>
-          <div class="tbl-wrap stock-trades" style="margin-top:12px;max-height:${SL.tradeH}px;overflow-y:auto;">
-            <table class="table-auto">
-              <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span>메모</span>
-                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="closeStockDetail();renderTable();">✕ 세부 정보 닫기</button>
-                </div>
-              </th></tr></thead>
-              <tbody id="stockChartTradeBody_${a.id}"></tbody>
-            </table>
-          </div>
-        </td>
+        <td colspan="12" style="padding:14px 16px;" onclick="event.stopPropagation()">${stockDetailPanelHtml(a, SL, false)}</td>
       </tr>`;
     }
     return rows;
   }).join('');
-  if(chartDetailId){
+  if(chartDetailId && !cmp.open){
     const stillVisible = list.some(a=>a.id===chartDetailId);
-    if(stillVisible) setTimeout(()=>loadAndDrawStockChart(chartDetailId), 30);
+    if(stillVisible){ setTimeout(()=>loadAndDrawStockChart(chartDetailId), 30); cmpMarkButton(chartDetailId); }
   }
+}
+/* 종목 상세 패널(제목·기간 탭·가격 차트·지표·매매 이력). inCmp=true면 비교 화면 왼쪽 칸용 — 보유 요약을 위에 두고,
+   표 전용 버튼(트리맵으로 가기·세부 정보 닫기·매매전략)은 뺀다. id는 같아서 loadAndDrawStockChart가 그대로 그린다. */
+function stockDetailPanelHtml(a, SL, inCmp){
+  const legend = `<span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span>`;
+  const tabs = `<div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>`;
+  const rt = a.avgPrice>0 ? (a.currentPrice-a.avgPrice)/a.avgPrice*100 : null;
+  // 돌아가기 버튼: 펼침·90도는 제목 줄 오른쪽, 접힘은 제목이 길어 잘리므로 아래 도구 줄(매매전략 비교 옆) — CSS가 한쪽만 보인다
+  const retBtn = `<button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">${stockDetailOrigin&&stockDetailOrigin.type==='alloc'?'← 비중현황으로 가기':'← 트리맵으로 가기'}</button>`;
+  const head = inCmp
+    ? `<div class="cmp-dhead"><div class="cmp-dname">${a.name}</div>
+        <div class="cmp-dsum"><span>현재가 <b>${unitPriceStr(a.currentPrice||0, a.currency)}</b></span><span>평단 <b>${unitPriceStr(a.avgPrice||0, a.currency)}</b></span>${rt==null?'':`<span>수익률 <b style="color:${rt>=0?'var(--color-up)':'var(--color-down)'}">${fmtPct(rt)}</b></span>`}</div></div>
+       <div class="stock-dtools"><div style="font-size:12px;font-weight:700;">가격 추이 ${legend}</div>${tabs}</div>`
+    : `<div class="stock-dhead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+            <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 ${legend}</div>
+            ${retBtn}
+          </div>
+          <div class="stock-dtools">
+            ${retBtn}
+            <button class="btn btn-green cmp-open-btn" id="cmpBtn_${a.id}" onclick="cmpOpen('${a.id}')" title="같은 종목의 매수·매도 전략과 나란히 비교 (S)">📈 매매전략 비교</button>
+            ${tabs}
+          </div>`;
+  const memoHead = inCmp ? '메모' : `<div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span>메모</span>
+                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="closeStockDetail();renderTable();">✕ 세부 정보 닫기</button>
+                </div>`;
+  return `${head}
+          <div class="chart-wrap" style="position:relative;">
+            <canvas id="stockChart_${a.id}" height="${SL.chartH}" data-h="${SL.chartH}"></canvas>
+            <div id="stockChartTip_${a.id}" class="chart-tip-bubble" style="display:none;"></div>
+          </div>
+          <div id="stockChartStats_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-top:6px;${inCmp?"min-height:17px;":""}"></div>
+          <div class="tbl-wrap stock-trades" style="margin-top:12px;max-height:${SL.tradeH}px;overflow-y:auto;">
+            <table class="table-auto">
+              <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">${memoHead}</th></tr></thead>
+              <tbody id="stockChartTradeBody_${a.id}"></tbody>
+            </table>
+          </div>`;
 }
 function toggleQuickTrade(id){
   quickTradeId = quickTradeId===id ? null : id;
@@ -9509,6 +9577,210 @@ window.addEventListener('orientationchange',()=>{
   resizeRedrawTimer = setTimeout(()=>{ lastResizeWidth = window.innerWidth; drawLineChart(); refreshActiveViewCanvases(); scheduleFitScroll(); }, 300);
 });
 
+/* ════════════════════════════════════════
+   종목 상세 ⇄ 매매전략 비교
+   - 어디서 시작해도 같은 비교 화면: 종목 상세의 "매매전략 비교" 버튼, 또는 매매전략 크게 보기의 "내 보유 상세 나란히"
+     (→ ../portfolio/#cmp=SYMB&mode=sell 로 들어와 cmpFromHash가 연다).
+   - 보기: 펼침·90도 [상세|나란히|전략](마지막 선택 기억), 접힘 [상세|전략]. 매수/매도는 kis-mode(매매전략 화면과 공유).
+   - 오른쪽 iframe은 처음 한 번만 만들고, 종목·모드는 postMessage로 바꾼다. 뒤로가기는 비교 화면만 닫는다(pushState).
+   - 단축키: 1 상세 · 2 나란히 · 3 전략 · S 상세↔전략(닫혀 있으면 열기) · B 매수 · D 매도 · Esc 닫기
+════════════════════════════════════════ */
+const cmpFolded = ()=> window.innerWidth <= 480;
+function cmpEffView(){ if(!cmpFolded()) return cmp.pref; return cmp.pref==='split' ? cmp.focus : cmp.pref; }
+
+// 포트폴리오 종목 → 매매전략 종목: 005930.KS → 005930, 미국 종목은 그대로. 국내상장 미국지수 ETF는 기초지수 ETF(SPY/QQQ)로.
+function signalSymbDirect(a){ const t=(a.ticker||'').trim().toUpperCase(); return t ? t.replace(/\.(KS|KQ)$/,'') : null; }
+function signalSymbIndex(a){ const k=indexGroupKeyOf(a.name||''); if(!k) return null; return /^미국S&P500/.test(k) ? 'SPY' : /^미국나스닥100/.test(k) ? 'QQQ' : null; }
+let _sigUniverse = null;
+function loadSigUniverse(){
+  return _sigUniverse || (_sigUniverse = fetch('../signals/scores.json', {cache:'no-store'})
+    .then(r=>r.ok ? r.json() : null).then(d=>d && d.tickers ? new Set(d.tickers.map(t=>t.symb)) : null).catch(()=>null));
+}
+async function resolveSignalSymb(a){
+  const d = signalSymbDirect(a), ix = signalSymbIndex(a), U = await loadSigUniverse();
+  if(U){ if(d && U.has(d)) return {symb:d, via:null}; if(ix && U.has(ix)) return {symb:ix, via:'index'}; return null; }
+  return ix ? {symb:ix, via:'index'} : d ? {symb:d, via:null} : null;   // 목록을 못 받으면 추정으로라도 연다
+}
+// 표의 "매매전략 비교" 버튼: 대상이 아니면 비활성 + 이유
+async function cmpMarkButton(id){
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  const r = await resolveSignalSymb(a);
+  const b = document.getElementById('cmpBtn_'+id); if(!b) return;
+  if(!r){ b.disabled = true; b.textContent = '매매전략 대상 아님'; b.title = '매매전략은 지수·주요 종목만 계산합니다'; }
+  else b.title = (r.via==='index' ? `기초지수 ${r.symb} 기준 ` : '') + '매수·매도 전략과 나란히 비교 (S)';
+}
+
+async function cmpOpen(id){
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  const wasOpen = cmp.open;
+  cmp.open = true; cmp.id = id; chartDetailId = id;
+  document.getElementById('cmpName').textContent = a.name;
+  document.getElementById('cmpSymb').textContent = '';
+  document.getElementById('cmpView').classList.add('open');
+  document.body.classList.add('cmp-on');
+  if(!wasOpen){ try{ history.pushState({pfCmp:1}, ''); }catch(e){} if(cmpFolded()) cmp.focus = 'strat'; }
+  renderTable();                    // 표의 상세 행을 거둬 id 중복을 없앤다
+  cmpApplyView(false);
+  cmpRenderLeft();
+  const r = await resolveSignalSymb(a);
+  if(!cmp.open || cmp.id!==id) return;
+  cmp.symb = r ? r.symb : null; cmp.via = r ? r.via : null;
+  document.getElementById('cmpSymb').textContent = r ? (r.via==='index' ? `기초지수 ${r.symb} 기준` : r.symb) : '매매전략 대상 아님';
+  cmpLoadRight();
+}
+// 왼쪽 칸 높이를 남김없이: 매매 이력은 실제 행 수만큼(최대 6행)만 잡고 나머지는 차트에 준다(빈 여백 금지)
+function cmpLayout(a){
+  const el = document.getElementById('cmpLeft');
+  const A = el && el.clientHeight > 200 ? el.clientHeight - 28 : window.innerHeight - 140;
+  const head = el && el.clientWidth < 400 ? 96 : 76;   // 보유 요약 + 제목·기간 탭(좁으면 두 줄)
+  const FIXED = head + 22 + 12;                        // + 지표 줄 + 표 위 여백
+  const n = a ? loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a)).length : 3;
+  const tradeNeed = 34 + Math.min(6, Math.max(1, n)) * 31;
+  const chartH = Math.max(180, Math.min(560, A - FIXED - tradeNeed));
+  return {chartH:Math.round(chartH), tradeH:Math.round(Math.max(96, A - FIXED - chartH))};
+}
+function cmpRenderLeft(){
+  const a = assets.find(x=>x.id===cmp.id), el = document.getElementById('cmpLeft');
+  if(!a || !el || !cmp.open) return;
+  if(getComputedStyle(el).display === 'none'){ el.dataset.stale = '1'; return; }   // 숨겨진 칸은 폭 0 — 보일 때 그린다
+  el.dataset.stale = '';
+  el.innerHTML = stockDetailPanelHtml(a, cmpLayout(a), true);
+  const drawn = loadAndDrawStockChart(a.id);   // 동기 구간에서 매매 이력 표가 먼저 채워지고, 차트는 시세를 받은 뒤 data-h 높이로 그린다
+  cmpFitLeft(a.id);
+  // 그린 뒤(지표 줄이 채워진 뒤) 그래도 넘치면 차트만 그만큼 줄여 한 번 더 그린다
+  Promise.resolve(drawn).then(()=>{
+    const cv = document.getElementById("stockChart_"+a.id); if(!cv || !cmp.open || cmp.id!==a.id) return;
+    const over = el.scrollHeight - el.clientHeight, h = parseInt(cv.dataset.h,10);
+    if(over > 0 && h > 180){ cv.dataset.h = Math.max(180, h - over); loadAndDrawStockChart(a.id); }
+  });
+}
+// 추정 대신 실측으로 왼쪽 칸을 꼭 맞춘다: 매매 이력은 실제 행 수(최대 6행)만큼, 남는 높이는 전부 차트(180~560px).
+// 차트가 최소 높이라 넘치면 매매 이력 칸을 줄여(표 안 스크롤) 칸 자체에는 세로 스크롤이 생기지 않게 한다.
+function cmpFitLeft(id){
+  const el = document.getElementById('cmpLeft'), cv = document.getElementById('stockChart_'+id);
+  const tw = el && el.querySelector('.stock-trades');
+  if(!cv || !tw) return;
+  tw.style.maxHeight = 'none';
+  const rows = tw.querySelectorAll('tbody tr');
+  const rowH = rows[0] ? rows[0].getBoundingClientRect().height : 30;
+  const tradeH = Math.ceil(tw.querySelector('thead').getBoundingClientRect().height + rowH * Math.min(6, Math.max(1, rows.length)));
+  tw.style.maxHeight = tradeH + 'px';
+  const other = el.scrollHeight - cv.getBoundingClientRect().height;
+  const h = Math.round(Math.max(180, Math.min(560, el.clientHeight - other)));
+  cv.dataset.h = h; cv.height = h; cv.style.height = h + 'px';
+  const over = el.scrollHeight - el.clientHeight;
+  if(over > 0) tw.style.maxHeight = Math.max(96, tradeH - over) + 'px';
+}
+function cmpMsg(html){ const m = document.getElementById('cmpRightMsg'); if(!m) return; if(html==null){ m.style.display='none'; } else { m.innerHTML = html; m.style.display='flex'; } }
+function cmpPost(msg){ try{ if(cmp.frame && cmp.frame.contentWindow) cmp.frame.contentWindow.postMessage(msg, location.origin); }catch(e){} }
+function cmpLoadRight(){
+  if(!cmp.symb){
+    if(cmp.frame) cmp.frame.style.visibility = 'hidden';
+    cmpMsg('<b>매매전략 대상이 아닌 종목입니다</b><span>매매전략은 지수·주요 종목만 계산합니다</span>');
+    return;
+  }
+  if(!cmp.frame){
+    cmp.ready = false;
+    cmpMsg('<span>전략 불러오는 중…</span>');
+    const f = document.createElement('iframe');
+    f.id = 'cmpFrame'; f.title = '매매전략';
+    f.src = `../signals/?embed=1&symb=${encodeURIComponent(cmp.symb)}&mode=${cmp.mode}`;
+    document.getElementById('cmpRight').appendChild(f);
+    cmp.frame = f;
+    setTimeout(()=>{ if(!cmp.ready) cmpMsg(null); }, 7000);   // 응답이 없어도(구버전 화면) 가리지 않는다
+    return;
+  }
+  cmp.frame.style.visibility = 'visible';
+  if(cmp.ready && cmp.frameSymb !== cmp.symb){ cmpMsg('<span>전략 불러오는 중…</span>'); cmpPost({type:'kis:open', symb:cmp.symb, mode:cmp.mode}); }
+  else if(cmp.ready) cmpMsg(null);
+}
+window.addEventListener('message', e=>{
+  if(e.origin !== location.origin || !e.data || typeof e.data !== 'object') return;
+  const d = e.data;
+  if(d.type==='kis:ready' || d.type==='kis:shown'){
+    cmp.ready = true; cmp.frameSymb = d.symb || null; cmp.frameMode = d.mode || null;
+    if(!cmp.open || !cmp.symb) return;
+    if(cmp.frameSymb !== cmp.symb) cmpPost({type:'kis:open', symb:cmp.symb, mode:cmp.mode});
+    else { if(cmp.frameMode !== cmp.mode) cmpPost({type:'kis:mode', mode:cmp.mode}); cmpMsg(null); }
+  } else if(d.type==='kis:key') cmpKey(d.key);
+});
+
+function cmpSetView(v){
+  if(cmpFolded()){ if(v==='split') return; cmp.focus = v; if(cmp.pref!=='split') cmp.pref = v; }
+  else { cmp.pref = v; if(v!=='split') cmp.focus = v; }
+  try{ localStorage.setItem(CMP_VIEW_KEY, cmp.pref); }catch(e){}
+  cmpApplyView(true);
+}
+let _cmpLastView = null, _cmpLastW = 0;
+function cmpApplyView(redraw){
+  const v = cmpEffView();
+  document.getElementById('cmpBody').className = 'cmp-body v-'+v;
+  document.querySelectorAll('#cmpViewSeg button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
+  document.querySelectorAll('#cmpModeSeg button').forEach(b=>b.classList.toggle('active', b.dataset.m===cmp.mode));
+  const left = document.getElementById('cmpLeft');
+  // 왼쪽 칸 폭이 바뀌었거나(나란히↔상세, 접힘↔펼침) 숨어 있다 보이게 되면 차트를 새 폭으로 다시 그린다
+  if(redraw && v!=='strat' && (left.dataset.stale==='1' || v!==_cmpLastView || Math.abs(window.innerWidth-_cmpLastW) > 6)) requestAnimationFrame(cmpRenderLeft);
+  _cmpLastView = v; _cmpLastW = window.innerWidth;
+}
+function cmpSetMode(m){
+  cmp.mode = m;
+  try{ localStorage.setItem('kis-mode', m); }catch(e){}
+  if(cmp.ready && cmp.symb) cmpPost({type:'kis:mode', mode:m});
+  if(cmpEffView()==='detail'){ cmpSetView(cmpFolded() ? 'strat' : 'split'); return; }   // 상세만 보던 중이면 전략이 보이게
+  cmpApplyView(false);
+}
+function cmpClose(){
+  if(!cmp.open) return;
+  cmp.open = false;
+  document.getElementById('cmpView').classList.remove('open');
+  document.body.classList.remove('cmp-on');
+  document.getElementById('cmpLeft').innerHTML = '';
+  const id = cmp.id;
+  renderTable();                     // 표의 종목 상세 행을 다시 펼친다
+  if(chartDetailId===id) setTimeout(()=>focusStockRow(id), 60);
+}
+function cmpCloseBtn(){ if(history.state && history.state.pfCmp) history.back(); else cmpClose(); }
+window.addEventListener('popstate', ()=>{ if(cmp.open) cmpClose(); });
+function cmpKey(k){
+  if(!cmp.open){
+    if((k==='s'||k==='S') && chartDetailId){ cmpOpen(chartDetailId); return true; }
+    return false;
+  }
+  switch(k){
+    case '1': cmpSetView('detail'); break;
+    case '2': if(cmpFolded()) return false; cmpSetView('split'); break;
+    case '3': cmpSetView('strat'); break;
+    case 's': case 'S': cmpSetView(cmpEffView()==='strat' ? 'detail' : 'strat'); break;
+    case 'b': case 'B': cmpSetMode('buy'); break;
+    case 'd': case 'D': cmpSetMode('sell'); break;
+    case 'Escape': cmpCloseBtn(); break;
+    default: return false;
+  }
+  return true;
+}
+document.addEventListener('keydown', e=>{
+  if(e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if(t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.tagName==='SELECT' || t.isContentEditable)) return;
+  if(!cmp.open && !(chartDetailId && (e.key==='s'||e.key==='S'))) return;
+  if(cmpKey(e.key)) e.preventDefault();
+});
+let _cmpResizeT = null;
+window.addEventListener('resize', ()=>{ if(!cmp.open) return; clearTimeout(_cmpResizeT); _cmpResizeT = setTimeout(()=>cmpApplyView(true), 150); });
+// 매매전략 화면의 "내 보유 상세 나란히"로 들어온 경우: #cmp=SYMB&mode=buy|sell
+function cmpFromHash(){
+  const m = location.hash.match(/[#&]cmp=([^&]+)/); if(!m) return;
+  const symb = decodeURIComponent(m[1]).toUpperCase();
+  const mm = location.hash.match(/[#&]mode=(buy|sell)/);
+  try{ history.replaceState(history.state, '', location.pathname + location.search); }catch(e){}
+  if(mm){ cmp.mode = mm[1]; try{ localStorage.setItem('kis-mode', cmp.mode); }catch(e){} }
+  const cands = assets.filter(a=>a.acctType!=='cash' && (a.quantity||0) > 0 && (signalSymbDirect(a)===symb || signalSymbIndex(a)===symb));
+  if(!cands.length) return;
+  cands.sort((x,y)=>(y.quantity*(y.currentPrice||0)) - (x.quantity*(x.currentPrice||0)));
+  switchPage('portfolio');
+  cmpOpen(cands[0].id);
+}
+
 (async function init(){
   applyHideAmountsUI();
   migrateSoldHistory();
@@ -9527,6 +9799,8 @@ window.addEventListener('orientationchange',()=>{
   if(cashFixed) saveAssets();
   renderAll();renderSnaps();renderSoldHistory();renderIndices();
   restorePageState();
+  // 비교 화면 DOM(#cmpView)은 스크립트 뒤에 있어 파싱이 끝난 뒤에 연다
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', ()=>setTimeout(cmpFromHash, 0), {once:true}); else setTimeout(cmpFromHash, 0);
 
   // ★ 저장된 기간 탭 활성화 (리프레시 시 유지)
   document.querySelectorAll('#periodTabs button').forEach(b=>{
@@ -9594,5 +9868,24 @@ refreshLiveUsdKrw();
 setInterval(()=>{ if(!document.hidden) refreshLiveUsdKrw(); }, 30*1000);
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshLiveUsdKrw(); });
 </script>
+<div id="cmpView" role="dialog" aria-label="종목 상세와 매매전략 비교">
+  <div class="cmp-bar">
+    <div class="cmp-title"><b id="cmpName"></b><span id="cmpSymb"></span></div>
+    <div class="period-tabs cmp-seg" id="cmpViewSeg" role="tablist" aria-label="보기">
+      <button type="button" data-v="detail" onclick="cmpSetView('detail')" title="종목 상세만 (1)">상세</button>
+      <button type="button" data-v="split" class="seg-split" onclick="cmpSetView('split')" title="나란히 (2)">나란히</button>
+      <button type="button" data-v="strat" onclick="cmpSetView('strat')" title="매매전략만 (3)">전략</button>
+    </div>
+    <div class="period-tabs cmp-seg" id="cmpModeSeg" role="tablist" aria-label="전략">
+      <button type="button" data-m="buy" class="mode-buy" onclick="cmpSetMode('buy')" title="매수 전략 (B)">매수</button>
+      <button type="button" data-m="sell" class="mode-sell" onclick="cmpSetMode('sell')" title="매도 전략 (D)">매도</button>
+    </div>
+    <button type="button" class="btn btn-ghost cmp-close" onclick="cmpCloseBtn()" aria-label="닫기" title="닫기 (Esc)">✕</button>
+  </div>
+  <div class="cmp-body v-split" id="cmpBody">
+    <div class="cmp-pane cmp-left" id="cmpLeft"></div>
+    <div class="cmp-pane cmp-right" id="cmpRight"><div class="cmp-msg" id="cmpRightMsg"></div></div>
+  </div>
+</div>
 </body>
 </html>
