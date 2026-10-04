@@ -26,7 +26,7 @@
     '🔶': 'diamond-orange', '🔷': 'diamond-blue', '💎': 'gem', '✨': 'sparkles',
     '🥇': 'medal-1', '🥈': 'medal-2', '🥉': 'medal-3',
     '✅': 'check-circle', '❌': 'xmark-circle', '⚠️': 'warning', '⚠': 'warning',
-    '💡': 'bulb', '✔': 'check', '✔️': 'check'
+    '💡': 'bulb', '✔': 'check', '✔️': 'check', '✓': 'check', '✕': 'xmark'
   };
 
   // 24x24 격자, 선 굵기·끝 모양은 CSS(.ic)가 정한다. 고유 색이 필요한 상태 아이콘만 fill/stroke를 직접 지정.
@@ -71,7 +71,8 @@
     'xmark-circle': '<circle cx="12" cy="12" r="10" fill="#ff3b30" stroke="none"/><path d="M8.6 8.6l6.8 6.8M15.4 8.6l-6.8 6.8" stroke="#fff" stroke-width="2.3" fill="none"/>',
     'warning': '<path d="M12 3.4 21.6 20H2.4z" fill="#ff9500" stroke="#ff9500" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 9.6v4.8" stroke="#fff" stroke-width="2.3" fill="none"/><circle cx="12" cy="17.4" r="1.3" fill="#fff" stroke="none"/>',
     'bulb': '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" stroke="#ff9f0a"/><path d="M9 18h6" stroke="#ff9f0a"/><path d="M10 22h4" stroke="#ff9f0a"/>',
-    'check': '<polyline points="20 6 9 17 4 12"/>'
+    'check': '<polyline points="20 6 9 17 4 12"/>',
+    'xmark': '<path d="M6 6l12 12M18 6L6 18"/>'
   };
 
   var esc = function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };

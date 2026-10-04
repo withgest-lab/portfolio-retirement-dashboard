@@ -192,7 +192,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;border-radius:999px;font-family:inherit;
   font-size:12px;font-weight:600;padding:6px 13px;transition:.15s;white-space:nowrap;flex-shrink:0;}
 .btn:active{transform:scale(.97);}
-.btn-primary{background:var(--color-accent);color:#fff;}
+.btn-primary{background:rgba(0,122,255,.14);color:var(--color-accent);font-weight:700;}
 .btn-ghost{background:rgba(118,118,128,.12);color:var(--color-text);}
 .btn-green{background:rgba(0,122,255,.12);color:var(--color-accent);}
 .btn-red{background:rgba(255,59,48,.12);color:var(--color-up);}
@@ -283,8 +283,9 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .collapsible summary{cursor:pointer;color:var(--color-secondary);font-weight:600;font-size:11px;
   padding:4px 0;list-style:none;}
 .collapsible summary::-webkit-details-marker{display:none;}
-.collapsible summary::before{content:'▸ ';}
-.collapsible[open] summary::before{content:'▾ ';}
+.collapsible summary::before{content:'';display:inline-block;width:5px;height:5px;margin-right:8px;vertical-align:1px;
+  border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .15s;}
+.collapsible[open] summary::before{transform:rotate(45deg);}
 
 /* ── 차트 ── */
 .chart-wrap{margin-top:10px;}
@@ -1195,9 +1196,8 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
         <option value="USD">USD $</option>
         <option value="JPY">JPY ¥</option>
       </select></label>
-      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-tertiary);white-space:nowrap;">
-        <input type="checkbox" id="af_bond_toggle" onchange="toggleBondFields()"> 확정금리 채권(복리)
-      </label>
+      <button type="button" class="tgl-banner" id="af_bond_sw" role="switch" aria-checked="false" onclick="toggleBondSwitch()">확정금리 채권(복리)<span class="sw"></span></button>
+      <input type="checkbox" id="af_bond_toggle" hidden>
       <div id="af_bond_fields" style="display:none;flex:1 1 100%;gap:8px;flex-wrap:wrap;">
         <label>매입원금<input id="af_bond_principal" type="number" placeholder="" style="width:120px"></label>
         <label>표면금리(%)<input id="af_bond_coupon" type="number" step="0.001" placeholder="4.415" style="width:80px"></label>
@@ -1208,7 +1208,7 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
       <label style="flex:1;min-width:140px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
         <input id="af_reason" placeholder="매수 사유" style="width:100%">
       </label>
-      <button class="btn btn-primary" onclick="addAsset()">+ 매수</button>
+      <button class="btn btn-red" onclick="addAsset()">+ 매수</button>
     </div>
 
     <!-- 매도 폼 -->
@@ -1775,6 +1775,7 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   </div>
 </div>
 
+<script src="../shared/dialog.js"></script>
 <script src="../shared/icons.js"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
@@ -3532,12 +3533,12 @@ function deleteSoldHistory(id){
     ${maskAmt(sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString())}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">이 매매 이력을 삭제할까요?</span>`;
   document.getElementById('tc_reason_wrap').style.display='none';
-  confirmBtn.style.background = 'var(--color-up)';
+  setConfirmTone(confirmBtn, 'var(--color-up)');
   confirmBtn.textContent = '삭제 확인';
   document.getElementById('tradeConfirmModal').classList.add('open');
 }
-function clearTradeLog(){
-  if(!confirm('매매 이력을 전체 삭제할까요?')) return;
+async function clearTradeLog(){
+  if(!await iosConfirm({title:'매매 이력 전체 삭제', message:'삭제한 이력은 되돌릴 수 없어요.', okText:'삭제', destructive:true})) return;
   saveTradeLog([]);
   renderSoldHistory();
 }
@@ -3572,16 +3573,16 @@ function saveTradeLogEdit(id){
   const qty   = parseFloat(document.getElementById(`tle_qty_${id}`).value);
   const reason = document.getElementById(`tle_reason_${id}`).value.trim();
 
-  if(!name){ alert('종목명을 입력해 주세요.'); return; }
+  if(!name){ fieldError(`tle_name_${id}`,'종목명을 입력해 주세요.'); return; }
   // 티커가 없으면 종목 상세 차트에 매매 마커가 안 그려지므로 필수 — 단, 이미 포트폴리오에
   // 유효한 티커로 등록된 종목이면 그 티커를 그대로 쓰므로(바로 아래) 다시 입력하게 강제하지 않는다.
   const existingAsset = assets.find(a=>a.name===name);
   if(!tickerInput && !(existingAsset && existingAsset.ticker && existingAsset.ticker!=='—') && !(r.ticker && r.ticker!=='—')){
-    alert('티커를 입력해 주세요.');
+    fieldError(`tle_ticker_${id}`,'티커를 입력해 주세요.');
     return;
   }
-  if(isNaN(price)||price<=0){ alert('체결단가를 입력해 주세요.'); return; }
-  if(isNaN(qty)||qty<=0){ alert('수량을 입력해 주세요.'); return; }
+  if(isNaN(price)||price<=0){ fieldError(`tle_price_${id}`,'체결단가를 입력해 주세요.'); return; }
+  if(isNaN(qty)||qty<=0){ fieldError(`tle_qty_${id}`,'수량을 입력해 주세요.'); return; }
 
   if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
   r.name = name;
@@ -4016,11 +4017,9 @@ function renderTradeLogEditForm(r, colspan){
             style="width:100%;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
         </label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn"
-            style="background:#34c759;color:#fff;padding:7px 16px;font-size:13px;box-shadow:0 2px 8px #34c75930;"
-            onclick="saveTradeLogEdit('${r.id}')">✓ 수정저장</button>
+          <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="saveTradeLogEdit('${r.id}')">저장</button>
           <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-            onclick="closeTradeLogEdit()">✕ 닫기</button>
+            onclick="closeTradeLogEdit()">닫기</button>
         </div>
       </div>
     </td>
@@ -4031,14 +4030,14 @@ function deleteSnap(snapKey){
   // snapKey = s.id 또는 String(s.timestamp) (폴백)
   const snaps = loadSnaps();
   const s = snaps.find(x=>String(x.id||x.timestamp)===String(snapKey));
-  if(!s){ alert('스냅샷을 찾을 수 없습니다.'); return; }
+  if(!s){ iosAlert('스냅샷을 찾을 수 없어요.'); return; }
   pendingTrade = {mode:'snap_delete', snapKey: String(snapKey)};
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
   titleEl.innerHTML = `<span style="color:var(--color-up)">🗑 스냅샷 삭제</span>`;
   detailEl.innerHTML = `${new Date(s.timestamp).toLocaleString('ko-KR')}<br><b>${fmt(s.totalValue)}</b><br><span style="color:var(--color-tertiary);font-size:11px;">이 스냅샷을 삭제할까요?</span>`;
-  confirmBtn.style.background = 'var(--color-up)';
+  setConfirmTone(confirmBtn, 'var(--color-up)');
   confirmBtn.textContent = '삭제 확인';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -4051,7 +4050,7 @@ function clearSnaps(){
   const confirmBtn = document.getElementById('tc_confirm');
   titleEl.innerHTML = `<span style="color:var(--color-up)">🗑 이력 초기화</span>`;
   detailEl.innerHTML = `스냅샷 이력 <b>전체</b>를 삭제할까요?<br><span style="color:var(--color-tertiary);font-size:11px;">삭제 후 복구가 불가능합니다.</span>`;
-  confirmBtn.style.background = 'var(--color-up)';
+  setConfirmTone(confirmBtn, 'var(--color-up)');
   confirmBtn.textContent = '전체 삭제 확인';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -4295,14 +4294,12 @@ function renderTable(){
                        padding:6px 10px;font-size:13px;font-family:inherit;">
             </label>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn"
-                style="background:#007aff;color:#fff;padding:7px 16px;font-size:13px;box-shadow:0 2px 8px #007aff30;"
+              <button class="btn btn-red" style="padding:7px 16px;font-size:13px;"
                 onclick="confirmTrade('${a.id}','buy')">+ 매수</button>
-              <button class="btn"
-                style="background:#ff3b3015;color:var(--color-up);padding:7px 16px;font-size:13px;border:1px solid #ff3b3030;"
+              <button class="btn btn-green" style="padding:7px 16px;font-size:13px;"
                 onclick="confirmTrade('${a.id}','sell')">− 매도</button>
               <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-                onclick="closeTradePanel()">✕ 닫기</button>
+                onclick="closeTradePanel()">닫기</button>
             </div>
           </div>
           <div id="tp_status_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-top:8px;min-height:14px;"></div>
@@ -4418,11 +4415,9 @@ function renderTable(){
                   style="width:150px;border:1px solid #34c75960;border-radius:8px;
                          padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
-              <button class="btn"
-                style="background:#34c759;color:#fff;padding:7px 16px;font-size:13px;"
-                onclick="confirmEditCash('${a.id}')">✓ 수정저장</button>
+              <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="confirmEditCash('${a.id}')">저장</button>
               <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-                onclick="closeTradePanel()">✕ 닫기</button>
+                onclick="closeTradePanel()">닫기</button>
             </div>
           </td>
         </tr>`;
@@ -4550,11 +4545,9 @@ function renderTable(){
                          border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
               </label>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="btn"
-                  style="background:#34c759;color:#fff;padding:7px 16px;font-size:13px;box-shadow:0 2px 8px #34c75930;"
-                  onclick="confirmSaveEdit('${a.id}')">✓ 수정저장</button>
+                <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="confirmSaveEdit('${a.id}')">저장</button>
                 <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-                  onclick="closeTradePanel()">✕ 닫기</button>
+                  onclick="closeTradePanel()">닫기</button>
               </div>
             </div>
           </td>
@@ -4632,23 +4625,23 @@ function confirmTrade(id, mode){
 
   if(mode==='buy'){
     const newAvg = Math.round(((a.avgPrice*a.quantity)+(price*qty))/(a.quantity+qty));
-    titleEl.innerHTML = `<span style="color:#007aff">+ 매수 확인</span>`;
+    titleEl.innerHTML = `<span style="color:${TONE_BUY}">+ 매수 확인</span>`;
     detailEl.innerHTML = `
       <b>${a.name}</b><br>
       ${qty.toLocaleString()}주 × ${sym}${price.toLocaleString()}<br>
       총 <b>${sym}${totalAmt.toLocaleString()}</b><br>
       <span style="color:var(--color-tertiary)">→ 총 ${(a.quantity+qty).toLocaleString()}주 · 평균 ${sym}${newAvg.toLocaleString()}</span>`;
-    confirmBtn.style.background = '#007aff';
+    setConfirmTone(confirmBtn, TONE_BUY);
     confirmBtn.textContent = '매수 확인';
   } else {
     const pnl = Math.round((price - a.avgPrice) * qty);
-    titleEl.innerHTML = `<span style="color:var(--color-up)">− 매도 확인</span>`;
+    titleEl.innerHTML = `<span style="color:${TONE_SELL}">− 매도 확인</span>`;
     detailEl.innerHTML = `
       <b>${a.name}</b><br>
       ${qty.toLocaleString()}주 × ${sym}${price.toLocaleString()}<br>
       총 <b>${sym}${totalAmt.toLocaleString()}</b><br>
       <span style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">실현손익 ${pnl>=0?'+':''}${sym}${Math.abs(pnl).toLocaleString()}</span>`;
-    confirmBtn.style.background = 'var(--color-up)';
+    setConfirmTone(confirmBtn, TONE_SELL);
     confirmBtn.textContent = '매도 확인';
   }
   document.getElementById('tc_reason_wrap').style.display='block';
@@ -4656,6 +4649,12 @@ function confirmTrade(id, mode){
   document.getElementById('tradeConfirmModal').classList.add('open');
 }
 
+// 확인 모달 버튼은 원색 채움 대신 틴트 캡슐(색 14% 배경 + 같은 색 글자) — 모드별 색만 바꾼다
+const TONE_BUY = '#ff3b30', TONE_SELL = '#007aff';   // 앱 전체 규칙: 매수=빨강 / 매도=파랑
+function setConfirmTone(btn, color){
+  btn.style.background = `color-mix(in srgb, ${color} 14%, transparent)`;
+  btn.style.color = color;
+}
 function closeTradeConfirm(){
   document.getElementById('tradeConfirmModal').classList.remove('open');
   document.getElementById('tc_reason_wrap').style.display='none';
@@ -4927,7 +4926,7 @@ function confirmDelete(id, name){
   detailEl.innerHTML = `
     <b>${name}</b> 종목을 삭제할까요?<br>
     <span style="color:var(--color-tertiary);font-size:11px;">삭제 후 복구가 어렵습니다.</span>`;
-  confirmBtn.style.background = 'var(--color-up)';
+  setConfirmTone(confirmBtn, 'var(--color-up)');
   confirmBtn.textContent = '삭제 확인';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -4987,7 +4986,7 @@ function confirmSaveEdit(id){
     계좌유형: ${acctTypeChanged?`${ACCTTYPE_LABELS[a.acctType]||a.acctType} → <b>${ACCTTYPE_LABELS[acctType]||acctType}</b>`:'변경없음'}<br>
     자산유형: ${assetTypeChanged?`${a.assetType||'없음'} → <b>${assetType||'없음'}</b>`:'변경없음'}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">위 내용으로 저장하시겠습니까?</span>`;
-  confirmBtn.style.background = '#34c759';
+  setConfirmTone(confirmBtn, '#34c759');
   confirmBtn.textContent = '저장 확인';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -5406,8 +5405,15 @@ function resetBuyForm(){
   toggleBondFields();
 }
 // 확정금리 채권 체크박스 토글 — 켜면 수량/단가 입력을 채권 전용 필드(원금·금리·발행/만기일)로 교체
+function toggleBondSwitch(){
+  const cb = document.getElementById('af_bond_toggle');
+  cb.checked = !cb.checked;
+  toggleBondFields();
+}
 function toggleBondFields(){
   const on = document.getElementById('af_bond_toggle').checked;
+  const sw = document.getElementById('af_bond_sw');
+  sw.classList.toggle('on', on); sw.setAttribute('aria-checked', on ? 'true' : 'false');
   document.getElementById('af_bond_fields').style.display = on ? 'flex' : 'none';
   document.getElementById('af_qty_label').style.display = on ? 'none' : 'inline-block';
   document.getElementById('af_price_label').style.display = on ? 'none' : 'inline-block';
@@ -5436,7 +5442,7 @@ function readSelectOrCustom(selectId, customInputId, isAcctType){
       if(byLabel) return byLabel;
       if(LEGACY_ACCTTYPE_LABELS[v]) return LEGACY_ACCTTYPE_LABELS[v];
       if(RESERVED_ACCTTYPE_KEYS.includes(v.toLowerCase()) || v === ACCTTYPE_LABELS.cash){
-        alert(`"${v}"는 시스템 예약어와 겹쳐 계좌유형명으로 쓸 수 없습니다. 다른 이름을 입력해 주세요.`);
+        iosAlert(`"${v}"는 시스템 예약어와 겹쳐 계좌유형명으로 쓸 수 없어요. 다른 이름을 입력해 주세요.`);
         return null;
       }
     }
@@ -5516,7 +5522,7 @@ function addAsset(){
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
-  titleEl.innerHTML = `<span style="color:#007aff">+ 매수 확인</span>`;
+  titleEl.innerHTML = `<span style="color:${TONE_BUY}">+ 매수 확인</span>`;
   detailEl.innerHTML = isBond ? `
     <b>${name}</b><br>
     매입원금 <b>${sym}${Math.round(price).toLocaleString()}</b> · 표면 ${maskAmt((bondFields.bondCouponRate*100).toFixed(3)+'%')} + 가산 ${maskAmt((bondFields.bondSpreadRate*100).toFixed(3)+'%')}<br>
@@ -5527,7 +5533,7 @@ function addAsset(){
     ${existing
       ? `<span style="color:var(--color-tertiary)">→ 기존 보유 합산: 총 ${totalQty.toLocaleString()}주 · 평균 ${sym}${newAvg.toLocaleString()}</span>`
       : `<span style="color:var(--color-tertiary)">신규 종목 추가</span>`}`;
-  confirmBtn.style.background = '#007aff';
+  setConfirmTone(confirmBtn, TONE_BUY);
   confirmBtn.textContent = '매수 확인';
   document.getElementById('tc_reason_wrap').style.display='block';
   document.getElementById('tc_reason').value=document.getElementById('af_reason').value.trim();
@@ -5558,14 +5564,14 @@ function sellAsset(){
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
-  titleEl.innerHTML = `<span style="color:var(--color-up)">− 매도 확인</span>`;
+  titleEl.innerHTML = `<span style="color:${TONE_SELL}">− 매도 확인</span>`;
   detailEl.innerHTML = `
     <b>${a.name}</b><br>
     ${sellQty.toLocaleString()}주 × ${sym}${sellPrice.toLocaleString()}<br>
     총 <b>${sym}${Math.round(sellPrice*sellQty).toLocaleString()}</b><br>
     실현손익 <b style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">${pnl>=0?'+':''}${sym}${Math.abs(pnl).toLocaleString()}</b><br>
     <span style="color:var(--color-tertiary)">잔여 ${(a.quantity-sellQty).toLocaleString()}주</span>`;
-  confirmBtn.style.background = 'var(--color-up)';
+  setConfirmTone(confirmBtn, TONE_SELL);
   confirmBtn.textContent = '매도 확인';
   document.getElementById('tc_reason_wrap').style.display='block';
   document.getElementById('tc_reason').value=document.getElementById('sf_reason').value.trim();
@@ -5634,7 +5640,7 @@ function confirmEditCash(id){
     ${acctTypeChanged?`계좌유형: ${ACCTTYPE_LABELS[a.cashAcctType]||a.cashAcctType||'없음'} → <b>${ACCTTYPE_LABELS[cashAcctTypeVal]||cashAcctTypeVal||'없음'}</b><br>`:''}
     ${assetTypeChanged?`자산유형: ${a.assetType||'없음'} → <b>${assetType||'없음'}</b><br>`:''}
     <span style="color:var(--color-tertiary);font-size:11px;">저장 후 잔액: ${sym}${newAmt.toLocaleString()}</span>`;
-  confirmBtn.style.background=modeColors[mode];
+  setConfirmTone(confirmBtn, modeColors[mode]);
   confirmBtn.textContent='확인';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -5722,7 +5728,7 @@ function addCash(){
     <b>${name}</b> (${cur})${market?` · ${MARKET_LABELS[market]||market}`:''}${acct?` · ${COMPANY_LABELS[acct]||acct}`:''}${cashAcctTypeVal2?` · ${ACCTTYPE_LABELS[cashAcctTypeVal2]||cashAcctTypeVal2}`:''}${assetType?` · ${assetType}`:''}<br>
     ${changeStr}<br>
     <span style="color:var(--color-tertiary);font-size:11px;">저장 후 잔액: ${sym}${newAmount.toLocaleString()}</span>`;
-  confirmBtn.style.background = modeColors[cashMode];
+  setConfirmTone(confirmBtn, modeColors[cashMode]);
   confirmBtn.textContent = '확인';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -5924,11 +5930,9 @@ function renderPrincipalLedgerEditForm(r){
           </select>
         </label>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn"
-            style="background:#34c759;color:#fff;padding:7px 16px;font-size:13px;box-shadow:0 2px 8px #34c75930;"
-            onclick="savePrincipalLedgerEdit('${r.id}')">✓ 수정저장</button>
+          <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="savePrincipalLedgerEdit('${r.id}')">저장</button>
           <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-            onclick="closePrincipalLedgerEdit()">✕ 닫기</button>
+            onclick="closePrincipalLedgerEdit()">닫기</button>
         </div>
       </div>
     </td>
@@ -5952,8 +5956,8 @@ function savePrincipalLedgerEdit(id){
   const amount = parseFloat(document.getElementById(`ple_amount_${id}`).value);
   const cur    = document.getElementById(`ple_cur_${id}`).value || 'KRW';
 
-  if(!dateV){ alert('날짜를 입력해 주세요.'); return; }
-  if(isNaN(amount)||amount<=0){ alert('금액을 입력해 주세요.'); return; }
+  if(!dateV){ fieldError(`ple_date_${id}`,'날짜를 입력해 주세요.'); return; }
+  if(isNaN(amount)||amount<=0){ fieldError(`ple_amount_${id}`,'금액을 입력해 주세요.'); return; }
 
   r.at = new Date(dateV+'T00:00:00').getTime();
   r.type = type;
@@ -5997,8 +6001,8 @@ function addPrincipalLedgerEntry(){
   drawPrincipalVsValueChart();
 }
 
-function deletePrincipalLedgerEntry(id){
-  if(!confirm('이 원금 기록을 삭제할까요?')) return;
+async function deletePrincipalLedgerEntry(id){
+  if(!await iosConfirm({title:'원금 기록 삭제', message:'이 원금 기록을 삭제할까요?', okText:'삭제', destructive:true})) return;
   saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
   renderPrincipalLedger();
   renderMonthlyTable();
@@ -6645,8 +6649,8 @@ function saveDividendEntryEdit(id){
   const dateV  = document.getElementById(`de_date_${id}`).value;
   const name   = document.getElementById(`de_name_${id}`).value.trim();
   const amount = parseFloat(document.getElementById(`de_amount_${id}`).value);
-  if(!name){ alert('종목/배당원천을 입력해 주세요.'); return; }
-  if(isNaN(amount) || amount<=0){ alert('금액을 입력해 주세요.'); return; }
+  if(!name){ fieldError(`de_name_${id}`,'종목/배당원천을 입력해 주세요.'); return; }
+  if(isNaN(amount) || amount<=0){ fieldError(`de_amount_${id}`,'금액을 입력해 주세요.'); return; }
   if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
   r.name = name;
   r.totalKRW = Math.round(amount);
@@ -6655,8 +6659,8 @@ function saveDividendEntryEdit(id){
   editingDividendId = null;
   renderAllDividendViews();
 }
-function deleteDividendEntry(id){
-  if(!confirm('이 배당 기록을 삭제할까요?')) return;
+async function deleteDividendEntry(id){
+  if(!await iosConfirm({title:'배당 기록 삭제', message:'이 배당 기록을 삭제할까요?', okText:'삭제', destructive:true})) return;
   saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
   renderAllDividendViews();
 }
@@ -6682,8 +6686,8 @@ function renderDividendEntryRow(r){
           style="width:120px;border:1px solid #ff950060;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
       </label>
       <div style="display:flex;gap:6px;">
-        <button class="btn" style="background:#ff9500;color:#fff;padding:7px 14px;font-size:13px;" onclick="saveDividendEntryEdit('${r.id}')">✓ 저장</button>
-        <button class="btn btn-ghost" style="padding:7px 10px;font-size:13px;" onclick="toggleDividendEntryEdit('${r.id}')">✕ 취소</button>
+        <button class="btn btn-green" style="padding:7px 14px;font-size:13px;" onclick="saveDividendEntryEdit('${r.id}')">저장</button>
+        <button class="btn btn-ghost" style="padding:7px 10px;font-size:13px;" onclick="toggleDividendEntryEdit('${r.id}')">취소</button>
       </div>
     </div>`;
   }
@@ -9784,7 +9788,7 @@ function restoreFromFile(event){
   const file = event.target.files[0];
   if(!file){ return; }
   const reader = new FileReader();
-  reader.onload = (e)=>{
+  reader.onload = async (e)=>{
     try{
       let data;
       try{ data = JSON.parse(e.target.result); }catch(_){ throw new Error('올바른 JSON 파일이 아닙니다.'); }
@@ -9797,7 +9801,12 @@ function restoreFromFile(event){
         retirementFields: data.retirement ? Object.keys(data.retirement).length : 0
       };
       const noRetirementNote = data.retirement ? '' : '\n\n※ 이 백업 파일에는 현금흐름 입력값이 없어 현재 기기의 현금흐름 값은 그대로 유지됩니다.';
-      if(!confirm(`백업 파일(${file.name})로 복원하시겠습니까?\n\n현재: ${backupCountsText(cur)}\n백업: ${backupCountsText(inc)}\n\n현재 데이터는 덮어씌워지며, 덮어쓰기 전에 현재 데이터를 '복원전' 파일로 먼저 자동 다운로드합니다.${noRetirementNote}`)){
+      if(!await iosConfirm({title:'백업 복원', message:`${file.name}
+
+현재: ${backupCountsText(cur)}
+백업: ${backupCountsText(inc)}
+
+현재 데이터는 덮어씌워지며, 덮어쓰기 전에 현재 데이터를 '복원전' 파일로 먼저 자동 다운로드해요.${noRetirementNote}`, okText:'복원', destructive:true})){
         statusEl.textContent = '';
         return;
       }

@@ -27,6 +27,8 @@ description: 이 저장소(포트폴리오·현금흐름·홈)의 UI를 만들�
 - 부가 정보·선택 목록은 **팝오버/시트**(absolute, 그래프·본문을 밀어내지 않음, 바깥 탭·ESC로 닫힘)를 우선한다. 화면을 상시 차지하는 패널은 지양.
 - 눌림 피드백은 `shared/icons.js`가 자동으로 준다(0.95배 + 밝기). 선택 상태가 바뀌는 컨트롤은 `PRESS_SKIP`에 넣는다.
 
+- **알림창은 `shared/dialog.js`**: `alert/confirm` 대신 `await iosConfirm({..., destructive})`/`iosAlert()`, 입력 누락은 `fieldError(input,msg)`. 매수=빨강·매도=파랑 틴트, 확인 모달은 `setConfirmTone()`. (세부: DESIGN_GUIDELINES 15절)
+
 ## 4. 아이콘·글자
 - **이모지 금지** — `shared/icons.js`의 SF Symbols식 라인 SVG(`currentColor`, 1.15em). 새 아이콘은 그 파일 `MAP`/`SYMBOLS`에 추가.
 - 글꼴 Pretendard. 크기 위계: 라벨 10~11px/600, 본문 12~14px, 강조 수치 13~17px/700~800. 한 화면에서 위계를 3단계 이상 늘리지 않는다.
