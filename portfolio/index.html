@@ -925,8 +925,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 .cmp-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:24px;
   text-align:center;font-size:13px;color:var(--color-tertiary);background:var(--color-card);}
 .cmp-msg b{font-size:14px;color:var(--color-secondary);font-weight:600;}
-.cmp-dhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin-bottom:10px;}
-.cmp-dname{font-size:15px;font-weight:700;min-width:0;}
+.cmp-dhead{display:flex;align-items:baseline;gap:8px 12px;flex-wrap:wrap;margin-bottom:10px;}
 .cmp-dsum{font-size:12px;color:var(--color-secondary);display:flex;gap:4px 12px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
 .cmp-dsum b{color:var(--color-text);font-weight:600;}
 .stock-dtools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
@@ -992,8 +991,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <!-- 변화추이 (트리맵): 종목 트리맵만 표시 (요약카드는 비중현황 탭 트리맵 뷰로 이동) -->
 <div class="subpage" data-sub="summary" id="qvSubpage">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
-      <div class="section-label" style="margin:0">종목 트리맵</div>
+    <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="qvModeTabs">
           <button data-mode="market" class="active" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
@@ -1051,8 +1049,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 </div>
 <div id="snapHistWrap" style="display:none;">
   <div class="card" style="margin-top:10px;">
-    <div class="snap-header">
-      <div class="section-label" style="margin:0">스냅샷 이력</div>
+    <div class="snap-header" style="justify-content:flex-end;">
       <button class="btn btn-ghost" onclick="clearSnaps()">이력 초기화</button>
     </div>
     <!-- iOS 목록형: 날짜별 섹션 머리말 + 한 행에 시각·총 평가금액·전 대비·변화율, 열 정렬·옅은 헤어라인 -->
@@ -1140,14 +1137,13 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
   </div>
   </div>
   <div id="allocTreemapView" style="display:none;">
-    <div class="section-label" style="margin:6px 0 10px;">자산군 분포</div>
     <div class="dist-top-grid">
       <div class="dist-cell">
-        <div class="mt-label">① 투자시장 분포</div>
+        <div class="mt-label">① 투자시장</div>
         <div class="dist-canvas-wrap"><canvas id="distMarketCanvas" height="220"></canvas></div>
       </div>
       <div class="dist-cell">
-        <div class="mt-label">② 자산유형 분포</div>
+        <div class="mt-label">② 자산유형</div>
         <div class="dist-canvas-wrap"><canvas id="distAssetTypeCanvas" height="220"></canvas></div>
       </div>
     </div>
@@ -1180,6 +1176,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <select id="assetFilterCompany" onchange="setAssetFilter('company', this.value)"><option value="">금융회사 전체</option></select>
     <select id="assetFilterAcctType" onchange="setAssetFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
     <select id="assetFilterAssetType" onchange="setAssetFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
+    <button class="btn btn-ghost" id="sigMatchBtn" onclick="openSigMatch()" title="보유 종목이 매매전략의 어떤 종목과 연결되는지 확인">전략 매칭</button>
   </div>
   <div class="tbl-wrap">
     <table class="table-fit">
@@ -1223,8 +1220,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 <section class="page" id="page_tradelog">
 <div class="card">
-  <div class="snap-header">
-    <div class="section-label" style="margin:0">매수/매도 이력</div>
+  <div class="snap-header" style="justify-content:flex-end;">
     <button class="btn btn-ghost" onclick="clearTradeLog()">이력 초기화</button>
   </div>
   <div class="filter-bar">
@@ -1267,7 +1263,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <div class="subpage" data-sub="monthly_table">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
-      <div class="section-label" style="margin:0" id="snapPerfLabel">스냅샷 기반 자산 추이 — 월별</div>
+      <div class="section-label" style="margin:0" id="snapPerfLabel">월별</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn-icon" id="monthlyPerfGranBtn" onclick="toggleMonthlyPerfGranularity()"
           style="border:1px solid var(--color-border);border-radius:8px;">📅 연도별로 보기</button>
@@ -1296,7 +1292,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <div class="subpage" data-sub="yearly">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
-      <div class="section-label" style="margin:0" id="yearlyReturnsLabel">매매이력 기반 손익분석 — 연도별</div>
+      <div class="section-label" style="margin:0" id="yearlyReturnsLabel">연도별</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn-icon" id="yearlyReturnsGranBtn" onclick="toggleTradeReturnsGranularity()"
           style="border:1px solid var(--color-border);border-radius:8px;">🗓 월별로 보기</button>
@@ -1321,8 +1317,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 </div>
 <div class="subpage active" data-sub="monthly_chart">
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-      <div class="section-label" style="margin:0">자산가치 vs 투입원금 추이</div>
+    <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;">
       <div class="period-tabs" id="monthlyChartPeriodTabs">
         <button data-p="1D" onclick="setMonthlyChartPeriod('1D')">1D</button>
         <button data-p="5D" onclick="setMonthlyChartPeriod('5D')">5D</button>
@@ -1347,8 +1342,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 </div>
 <div class="subpage" data-sub="principal">
   <div class="card">
-    <div class="section-label" style="margin:0">원금 기록장</div>
-    <div class="tgl-banner-row" style="margin:10px 0 0;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="principalAddWrap" onclick="toggleBanner(this)">원금 입출금 추가<span class="sw"></span></button></div>
+    <div class="tgl-banner-row" style="margin:0;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="principalAddWrap" onclick="toggleBanner(this)">원금 입출금 추가<span class="sw"></span></button></div>
     <div id="principalAddWrap" style="display:none;margin:0 0 14px;">
       <div class="notice" style="margin:10px 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다.</div>
       <div class="fm">
@@ -1392,7 +1386,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 </nav>
 <div class="subpage active" data-sub="monthly">
   <div class="card">
-    <div class="section-label">월별 배당 집계</div>
     <div class="vbar-scroll" style="margin-bottom:14px;">
       <div class="vbar-chart" id="divMonthlyBars"></div>
       <div class="vbar-xaxis" id="divMonthlyBarsAxis"></div>
@@ -1408,7 +1401,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 </div>
 <div class="subpage" data-sub="stock">
   <div class="card">
-    <div class="section-label">종목별 배당 집계</div>
     <div class="tbl-wrap">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">종목</th><th>지급 횟수</th><th>누적 배당금</th><th>다음 예상</th></tr></thead>
@@ -1422,7 +1414,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <div class="subpage" data-sub="calendar">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-      <div class="section-label" style="margin:0">월별 배당 캘린더 (<span id="divCalYear"></span>년)</div>
+      <div class="section-label" style="margin:0"><span id="divCalYear"></span>년</div>
       <button class="btn-icon" id="divCalViewBtn" onclick="toggleDivCalView()"
         style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
     </div>
@@ -1444,13 +1436,13 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 </nav>
 <div class="subpage active" data-sub="cgt">
   <div class="card">
-    <div class="section-label">해외주식 양도소득세 (<span id="cgtYear"></span>년 예상)</div>
+    <div class="section-label"><span id="cgtYear"></span>년 예상</div>
     <div id="capGainsTax"></div>
   </div>
 </div>
 <div class="subpage" data-sub="fit">
   <div class="card">
-    <div class="section-label">금융소득종합과세 임계값 (<span id="fitYear"></span>년)</div>
+    <div class="section-label"><span id="fitYear"></span>년</div>
     <div id="finIncomeThreshold"></div>
   </div>
 </div>
@@ -1487,7 +1479,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
     <!-- 백업 섹션 -->
     <div style="background:var(--color-surface);border-radius:12px;padding:14px;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📥 백업 (JSON 다운로드)</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📥 백업</div>
       <div style="font-size:11px;color:var(--color-secondary);margin-bottom:10px;line-height:1.5;">
         자산목록·환율·스냅샷·매매이력(배당/입출금 포함)·기타 금융소득·<b>현금흐름 대시보드 입력값</b>을 JSON 파일로 저장합니다. 수익률분석·배당금관리·세금관리는 이 데이터로부터 계산되므로 함께 백업됩니다. 다운로드 후 구글 드라이브에 수동 업로드하세요.
       </div>
@@ -1500,7 +1492,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
     <!-- 복원 섹션 -->
     <div style="background:var(--color-surface);border-radius:12px;padding:14px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📤 복원 (JSON 불러오기)</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📤 복원</div>
       <div style="font-size:11px;color:var(--color-secondary);margin-bottom:10px;line-height:1.5;">
         구글 드라이브에서 백업 파일을 선택하면 복원됩니다. 덮어쓰기 전에 현재 데이터를 「복원전」 파일로 먼저 내려받고, 복원 후 저장된 값이 파일과 같은지 검증 결과를 보여줍니다.
       </div>
@@ -1509,6 +1501,15 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     </div>
 
     <div id="sheetsStatus" style="font-size:12px;margin-top:10px;min-height:18px;text-align:center;"></div>
+  </div>
+</div>
+
+<!-- 전략 매칭 현황 -->
+<div class="modal-bg" id="sigMatchModal" onclick="if(event.target===this)closeSigMatch()">
+  <div class="modal-box" style="max-width:440px;position:relative;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:8px;">전략 매칭</div>
+    <button onclick="closeSigMatch()" aria-label="닫기" style="position:absolute;top:16px;right:16px;border:none;background:none;cursor:pointer;font-size:18px;color:var(--color-tertiary);">✕</button>
+    <div id="sigMatchBody" style="overflow-y:auto;min-height:0;"></div>
   </div>
 </div>
 
@@ -1664,7 +1665,7 @@ function fmBuildCash(){
     <div class="fm-sec">거래</div>
     <div class="fm-grid">
       <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금'],['div','배당']],'set',k=>'cf_mode_'+k,k=>`setCashMode('${k}')`)}</div>
-      ${fmField('잔액', fmInput('cf_amount',{type:'number',ph:'0',attrs:'min="0"'}), {id:'cf_amount_label'})}
+      ${fmField('금액', fmInput('cf_amount',{type:'number',ph:'0',attrs:'min="0"'}), {id:'cf_amount_label'})}
       <div id="cf_div_row" style="display:none;grid-column:span 12;">${fmField('배당 지급 종목', fmInput('cf_div_source',{ph:'예: SCHD'}), {opt:true, cls:'s6'})}</div>
     </div>
     <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addCash()">확인</button></div>`;
@@ -2381,7 +2382,6 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
   let headerBoxRight = PAD_L, headerBoxBottom = 0;
   {
     // 야후처럼 영어 기간 라벨("Past year" 등)을 쓴다 — 한글 라벨 대신.
-    const PERIOD_LABELS = {'1D':'Past day','5D':'Past 5 days','1M':'Past month','3M':'Past 3 months','6M':'Past 6 months','YTD':'Year to date','1Y':'Past year','3Y':'Past 3 years','5Y':'Past 5 years','10Y':'Past 10 years','ALL':'All time'};
     let x = PAD_L, row1Right = PAD_L;
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
     const priceText = unitPriceStr(curPrice!=null ? curPrice : baselineVal, currency);
@@ -2394,11 +2394,8 @@ function drawStockPriceChart(canvas, points, tradeEntries, tipElId, currency, pe
       const changeText = `${diff>=0?'+':'-'}${unitPriceStr(Math.abs(diff), currency)} (${maskAmt((pct>=0?'+':'')+pct.toFixed(1)+'%')})`;
       ctx.font = 'bold 12px Pretendard'; ctx.fillStyle = pct<0 ? DOWN_COLOR : UP_COLOR;
       ctx.fillText(changeText, x, 6);
-      x += ctx.measureText(changeText).width + 6;
-      const periodText = PERIOD_LABELS[period] || period;
-      ctx.font = '11px Pretendard'; ctx.fillStyle = '#8e8e93';
-      ctx.fillText(periodText, x, 7);
-      row1Right = x + ctx.measureText(periodText).width;
+      // 기간 이름("Past year" 등)은 바로 옆 기간 탭이 이미 보여주므로 쓰지 않는다
+      row1Right = x + ctx.measureText(changeText).width;
     }
     const fmtDate = ts => { const d=new Date(ts); return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`; };
     const dateRangeText = `${fmtDate(points[0].ts)} - ${fmtDate(points[points.length-1].ts)}, ${currency}`;
@@ -2663,6 +2660,7 @@ const STOCK_CHART_PERIODS = ['1D','5D','1M','3M','6M','YTD','1Y','3Y','5Y','10Y'
 let treemapForcedChartId = null;
 // 종목 차트의 "트리맵으로 가기"로 변화추이(트리맵)에 돌아왔을 때 그 종목 셀을 강조하기 위한 id(그 화면을 벗어나면 해제)
 let qvHighlightId = null;
+let qvTmSel = null;   // 변화추이 트리맵에서 선택(1탭)된 종목 id — 한 번 더 누르면 상세
 // 종목 상세로 들어온 출발 화면 — {type:'alloc', view, scrollY, sel}(비중현황) | null(변화 추이 트리맵·보유 종목 표 → 기본은 변화 추이).
 // "트리맵으로 가기"가 이 값을 보고 돌아갈 곳을 정한다. 종목 상세를 닫는 모든 경로는 closeStockDetail()로 함께 비운다.
 let stockDetailOrigin = null;
@@ -3413,11 +3411,10 @@ function deleteSoldHistory(id){
   const dtStr = `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
   titleEl.innerHTML = `<span style="color:var(--color-up)">🗑 매매 이력 삭제</span>`;
   detailEl.innerHTML = `${dtStr} · <b>${r.name}</b> (${r.type==='buy'?'매수':'매도'})<br>
-    ${maskAmt(sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString())}<br>
-    <span style="color:var(--color-tertiary);font-size:11px;">이 매매 이력을 삭제할까요?</span>`;
+    ${maskAmt(sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString())}`;
   document.getElementById('tc_reason_wrap').style.display='none';
   setConfirmTone(confirmBtn, 'var(--color-up)');
-  confirmBtn.textContent = '삭제 확인';
+  confirmBtn.textContent = '삭제';
   document.getElementById('tradeConfirmModal').classList.add('open');
 }
 async function clearTradeLog(){
@@ -3796,7 +3793,7 @@ function renderTradeLogEditForm(r, colspan){
   const id = r.id;
   return `<tr class="tr-full fm-row"><td colspan="${colspan}" onclick="event.stopPropagation()">
     <div class="fm">
-      <div class="fm-h"><b>매매 이력 수정</b><span>${r.name}</span></div>
+      <div class="fm-h"><b>매매 이력 수정</b></div>
       <div class="fm-sec">거래</div>
       <div class="fm-grid">
         ${fmField('날짜', fmInput(`tle_date_${id}`,{type:'date',value:dateVal}))}
@@ -3832,9 +3829,9 @@ function deleteSnap(snapKey){
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
   titleEl.innerHTML = `<span style="color:var(--color-up)">🗑 스냅샷 삭제</span>`;
-  detailEl.innerHTML = `${new Date(s.timestamp).toLocaleString('ko-KR')}<br><b>${fmt(s.totalValue)}</b><br><span style="color:var(--color-tertiary);font-size:11px;">이 스냅샷을 삭제할까요?</span>`;
+  detailEl.innerHTML = `${new Date(s.timestamp).toLocaleString('ko-KR')}<br><b>${fmt(s.totalValue)}</b>`;
   setConfirmTone(confirmBtn, 'var(--color-up)');
-  confirmBtn.textContent = '삭제 확인';
+  confirmBtn.textContent = '삭제';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
 }
@@ -3845,9 +3842,9 @@ function clearSnaps(){
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
   titleEl.innerHTML = `<span style="color:var(--color-up)">🗑 이력 초기화</span>`;
-  detailEl.innerHTML = `스냅샷 이력 <b>전체</b>를 삭제할까요?<br><span style="color:var(--color-tertiary);font-size:11px;">삭제 후 복구가 불가능합니다.</span>`;
+  detailEl.innerHTML = `스냅샷 이력 <b>전체</b><br><span style="color:var(--color-tertiary);font-size:11px;">삭제 후 복구가 불가능합니다.</span>`;
   setConfirmTone(confirmBtn, 'var(--color-up)');
-  confirmBtn.textContent = '전체 삭제 확인';
+  confirmBtn.textContent = '전체 삭제';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
 }
@@ -4039,7 +4036,7 @@ function renderTable(){
     let rows=`<tr style="cursor:pointer;" ondblclick="toggleQuickTrade('${a.id}')">
       <td class="name-cell">
         <div class="name-main">${a.name}</div>
-        <div class="name-sub">${a.ticker==='—'?'현금':a.ticker}</div>
+        <div class="name-sub">${a.ticker==='—'?'':a.ticker}</div>
       </td>
       <td class="fold-hide">${a.market
         ? `<span class="acctType-badge" style="background:${MARKET_COLS[a.market]||'#8e8e93'}20;color:${MARKET_COLS[a.market]||'#8e8e93'}">${MARKET_LABELS[a.market]||a.market}</span>`
@@ -4047,8 +4044,9 @@ function renderTable(){
       <td class="fold-hide">${a.company?`<span class="acctType-badge" style="background:${sac}20;color:${sac}">${COMPANY_LABELS[a.company]||a.company}</span>`:na}</td>
       <td class="fold-hide">${isCash && a.cashAcctType
         ? `<span class="acctType-badge" style="background:${ACCTTYPE_COLS[a.cashAcctType]||'#8e8e93'}20;color:${ACCTTYPE_COLS[a.cashAcctType]||'#8e8e93'}">${ACCTTYPE_LABELS[a.cashAcctType]||a.cashAcctType}</span>`
+        : isCash ? na   // 계좌 미지정 현금은 이름이 이미 "현금" — 배지로 다시 쓰지 않는다
         : `<span class="acctType-badge" style="background:${cc}20;color:${cc}">${acctTypeBadge(a)}</span>`}</td>
-      <td class="fold-hide">${(a.assetType||(isCash?'현금':''))?`<span class="acctType-badge" style="background:${ASSETTYPE_COLS[a.assetType||'현금']||'#8e8e93'}20;color:${ASSETTYPE_COLS[a.assetType||'현금']||'#8e8e93'}">${a.assetType||'현금'}</span>`:na}</td>
+      <td class="fold-hide">${a.assetType?`<span class="acctType-badge" style="background:${ASSETTYPE_COLS[a.assetType]||'#8e8e93'}20;color:${ASSETTYPE_COLS[a.assetType]||'#8e8e93'}">${a.assetType}</span>`:na}</td>
       <td style="font-size:11px;${a.priceStale?'opacity:.5;':''}" ${a.priceStale?'title="최근 시세 갱신 실패 — 이전 값 표시 중"':''}>
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
@@ -4075,7 +4073,7 @@ function renderTable(){
     if(quickTradeId===a.id){
       rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
         <div class="fm">
-          <div class="fm-h"><b>빠른 거래</b><span>${a.name} · 보유 ${maskAmt(a.quantity.toLocaleString()+'주')} · 평균 ${priceStr(a.avgPrice)}</span></div>
+          <div class="fm-h"><b>빠른 거래</b></div>
           <div class="fm-grid">
             ${fmField('수량', fmInput(`tp_qty_${a.id}`,{type:'number',ph:'0',attrs:'min="0"'}))}
             ${fmField(`단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.currentPrice}))}
@@ -4095,10 +4093,10 @@ function renderTable(){
         // ── 현금 전용: 잔액설정 / 입금 / 출금 ──
         const sym=CUR_SYM[a.currency];
         const cm=editCashModes[a.id]||'set';
-        const cmLabel={set:'잔액', in:'입금 금액', out:'출금 금액'}[cm];
+        const cmLabel='금액';   // 모드(잔액 설정/입금/출금)는 위 세그먼트 한 곳에서만 보여준다
         rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
           <div class="fm">
-            <div class="fm-h"><b>현금 수정</b><span>${a.name} · 현재 ${maskAmt(sym+a.avgPrice.toLocaleString())}</span></div>
+            <div class="fm-h"><b>현금 수정</b></div>
             <div class="fm-sec">분류</div>
             <div class="fm-grid">${fmClassFields({market:[`ep_market_${a.id}`,`ep_market_custom_${a.id}`],company:[`ep_company_${a.id}`,`ep_company_custom_${a.id}`],acct:[`ep_cashaccttype_${a.id}`,`ep_cashaccttype_custom_${a.id}`],asset:[`ep_assettype_${a.id}`,`ep_assettype_custom_${a.id}`]},
               {market:a.market,company:a.company,acct:a.cashAcctType,asset:a.assetType},{blank:BL_NONE})}</div>
@@ -4131,7 +4129,7 @@ function renderTable(){
             </div>`;
         rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
           <div class="fm">
-            <div class="fm-h"><b>종목 수정</b><span>${a.name}</span></div>
+            <div class="fm-h"><b>종목 수정</b></div>
             ${holdFields}
             <div class="fm-sec">분류</div>
             <div class="fm-grid">${fmClassFields({market:[`tp_market_${a.id}`,`tp_market_custom_${a.id}`],company:[`tp_company_${a.id}`,`tp_company_custom_${a.id}`],acct:[`tp_accttype_${a.id}`,`tp_accttype_custom_${a.id}`],asset:[`tp_assettype_${a.id}`,`tp_assettype_custom_${a.id}`]},
@@ -4162,22 +4160,23 @@ function renderTable(){
 /* 종목 상세 패널(제목·기간 탭·가격 차트·지표·매매 이력). inCmp=true면 비교 화면 왼쪽 칸용 — 보유 요약을 위에 두고,
    표 전용 버튼(트리맵으로 가기·세부 정보 닫기·매매전략)은 뺀다. id는 같아서 loadAndDrawStockChart가 그대로 그린다. */
 function stockDetailPanelHtml(a, SL, inCmp){
-  const legend = `<span style="font-weight:400;">(<span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span>)</span>`;
+  const legend = `<span style="font-weight:400;"><span style="color:#ff3b30;font-weight:700;">매수 ▲</span> <span style="color:#0a84ff;font-weight:700;">매도 ▼</span></span>`;
   const tabs = `<div class="period-tabs" id="stockChartPeriodTabs_${a.id}">${renderStockChartPeriodTabs(a.id)}</div>`;
   const rt = a.avgPrice>0 ? (a.currentPrice-a.avgPrice)/a.avgPrice*100 : null;
   // 돌아가기 버튼: 펼침·90도는 제목 줄 오른쪽, 접힘은 제목이 길어 잘리므로 아래 도구 줄(매매전략 비교 옆) — CSS가 한쪽만 보인다
   const retBtn = `<button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">${stockDetailOrigin&&stockDetailOrigin.type==='alloc'?'← 비중현황으로 가기':'← 트리맵으로 가기'}</button>`;
+  // 종목 이름은 비교 화면 바(또는 표의 종목 행)에 이미 있으므로 여기서는 다시 쓰지 않는다
   const head = inCmp
-    ? `<div class="cmp-dhead"><div class="cmp-dname">${a.name}</div>
+    ? `<div class="cmp-dhead">
         <div class="cmp-dsum"><span>현재가 <b>${unitPriceStr(a.currentPrice||0, a.currency)}</b></span><span>평단 <b>${unitPriceStr(a.avgPrice||0, a.currency)}</b></span>${rt==null?'':`<span>수익률 <b style="color:${rt>=0?'var(--color-up)':'var(--color-down)'}">${fmtPct(rt)}</b></span>`}</div></div>
-       <div class="stock-dtools"><div style="font-size:12px;font-weight:700;">가격 추이 ${legend}</div>${tabs}</div>`
+       <div class="stock-dtools"><div style="font-size:12px;font-weight:700;">${legend}</div>${tabs}</div>`
     : `<div class="stock-dhead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
-            <div style="font-size:12px;font-weight:700;">📈 ${a.name} 가격 추이 ${legend}</div>
+            <div style="font-size:12px;font-weight:700;">가격 추이 ${legend}</div>
             ${retBtn}
           </div>
           <div class="stock-dtools">
             ${retBtn}
-            <button class="btn btn-green cmp-open-btn" id="cmpBtn_${a.id}" onclick="cmpOpen('${a.id}')" title="같은 종목의 매수·매도 전략과 나란히 비교 (S)">📈 매매전략 비교</button>
+            <button class="btn btn-green cmp-open-btn" id="cmpBtn_${a.id}" onclick="cmpOpen('${a.id}')" title="같은 종목의 매수·매도 전략과 나란히 비교 (S)">나란히 비교</button>
             ${tabs}
           </div>`;
   const memoHead = inCmp ? '메모' : `<div style="display:flex;justify-content:space-between;align-items:center;">
@@ -4229,24 +4228,24 @@ function confirmTrade(id, mode){
 
   if(mode==='buy'){
     const newAvg = Math.round(((a.avgPrice*a.quantity)+(price*qty))/(a.quantity+qty));
-    titleEl.innerHTML = `<span style="color:${TONE_BUY}">+ 매수 확인</span>`;
+    titleEl.innerHTML = `<span style="color:${TONE_BUY}">+ 매수</span>`;
     detailEl.innerHTML = `
       <b>${a.name}</b><br>
       ${qty.toLocaleString()}주 × ${sym}${price.toLocaleString()}<br>
       총 <b>${sym}${totalAmt.toLocaleString()}</b><br>
       <span style="color:var(--color-tertiary)">→ 총 ${(a.quantity+qty).toLocaleString()}주 · 평균 ${sym}${newAvg.toLocaleString()}</span>`;
     setConfirmTone(confirmBtn, TONE_BUY);
-    confirmBtn.textContent = '매수 확인';
+    confirmBtn.textContent = '확인';
   } else {
     const pnl = Math.round((price - a.avgPrice) * qty);
-    titleEl.innerHTML = `<span style="color:${TONE_SELL}">− 매도 확인</span>`;
+    titleEl.innerHTML = `<span style="color:${TONE_SELL}">− 매도</span>`;
     detailEl.innerHTML = `
       <b>${a.name}</b><br>
       ${qty.toLocaleString()}주 × ${sym}${price.toLocaleString()}<br>
       총 <b>${sym}${totalAmt.toLocaleString()}</b><br>
       <span style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">실현손익 ${pnl>=0?'+':''}${sym}${Math.abs(pnl).toLocaleString()}</span>`;
     setConfirmTone(confirmBtn, TONE_SELL);
-    confirmBtn.textContent = '매도 확인';
+    confirmBtn.textContent = '확인';
   }
   document.getElementById('tc_reason_wrap').style.display='block';
   document.getElementById('tc_reason').value='';
@@ -4528,10 +4527,10 @@ function confirmDelete(id, name){
   const confirmBtn = document.getElementById('tc_confirm');
   titleEl.innerHTML = `<span style="color:var(--color-up)">🗑 종목 삭제</span>`;
   detailEl.innerHTML = `
-    <b>${name}</b> 종목을 삭제할까요?<br>
+    <b>${name}</b><br>
     <span style="color:var(--color-tertiary);font-size:11px;">삭제 후 복구가 어렵습니다.</span>`;
   setConfirmTone(confirmBtn, 'var(--color-up)');
-  confirmBtn.textContent = '삭제 확인';
+  confirmBtn.textContent = '삭제';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
 }
@@ -4574,24 +4573,23 @@ function confirmSaveEdit(id){
   const titleEl   = document.getElementById('tc_title');
   const detailEl  = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
-  titleEl.innerHTML = `<span style="color:#34c759">✓ 수정 저장</span>`;
-  detailEl.innerHTML = a.isBond ? `
-    <b>${a.name}</b><br>
-    매입원금: ${sym}${bondFields.bondPrincipal.toLocaleString()} · 표면 ${maskAmt((bondFields.bondCouponRate*100).toFixed(3)+'%')} + 가산 ${maskAmt((bondFields.bondSpreadRate*100).toFixed(3)+'%')}<br>
-    투자시장: ${marketChanged?`${MARKET_LABELS[a.market]||a.market||'없음'} → <b>${MARKET_LABELS[market]||market||'없음'}</b>`:'변경없음'}<br>
-    금융회사: ${companyChanged?`${COMPANY_LABELS[a.company]||a.company||'없음'} → <b>${COMPANY_LABELS[company]||company||'없음'}</b>`:'변경없음'}<br>
-    계좌유형: ${acctTypeChanged?`${ACCTTYPE_LABELS[a.acctType]||a.acctType} → <b>${ACCTTYPE_LABELS[acctType]||acctType}</b>`:'변경없음'}<br>
-    <span style="color:var(--color-tertiary);font-size:11px;">위 내용으로 저장하시겠습니까?</span>` : `
-    <b>${a.name}</b><br>
-    수량: ${!isNaN(qty)?qty.toLocaleString():'변경없음'}<br>
-    평균단가: ${!isNaN(price)?sym+price.toLocaleString():'변경없음'}<br>
-    투자시장: ${marketChanged?`${MARKET_LABELS[a.market]||a.market||'없음'} → <b>${MARKET_LABELS[market]||market||'없음'}</b>`:'변경없음'}<br>
-    금융회사: ${companyChanged?`${COMPANY_LABELS[a.company]||a.company||'없음'} → <b>${COMPANY_LABELS[company]||company||'없음'}</b>`:'변경없음'}<br>
-    계좌유형: ${acctTypeChanged?`${ACCTTYPE_LABELS[a.acctType]||a.acctType} → <b>${ACCTTYPE_LABELS[acctType]||acctType}</b>`:'변경없음'}<br>
-    자산유형: ${assetTypeChanged?`${a.assetType||'없음'} → <b>${assetType||'없음'}</b>`:'변경없음'}<br>
-    <span style="color:var(--color-tertiary);font-size:11px;">위 내용으로 저장하시겠습니까?</span>`;
+  titleEl.innerHTML = `<span style="color:#34c759">수정 저장</span>`;
+  // 바뀌는 항목만 보여준다(안 바뀐 줄을 "변경없음"으로 나열하지 않는다)
+  const chg = (label, changed, from, to)=> changed ? `${label}: ${from} → <b>${to}</b>` : null;
+  const lines = (a.isBond ? [
+    `매입원금: ${sym}${bondFields.bondPrincipal.toLocaleString()} · 표면 ${maskAmt((bondFields.bondCouponRate*100).toFixed(3)+'%')} + 가산 ${maskAmt((bondFields.bondSpreadRate*100).toFixed(3)+'%')}`,
+  ] : [
+    !isNaN(qty) ? `수량: ${qty.toLocaleString()}` : null,
+    !isNaN(price) ? `평균단가: ${sym}${price.toLocaleString()}` : null,
+  ]).concat([
+    chg('투자시장', marketChanged, MARKET_LABELS[a.market]||a.market||'없음', MARKET_LABELS[market]||market||'없음'),
+    chg('금융회사', companyChanged, COMPANY_LABELS[a.company]||a.company||'없음', COMPANY_LABELS[company]||company||'없음'),
+    chg('계좌유형', acctTypeChanged, ACCTTYPE_LABELS[a.acctType]||a.acctType, ACCTTYPE_LABELS[acctType]||acctType),
+    a.isBond ? null : chg('자산유형', assetTypeChanged, a.assetType||'없음', assetType||'없음'),
+  ]).filter(Boolean);
+  detailEl.innerHTML = `<b>${a.name}</b><br>${lines.join('<br>')}`;
   setConfirmTone(confirmBtn, '#34c759');
-  confirmBtn.textContent = '저장 확인';
+  confirmBtn.textContent = '저장';
   document.getElementById('tc_reason_wrap').style.display='none';
   document.getElementById('tradeConfirmModal').classList.add('open');
 }
@@ -4635,7 +4633,7 @@ const PAGE_IDS = ['dashboard','portfolio','tradelog','returns','dividend','tax']
 const PAGE_RENDER_HOOKS = {};
 function switchPage(pageId){
   if(!PAGE_IDS.includes(pageId)) return;
-  if(pageId!=='dashboard') qvHighlightId = null;
+  if(pageId!=='dashboard'){ qvHighlightId = null; qvTmSel = null; }
   PAGE_IDS.forEach(id=>{
     const sec=document.getElementById('page_'+id);
     if(sec) sec.classList.toggle('active', id===pageId);
@@ -4668,7 +4666,7 @@ const SUBPAGE_RENDER_HOOKS = {};
 function switchSubPage(pageId, subId){
   const container=document.getElementById('page_'+pageId);
   if(!container) return;
-  if(pageId==='dashboard' && subId!=='summary') qvHighlightId = null; // 트리맵 종목 강조는 그 화면을 벗어나면 해제
+  if(pageId==='dashboard' && subId!=='summary'){ qvHighlightId = null; qvTmSel = null; } // 트리맵 종목 강조·선택은 그 화면을 벗어나면 해제
   container.querySelectorAll(':scope > .subpage').forEach(sec=>{
     sec.classList.toggle('active', sec.dataset.sub===subId);
   });
@@ -5120,7 +5118,7 @@ function addAsset(){
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
-  titleEl.innerHTML = `<span style="color:${TONE_BUY}">+ 매수 확인</span>`;
+  titleEl.innerHTML = `<span style="color:${TONE_BUY}">+ 매수</span>`;
   detailEl.innerHTML = isBond ? `
     <b>${name}</b><br>
     매입원금 <b>${sym}${Math.round(price).toLocaleString()}</b> · 표면 ${maskAmt((bondFields.bondCouponRate*100).toFixed(3)+'%')} + 가산 ${maskAmt((bondFields.bondSpreadRate*100).toFixed(3)+'%')}<br>
@@ -5132,7 +5130,7 @@ function addAsset(){
       ? `<span style="color:var(--color-tertiary)">→ 기존 보유 합산: 총 ${totalQty.toLocaleString()}주 · 평균 ${sym}${newAvg.toLocaleString()}</span>`
       : `<span style="color:var(--color-tertiary)">신규 종목 추가</span>`}`;
   setConfirmTone(confirmBtn, TONE_BUY);
-  confirmBtn.textContent = '매수 확인';
+  confirmBtn.textContent = '확인';
   document.getElementById('tc_reason_wrap').style.display='block';
   document.getElementById('tc_reason').value=document.getElementById('af_reason').value.trim();
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -5162,7 +5160,7 @@ function sellAsset(){
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
-  titleEl.innerHTML = `<span style="color:${TONE_SELL}">− 매도 확인</span>`;
+  titleEl.innerHTML = `<span style="color:${TONE_SELL}">− 매도</span>`;
   detailEl.innerHTML = `
     <b>${a.name}</b><br>
     ${sellQty.toLocaleString()}주 × ${sym}${sellPrice.toLocaleString()}<br>
@@ -5170,7 +5168,7 @@ function sellAsset(){
     실현손익 <b style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">${pnl>=0?'+':''}${sym}${Math.abs(pnl).toLocaleString()}</b><br>
     <span style="color:var(--color-tertiary)">잔여 ${(a.quantity-sellQty).toLocaleString()}주</span>`;
   setConfirmTone(confirmBtn, TONE_SELL);
-  confirmBtn.textContent = '매도 확인';
+  confirmBtn.textContent = '확인';
   document.getElementById('tc_reason_wrap').style.display='block';
   document.getElementById('tc_reason').value=document.getElementById('sf_reason').value.trim();
   document.getElementById('tradeConfirmModal').classList.add('open');
@@ -5180,7 +5178,7 @@ function sellAsset(){
 const editCashModes = {};
 function setEditCashMode(id, mode){
   editCashModes[id] = mode;
-  const labels = {set:'잔액', in:'입금 금액', out:'출금 금액'};
+  const labels = {set:'금액', in:'금액', out:'금액'};
   ['set','in','out'].forEach(k=>{
     const btn=document.getElementById(`ep_mode_${k}_${id}`);
     if(btn) btn.classList.toggle('active', k===mode);
@@ -5246,7 +5244,7 @@ function setCashMode(mode){
     out: document.getElementById('cf_mode_out'),
     div: document.getElementById('cf_mode_div'),
   };
-  const labels = {set:'잔액', in:'입금 금액', out:'출금 금액', div:'배당 수령액(실제 입금액)'};
+  const labels = {set:'금액', in:'금액', out:'금액', div:'금액'};
   Object.entries(btns).forEach(([k,btn])=>{ if(btn) btn.classList.toggle('active', k===mode); });
   const lbl = document.getElementById('cf_amount_label');
   if(lbl) lbl.childNodes[0].textContent = labels[mode];
@@ -5458,7 +5456,7 @@ function renderPrincipalLedger(){
       : `<span class="acctType-badge" style="background:#ff3b3020;color:var(--color-up);">출금</span>`;
     const mainRow = `<tr>
       <td style="text-align:left;font-size:12px;color:var(--color-tertiary);">${dtStr}</td>
-      <td style="text-align:left;font-size:12px;">${r.name||'현금'}</td>
+      <td style="text-align:left;font-size:12px;">${r.name && r.name!=='현금' ? r.name : ''}</td>
       <td style="text-align:center;">${badge}</td>
       <td class="${isIn?'up':'dn'}" style="font-weight:600;">${isIn?'+':'-'}${fmt(r.totalKRW||0)}</td>
       <td style="font-weight:700;">${fmt(running)}</td>
@@ -5479,7 +5477,7 @@ function renderPrincipalLedgerEditForm(r){
   const amountVal = r.currency==='KRW' ? (r.totalKRW||0) : Math.round((r.totalKRW||0)/fxRate);
   return `<tr class="tr-full fm-row"><td colspan="6" onclick="event.stopPropagation()">
     <div class="fm">
-      <div class="fm-h"><b>원금 기록 수정</b><span>날짜 · 구분 · 금액 · 통화</span></div>
+      <div class="fm-h"><b>원금 기록 수정</b></div>
       <div class="fm-grid">
         ${fmField('날짜', fmInput(`ple_date_${r.id}`,{type:'date',value:dateVal}))}
         ${fmField('구분', fmSelect(`ple_type_${r.id}`,[['deposit','입금'],['withdrawal','출금']],r.type,{custom:false}))}
@@ -5557,7 +5555,7 @@ function addPrincipalLedgerEntry(){
 }
 
 async function deletePrincipalLedgerEntry(id){
-  if(!await iosConfirm({title:'원금 기록 삭제', message:'이 원금 기록을 삭제할까요?', okText:'삭제', destructive:true})) return;
+  if(!await iosConfirm({title:'원금 기록 삭제', message:'삭제한 기록은 되돌릴 수 없어요.', okText:'삭제', destructive:true})) return;
   saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
   renderPrincipalLedger();
   renderMonthlyTable();
@@ -5716,7 +5714,7 @@ function renderMonthlyTable(){
   const labelEl = document.getElementById('snapPerfLabel');
   const periodHeaderEl = document.getElementById('monthlyPerfPeriodHeader');
   const granBtn = document.getElementById('monthlyPerfGranBtn');
-  if(labelEl) labelEl.textContent = `스냅샷 기반 자산 추이 — ${isYear?'연도별':'월별'}`;
+  if(labelEl) labelEl.textContent = isYear?'연도별':'월별';   // 서브탭 이름은 위 탭이 이미 보여준다
   if(periodHeaderEl) periodHeaderEl.textContent = isYear ? '연도' : '월';
   if(granBtn) granBtn.textContent = isYear ? '🗓 월별로 보기' : '📅 연도별로 보기';
 
@@ -6215,7 +6213,7 @@ function saveDividendEntryEdit(id){
   renderAllDividendViews();
 }
 async function deleteDividendEntry(id){
-  if(!await iosConfirm({title:'배당 기록 삭제', message:'이 배당 기록을 삭제할까요?', okText:'삭제', destructive:true})) return;
+  if(!await iosConfirm({title:'배당 기록 삭제', message:'삭제한 기록은 되돌릴 수 없어요.', okText:'삭제', destructive:true})) return;
   saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
   renderAllDividendViews();
 }
@@ -6375,7 +6373,7 @@ function renderDividendMonthly(){
   el.innerHTML = descKeys.map(key=>{
     const m = byMonth[key];
     const confirmedStr = m.confirmedSum ? `<span class="up" style="font-weight:600;">${fmt(m.confirmedSum)}</span>` : '—';
-    const projectedStr = m.projectedSum ? `<span class="dim">예상 +${fmt(m.projectedSum)}</span>` : '—';
+    const projectedStr = m.projectedSum ? `<span class="dim">+${fmt(m.projectedSum)}</span>` : '—';   // "예상"은 열 제목(예상 배당)이 이미 말한다
     const isOpen = divExpandedMonthKey===key;
     let rowHtml = `<tr style="cursor:pointer;" onclick="toggleDivMonthExpand('${key}')">
       <td style="text-align:left;font-weight:600;">${isOpen?'▾':'▸'} ${key}</td>
@@ -6406,7 +6404,7 @@ function renderDividendByStock(){
     const s = byName[name];
     const proj = projectNextDividend(s.events);
     const projStr = (proj && proj.nextAt>Date.now())
-      ? `<span class="dim">${new Date(proj.nextAt).toLocaleDateString('ko-KR')} 예상 ${fmt(proj.amount)}</span>`
+      ? `<span class="dim">${new Date(proj.nextAt).toLocaleDateString('ko-KR')} · ${fmt(proj.amount)}</span>`
       : '—';
     const isOpen = divExpandedStockName===name;
     let rowHtml = `<tr style="cursor:pointer;" onclick="toggleDivStockExpand('${name.replace(/'/g,"\\'")}')">
@@ -6567,7 +6565,7 @@ function renderYearlyReturns(){
   const labelEl = document.getElementById('yearlyReturnsLabel');
   const periodHeaderEl = document.getElementById('yearlyReturnsPeriodHeader');
   const granBtn = document.getElementById('yearlyReturnsGranBtn');
-  if(labelEl) labelEl.textContent = `매매이력 기반 손익분석 — ${isYear?'연도별':'월별'}`;
+  if(labelEl) labelEl.textContent = isYear?'연도별':'월별';
   if(periodHeaderEl) periodHeaderEl.textContent = isYear ? '연도' : '월';
   if(granBtn) granBtn.textContent = isYear ? '🗓 월별로 보기' : '📅 연도별로 보기';
 
@@ -7481,7 +7479,9 @@ function showTmBubble(canvas, box, lines, key, onTap){
   tmBubbleKey = key;
 }
 // 공용 트리맵 렌더러 — 비중현황/Quick View/글로벌시장 트리맵이 모두 이 함수를 호출
-function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highlightId){
+// opts.select: 비중현황 세부 트리맵과 같은 3단계 클릭 — 1탭=선택+말풍선, 선택 셀 재탭=상세, 말풍선 탭=선택 해제
+//   {sel:()=>선택 id, setSel:id=>…, redraw:()=>다시 그리기}
+function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highlightId, opts){
   const canvas = document.getElementById(canvasId);
   if(!canvas || canvas.offsetParent===null) return; // 숨겨진 상태면 스킵 — 다시 보일 때 해당 서브탭 훅이 재호출
   const wrap = canvas.parentElement;
@@ -7557,10 +7557,34 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
   });
 
   canvas.style.cursor='pointer';
-  canvas.onclick = (e)=>{
+  const hitAt = e=>{
     const rect = canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-    const hit = layout.find(c=>mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h);
+    return layout.find(c=>mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h);
+  };
+  if(opts && opts.select){
+    const bubbleOf = c=>{
+      const pct = maskAmt((c.rtn>=0?'+':'')+c.rtn.toFixed(1)+'%');
+      const pnl = c.pnl!==undefined ? ' '+(c.pnlParen ? `(${fmtCompactSigned(c.pnl)})` : fmtCompactSigned(c.pnl)) : '';
+      showTmBubble(canvas, c, [c.name, fmt(c.value), pct+pnl, '<span style="opacity:.7;font-size:11px;white-space:nowrap;">한 번 더 누르면 상세 · 이 창 누르면 해제</span>'], canvasId+'|'+c.id,
+        ()=>{ opts.setSel(null); opts.redraw(); });
+    };
+    const pick = c=>{ opts.setSel(c.id); opts.redraw(); bubbleOf(c); };
+    canvas.onclick = e=>{
+      const hit = hitAt(e);
+      if(!hit){ hideTmBubble(); return; }
+      if(hit.id===opts.sel() && (e.pointerType==='mouse' || tmBubbleKey===canvasId+'|'+hit.id)){
+        hideTmBubble(); opts.setSel(null);
+        if(typeof onCellClick==='function') onCellClick(hit.id);
+        return;
+      }
+      pick(hit);
+    };
+    canvas.onpointermove = e=>{ if(e.pointerType!=='mouse') return; const hit=hitAt(e); if(hit && hit.id!==opts.sel()) pick(hit); };
+    return;
+  }
+  canvas.onclick = (e)=>{
+    const hit = hitAt(e);
     if(!hit) return;
     // 내용이 잘린("…") 셀은 첫 클릭에 말풍선으로 전체 내용을 보여주고, 같은 셀을 다시 누르면 상세로 이동
     const key = canvasId+'|'+hit.name;
@@ -7622,13 +7646,13 @@ function returnToTreemap(assetId){
 // 자산 Quick View 트리맵 — 대시보드 기본값: 기간별 주가 변화율(market) × 1D
 let qvTreemapMode = 'market', qvTreemapPeriod = localStorage.getItem('qvTreemapPeriod') || '1D';
 function setQuickViewMode(mode){
-  qvTreemapMode = mode;
+  qvTreemapMode = mode; qvTmSel = null; hideTmBubble();
   syncQuickViewPeriodTabs();
   document.querySelectorAll('#qvModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
   drawQuickViewTreemap();
 }
 function setQuickViewPeriod(period){
-  qvTreemapPeriod = period;
+  qvTreemapPeriod = period; qvTmSel = null; hideTmBubble();
   localStorage.setItem('qvTreemapPeriod', period);
   document.querySelectorAll('#qvPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawQuickViewTreemap();
@@ -7648,7 +7672,10 @@ function drawQuickViewTreemap(){
   // 펼침 화면: 트리맵이 남는 화면 높이를 전부 쓴다(세로 스크롤 없음). 접힘(<600px)은 기존 280px
   const cv = document.getElementById('qvTreemapCanvas');
   const h = window.innerWidth < 600 ? 280 : Math.max(240, remainingHeight(cv, 31) || 280);
-  renderTreemapCanvas('qvTreemapCanvas', buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod), h, goToStockDetail, undefined, qvHighlightId);
+  const items = buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod);
+  if(qvTmSel && !items.some(i=>i.id===qvTmSel)) qvTmSel = null;
+  renderTreemapCanvas('qvTreemapCanvas', items, h, goToStockDetail, undefined, qvTmSel || qvHighlightId,
+    {select:true, sel:()=>qvTmSel, setSel:id=>{ qvTmSel=id; }, redraw:drawQuickViewTreemap});
 }
 // 스크롤 컨테이너(getScroller()) 안에서 el의 위쪽부터 화면 아래까지 남는 높이(스크롤 위치 불변). bottomGap = 카드 하단 패딩+여백
 function remainingHeight(el, bottomGap){
@@ -8641,7 +8668,7 @@ function drawLineChart(){
       return acc / wsum;               // 가중평균 (정규화)
     });
     const rawSum = chartHistory.map(h=>Object.values(h.byAsset).reduce((s,v)=>s+(v||0),0));
-    lines.unshift({label:currentPeriod+' 합계', vals:sumVals, absVals:rawSum,
+    lines.unshift({label:'합계', vals:sumVals, absVals:rawSum,
       color:'#2c2c2e', lw:1.8, isSum:true, events:[]});
   }
   const allPct=lines.flatMap(l=>l.vals).filter(v=>v!=null&&isFinite(v));
@@ -8950,7 +8977,7 @@ function renderStatBar(){
         if(lastP!=null) diff += (lastP - fvp) * cq;
       });
       diff = Math.round(diff);
-      return {sum:true, name:currentPeriod+' 합계', color:'var(--color-text)', diff, pct, hi:hiPct, lo:loPct};
+      return {sum:true, name:'합계', color:'var(--color-text)', diff, pct, hi:hiPct, lo:loPct};
     }
 
     if(item.acctType==='cash'){
@@ -9588,27 +9615,83 @@ window.addEventListener('orientationchange',()=>{
 const cmpFolded = ()=> window.innerWidth <= 480;
 function cmpEffView(){ if(!cmpFolded()) return cmp.pref; return cmp.pref==='split' ? cmp.focus : cmp.pref; }
 
-// 포트폴리오 종목 → 매매전략 종목: 005930.KS → 005930, 미국 종목은 그대로. 국내상장 미국지수 ETF는 기초지수 ETF(SPY/QQQ)로.
-function signalSymbDirect(a){ const t=(a.ticker||'').trim().toUpperCase(); return t ? t.replace(/\.(KS|KQ)$/,'') : null; }
-function signalSymbIndex(a){ const k=indexGroupKeyOf(a.name||''); if(!k) return null; return /^미국S&P500/.test(k) ? 'SPY' : /^미국나스닥100/.test(k) ? 'QQQ' : null; }
-let _sigUniverse = null;
-function loadSigUniverse(){
-  return _sigUniverse || (_sigUniverse = fetch('../signals/scores.json', {cache:'no-store'})
-    .then(r=>r.ok ? r.json() : null).then(d=>d && d.tickers ? new Set(d.tickers.map(t=>t.symb)) : null).catch(()=>null));
+// 포트폴리오 종목 → 매매전략 종목. 규칙은 전략 저장소 한 곳(signal_bot/proxies.py)이 scores.json의 "proxies"로 내보내고,
+// 이 화면과 매매전략 화면(resolveHolding)이 같은 목록을 읽는다.
+//   ① 티커 직접 일치(.KS/.KQ/.T 제거: 005930.KS→005930, 6268.T→6268)  ② 규칙(이름 규칙은 운용사 접두가 붙은 ETF에만)  ③ 없으면 미매칭
+function signalSymbDirect(a){ const t=(a.ticker||'').trim().toUpperCase(); return t ? t.replace(/\.(KS|KQ|T)$/,'') : null; }
+let _sigData = null;
+function loadSigData(){
+  return _sigData || (_sigData = fetch('../signals/scores.json', {cache:'no-store'})
+    .then(r=>r.ok ? r.json() : null)
+    .then(d=>d && d.tickers ? {universe:new Set(d.tickers.map(t=>t.symb)), names:Object.fromEntries(d.tickers.map(t=>[t.symb,t.name])), proxies:d.proxies||null} : null)
+    .catch(()=>null));
+}
+// -> {kind:'direct'|'proxy'|'none'|'unmatched', symb, why}. sig가 없으면(목록을 못 받음) 옛 규칙(SPY/QQQ)으로 추정한다.
+function matchSignal(a, sig){
+  const d = signalSymbDirect(a);
+  if(!sig){
+    const k = indexGroupKeyOf(a.name||''), ix = k ? (/^미국S&P500/.test(k) ? 'SPY' : /^미국나스닥100/.test(k) ? 'QQQ' : null) : null;
+    return ix ? {kind:'proxy', symb:ix} : d ? {kind:'direct', symb:d} : {kind:'unmatched', symb:null};
+  }
+  if(d && sig.universe.has(d)) return {kind:'direct', symb:d};
+  const px = sig.proxies;
+  if(px){
+    const nm = (a.name||'').trim(), pre = new RegExp(px.prefix,'i'), isEtf = pre.test(nm), stripped = nm.replace(pre,'');
+    for(const r of px.rules){
+      const hit = r.tk ? (d && new RegExp(r.tk,'i').test(d)) : (isEtf && stripped && new RegExp(r.re,'i').test(stripped));
+      if(!hit) continue;
+      return r.symb ? (sig.universe.has(r.symb) ? {kind:'proxy', symb:r.symb} : {kind:'unmatched', symb:null}) : {kind:'none', symb:null, why:r.why};
+    }
+  } else {   // 구버전 scores.json(proxies 없음)
+    const k = indexGroupKeyOf(a.name||''), ix = k ? (/^미국S&P500/.test(k) ? 'SPY' : /^미국나스닥100/.test(k) ? 'QQQ' : null) : null;
+    if(ix && sig.universe.has(ix)) return {kind:'proxy', symb:ix};
+  }
+  return {kind:'unmatched', symb:null};
 }
 async function resolveSignalSymb(a){
-  const d = signalSymbDirect(a), ix = signalSymbIndex(a), U = await loadSigUniverse();
-  if(U){ if(d && U.has(d)) return {symb:d, via:null}; if(ix && U.has(ix)) return {symb:ix, via:'index'}; return null; }
-  return ix ? {symb:ix, via:'index'} : d ? {symb:d, via:null} : null;   // 목록을 못 받으면 추정으로라도 연다
+  const m = matchSignal(a, await loadSigData());
+  return m.symb ? {symb:m.symb, via:m.kind==='proxy' ? 'proxy' : null} : null;
 }
-// 표의 "매매전략 비교" 버튼: 대상이 아니면 비활성 + 이유
+// 표의 "나란히 비교" 버튼: 대상이 아니면 비활성 + 이유
 async function cmpMarkButton(id){
   const a = assets.find(x=>x.id===id); if(!a) return;
-  const r = await resolveSignalSymb(a);
+  const sig = await loadSigData(), m = matchSignal(a, sig);
   const b = document.getElementById('cmpBtn_'+id); if(!b) return;
-  if(!r){ b.disabled = true; b.textContent = '매매전략 대상 아님'; b.title = '매매전략은 지수·주요 종목만 계산합니다'; }
-  else b.title = (r.via==='index' ? `기초지수 ${r.symb} 기준 ` : '') + '매수·매도 전략과 나란히 비교 (S)';
+  if(!m.symb){
+    b.disabled = true; b.textContent = '전략 대상 아님';
+    b.title = m.kind==='none' ? m.why : '매매전략 목록에 없는 종목입니다 — 목록 필터줄의 "전략 매칭"에서 확인하세요';
+  }
+  else b.title = (m.kind==='proxy' ? `대응 종목 ${m.symb} 기준 ` : '') + '매수·매도 전략과 나란히 비교 (S)';
 }
+
+// "전략 매칭" 창: 보유 종목별로 어떤 전략 종목과 연결되는지(직접/대응/대상 아님/미매칭)를 보여준다.
+// 미매칭은 전략 목록에 추가해야 하는 종목이다 — "복사"로 티커·이름을 그대로 가져갈 수 있다.
+async function openSigMatch(){
+  const modal = document.getElementById('sigMatchModal'), body = document.getElementById('sigMatchBody');
+  modal.classList.add('open'); body.innerHTML = '<div style="color:var(--color-tertiary);padding:12px 0;">불러오는 중…</div>';
+  const sig = await loadSigData();
+  if(!sig){ body.innerHTML = '<div style="padding:12px 0;">전략 목록을 불러오지 못했습니다. 잠시 후 다시 열어 주세요.</div>'; return; }
+  const rows = assets.filter(a=>a.acctType!=='cash' && (a.quantity||0)>0).map(a=>({a, m:matchSignal(a, sig)}));
+  const group = k=>rows.filter(r=>r.m.kind===k);
+  const tag = {direct:['직접','rgba(52,199,89,.14)','#248a3d'], proxy:['대응','rgba(0,122,255,.12)','#007aff'], none:['대상 아님','rgba(118,118,128,.14)','#636366'], unmatched:['미매칭','rgba(255,59,48,.12)','#ff3b30']};
+  const line = ({a,m})=>{
+    const t = tag[m.kind], to = m.symb ? `${m.symb}${sig.names[m.symb]?' · '+sig.names[m.symb]:''}` : (m.kind==='none' ? m.why : '전략 목록에 추가 필요');
+    return `<div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-top:.5px solid rgba(60,60,67,.12);">
+      <span style="flex:0 0 auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:${t[1]};color:${t[2]};">${t[0]}</span>
+      <span style="flex:1 1 auto;min-width:0;font-size:12.5px;"><b>${a.name}</b> <span style="color:var(--color-tertiary);font-size:11px;">${a.ticker||''}</span>
+        <div style="font-size:11px;color:var(--color-secondary);">${to}</div></span></div>`;
+  };
+  const un = group('unmatched');
+  body.innerHTML = `<div style="font-size:12px;color:var(--color-secondary);margin-bottom:6px;">보유 ${rows.length}종목 — 직접 ${group('direct').length} · 대응 ${group('proxy').length} · 대상 아님 ${group('none').length} · <b style="color:${un.length?'#ff3b30':'inherit'}">미매칭 ${un.length}</b></div>`
+    + (un.length ? `<div style="margin:6px 0 10px;"><button class="btn btn-green" onclick="copySigUnmatched()">미매칭 ${un.length}종목 복사</button></div>` : '')
+    + ['unmatched','none','proxy','direct'].map(k=>group(k).map(line).join('')).join('');
+  window._sigUnmatchedText = un.map(({a})=>`${a.ticker||'-'}\t${a.name}\t${a.market||''}`).join('\n');
+}
+function copySigUnmatched(){
+  try{ navigator.clipboard.writeText(window._sigUnmatchedText||''); }catch(e){}
+  const b = document.querySelector('#sigMatchBody .btn-green'); if(b){ const t=b.textContent; b.textContent='복사됨'; setTimeout(()=>b.textContent=t, 1200); }
+}
+function closeSigMatch(){ document.getElementById('sigMatchModal').classList.remove('open'); }
 
 async function cmpOpen(id){
   const a = assets.find(x=>x.id===id); if(!a) return;
@@ -9625,14 +9708,15 @@ async function cmpOpen(id){
   const r = await resolveSignalSymb(a);
   if(!cmp.open || cmp.id!==id) return;
   cmp.symb = r ? r.symb : null; cmp.via = r ? r.via : null;
-  document.getElementById('cmpSymb').textContent = r ? (r.via==='index' ? `기초지수 ${r.symb} 기준` : r.symb) : '매매전략 대상 아님';
+  // 전략 쪽 카드가 티커·이름을 보여주므로 바에는 반복하지 않고, 대신 매칭 방식만 짧게(기초지수로 대신 비교할 때)
+  document.getElementById('cmpSymb').textContent = r && r.via ? '대응 종목 기준' : '';
   cmpLoadRight();
 }
 // 왼쪽 칸 높이를 남김없이: 매매 이력은 실제 행 수만큼(최대 6행)만 잡고 나머지는 차트에 준다(빈 여백 금지)
 function cmpLayout(a){
   const el = document.getElementById('cmpLeft');
   const A = el && el.clientHeight > 200 ? el.clientHeight - 28 : window.innerHeight - 140;
-  const head = el && el.clientWidth < 400 ? 96 : 76;   // 보유 요약 + 제목·기간 탭(좁으면 두 줄)
+  const head = el && el.clientWidth < 400 ? 80 : 58;   // 보유 요약 + 범례·기간 탭(좁으면 두 줄)
   const FIXED = head + 22 + 12;                        // + 지표 줄 + 표 위 여백
   const n = a ? loadTradeLog().filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a)).length : 3;
   const tradeNeed = 34 + Math.min(6, Math.max(1, n)) * 31;
@@ -9768,13 +9852,14 @@ document.addEventListener('keydown', e=>{
 let _cmpResizeT = null;
 window.addEventListener('resize', ()=>{ if(!cmp.open) return; clearTimeout(_cmpResizeT); _cmpResizeT = setTimeout(()=>cmpApplyView(true), 150); });
 // 매매전략 화면의 "내 보유 상세 나란히"로 들어온 경우: #cmp=SYMB&mode=buy|sell
-function cmpFromHash(){
+async function cmpFromHash(){
   const m = location.hash.match(/[#&]cmp=([^&]+)/); if(!m) return;
   const symb = decodeURIComponent(m[1]).toUpperCase();
   const mm = location.hash.match(/[#&]mode=(buy|sell)/);
   try{ history.replaceState(history.state, '', location.pathname + location.search); }catch(e){}
   if(mm){ cmp.mode = mm[1]; try{ localStorage.setItem('kis-mode', cmp.mode); }catch(e){} }
-  const cands = assets.filter(a=>a.acctType!=='cash' && (a.quantity||0) > 0 && (signalSymbDirect(a)===symb || signalSymbIndex(a)===symb));
+  const sig = await loadSigData();
+  const cands = assets.filter(a=>a.acctType!=='cash' && (a.quantity||0) > 0 && matchSignal(a, sig).symb===symb);
   if(!cands.length) return;
   cands.sort((x,y)=>(y.quantity*(y.currentPrice||0)) - (x.quantity*(x.currentPrice||0)));
   switchPage('portfolio');

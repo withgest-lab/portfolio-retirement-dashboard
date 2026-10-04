@@ -648,7 +648,6 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="top-bar">
   <div>
     <h1>현금흐름</h1>
-    <div class="subtitle" id="subtitle">51세 → 57세 은퇴 · 사적연금 한도 1,400만원/년</div>
   </div>
   <div style="display:flex;align-items:center;gap:7px;flex-wrap:nowrap;">
     <a href="../" class="tax-guide-btn" aria-label="홈" title="홈" style="text-decoration:none;width:32px;padding:0;justify-content:center;">🏠</a>
@@ -663,7 +662,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="plan-banner-backdrop" id="planBannerBackdrop" onclick="closePlanBanner()"></div>
 <div class="plan-banner" id="planBanner">
   <div class="pb-title">
-    <span>세금·건보료 최소화 인출 플랜</span>
+    <span>인출 플랜</span>
     <button class="pb-close" onclick="closePlanBanner()" aria-label="닫기">✕</button>
   </div>
   <div class="pb-grid">
@@ -689,7 +688,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 
 <!-- 세금 상식 인라인 패널 (버튼 클릭 시 펼침/접힘, 모달 아님) -->
 <div class="inline-panel" id="taxGuidePanel">
-  <div class="inline-panel-title">📖 세금 상식 — 연금 세금·건보료·국민연금 가이드</div>
+  <div class="inline-panel-title">연금 세금·건보료·국민연금 가이드</div>
   <div class="guide-sec">
     <h4>① 연금 세금 적게 내는 법</h4>
     <p><b>연금 수령은 만 55세부터</b> — 연금저축·IRP(퇴직IRP 포함)는 소득세법상 만 55세 이상부터만 "연금"으로 수령할 수 있습니다. 은퇴 나이를 55세 미만으로 설정하면, 이 대시보드는 해당 계좌들의 실제 수령 개시를 자동으로 55세로 맞추고 그 전 구간(은퇴~54세)은 ISA·안세공만으로 버티는 것으로 계산합니다.</p>
@@ -743,7 +742,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <!-- 건보료 설계 인라인 패널 (버튼 클릭 시 펼침/접힘, 모달 아님) -->
 <div class="inline-panel" id="healthPanel">
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
-    <span style="font-size:12px;font-weight:700;color:#1c1c1e;">🏥 건보료 설계 — 은퇴 후 지역가입자 보험료</span>
+    <span style="font-size:12px;font-weight:700;color:#1c1c1e;">은퇴 후 지역가입자 보험료</span>
   </div>
   <div class="note" style="margin-top:0;">은퇴하면 직장가입자에서 빠져, 피부양자로 올라갈 직장가입자 가족이 없으면 소득+재산에 보험료가 붙는 지역가입자가 됩니다. 이 보험료는 <b>현금흐름 세후에서 매년 뺍니다</b>(은퇴한 해부터, 오늘 가치 기준 2026 요율). 사적연금(연금저축·IRP·퇴직IRP)·ISA 인출은 부과 대상이 아닙니다. 아래 소득은 은퇴 후에도 받는 금액을 넣으세요. 자세한 개념은 상단 "세금 상식" 참고.</div>
 
@@ -1395,17 +1394,15 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
         <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
         <div class="chart-alt" id="altView" style="display:none;">
           <div id="scWrap" style="display:none;">
-            <div class="alt-title">수익률 민감도 — 낙관·기본·비관 시나리오 비교</div>
             <table>
               <thead><tr>
                 <th style="text-align:left">시나리오</th>
-                <th>수익률</th><th>물가</th><th>공백기 세후(오늘)</th><th>완성기 세후(오늘)</th><th>은퇴시 총자산</th><th>런웨이</th>
+                <th>수익률</th><th>물가</th><th>공백기</th><th>완성기</th><th>은퇴시 총자산</th><th>런웨이</th>
               </tr></thead>
               <tbody id="sc-body"></tbody>
             </table>
           </div>
           <div id="needWrap" style="display:none;">
-            <div class="alt-title">완전소진 vs 필요분만 인출</div>
             <div id="need-only-compare"></div>
           </div>
         </div>
@@ -1914,8 +1911,7 @@ function renderSuggestBox(p, plan, res){
   const over = res.firstOverPlimitAge;
   const box = document.getElementById('suggest-box');
   box.className = 'suggest-result show';
-  box.innerHTML = `<strong>세금·건보료 최소화 + ${p.life}세(기대수명) 맞춤 자동설계 · 생활비 평탄화</strong>
-<div style="font-size:9px;color:#636366;margin:2px 0 4px;">※ 금액은 "오늘(${p.age}세) 돈 가치"이며 실제로는 매년 물가(${p.inf}%)만큼 늘어납니다(국민연금도 매년 물가연동). 생활비 비교는 세후(세금·건보료를 뺀 금액)입니다.</div>
+  box.innerHTML = `<div style="font-size:9px;color:#636366;margin:2px 0 4px;">※ 금액은 "오늘(${p.age}세) 돈 가치"이며 실제로는 매년 물가(${p.inf}%)만큼 늘어납니다(국민연금도 매년 물가연동). 생활비 비교는 세후(세금·건보료를 뺀 금액)입니다.</div>
 ${s.hasGap ? `<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 공백기 (${p.ret}~${p.npage-1}세)</div>
 <ul>
   ${prinTotal > 0 ? `<li>비과세 원금(안세공) <b>${prinTotal.toLocaleString()}만</b> → 법정 인출순서상 농협·미래에셋 인출액에서 가장 먼저 빠져${res.prinExhaustAge ? ` 약 ${res.prinExhaustAge}세까지` : ''} 세금 없음·1,500만원 판정 제외${sub(`입력 ${(T.nhInput+T.mfInput).toLocaleString()}만(2026년 말 확정)${prinAuto > 0 ? ` + 2027년~ 세액공제 한도 초과 납입분 자동 ${prinAuto.toLocaleString()}만` : ''}${ex.years > 0 ? ` · 연금저축을 연금으로 못 받는 ${p.ret}~54세에는 월 ${ex.nh + ex.mf}만(정액) 가교 인출` : ''}`)}</li>` : ''}
@@ -2169,7 +2165,7 @@ function loadState(){
 // 버튼을 누르면 정말 전부 초기화됨). location.reload()에 의존하지 않으므로 브라우저의
 // 새로고침-시-폼값-복원 동작에 영향받지 않아 항상 완전히 초기화된다.
 async function resetStateClick(){
-  if(await iosConfirm({title:'설정 초기화', message:'모든 설정값을 초기화할까요?', okText:'초기화', destructive:true})) resetState();
+  if(await iosConfirm({title:'설정 초기화', message:'입력한 값이 모두 지워집니다.', okText:'초기화', destructive:true})) resetState();
 }
 function resetState(){
   try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
@@ -2495,7 +2491,7 @@ function renderAssetTooltip(idx){
   // 계좌 잔액은 2열(연금저축 합계만 한 줄 전체)로 줄여 차트 높이 안에 들어가게 함.
   // 맨 아래 한 줄 설명: 은퇴 전은 "얼마나 남았고 얼마씩 넣는 중", 은퇴 후는 소진 패턴.
   const notes = row.phase === 'acc'
-    ? `<div class="tt-exp">💡 은퇴까지 ${row.yearsLeft}년 · 연 ${row.depYearTotal.toLocaleString()}만 납입 중</div>`
+    ? `<div class="tt-exp">💡 연 ${row.depYearTotal.toLocaleString()}만 납입 중</div>`
     : `<div class="tt-exp">💡 연금저축: 순서대로 인출, ${p.life}세 0원</div>
        <div class="tt-exp">💡 퇴직연금: ${p.tage}세부터 인출, ${p.life}세 소진</div>
        <div class="tt-exp">💡 ISA: 공백기(${p.ret}~${p.npage}세) 집중 인출</div>`;
@@ -2569,7 +2565,7 @@ function showCustomTooltip(evt, activeEls, chart){
       ${acts.length ? acts.map(a=>`<div class="tt-row tt-act"><span class="tt-dot" style="background:${a.c}"></span>${a.t}</div>`).join('')
                     : `<div class="tt-exp">${noDep}</div>`}
       <div class="tt-note">막대는 월 환산(일시납·연 적립 ÷12)</div>
-      <div class="tt-goal">🎯 ${acts.length ? `${p.ret}세 은퇴까지 ${row.yearsLeft}번 더 하면 완성` : `${p.ret}세 은퇴까지 ${row.yearsLeft}년 — 운용으로 불리는 중`}</div>
+      <div class="tt-goal">🎯 ${acts.length ? `${p.ret}세 은퇴까지 ${row.yearsLeft}번 더 하면 완성` : `${p.ret}세 은퇴 — 운용으로 불리는 중`}</div>
     `;
     placeTooltip(tip, chart, idx);
     return;
@@ -2817,10 +2813,6 @@ function upd(){
   }
   saveState();   // 자동으로 바뀐 값(np·퇴직소득세)까지 반영한 뒤 저장
 
-  // 자막
-  document.getElementById('subtitle').textContent=
-    p.age+'세 → '+p.ret+'세 은퇴 · 사적연금 한도 '+p.plimit.toLocaleString()+'만원/년';
-
   // 시뮬레이션 — 시나리오 3종(낙관/기본/비관)을 한 번씩만 계산해 캐싱, 아래 비교표에서 재사용
   const scenarioResults = {opt:simulate(p,SA.opt), base:simulate(p,SA.base), pes:simulate(p,SA.pes)};
   const res = scenarioResults.base; // 메인 대시보드는 항상 기본 시나리오 기준 (낙관/비관은 아래 접이식 비교표에서만 확인)
@@ -2917,7 +2909,6 @@ function upd(){
       {dot:C.nh.line, t:'농협·미래에셋 연금저축 월 납입'},
       {dot:C.isa.line,t:'IRP·ISA 연 일시납'},
       {dot:C.dc.line, t:'퇴직IRP DC 회사 적립'},
-      {dot:'transparent', t:'<b style="color:#007AFF;">은퇴까지 '+(p.ret-p.age)+'년</b>'},
     ]},
     npEff > p.ret && {key:'gap', ph:'공백기',range:p.ret+'~'+p.npage+'세 · '+(p.npage-p.ret)+'년',bg:'rgba(255,149,0,.12)',items:[
       overlap(sp.prin, gA, gB) && {dot:C.prin.line, t:'안세공 비과세 원금 — 먼저 빠짐(~'+(res.prinExhaustAge || sp.prin[1])+'세)'},
