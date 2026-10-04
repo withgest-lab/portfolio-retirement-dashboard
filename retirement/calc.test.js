@@ -7,7 +7,8 @@ const {
   npsAdjustFactor, calcRetirementIncomeTax, pmtAnnualGrowing, propertyTaxBase,
   basicIncomeTax, pensionIncomeDeduction, comprehensivePensionTax, pensionTaxes,
   calcMonthlyDepositFV, growYears, stepBalance, stepBalanceDetail, pvOfMonthlyStream,
-  futurePrinAdd, taxFreeBases, simulate, computeAutoPlan, buildAccRows, accumulate, npNominalAtStart
+  futurePrinAdd, taxFreeBases, simulate, computeAutoPlan, buildAccRows, accumulate, npNominalAtStart,
+  pensionLimitAnnual, bridgeExtraMonthly
 } = c;
 
 // 화면 기본값과 같은 입력(납입 종료는 getP()처럼 은퇴나이-1로 정규화된 상태)
@@ -241,9 +242,10 @@ test('자동설계 → 시뮬레이션: 계좌마다 기대수명(또는 지정 
     const fv = r[k+'FV'];
     if(fv > 0) assert.ok(last.bal[k] < fv * 0.02, `${k} 잔여 ${Math.round(last.bal[k])} / ${fv}`);
   }
-  // ISA·미래에셋은 공백기 끝(국민연금 개시 전)까지 소진
-  const gapLast = r.rows.find(x => x.age === p.npage - 1);
-  assert.ok(gapLast.bal.isa < r.isaFV * 0.02 && gapLast.bal.mf < r.mfFV * 0.02);
+  // ISA·미래에셋은 자동설계가 고른 소진 나이(isaEnd·mfEnd)에 0원
+  const plan = computeAutoPlan(BASE);
+  const isaEndRow = r.rows.find(x => x.age === plan.info.isaEnd), mfEndRow = r.rows.find(x => x.age === plan.info.mfEnd);
+  assert.ok(isaEndRow.bal.isa < r.isaFV * 0.02 && mfEndRow.bal.mf < r.mfFV * 0.02);
 });
 
 test('사적연금 1,500만원은 세율 경계일 뿐 — 넘는 해에도 인출액을 깎지 않음', () => {
@@ -281,12 +283,14 @@ test('엣지: 55세 전 은퇴 — 연금저축은 55세부터, 그 전엔 ISA·
   assert.ok(r.leftover < r.totalFV * 0.01);
 });
 
-test('필요분만 인출: 해마다 생활비 이상은 빼지 않고, 남는 자산은 완전소진보다 많음', () => {
+test('필요분만 인출: 세후가 생활비를 넘는 해만 사적 인출을 줄여 세후 ≈ 생활비, 남는 자산은 완전소진보다 많음', () => {
   const p = withPlan(BASE);
   const full = simulate(p), need = simulate(p, c.SA.base, {needOnly:true});
-  for(const x of need.rows){
-    assert.ok(x.totalInc <= Math.max(x.curExp, x.npInc) + 5, `${x.age}세 ${x.totalInc} > 생활비 ${x.curExp}`);
-  }
+  // 첫해는 잔액이 같으므로 직접 비교: 세후가 생활비를 넘으면 생활비에 맞춰 줄인다
+  const f0 = full.rows[0], n0 = need.rows[0];
+  if(f0.netInc > f0.curExp + 2) near(n0.netInc, n0.curExp, 3, `${n0.age}세 세후를 생활비에 맞춰야 함`);
+  // 모든 해: 줄인 해의 세후는 생활비 근처, 안 줄인 해는 세후가 생활비 이하
+  for(const x of need.rows) assert.ok(x.netInc <= Math.max(x.curExp, Math.round(x.npInc)) + 3, `${x.age}세 세후 ${x.netInc} > 생활비 ${x.curExp}`);
   assert.ok(need.leftover > full.leftover);
 });
 
@@ -300,4 +304,106 @@ test('ISA 해지 과세는 계좌에서 한 번만 차감(세후 계산에 이�
   near(x.taxTotal, x.taxPriv + x.taxNp + x.taxTirp, 2, 'ISA 해지세가 세후에 다시 빠지면 안 됨');
   assert.ok(x.isaTax > 10);
   assert.equal(Math.round(r.isaTaxPaid), x.isaTax);
+});
+
+/* ── 2차 점검(2026-10-04): 연금수령한도·감면 연차·피부양자 사업소득·평탄화·오늘 기준 요약 ── */
+test('pensionLimitAnnual: 평가액 ÷ (11 − 연차) × 120%, 11년차부터 한도 없음, 수령 요건 전은 0', () => {
+  near(pensionLimitAnnual(10000, 1), 1200, 1e-9);
+  near(pensionLimitAnnual(10000, 3), 1500, 1e-9);
+  near(pensionLimitAnnual(10000, 10), 12000, 1e-9);
+  assert.equal(pensionLimitAnnual(10000, 11), Infinity);
+  assert.equal(pensionLimitAnnual(10000, 0), 0);
+});
+
+test('연금수령한도 초과분은 연금외수령: 16.5% 기타소득, 1,500만원 판정에서 제외 / 자동설계는 초과 없음', () => {
+  assert.equal(simulate(withPlan(BASE)).overLimitYears, 0, '자동설계 값은 한도 안');
+  const p = Object.assign({}, withPlan(BASE), {mfpay:150});
+  const r = simulate(p);
+  const over = r.rows.filter(x => x.taxedOverAnnual > 0.5);
+  assert.ok(over.length > 0 && r.overLimitYears === over.length);
+  for(const x of over){
+    near(x.taxOther, Math.round(x.otherAnnual * 0.165 / 12), 1, `${x.age}세 연금외수령 세금`);
+  }
+  for(const x of r.rows){ // 과세 구분 보존: 연금소득 과세분 + 연금외수령분 = (인출 − 비과세) + 퇴직IRP 운용수익분
+    const taxable = (x.gross.nh + x.gross.mf + x.gross.irp) - (x.freeAnnual.nh + x.freeAnnual.mf + x.freeAnnual.irp) + (x.gross.tirp - x.tirpDeferredAnnual);
+    near(x.privTaxableAnnual + x.otherAnnual, taxable, 1e-6, `${x.age}세 과세 구분 합`);
+  }
+});
+
+test('퇴직IRP 감면 연차는 실제로 처음 받은 해부터(수령 시작을 은퇴보다 앞으로 넣어도)', () => {
+  const p = Object.assign({}, withPlan(BASE), {tage:55});   // 은퇴는 57세 → 실제 1년차는 57세
+  const r = simulate(p);
+  const x = r.rows.find(y => y.age === 66);                // 실제 10년차 → 30% 감면이어야 함(예전엔 12년차 40%)
+  near(x.taxTirp, Math.round(x.tirpDeferredAnnual * r.tirpTaxRate * 0.7 / 12), 1);
+  const y = r.rows.find(z => z.age === 67);                // 실제 11년차 → 40%
+  near(y.taxTirp, Math.round(y.tirpDeferredAnnual * r.tirpTaxRate * 0.6 / 12), 1);
+});
+
+test('피부양자: 사업소득 500만원 초과면 탈락, 그 이하라도 있으면 사업자등록 경고', () => {
+  assert.equal(dependentStatusCheck(1000, 0, 600).fail, true);
+  const w = dependentStatusCheck(1000, 0, 300);
+  assert.equal(w.fail, false); assert.ok(w.warn.length > 0);
+  assert.equal(dependentStatusCheck(1000, 0, 0).warn, '');
+  assert.equal(dependentStatusCheck(2001, 0, 0).fail, true);   // 기존 기준 유지
+});
+
+test('평탄화: 55세 이후 안세공 추가 인출 없음, 최저 세후 실질소득이 기준안 이상, 기대수명까지 유지', () => {
+  const plan = computeAutoPlan(BASE);
+  assert.ok(plan.info.leveled.minNet >= plan.info.baseline.minNet - 1e-9);
+  const r = simulate(Object.assign({}, BASE, plan));
+  assert.deepEqual([r.extra.nh, r.extra.mf], [0, 0], '은퇴 57세 → 가교 인출 없음');
+  assert.equal(r.runway, BASE.life);
+  assert.ok(r.minNetReal > 320, `최저 세후 실질 ${Math.round(r.minNetReal)}`);   // 회귀 방지(1차 수정 직후 317)
+  // 55세 전 은퇴: 은퇴~54세만 가교 인출
+  const e = Object.assign({}, BASE, {ret:52, nhend:51, mfend:51, irpend:51, isaend:51, tdcend:51});
+  const b = bridgeExtraMonthly(taxFreeBases(e), e);
+  assert.equal(b.years, 3); assert.ok(b.nh > 0);
+  const er = simulate(Object.assign({}, e, computeAutoPlan(e)));
+  const at55 = er.rows.find(x => x.age === 55), at54 = er.rows.find(x => x.age === 54);
+  assert.ok(at54.prinInc > 0, '54세까지는 비과세 원금 가교 인출');
+  assert.equal(er.overLimitYears, 0, '55세 전 비과세 원금 인출은 세금 붙는 한도 초과가 아님');
+  assert.ok(at55.totalInc > 0);
+});
+
+test('오늘 기준 요약이 연도별 행과 일치하고, 생활비 미달은 세후로 셈', () => {
+  const r = simulate(withPlan(BASE));
+  const gap = r.rows.filter(x => x.age < BASE.npage), full = r.rows.filter(x => x.age >= BASE.npage);
+  assert.equal(r.phase.gap.net, Math.round(sum(gap, x => x.netInc / x.infMul) / gap.length));
+  assert.equal(r.phase.full.gross, Math.round(sum(full, x => x.totalInc / x.infMul) / full.length));
+  assert.equal(r.shortNetYears, r.rows.filter(x => x.netInc < x.curExp).length);
+  near(r.minNetReal, Math.min(...r.rows.map(x => x.netInc / x.infMul)), 1e-9);
+});
+
+test('비관 시나리오: 같은 계획이면 기대수명 전에 소진되고, 생활비 미달은 소진보다 먼저 드러남', () => {
+  const p = withPlan(BASE);
+  const s = simulate(p, c.SA.pes);
+  assert.ok(s.runway < p.life, `runway ${s.runway}`);
+  assert.ok(s.firstShortNetAge !== null && s.firstShortNetAge <= s.runway);
+});
+
+test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC 평가액·세후≤세전·자동설계 기대수명 유지', () => {
+  let seed = 11;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const ri = (a, b) => Math.round(a + rnd() * (b - a));
+  for(let i = 0; i < 200; i++){
+    const age = ri(40, 62), ret = ri(Math.max(age, 50), 70), life = ri(75, 105);
+    const p = Object.assign({}, BASE, {age, ret, life, npage: ri(60, 70), exp: ri(100, 600),
+      nh: ri(0, 50000), nhm: ri(0, 150), nhstart: ri(40, 65), nhprin: ri(0, 8000), mf: ri(0, 30000), mfm: ri(0, 150), mfstart: ri(40, 65), mfprin: ri(0, 5000),
+      irp: ri(0, 20000), irpy: ri(0, 1200), irpstart: ri(40, 65), tirp: ri(0, 100000), tdc: ri(0, 3000), tdcstart: ri(40, 65), tservice: ri(1, 45),
+      isa: ri(0, 20000), isay: ri(0, 2000), isastart: ri(40, 65), rnh: ri(0, 15), rmf: ri(0, 15), rirp: ri(0, 15), rtirp: ri(0, 15), risa: ri(0, 20),
+      inf: ri(0, 10) / 2, np: ri(0, 500), curYear: ri(2026, 2035)});
+    for(const k of ['nhend','mfend','irpend','isaend','tdcend']) p[k] = ret - 1;
+    const q = Object.assign({}, p, computeAutoPlan(p));
+    const r = simulate(q), T = taxFreeBases(q);
+    for(const x of r.rows){
+      const v = [x.totalInc, x.netInc, x.taxTotal, ...Object.values(x.bal)];
+      assert.ok(v.every(Number.isFinite), `#${i} ${x.age}세 NaN`);
+      assert.ok(Object.values(x.bal).every(b => b >= -1e-6), `#${i} 음수 잔액`);
+      assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc, `#${i} 합계`);
+      assert.ok(x.netInc <= x.totalInc && x.nhInc >= 0 && x.mfInc >= 0 && x.irpInc >= 0, `#${i} 세후/음수`);
+    }
+    assert.ok(sum(r.rows, x => x.freeAnnual.nh + x.freeAnnual.mf + x.freeAnnual.irp) <= T.nh + T.mf + T.irp + 1e-6, `#${i} 비과세`);
+    assert.ok(sum(r.rows, x => x.tirpDeferredAnnual) <= r.tirpFV + 1e-6, `#${i} 이연`);
+    if(life > ret && r.totalFV > 1000) assert.equal(r.runway, life, `#${i} 자동설계 기대수명 유지`);
+  }
 });
