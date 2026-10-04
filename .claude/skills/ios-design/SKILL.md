@@ -29,6 +29,8 @@ description: 이 저장소(포트폴리오·현금흐름·홈)의 UI를 만들�
 
 - **알림창은 `shared/dialog.js`**: `alert/confirm` 대신 `await iosConfirm({..., destructive})`/`iosAlert()`, 입력 누락은 `fieldError(input,msg)`. 매수=빨강·매도=파랑 틴트, 확인 모달은 `setConfirmTone()`. (세부: DESIGN_GUIDELINES 15절)
 
+- **입력 폼은 `.fm` 시스템**(DESIGN_GUIDELINES 16절): 12칸 grid·36px 입력·우측 액션 행, 헬퍼 `fmField/fmSelect/fmClassFields`. 행 연필·휴지통은 `iconBtn()`(= 매매 이력 `.tl-icon`)만 쓴다.
+
 ## 4. 아이콘·글자
 - **이모지 금지** — `shared/icons.js`의 SF Symbols식 라인 SVG(`currentColor`, 1.15em). 새 아이콘은 그 파일 `MAP`/`SYMBOLS`에 추가.
 - 글꼴 Pretendard. 크기 위계: 라벨 10~11px/600, 본문 12~14px, 강조 수치 13~17px/700~800. 한 화면에서 위계를 3단계 이상 늘리지 않는다.

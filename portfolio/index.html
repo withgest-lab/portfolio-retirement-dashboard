@@ -365,7 +365,6 @@ table.table-fit th:nth-child(5),table.table-fit td:nth-child(5){text-align:cente
 /* 연필(11)·휴지통(12)은 한 쌍으로 표 오른쪽 끝에 붙인다 — 사이 여백(셀 padding)을 없애고 버튼 padding만 남긴다(v4: 글리프 간격 28→약 12px) */
 #page_portfolio table.table-fit th:nth-child(11),#page_portfolio table.table-fit td:nth-child(11){padding-left:4px;padding-right:0;}
 #page_portfolio table.table-fit th:nth-child(12),#page_portfolio table.table-fit td:nth-child(12){padding-left:0;padding-right:4px;text-align:left;}
-#page_portfolio table.table-fit td:nth-child(11) .edit-btn,#page_portfolio table.table-fit td:nth-child(12) .del-btn{padding:7px 6px;}
 /* 상세정보(10) 아이콘 확대 */
 #page_portfolio table.table-fit .btn-chart .ic{width:23px;height:23px;}
 /* 어떤 폭에서도 가로 스크롤 바가 생기지 않게(칼럼 폭은 퍼센트로 배분) */
@@ -409,17 +408,48 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .inline-edit input{border:1px solid var(--color-accent);border-radius:7px;padding:4px 8px;
   font-family:inherit;font-size:12px;width:95px;}
 
-/* ── 매수/매도 탭 ── */
-.trade-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid var(--color-border);}
-.trade-tab{border:none;background:none;cursor:pointer;padding:8px 18px;font-family:inherit;
-  font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.15s;}
-
-/* ── 추가 폼 ── */
-.add-form{display:flex;gap:6px;flex-wrap:wrap;padding-top:14px;
-  border-top:1px solid var(--color-border);margin-top:8px;align-items:flex-end;}
-.add-form label{font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;}
-.add-form input,.add-form select{border:1px solid var(--color-border);border-radius:7px;padding:5px 8px;
-  font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);}
+/* ── 공용 폼 .fm — iOS 그룹 폼. 추가·수정 폼이 모두 이 구조(헤더·섹션·12칸 grid·액션 행)를 쓴다 ── */
+.fm{background:rgba(118,118,128,.07);border-radius:14px;padding:14px 16px 12px;max-width:900px;text-align:left;font-size:13px;}
+.fm-h{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;white-space:nowrap;min-width:0;}
+.fm-h b{font-size:14px;font-weight:700;color:var(--color-text);flex-shrink:0;}
+.fm-h span{font-size:11.5px;color:var(--color-tertiary);overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.fm-sec{font-size:11px;font-weight:600;color:var(--color-tertiary);margin:14px 0 6px;letter-spacing:.02em;}
+.fm>.fm-sec:first-child,.fm-h+.fm-sec{margin-top:0;}
+.fm-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;align-items:start;}
+.fm-f{display:flex;flex-direction:column;gap:4px;min-width:0;grid-column:span 3;position:relative;}
+.fm-f.s4{grid-column:span 4;} .fm-f.s6{grid-column:span 6;} .fm-f.s8{grid-column:span 8;} .fm-f.s12{grid-column:span 12;}
+.fm-l{font-size:11px;font-weight:600;color:var(--color-secondary);white-space:nowrap;}
+.fm-l em{font-style:normal;font-weight:400;color:var(--color-tertiary);margin-left:3px;}
+.fm-input,.fm-select{width:100%;min-width:0;height:36px;box-sizing:border-box;border:.5px solid rgba(60,60,67,.22);border-radius:10px;
+  padding:0 11px;font-family:inherit;font-size:14px;color:var(--color-text);background:var(--color-card);outline:none;
+  transition:box-shadow .12s,border-color .12s;}
+.fm-input::placeholder{color:var(--color-tertiary);}
+.fm-input[type=number]{-moz-appearance:textfield;}
+.fm-input[type=number]::-webkit-inner-spin-button,.fm-input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.fm-input:focus,.fm-select:focus{border-color:var(--color-accent);box-shadow:0 0 0 3px rgba(0,122,255,.18);}
+.fm-input[readonly]{background:rgba(118,118,128,.1);color:var(--color-secondary);}
+.fm-select{appearance:none;-webkit-appearance:none;padding-right:28px;background-repeat:no-repeat;background-position:right 11px center;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");}
+.fm-custom{margin-top:6px;}
+.fm-a{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.fm-a .btn{padding:8px 18px;font-size:13px;min-width:76px;}
+.fm-seg{width:100%;flex-wrap:nowrap;}
+.fm-seg button{flex:1 1 0;padding:8px 6px;font-size:12.5px;white-space:nowrap;}
+.fm-tabs{margin-bottom:12px;}
+.fm-seg button.m-buy.active{color:#ff3b30;} .fm-seg button.m-sell.active{color:#0a84ff;} .fm-seg button.m-cash.active{color:#248a3d;}
+.fm-seg button.m-set.active{color:#248a3d;} .fm-seg button.m-in.active{color:#007aff;} .fm-seg button.m-out.active{color:#ff3b30;} .fm-seg button.m-div.active{color:#c76a00;}
+.fm-sw{width:100%;height:36px;justify-content:space-between;padding:0 12px;border-radius:10px;font-size:13px;
+  background:var(--color-card);border:.5px solid rgba(60,60,67,.22);color:var(--color-text);}
+.fm-sw.on{background:var(--color-card);color:var(--color-text);}
+.fm-sw.on .sw{background:var(--color-accent);}
+.fm-row{background:var(--color-section-bg);}
+.fm-row>td{padding:12px 14px !important;}
+.fm-hint{font-size:11px;color:var(--color-tertiary);margin-top:8px;}
+@media (max-width:640px){
+  .fm{padding:12px;}
+  .fm-f,.fm-f.s4{grid-column:span 6;} .fm-f.s6,.fm-f.s8,.fm-f.s12{grid-column:span 12;}
+  .fm-a .btn{flex:1 1 0;}
+}
 .form-status{font-size:12px;color:var(--color-secondary);padding-top:8px;min-height:18px;}
 
 /* ── 자산 목록 필터 ── */
@@ -615,6 +645,7 @@ table.tl-table{width:100%;table-layout:fixed;border-collapse:separate;border-spa
 .tl-dim{color:var(--color-tertiary);}
 .tl-act{text-align:right;}
 .tl-icon{border:none;background:transparent;color:var(--color-tertiary);width:30px;height:30px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;}
+.tl-icon .ic{width:15px;height:15px;vertical-align:middle;}
 .tl-icon:hover{background:rgba(118,118,128,.12);color:var(--color-text);}
 .tl-icon.del:hover{background:rgba(255,59,48,.10);color:#ff3b30;}
 .tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 8px 4px!important;}
@@ -681,10 +712,6 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   .fold-hide-narrow{display:none;}
   /* 편집 칼럼(📈/✏️/🗑 최대 3개)이 실제로 들어갈 폭을 확보하려면 아이콘 버튼 자체도
      좀 더 좁혀야 한다 — 터치 타겟이 과하게 작아지지 않는 선에서 좌우 패딩만 축소. */
-  #page_portfolio .tbl-wrap table.table-fit .edit-btn,
-  #page_portfolio .tbl-wrap table.table-fit .del-btn{padding:6px 4px;}
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11) .edit-btn,
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12) .del-btn{padding:6px 4px;}
   #page_portfolio .tbl-wrap table.table-fit{table-layout:fixed;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:19.5%;}
@@ -839,7 +866,6 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   .biased-wrap{flex-direction:column;}
   .bar-side{min-width:unset;width:100%;}
   .index-grid{grid-template-columns:1fr;}
-  .add-form{flex-direction:column;align-items:stretch;}
   table{font-size:10px;}
   th,td{padding:6px 3px;}
   /* 위 th,td{padding:6px 3px}는 의도한 값이지만 #page_portfolio 보유종목 표(table.table-fit)는
@@ -869,7 +895,6 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:18.5%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:11.5%;}
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11) .edit-btn{padding:7px 6px;}
 }
 </style>
 </head>
@@ -1130,265 +1155,14 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   <details class="collapsible" style="margin-top:16px;">
     <summary style="color:#2C5B8A;">매수/매도/현금 기록 추가</summary>
   <div style="margin-top:10px;">
-    <div class="trade-tabs">
-      <button class="trade-tab" id="tab_buy" onclick="switchTab('buy')"
-        style="color:var(--color-accent);border-bottom-color:var(--color-accent);">매수</button>
-      <button class="trade-tab" id="tab_sell" onclick="switchTab('sell')"
-        style="color:var(--color-tertiary);border-bottom-color:transparent;">매도</button>
-      <button class="trade-tab" id="tab_cash" onclick="switchTab('cash')"
-        style="color:var(--color-tertiary);border-bottom-color:transparent;">💵 현금</button>
+    <div class="period-tabs fm-seg fm-tabs">
+      <button type="button" class="m-buy active" id="tab_buy" onclick="switchTab('buy')">매수</button>
+      <button type="button" class="m-sell" id="tab_sell" onclick="switchTab('sell')">매도</button>
+      <button type="button" class="m-cash" id="tab_cash" onclick="switchTab('cash')">현금</button>
     </div>
-
-    <!-- 추가 폼 -->
-    <div id="form_buy" class="add-form">
-      <label style="position:relative;">종목명
-        <input id="af_name" placeholder="" style="width:130px" oninput="searchTicker(this.value)" autocomplete="off">
-        <div class="suggest-box" id="af_suggestions"></div>
-      </label>
-      <label>티커<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-        <input id="af_ticker" placeholder="" style="width:100px">
-      </label>
-      <label>투자시장<select id="af_market" onchange="toggleCustomInput('af_market','af_market_custom')" style="width:100px;">
-        <option value="">-- 선택 --</option>
-        <option value="kr">한국</option>
-        <option value="us">미국</option>
-        <option value="jp">일본</option>
-        <option value="global">글로벌</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="af_market_custom" placeholder="투자시장 입력" style="width:100px;display:none;margin-top:3px;">
-      </label>
-      <label>금융회사<select id="af_company" onchange="toggleCustomInput('af_company','af_company_custom')" style="width:100px;">
-        <option value="">-- 없음 --</option>
-        <option value="nh">농협</option>
-        <option value="mf">미래에셋</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="af_company_custom" placeholder="금융회사명 입력" style="width:100px;display:none;margin-top:3px;">
-      </label>
-      <label>계좌유형<select id="af_accttype" onchange="toggleCustomInput('af_accttype','af_accttype_custom')">
-        <option value="">-- 선택 --</option>
-        <option value="general">일반계좌</option>
-        <option value="pension_personal">개인연금</option>
-        <option value="pension_retirement">퇴직연금</option>
-        <option value="irp">IRP 개인</option>
-        <option value="isa">ISA</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="af_accttype_custom" placeholder="계좌유형명 입력" style="display:none;margin-top:3px;">
-      </label>
-      <label>자산유형<select id="af_assettype" onchange="toggleCustomInput('af_assettype','af_assettype_custom')">
-        <option value="">— 없음 —</option>
-        <option value="Core">Core</option>
-        <option value="주도주">주도주</option>
-        <option value="유망주">유망주</option>
-        <option value="원자재">원자재</option>
-        <option value="안전자산">안전자산</option>
-        <option value="가상자산">가상자산</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="af_assettype_custom" placeholder="자산유형명 입력" style="display:none;margin-top:3px;">
-      </label>
-      <label id="af_qty_label">수량<input id="af_qty" type="number" placeholder="" style="width:80px"></label>
-      <label id="af_price_label">단가<input id="af_price" type="number" placeholder="" style="width:100px"></label>
-      <label>통화<select id="af_cur">
-        <option value="KRW">KRW ₩</option>
-        <option value="USD">USD $</option>
-        <option value="JPY">JPY ¥</option>
-      </select></label>
-      <button type="button" class="tgl-banner" id="af_bond_sw" role="switch" aria-checked="false" onclick="toggleBondSwitch()">확정금리 채권(복리)<span class="sw"></span></button>
-      <input type="checkbox" id="af_bond_toggle" hidden>
-      <div id="af_bond_fields" style="display:none;flex:1 1 100%;gap:8px;flex-wrap:wrap;">
-        <label>매입원금<input id="af_bond_principal" type="number" placeholder="" style="width:120px"></label>
-        <label>표면금리(%)<input id="af_bond_coupon" type="number" step="0.001" placeholder="4.415" style="width:80px"></label>
-        <label>가산금리(%)<input id="af_bond_spread" type="number" step="0.001" placeholder="0.350" style="width:80px"></label>
-        <label>발행일<input id="af_bond_issue" type="date" style="width:135px"></label>
-        <label>만기일<input id="af_bond_maturity" type="date" style="width:135px"></label>
-      </div>
-      <label style="flex:1;min-width:140px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-        <input id="af_reason" placeholder="매수 사유" style="width:100%">
-      </label>
-      <button class="btn btn-red" onclick="addAsset()">+ 매수</button>
-    </div>
-
-    <!-- 매도 폼 -->
-    <div id="form_sell" class="add-form" style="display:none;">
-      <label style="position:relative;">종목명
-        <input id="sf_name" placeholder="" style="width:130px" oninput="searchSell(this.value)" autocomplete="off">
-        <div class="suggest-box" id="sf_suggestions"></div>
-      </label>
-      <label>투자시장<select id="sf_market" onchange="toggleCustomInput('sf_market','sf_market_custom')" style="width:100px;">
-        <option value="">-- 선택 --</option>
-        <option value="kr">한국</option>
-        <option value="us">미국</option>
-        <option value="jp">일본</option>
-        <option value="global">글로벌</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="sf_market_custom" placeholder="투자시장 입력" style="width:100px;display:none;margin-top:3px;">
-      </label>
-      <label>금융회사<select id="sf_company" onchange="toggleCustomInput('sf_company','sf_company_custom')" style="width:100px;">
-        <option value="">-- 없음 --</option>
-        <option value="nh">농협</option>
-        <option value="mf">미래에셋</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="sf_company_custom" placeholder="금융회사명 입력" style="width:100px;display:none;margin-top:3px;">
-      </label>
-      <label>계좌유형<select id="sf_accttype" onchange="toggleCustomInput('sf_accttype','sf_accttype_custom')">
-        <option value="">-- 선택 --</option>
-        <option value="general">일반계좌</option>
-        <option value="pension_personal">개인연금</option>
-        <option value="pension_retirement">퇴직연금</option>
-        <option value="irp">IRP 개인</option>
-        <option value="isa">ISA</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="sf_accttype_custom" placeholder="계좌유형명 입력" style="display:none;margin-top:3px;">
-      </label>
-      <label>자산유형<select id="sf_assettype" onchange="toggleCustomInput('sf_assettype','sf_assettype_custom')">
-        <option value="">— 없음 —</option>
-        <option value="Core">Core</option>
-        <option value="주도주">주도주</option>
-        <option value="유망주">유망주</option>
-        <option value="원자재">원자재</option>
-        <option value="안전자산">안전자산</option>
-        <option value="가상자산">가상자산</option>
-        <option value="__custom__">+ 직접입력</option>
-      </select>
-      <input id="sf_assettype_custom" placeholder="자산유형명 입력" style="display:none;margin-top:3px;">
-      </label>
-      <label>보유수량<input id="sf_held" style="width:80px;background:var(--color-section-bg);" readonly></label>
-      <label>매도수량<input id="sf_qty" type="number" placeholder="" style="width:80px"></label>
-      <label>매도단가<input id="sf_price" type="number" placeholder="" style="width:100px"></label>
-      <label style="flex:1;min-width:160px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-        <input id="sf_reason" placeholder="매도 사유" style="width:100%">
-      </label>
-      <button class="btn btn-red" onclick="sellAsset()">− 매도</button>
-    </div>
-    <!-- 현금 폼 -->
-    <div id="form_cash" class="add-form" style="display:none;">
-      <!-- 이름 + 통화 -->
-      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          이름
-          <select id="cf_name" onchange="toggleCustomInput('cf_name','cf_name_custom')"
-            style="width:120px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="현금">현금</option>
-            <option value="예금">예금</option>
-            <option value="__custom__">+ 직접입력</option>
-          </select>
-          <input id="cf_name_custom" placeholder="이름 입력" style="width:120px;display:none;margin-top:3px;
-                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          통화
-          <select id="cf_cur" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="KRW">KRW ₩</option>
-            <option value="USD">USD $</option>
-            <option value="JPY">JPY ¥</option>
-          </select>
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          투자시장<span style="font-size:9px;margin-left:2px;">(선택)</span>
-          <select id="cf_market" onchange="toggleCustomInput('cf_market','cf_market_custom')"
-            style="width:100px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="">-- 없음 --</option>
-            <option value="kr">한국</option>
-            <option value="us">미국</option>
-            <option value="jp">일본</option>
-            <option value="global">글로벌</option>
-            <option value="__custom__">+ 직접입력</option>
-          </select>
-          <input id="cf_market_custom" placeholder="투자시장 입력" style="width:100px;display:none;margin-top:3px;
-                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          금융회사
-          <select id="cf_company" onchange="toggleCustomInput('cf_company','cf_company_custom')"
-            style="width:100px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="">-- 없음 --</option>
-            <option value="nh">농협</option>
-            <option value="mf">미래에셋</option>
-            <option value="__custom__">+ 직접입력</option>
-          </select>
-          <input id="cf_company_custom" placeholder="금융회사명 입력" style="width:100px;display:none;margin-top:3px;
-                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          계좌유형<span style="font-size:9px;margin-left:2px;">(선택)</span>
-          <select id="cf_cashaccttype" onchange="toggleCustomInput('cf_cashaccttype','cf_cashaccttype_custom')"
-            style="width:100px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="">-- 없음 --</option>
-            <option value="pension_personal">개인연금</option>
-            <option value="pension_retirement">퇴직연금</option>
-            <option value="irp">IRP 개인</option>
-            <option value="isa">ISA</option>
-            <option value="general">일반계좌</option>
-            <option value="__custom__">+ 직접입력</option>
-          </select>
-          <input id="cf_cashaccttype_custom" placeholder="계좌유형명 입력" style="width:100px;display:none;margin-top:3px;
-                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          자산유형<span style="font-size:9px;margin-left:2px;">(선택)</span>
-          <select id="cf_assettype" onchange="toggleCustomInput('cf_assettype','cf_assettype_custom')"
-            style="width:100px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="">-- 없음 --</option>
-            <option value="Core">Core</option>
-            <option value="주도주">주도주</option>
-            <option value="유망주">유망주</option>
-            <option value="원자재">원자재</option>
-            <option value="안전자산">안전자산</option>
-        <option value="가상자산">가상자산</option>
-            <option value="__custom__">+ 직접입력</option>
-          </select>
-          <input id="cf_assettype_custom" placeholder="자산유형명 입력" style="width:100px;display:none;margin-top:3px;
-                 border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-      </div>
-      <!-- 4가지 모드 선택 -->
-      <div style="display:flex;gap:6px;margin-bottom:10px;flex:1 1 100%;flex-wrap:wrap;">
-        <button id="cf_mode_set" onclick="setCashMode('set')"
-          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid #34c759;
-                 background:#34c75920;color:#34c759;font-weight:700;cursor:pointer;">
-          잔액 설정
-        </button>
-        <button id="cf_mode_in" onclick="setCashMode('in')"
-          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
-                 background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
-          + 입금
-        </button>
-        <button id="cf_mode_out" onclick="setCashMode('out')"
-          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
-                 background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
-          - 출금
-        </button>
-        <button id="cf_mode_div" onclick="setCashMode('div')"
-          style="flex:0 0 auto;white-space:nowrap;padding:7px 10px;font-size:12px;border-radius:8px;border:1.5px solid var(--color-border);
-                 background:var(--color-section-bg);color:var(--color-tertiary);cursor:pointer;">
-          💰 배당
-        </button>
-      </div>
-      <!-- 배당 모드 전용: 배당 지급 종목명(선택) -->
-      <div id="cf_div_row" style="display:none;margin-bottom:10px;">
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          배당 지급 종목<span style="font-size:9px;">(선택, 나중에 배당 내역 구분용)</span>
-          <input id="cf_div_source" placeholder="예: SCHD" style="width:200px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-      </div>
-      <!-- 금액 입력 -->
-      <div style="display:flex;gap:8px;align-items:flex-end;">
-        <label id="cf_amount_label" style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          잔액
-          <input id="cf_amount" type="number" placeholder="0" min="0"
-            style="width:150px;border:1px solid var(--color-border);border-radius:8px;
-                   padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <button class="btn" style="background:#34c75920;color:#34c759;padding:7px 14px;"
-          onclick="addCash()">확인</button>
-      </div>
-    </div>
+    <div id="form_buy" class="fm"></div>
+    <div id="form_sell" class="fm" style="display:none;"></div>
+    <div id="form_cash" class="fm" style="display:none;"></div>
     <div class="form-status" id="formStatus"></div>
   </div>
   </details>
@@ -1430,74 +1204,7 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   </div>
   <details class="collapsible" style="margin-top:14px;border-top:1px solid var(--color-section-bg);padding-top:10px;">
     <summary style="color:#A8433C;">이력 수동 기록 추가 <b>(자산/현금에는 반영되지 않음)</b></summary>
-  <div class="add-form" style="padding-top:14px;">
-    <label>날짜<input id="tl_date" type="date" style="width:110px"></label>
-    <label style="position:relative;">종목명
-      <input id="tl_name" placeholder="" style="width:130px" autocomplete="off"
-        oninput="searchTickerTL(this.value)">
-      <div class="suggest-box" id="tl_suggestions"></div>
-    </label>
-    <label>티커
-      <input id="tl_ticker" placeholder="예:005930" style="width:100px" autocomplete="off">
-    </label>
-    <label>투자시장<select id="tl_market" onchange="toggleCustomInput('tl_market','tl_market_custom')" style="width:100px;">
-      <option value="">-- 선택 --</option>
-      <option value="kr">한국</option>
-      <option value="us">미국</option>
-      <option value="jp">일본</option>
-      <option value="global">글로벌</option>
-      <option value="__custom__">+ 직접입력</option>
-    </select>
-    <input id="tl_market_custom" placeholder="투자시장" style="width:100px;display:none;margin-top:3px;">
-    </label>
-    <label>금융회사<select id="tl_company" onchange="toggleCustomInput('tl_company','tl_company_custom')" style="width:100px;">
-      <option value="">-- 없음 --</option>
-      <option value="nh">농협</option>
-      <option value="mf">미래에셋</option>
-      <option value="__custom__">+ 직접입력</option>
-    </select>
-    <input id="tl_company_custom" placeholder="금융회사명" style="width:100px;display:none;margin-top:3px;">
-    </label>
-    <label>유형<select id="tl_type" style="width:65px">
-      <option value="buy">매수</option>
-      <option value="sell">매도</option>
-    </select></label>
-    <label>계좌유형<select id="tl_accttype" onchange="toggleCustomInput('tl_accttype','tl_accttype_custom')">
-      <option value="">-- 선택 --</option>
-      <option value="general">일반계좌</option>
-      <option value="pension_personal">개인연금</option>
-      <option value="pension_retirement">퇴직연금</option>
-      <option value="irp">IRP 개인</option>
-      <option value="isa">ISA</option>
-      <option value="cash">현금</option>
-      <option value="__custom__">+ 직접입력</option>
-    </select>
-    <input id="tl_accttype_custom" placeholder="계좌유형명" style="display:none;margin-top:3px;">
-    </label>
-    <label>자산유형<select id="tl_assettype" onchange="toggleCustomInput('tl_assettype','tl_assettype_custom')">
-      <option value="">— 없음 —</option>
-      <option value="Core">Core</option>
-      <option value="주도주">주도주</option>
-      <option value="유망주">유망주</option>
-      <option value="원자재">원자재</option>
-      <option value="안전자산">안전자산</option>
-      <option value="가상자산">가상자산</option>
-      <option value="__custom__">+ 직접입력</option>
-    </select>
-    <input id="tl_assettype_custom" placeholder="자산유형명" style="display:none;margin-top:3px;">
-    </label>
-    <label>수량<input id="tl_qty" type="number" placeholder="0" style="width:80px"></label>
-    <label>체결단가<input id="tl_price" type="number" placeholder="0" style="width:100px"></label>
-    <label>통화<select id="tl_cur">
-      <option value="KRW">KRW ₩</option>
-      <option value="USD">USD $</option>
-      <option value="JPY">JPY ¥</option>
-    </select></label>
-    <label style="flex:1;min-width:140px;">사유<span style="font-size:9px;color:var(--color-tertiary);margin-left:2px;">(선택)</span>
-      <input id="tl_reason" placeholder="매수·매도 사유" style="width:100%">
-    </label>
-    <button class="btn btn-primary" onclick="addTradeLog_manual()">기록 추가</button>
-  </div>
+  <div class="fm" id="form_tl" style="margin-top:12px;"></div>
   </details>
   <div id="tradeLogStatus" style="font-size:12px;color:var(--color-secondary);min-height:16px;padding:4px 0;"></div>
 </div>
@@ -1597,31 +1304,14 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
     <div class="tgl-banner-row" style="margin:10px 0 0;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="principalAddWrap" onclick="toggleBanner(this)">원금 입출금 추가<span class="sw"></span></button></div>
     <div id="principalAddWrap" style="display:none;margin:0 0 14px;">
       <div class="notice" style="margin:10px 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다.</div>
-      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          날짜
-          <input id="pl_date" type="date" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          구분
-          <select id="pl_type" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="deposit">입금</option>
-            <option value="withdrawal">출금</option>
-          </select>
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          금액
-          <input id="pl_amount" type="number" placeholder="0" min="0" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          통화
-          <select id="pl_cur" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="KRW">KRW ₩</option>
-            <option value="USD">USD $</option>
-            <option value="JPY">JPY ¥</option>
-          </select>
-        </label>
-        <button class="btn" style="background:#34c75920;color:#34c759;padding:7px 14px;" onclick="addPrincipalLedgerEntry()">추가</button>
+      <div class="fm">
+        <div class="fm-grid">
+          <label class="fm-f"><span class="fm-l">날짜</span><input class="fm-input" id="pl_date" type="date"></label>
+          <label class="fm-f"><span class="fm-l">구분</span><select class="fm-select" id="pl_type"><option value="deposit">입금</option><option value="withdrawal">출금</option></select></label>
+          <label class="fm-f"><span class="fm-l">금액</span><input class="fm-input" id="pl_amount" type="number" inputmode="decimal" placeholder="0" min="0" autocomplete="off"></label>
+          <label class="fm-f"><span class="fm-l">통화</span><select class="fm-select" id="pl_cur"><option value="KRW">KRW ₩</option><option value="USD">USD $</option><option value="JPY">JPY ¥</option></select></label>
+        </div>
+        <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addPrincipalLedgerEntry()">추가</button></div>
       </div>
       <div class="form-status" id="principalLedgerStatus"></div>
     </div>
@@ -1821,6 +1511,152 @@ const SNAP_KEY    = 'pf_snaps_v5';
 const ICON_EDIT = '<svg class="ic" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>';
 const ICON_TRASH = '<svg class="ic" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>';
 const ICON_DETAIL = '<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="14" width="4" height="7" rx="1" fill="#d1d1d6" stroke="none"/><rect x="10" y="10" width="4" height="11" rx="1" fill="#d1d1d6" stroke="none"/><rect x="17" y="6" width="4" height="15" rx="1" fill="#d1d1d6" stroke="none"/><polyline points="3 12 9 6.5 13 10 20 3" stroke="#34c759" stroke-width="2.4"/><polyline points="15 3 20 3 20 8" stroke="#34c759" stroke-width="2.4"/></svg>';
+
+/* ════════════════════════════════════════
+   공용 폼(.fm) 헬퍼 — 추가·수정 폼 전부 같은 부품으로 만든다(입력 id는 호출부가 정해 기존 저장 함수가 그대로 읽는다)
+════════════════════════════════════════ */
+const FM_COMPANY = [['nh','농협'],['mf','미래에셋']];
+const FM_MARKET  = [['kr','한국'],['us','미국'],['jp','일본'],['global','글로벌']];
+const FM_ACCT    = ACCTTYPE_PRESETS.map(k=>[k,ACCTTYPE_LABELS[k]]);
+const FM_ASSET   = ASSETTYPE_OPTIONS.map(v=>[v,v]);
+const FM_CUR     = [['KRW','KRW ₩'],['USD','USD $'],['JPY','JPY ¥']];
+const fmEsc = v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+// select (+ "직접입력" 선택 시 아래에 열리는 입력칸). cur이 목록에 없으면 직접입력 상태로 보여준다
+function fmSelect(id, opts, cur, o={}){
+  const custom = o.custom!==false;
+  const isCustom = custom && cur && !opts.some(x=>x[0]===cur);
+  const html = (o.blank!==undefined ? `<option value=""${!cur?' selected':''}>${o.blank}</option>` : '')
+    + opts.map(([v,l])=>`<option value="${fmEsc(v)}"${cur===v?' selected':''}>${l}</option>`).join('')
+    + (custom ? `<option value="__custom__"${isCustom?' selected':''}>+ 직접입력</option>` : '');
+  return `<select class="fm-select" id="${id}"${custom?` onchange="toggleCustomInput('${id}','${o.customId}')"`:''}>${html}</select>`
+    + (custom ? `<input class="fm-input fm-custom" id="${o.customId}" placeholder="직접 입력" autocomplete="off" value="${isCustom?fmEsc(cur):''}" style="display:${isCustom?'block':'none'}">` : '');
+}
+function fmInput(id, o={}){
+  const t = o.type||'text';
+  return `<input class="fm-input" id="${id}" type="${t}"${o.value!==undefined&&o.value!==null?` value="${fmEsc(o.value)}"`:''}${o.ph?` placeholder="${fmEsc(o.ph)}"`:''}${t==='number'?' inputmode="decimal"':''}${o.readonly?' readonly':''}${o.attrs?' '+o.attrs:''} autocomplete="off">`;
+}
+function fmField(label, inner, o={}){
+  return `<label class="fm-f${o.cls?' '+o.cls:''}"${o.id?` id="${o.id}"`:''}><span class="fm-l">${label}${o.opt?'<em>(선택)</em>':''}</span>${inner}</label>`;
+}
+// 분류 4칸(투자시장·금융회사·계좌유형·자산유형) — 옵션 목록은 상수에서 만들어 모든 폼이 같다
+function fmClassFields(ids, v={}, o={}){
+  const bl=o.blank||{}, op={opt:!!o.optional};
+  return fmField('투자시장', fmSelect(ids.market[0], FM_MARKET, v.market, {blank:bl.market, customId:ids.market[1]}), op)
+    + fmField('금융회사', fmSelect(ids.company[0], FM_COMPANY, v.company, {blank:bl.company, customId:ids.company[1]}), op)
+    + fmField('계좌유형', fmSelect(ids.acct[0], o.acctOpts||FM_ACCT, v.acct, {blank:bl.acct, customId:ids.acct[1]}), op)
+    + fmField('자산유형', fmSelect(ids.asset[0], FM_ASSET, v.asset, {blank:bl.asset, customId:ids.asset[1]}), op);
+}
+function fmSeg(items, active, idOf, fn){
+  return `<div class="period-tabs fm-seg">`+items.map(([k,l])=>`<button type="button" id="${idOf(k)}" class="m-${k}${k===active?' active':''}" onclick="${fn(k)}">${l}</button>`).join('')+`</div>`;
+}
+// 행 동작 아이콘 — 매매 이력(.tl-icon: 30px, 회색 라인 아이콘, 삭제는 빨강)과 같은 모양을 모든 표가 공유
+function iconBtn(kind, onclick){
+  const del = kind==='del';
+  return `<button class="tl-icon${del?' del':''}" onclick="${onclick}" title="${del?'삭제':'수정'}" aria-label="${del?'삭제':'수정'}">${del?ICON_TRASH:ICON_EDIT}</button>`;
+}
+const BL_NONE = {market:'-- 없음 --', company:'-- 없음 --', acct:'-- 없음 --', asset:'-- 없음 --'};
+const BL_PICK = {market:'-- 선택 --', company:'-- 없음 --', acct:'-- 선택 --', asset:'-- 없음 --'};
+
+function fmBuildBuy(){
+  const ids={market:['af_market','af_market_custom'],company:['af_company','af_company_custom'],acct:['af_accttype','af_accttype_custom'],asset:['af_assettype','af_assettype_custom']};
+  return `
+    <div class="fm-sec">종목</div>
+    <div class="fm-grid">
+      ${fmField('종목명', `<input class="fm-input" id="af_name" placeholder="종목명 또는 티커 검색" oninput="searchTicker(this.value)" autocomplete="off"><div class="suggest-box" id="af_suggestions"></div>`, {cls:'s6'})}
+      ${fmField('티커', fmInput('af_ticker',{ph:'예: 005930'}), {opt:true})}
+    </div>
+    <div class="fm-sec">분류</div>
+    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_PICK})}</div>
+    <div class="fm-sec">거래</div>
+    <div class="fm-grid">
+      ${fmField('수량', fmInput('af_qty',{type:'number',ph:'0'}), {id:'af_qty_label'})}
+      ${fmField('단가', fmInput('af_price',{type:'number',ph:'0'}), {id:'af_price_label'})}
+      ${fmField('통화', fmSelect('af_cur',FM_CUR,'KRW',{custom:false}))}
+      <div class="fm-f"><span class="fm-l">&nbsp;</span><button type="button" class="tgl-banner fm-sw" id="af_bond_sw" role="switch" aria-checked="false" onclick="toggleBondSwitch()">확정금리 채권(복리)<span class="sw"></span></button><input type="checkbox" id="af_bond_toggle" hidden></div>
+      <div id="af_bond_fields" class="fm-grid" style="display:none;grid-column:1 / -1;">
+        ${fmField('매입원금', fmInput('af_bond_principal',{type:'number'}))}
+        ${fmField('표면금리(%)', fmInput('af_bond_coupon',{type:'number',ph:'4.415',attrs:'step="0.001"'}))}
+        ${fmField('가산금리(%)', fmInput('af_bond_spread',{type:'number',ph:'0.350',attrs:'step="0.001"'}))}
+        ${fmField('발행일', fmInput('af_bond_issue',{type:'date'}))}
+        ${fmField('만기일', fmInput('af_bond_maturity',{type:'date'}))}
+      </div>
+    </div>
+    <div class="fm-sec">메모</div>
+    <div class="fm-grid">${fmField('사유', fmInput('af_reason',{ph:'매수 사유'}), {opt:true, cls:'s12'})}</div>
+    <div class="fm-a"><button class="btn btn-red" data-fm-primary onclick="addAsset()">+ 매수</button></div>`;
+}
+function fmBuildSell(){
+  const ids={market:['sf_market','sf_market_custom'],company:['sf_company','sf_company_custom'],acct:['sf_accttype','sf_accttype_custom'],asset:['sf_assettype','sf_assettype_custom']};
+  return `
+    <div class="fm-sec">종목</div>
+    <div class="fm-grid">
+      ${fmField('종목명', `<input class="fm-input" id="sf_name" placeholder="보유 종목 검색" oninput="searchSell(this.value)" autocomplete="off"><div class="suggest-box" id="sf_suggestions"></div>`, {cls:'s6'})}
+      ${fmField('보유수량', fmInput('sf_held',{readonly:true}))}
+    </div>
+    <div class="fm-sec">분류</div>
+    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_PICK})}</div>
+    <div class="fm-sec">거래</div>
+    <div class="fm-grid">
+      ${fmField('매도수량', fmInput('sf_qty',{type:'number',ph:'0'}))}
+      ${fmField('매도단가', fmInput('sf_price',{type:'number',ph:'0'}))}
+    </div>
+    <div class="fm-sec">메모</div>
+    <div class="fm-grid">${fmField('사유', fmInput('sf_reason',{ph:'매도 사유'}), {opt:true, cls:'s12'})}</div>
+    <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="sellAsset()">− 매도</button></div>`;
+}
+function fmBuildCash(){
+  const ids={market:['cf_market','cf_market_custom'],company:['cf_company','cf_company_custom'],acct:['cf_cashaccttype','cf_cashaccttype_custom'],asset:['cf_assettype','cf_assettype_custom']};
+  return `
+    <div class="fm-sec">구분</div>
+    <div class="fm-grid">
+      ${fmField('이름', fmSelect('cf_name',[['현금','현금'],['예금','예금']],'현금',{customId:'cf_name_custom'}))}
+      ${fmField('통화', fmSelect('cf_cur',FM_CUR,'KRW',{custom:false}))}
+    </div>
+    <div class="fm-sec">분류</div>
+    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_NONE,optional:true})}</div>
+    <div class="fm-sec">거래</div>
+    <div class="fm-grid">
+      <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금'],['div','배당']],'set',k=>'cf_mode_'+k,k=>`setCashMode('${k}')`)}</div>
+      ${fmField('잔액', fmInput('cf_amount',{type:'number',ph:'0',attrs:'min="0"'}), {id:'cf_amount_label'})}
+      <div id="cf_div_row" style="display:none;grid-column:span 12;">${fmField('배당 지급 종목', fmInput('cf_div_source',{ph:'예: SCHD'}), {opt:true, cls:'s6'})}</div>
+    </div>
+    <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addCash()">확인</button></div>`;
+}
+function fmBuildTL(){
+  const ids={market:['tl_market','tl_market_custom'],company:['tl_company','tl_company_custom'],acct:['tl_accttype','tl_accttype_custom'],asset:['tl_assettype','tl_assettype_custom']};
+  return `
+    <div class="fm-sec">종목</div>
+    <div class="fm-grid">
+      ${fmField('종목명', `<input class="fm-input" id="tl_name" placeholder="종목명 또는 티커 검색" autocomplete="off" oninput="searchTickerTL(this.value)"><div class="suggest-box" id="tl_suggestions"></div>`, {cls:'s6'})}
+      ${fmField('티커', fmInput('tl_ticker',{ph:'예: 005930'}))}
+    </div>
+    <div class="fm-sec">분류</div>
+    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_PICK, acctOpts:[...FM_ACCT,['cash','현금']]})}</div>
+    <div class="fm-sec">거래</div>
+    <div class="fm-grid">
+      ${fmField('날짜', fmInput('tl_date',{type:'date'}))}
+      ${fmField('유형', fmSelect('tl_type',[['buy','매수'],['sell','매도']],'buy',{custom:false}))}
+      ${fmField('수량', fmInput('tl_qty',{type:'number',ph:'0'}))}
+      ${fmField('체결단가', fmInput('tl_price',{type:'number',ph:'0'}))}
+      ${fmField('통화', fmSelect('tl_cur',FM_CUR,'KRW',{custom:false}))}
+    </div>
+    <div class="fm-sec">메모</div>
+    <div class="fm-grid">${fmField('사유', fmInput('tl_reason',{ph:'매수·매도 사유'}), {opt:true, cls:'s12'})}</div>
+    <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addTradeLog_manual()">기록 추가</button></div>`;
+}
+document.getElementById('form_buy').innerHTML  = fmBuildBuy();
+document.getElementById('form_sell').innerHTML = fmBuildSell();
+document.getElementById('form_cash').innerHTML = fmBuildCash();
+document.getElementById('form_tl').innerHTML   = fmBuildTL();
+// 폼 키보드: Enter = 저장(주 버튼), Esc = 닫기 — 자동완성 목록이 열려 있거나 한글 입력 중에는 건드리지 않는다
+document.addEventListener('keydown', e=>{
+  const fm = e.target.closest && e.target.closest('.fm'); if(!fm) return;
+  if(e.key==='Escape'){ const c=fm.querySelector('[data-fm-cancel]'); if(c){ e.preventDefault(); c.click(); } }
+  else if(e.key==='Enter' && e.target.tagName==='INPUT' && e.target.type!=='checkbox' && !e.isComposing){
+    const sb=fm.querySelector('.suggest-box'); if(sb && getComputedStyle(sb).display!=='none') return;
+    const pb=fm.querySelector('[data-fm-primary]'); if(pb){ e.preventDefault(); pb.click(); }
+  }
+});
 const ASSETS_KEY  = 'pf_assets_v1';
 const SOLD_KEY    = 'pf_sold_v1';
 const TRADE_KEY   = 'pf_tradelog_v1';
@@ -3568,7 +3404,7 @@ function saveTradeLogEdit(id){
   if(market===null) return;
   const acctType   = readSelectOrCustom(`tle_accttype_${id}`, `tle_accttype_custom_${id}`, true) ?? null;
   if(acctType===null) return;
-  const assetType  = document.getElementById(`tle_assettype_${id}`)?.value || '';
+  const assetType  = readSelectOrCustom(`tle_assettype_${id}`, `tle_assettype_custom_${id}`, false) || '';
   const price = parseFloat(document.getElementById(`tle_price_${id}`).value);
   const qty   = parseFloat(document.getElementById(`tle_qty_${id}`).value);
   const reason = document.getElementById(`tle_reason_${id}`).value.trim();
@@ -3887,8 +3723,7 @@ function renderSoldHistory(){
       <td class="tl-price">${isDiv ? '' : maskAmt(sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString())}<div class="tl-sub">${fmt(r.totalKRW||0)}</div></td>
       <td class="tl-pnlc">${pnlCell}</td>
       <td class="tl-act">
-        <button class="tl-icon" onclick="toggleTradeLogEdit('${r.id}')" title="수정" aria-label="수정">✏️</button>
-        <button class="tl-icon del" onclick="deleteSoldHistory('${r.id}')" title="삭제" aria-label="삭제">🗑</button>
+        ${iconBtn('edit', `toggleTradeLogEdit('${r.id}')`)}${iconBtn('del', `deleteSoldHistory('${r.id}')`)}
       </td>
     </tr>`;
 
@@ -3910,120 +3745,34 @@ function renderSoldHistory(){
 // 매매 이력 인라인 수정 폼 — "매매 이력" 탭과 "세금관리 > 해외주식 양도소득세" 탭에서 공용으로 사용
 function renderTradeLogEditForm(r, colspan){
   const dt = new Date(r.at);
-  const reasonStr = r.reason ? r.reason : '';
   const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-  const tleCompanyCustom = r.company && !['nh','mf'].includes(r.company);
-  const tleMarketCustom  = r.market && !MARKET_OPTIONS.includes(r.market);
-  const tleAcctTypeCustom = r.acctType && ![...ACCTTYPE_PRESETS,'cash'].includes(r.acctType);
-  return `<tr class="tr-full" style="background:#f0fff4;">
-    <td colspan="${colspan}" style="padding:14px 16px;" onclick="event.stopPropagation()">
-      <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
-        ✏️ 매매 이력 수정
-        <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-          ${r.name} · 날짜/종목/티커/투자시장/금융회사/계좌유형/체결단가/수량/사유를 수정합니다
-        </span>
+  const id = r.id;
+  return `<tr class="tr-full fm-row"><td colspan="${colspan}" onclick="event.stopPropagation()">
+    <div class="fm">
+      <div class="fm-h"><b>매매 이력 수정</b><span>${r.name}</span></div>
+      <div class="fm-sec">거래</div>
+      <div class="fm-grid">
+        ${fmField('날짜', fmInput(`tle_date_${id}`,{type:'date',value:dateVal}))}
+        ${fmField('유형', fmSelect(`tle_type_${id}`,[['buy','매수'],['sell','매도']],r.type,{custom:false}))}
+        ${fmField(`체결단가 (${r.currency})`, fmInput(`tle_price_${id}`,{type:'number',value:r.price}))}
+        ${fmField('수량', fmInput(`tle_qty_${id}`,{type:'number',value:r.quantity}))}
       </div>
-      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          날짜
-          <input id="tle_date_${r.id}" type="date" value="${dateVal}"
-            style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          종목명
-          <input id="tle_name_${r.id}" value="${r.name.replace(/"/g,'&quot;')}"
-            style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          티커
-          <input id="tle_ticker_${r.id}" value="${(r.ticker&&r.ticker!=='—'?r.ticker:'').replace(/"/g,'&quot;')}" placeholder="예:005930"
-            style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          투자시장
-          <select id="tle_market_${r.id}" onchange="toggleCustomInput('tle_market_${r.id}','tle_market_custom_${r.id}')"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value=""       ${!r.market?'selected':''}>-- 선택 --</option>
-            <option value="kr"     ${r.market==='kr'?'selected':''}>한국</option>
-            <option value="us"     ${r.market==='us'?'selected':''}>미국</option>
-            <option value="jp"     ${r.market==='jp'?'selected':''}>일본</option>
-            <option value="global" ${r.market==='global'?'selected':''}>글로벌</option>
-            <option value="__custom__" ${tleMarketCustom?'selected':''}>+ 직접입력</option>
-          </select>
-          <input id="tle_market_custom_${r.id}" placeholder="투자시장 입력" value="${tleMarketCustom?r.market.replace(/"/g,'&quot;'):''}"
-            style="width:85px;display:${tleMarketCustom?'inline-block':'none'};margin-top:3px;
-                   border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          금융회사
-          <select id="tle_company_${r.id}" onchange="toggleCustomInput('tle_company_${r.id}','tle_company_custom_${r.id}')"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value=""   ${!r.company?'selected':''}>-- 없음 --</option>
-            <option value="nh" ${r.company==='nh'?'selected':''}>농협</option>
-            <option value="mf" ${r.company==='mf'?'selected':''}>미래에셋</option>
-            <option value="__custom__" ${tleCompanyCustom?'selected':''}>+ 직접입력</option>
-          </select>
-          <input id="tle_company_custom_${r.id}" placeholder="금융회사명 입력" value="${tleCompanyCustom?r.company.replace(/"/g,'&quot;'):''}"
-            style="width:85px;display:${tleCompanyCustom?'inline-block':'none'};margin-top:3px;
-                   border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          유형
-          <select id="tle_type_${r.id}"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="buy"  ${r.type==='buy' ?'selected':''}>매수</option>
-            <option value="sell" ${r.type==='sell'?'selected':''}>매도</option>
-          </select>
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          계좌유형
-          <select id="tle_accttype_${r.id}" onchange="toggleCustomInput('tle_accttype_${r.id}','tle_accttype_custom_${r.id}')"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value=""                  ${!r.acctType?'selected':''}>-- 선택 --</option>
-            <option value="general"           ${r.acctType==='general'?'selected':''}>일반계좌</option>
-            <option value="pension_personal"  ${r.acctType==='pension_personal'?'selected':''}>개인연금</option>
-            <option value="pension_retirement"${r.acctType==='pension_retirement'?'selected':''}>퇴직연금</option>
-            <option value="irp"               ${r.acctType==='irp'?'selected':''}>IRP 개인</option>
-            <option value="isa"               ${r.acctType==='isa'?'selected':''}>ISA</option>
-            <option value="cash"              ${r.acctType==='cash'?'selected':''}>현금</option>
-            <option value="__custom__"        ${tleAcctTypeCustom?'selected':''}>+ 직접입력</option>
-          </select>
-          <input id="tle_accttype_custom_${r.id}" placeholder="계좌유형명 입력" value="${tleAcctTypeCustom?r.acctType.replace(/"/g,'&quot;'):''}"
-            style="width:100px;display:${tleAcctTypeCustom?'inline-block':'none'};margin-top:3px;
-                   border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          자산유형
-          <select id="tle_assettype_${r.id}"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value=""       ${!r.assetType?'selected':''}>— 없음 —</option>
-            ${[...ASSETTYPE_OPTIONS, ...(r.assetType && !ASSETTYPE_OPTIONS.includes(r.assetType) ? [r.assetType] : [])]
-              .map(v=>`<option value="${String(v).replace(/"/g,'&quot;')}" ${r.assetType===v?'selected':''}>${v}</option>`).join('')}
-          </select>
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          체결단가 (${r.currency})
-          <input id="tle_price_${r.id}" type="number" value="${r.price}"
-            style="width:110px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          수량
-          <input id="tle_qty_${r.id}" type="number" value="${r.quantity}"
-            style="width:90px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px;">
-          사유
-          <input id="tle_reason_${r.id}" value="${reasonStr.replace(/"/g,'&quot;')}"
-            style="width:100%;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="saveTradeLogEdit('${r.id}')">저장</button>
-          <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-            onclick="closeTradeLogEdit()">닫기</button>
-        </div>
+      <div class="fm-sec">종목</div>
+      <div class="fm-grid">
+        ${fmField('종목명', fmInput(`tle_name_${id}`,{value:r.name}), {cls:'s6'})}
+        ${fmField('티커', fmInput(`tle_ticker_${id}`,{value:(r.ticker&&r.ticker!=='—'?r.ticker:''),ph:'예: 005930'}))}
       </div>
-    </td>
-  </tr>`;
+      <div class="fm-sec">분류</div>
+      <div class="fm-grid">${fmClassFields({market:[`tle_market_${id}`,`tle_market_custom_${id}`],company:[`tle_company_${id}`,`tle_company_custom_${id}`],acct:[`tle_accttype_${id}`,`tle_accttype_custom_${id}`],asset:[`tle_assettype_${id}`,`tle_assettype_custom_${id}`]},
+        {market:r.market,company:r.company,acct:r.acctType,asset:r.assetType},{blank:BL_PICK, acctOpts:[...FM_ACCT,['cash','현금']]})}</div>
+      <div class="fm-sec">메모</div>
+      <div class="fm-grid">${fmField('사유', fmInput(`tle_reason_${id}`,{value:r.reason||''}), {opt:true, cls:'s12'})}</div>
+      <div class="fm-a">
+        <button class="btn btn-ghost" data-fm-cancel onclick="closeTradeLogEdit()">취소</button>
+        <button class="btn btn-green" data-fm-primary onclick="saveTradeLogEdit('${id}')">저장</button>
+      </div>
+    </div>
+  </td></tr>`;
 }
 
 function deleteSnap(snapKey){
@@ -4083,7 +3832,7 @@ function renderSnaps(){
       <span class="snap-val">${fmt(s.totalValue)}</span>
       <span class="col-hide ${cls(diff)}">${diff===null?'—':(diff>=0?'+':'')+fmt(diff)}</span>
       <span class="snap-pct ${cls(pct)}">${pct===null?'—':fmtPct(pct)}</span>
-      <span><button class="snap-del" onclick="deleteSnap('${s.id||s.timestamp}')" aria-label="삭제" title="삭제">🗑</button></span>
+      <span>${iconBtn('del', `deleteSnap('${s.id||s.timestamp}')`)}</span>
     </div>`;
   }).join('');
   if(document.getElementById('chartSubpage')?.classList.contains('snap-mode')) requestAnimationFrame(fitSnapHeight);
@@ -4261,297 +4010,84 @@ function renderTable(){
           onclick="flashPress(this); toggleStockChart('${a.id}')" title="종목별 가격 차트">${ICON_DETAIL}</button>` : ''}
       </td>
       <td style="white-space:nowrap;text-align:right;" onclick="event.stopPropagation()">
-        <button class="edit-btn btn-editicon"
-          onclick="flashPress(this); toggleEdit('${a.id}')" title="수정">${ICON_EDIT}</button>
+        ${iconBtn('edit', `toggleEdit('${a.id}')`)}
       </td>
       <td class="fold-hide" style="white-space:nowrap;text-align:right;" onclick="event.stopPropagation()">
-        <button class="del-btn"
-          onclick="confirmDelete('${a.id}','${a.name.replace(/'/g,'')}')" title="삭제">${ICON_TRASH}</button>
+        ${iconBtn('del', `confirmDelete('${a.id}','${a.name.replace(/'/g,'')}')`)}
       </td>
     </tr>`;
 
     // 거래 패널 (행 클릭) - 매수/매도
     if(quickTradeId===a.id){
-      rows+=`<tr class="tr-full" style="background:#f0f7ff;">
-        <td colspan="12" style="padding:14px 16px;" onclick="event.stopPropagation()">
-          <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#007aff;">
-            ⚡ 빠른 거래
-            <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-              ${a.name} · 보유 ${maskAmt(a.quantity.toLocaleString()+'주')} · 평균 ${priceStr(a.avgPrice)}
-            </span>
+      rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
+        <div class="fm">
+          <div class="fm-h"><b>빠른 거래</b><span>${a.name} · 보유 ${maskAmt(a.quantity.toLocaleString()+'주')} · 평균 ${priceStr(a.avgPrice)}</span></div>
+          <div class="fm-grid">
+            ${fmField('수량', fmInput(`tp_qty_${a.id}`,{type:'number',ph:'0',attrs:'min="0"'}))}
+            ${fmField(`단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.currentPrice}))}
           </div>
-          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              수량
-              <input id="tp_qty_${a.id}" type="number" placeholder="0" min="0" value=""
-                style="width:90px;border:1px solid var(--color-border);border-radius:8px;
-                       padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-              단가 (${a.currency})
-              <input id="tp_price_${a.id}" type="number" value="${a.currentPrice}"
-                style="width:110px;border:1px solid var(--color-border);border-radius:8px;
-                       padding:6px 10px;font-size:13px;font-family:inherit;">
-            </label>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn btn-red" style="padding:7px 16px;font-size:13px;"
-                onclick="confirmTrade('${a.id}','buy')">+ 매수</button>
-              <button class="btn btn-green" style="padding:7px 16px;font-size:13px;"
-                onclick="confirmTrade('${a.id}','sell')">− 매도</button>
-              <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-                onclick="closeTradePanel()">닫기</button>
-            </div>
+          <div class="fm-a">
+            <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">닫기</button>
+            <button class="btn btn-green" onclick="confirmTrade('${a.id}','sell')">− 매도</button>
+            <button class="btn btn-red" onclick="confirmTrade('${a.id}','buy')">+ 매수</button>
           </div>
-          <div id="tp_status_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-top:8px;min-height:14px;"></div>
-        </td>
-      </tr>`;
+        </div>
+      </td></tr>`;
     }
 
-    // 편집 패널 (✏️ 버튼)
+    // 편집 패널 (연필 버튼)
     if(editingId===a.id){
       if(a.acctType==='cash'){
         // ── 현금 전용: 잔액설정 / 입금 / 출금 ──
         const sym=CUR_SYM[a.currency];
-        rows+=`<tr class="tr-full" style="background:#f0fff4;">
-          <td colspan="12" style="padding:14px 16px;" onclick="event.stopPropagation()">
-            <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
-              ✏️ 현금 수정
-              <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-                ${a.name} · 현재 ${maskAmt(sym+a.avgPrice.toLocaleString())}
-              </span>
+        const cm=editCashModes[a.id]||'set';
+        const cmLabel={set:'잔액', in:'입금 금액', out:'출금 금액'}[cm];
+        rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
+          <div class="fm">
+            <div class="fm-h"><b>현금 수정</b><span>${a.name} · 현재 ${maskAmt(sym+a.avgPrice.toLocaleString())}</span></div>
+            <div class="fm-sec">분류</div>
+            <div class="fm-grid">${fmClassFields({market:[`ep_market_${a.id}`,`ep_market_custom_${a.id}`],company:[`ep_company_${a.id}`,`ep_company_custom_${a.id}`],acct:[`ep_cashaccttype_${a.id}`,`ep_cashaccttype_custom_${a.id}`],asset:[`ep_assettype_${a.id}`,`ep_assettype_custom_${a.id}`]},
+              {market:a.market,company:a.company,acct:a.cashAcctType,asset:a.assetType},{blank:BL_NONE})}</div>
+            <div class="fm-sec">금액</div>
+            <div class="fm-grid">
+              <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${a.id}`,k=>`setEditCashMode('${a.id}','${k}')`)}</div>
+              ${fmField(cmLabel, fmInput(`ep_cash_amt_${a.id}`,{type:'number',ph:'0',attrs:'min="0"'}), {id:`ep_amt_label_${a.id}`})}
             </div>
-            <!-- 투자시장 / 금융회사 / 계좌유형 / 자산유형 -->
-            <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px;flex-wrap:wrap;">
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                투자시장
-                <select id="ep_market_${a.id}" onchange="toggleCustomInput('ep_market_${a.id}','ep_market_custom_${a.id}')"
-                  style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value=""       ${!a.market?'selected':''}>-- 없음 --</option>
-                  <option value="kr"     ${a.market==='kr'?'selected':''}>한국</option>
-                  <option value="us"     ${a.market==='us'?'selected':''}>미국</option>
-                  <option value="jp"     ${a.market==='jp'?'selected':''}>일본</option>
-                  <option value="global" ${a.market==='global'?'selected':''}>글로벌</option>
-                  <option value="__custom__" ${a.market && !MARKET_OPTIONS.includes(a.market)?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="ep_market_custom_${a.id}" placeholder="투자시장 입력"
-                  value="${a.market && !MARKET_OPTIONS.includes(a.market)?a.market.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.market && !MARKET_OPTIONS.includes(a.market)?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                금융회사
-                <select id="ep_company_${a.id}" onchange="toggleCustomInput('ep_company_${a.id}','ep_company_custom_${a.id}')"
-                  style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value=""   ${!a.company?'selected':''}>-- 없음 --</option>
-                  <option value="nh" ${a.company==='nh'?'selected':''}>농협</option>
-                  <option value="mf" ${a.company==='mf'?'selected':''}>미래에셋</option>
-                  <option value="__custom__" ${a.company && !['nh','mf'].includes(a.company)?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="ep_company_custom_${a.id}" placeholder="금융회사명 입력"
-                  value="${a.company && !['nh','mf'].includes(a.company)?a.company.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.company && !['nh','mf'].includes(a.company)?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                계좌유형
-                <select id="ep_cashaccttype_${a.id}" onchange="toggleCustomInput('ep_cashaccttype_${a.id}','ep_cashaccttype_custom_${a.id}')"
-                  style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value=""   ${!a.cashAcctType?'selected':''}>-- 없음 --</option>
-                  <option value="pension_personal"   ${a.cashAcctType==='pension_personal'?'selected':''}>개인연금</option>
-                  <option value="pension_retirement" ${a.cashAcctType==='pension_retirement'?'selected':''}>퇴직연금</option>
-                  <option value="irp"       ${a.cashAcctType==='irp'      ?'selected':''}>IRP 개인</option>
-                  <option value="isa"       ${a.cashAcctType==='isa'      ?'selected':''}>ISA</option>
-                  <option value="general"   ${a.cashAcctType==='general'  ?'selected':''}>일반계좌</option>
-                  <option value="__custom__" ${a.cashAcctType && !ACCTTYPE_PRESETS.includes(a.cashAcctType)?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="ep_cashaccttype_custom_${a.id}" placeholder="계좌유형명 입력"
-                  value="${a.cashAcctType && !ACCTTYPE_PRESETS.includes(a.cashAcctType)?a.cashAcctType.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.cashAcctType && !ACCTTYPE_PRESETS.includes(a.cashAcctType)?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                자산유형
-                <select id="ep_assettype_${a.id}" onchange="toggleCustomInput('ep_assettype_${a.id}','ep_assettype_custom_${a.id}')"
-                  style="width:100px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value="" ${!a.assetType?'selected':''}>— 없음 —</option>
-                  <option value="Core"   ${a.assetType==='Core'  ?'selected':''}>Core</option>
-                  <option value="주도주" ${a.assetType==='주도주'?'selected':''}>주도주</option>
-                  <option value="유망주" ${a.assetType==='유망주'?'selected':''}>유망주</option>
-                  <option value="원자재" ${a.assetType==='원자재'?'selected':''}>원자재</option>
-                  <option value="안전자산" ${a.assetType==='안전자산'?'selected':''}>안전자산</option>
-                  <option value="가상자산" ${a.assetType==='가상자산'?'selected':''}>가상자산</option>
-                  <option value="__custom__" ${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="ep_assettype_custom_${a.id}" placeholder="자산유형명 입력"
-                  value="${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?a.assetType.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
+            <div class="fm-a">
+              <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
+              <button class="btn btn-green" data-fm-primary onclick="confirmEditCash('${a.id}')">저장</button>
             </div>
-            <!-- 모드 버튼 -->
-            <div style="display:flex;gap:6px;margin-bottom:10px;max-width:320px;">
-              <button id="ep_mode_set_${a.id}" onclick="setEditCashMode('${a.id}','set')"
-                style="flex:1;padding:6px 4px;font-size:12px;border-radius:8px;
-                       border:1.5px solid #34c759;background:#34c75920;
-                       color:#34c759;font-weight:700;cursor:pointer;">잔액 설정</button>
-              <button id="ep_mode_in_${a.id}" onclick="setEditCashMode('${a.id}','in')"
-                style="flex:1;padding:6px 4px;font-size:12px;border-radius:8px;
-                       border:1.5px solid var(--color-border);background:var(--color-section-bg);
-                       color:var(--color-tertiary);cursor:pointer;">+ 입금</button>
-              <button id="ep_mode_out_${a.id}" onclick="setEditCashMode('${a.id}','out')"
-                style="flex:1;padding:6px 4px;font-size:12px;border-radius:8px;
-                       border:1.5px solid var(--color-border);background:var(--color-section-bg);
-                       color:var(--color-tertiary);cursor:pointer;">− 출금</button>
-            </div>
-            <!-- 금액 입력 -->
-            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-              <label id="ep_amt_label_${a.id}" style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                잔액
-                <input id="ep_cash_amt_${a.id}" type="number" placeholder="0" min="0"
-                  style="width:150px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="confirmEditCash('${a.id}')">저장</button>
-              <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-                onclick="closeTradePanel()">닫기</button>
-            </div>
-          </td>
-        </tr>`;
+          </div>
+        </td></tr>`;
       } else {
-        // ── 일반 종목: 수량 / 평균단가 / 계좌 / 구분 / 속성 (확정금리 채권은 원금·금리·발행/만기일로 대체) ──
-        const tpCompanyCustom = a.company && !['nh','mf'].includes(a.company);
-        const tpMarketCustom  = a.market && !MARKET_OPTIONS.includes(a.market);
-        const tpAcctTypeCustom = a.acctType && !ACCTTYPE_PRESETS.includes(a.acctType);
-        const bondEditFields = a.isBond ? `
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                매입원금 (${a.currency})
-                <input id="tp_bond_principal_${a.id}" type="number" value="${a.bondPrincipal||0}"
-                  style="width:110px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                표면금리(%)
-                <input id="tp_bond_coupon_${a.id}" type="number" step="0.001" value="${((a.bondCouponRate||0)*100).toFixed(3)}"
-                  style="width:80px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                가산금리(%)
-                <input id="tp_bond_spread_${a.id}" type="number" step="0.001" value="${((a.bondSpreadRate||0)*100).toFixed(3)}"
-                  style="width:80px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                발행일
-                <input id="tp_bond_issue_${a.id}" type="date" value="${a.bondIssueDate||''}"
-                  style="width:135px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                만기일
-                <input id="tp_bond_maturity_${a.id}" type="date" value="${a.bondMaturityDate||''}"
-                  style="width:135px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>` : `
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                수량
-                <input id="tp_qty_${a.id}" type="number" value="${a.quantity}"
-                  style="width:90px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                평균단가 (${a.currency})
-                <input id="tp_price_${a.id}" type="number" value="${a.avgPrice}"
-                  style="width:110px;border:1px solid #34c75960;border-radius:8px;
-                         padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>`;
-        rows+=`<tr class="tr-full" style="background:#f0fff4;">
-          <td colspan="12" style="padding:14px 16px;" onclick="event.stopPropagation()">
-            <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
-              ✏️ 종목 수정
-              <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">
-                ${a.name} · ${a.isBond?'원금, 금리, 발행/만기일, 투자시장, 금융회사, 계좌유형, 자산유형을 수정합니다':'수량, 평균단가, 투자시장, 금융회사, 계좌유형, 자산유형을 수정합니다'}
-              </span>
+        // ── 일반 종목: 수량 / 평균단가 / 분류 (확정금리 채권은 원금·금리·발행/만기일로 대체) ──
+        const holdFields = a.isBond ? `
+            <div class="fm-sec">채권 정보</div>
+            <div class="fm-grid">
+              ${fmField(`매입원금 (${a.currency})`, fmInput(`tp_bond_principal_${a.id}`,{type:'number',value:a.bondPrincipal||0}))}
+              ${fmField('표면금리(%)', fmInput(`tp_bond_coupon_${a.id}`,{type:'number',value:((a.bondCouponRate||0)*100).toFixed(3),attrs:'step="0.001"'}))}
+              ${fmField('가산금리(%)', fmInput(`tp_bond_spread_${a.id}`,{type:'number',value:((a.bondSpreadRate||0)*100).toFixed(3),attrs:'step="0.001"'}))}
+              ${fmField('발행일', fmInput(`tp_bond_issue_${a.id}`,{type:'date',value:a.bondIssueDate||''}))}
+              ${fmField('만기일', fmInput(`tp_bond_maturity_${a.id}`,{type:'date',value:a.bondMaturityDate||''}))}
+            </div>` : `
+            <div class="fm-sec">보유 정보</div>
+            <div class="fm-grid">
+              ${fmField('수량', fmInput(`tp_qty_${a.id}`,{type:'number',value:a.quantity}))}
+              ${fmField(`평균단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.avgPrice}))}
+            </div>`;
+        rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
+          <div class="fm">
+            <div class="fm-h"><b>종목 수정</b><span>${a.name}</span></div>
+            ${holdFields}
+            <div class="fm-sec">분류</div>
+            <div class="fm-grid">${fmClassFields({market:[`tp_market_${a.id}`,`tp_market_custom_${a.id}`],company:[`tp_company_${a.id}`,`tp_company_custom_${a.id}`],acct:[`tp_accttype_${a.id}`,`tp_accttype_custom_${a.id}`],asset:[`tp_assettype_${a.id}`,`tp_assettype_custom_${a.id}`]},
+              {market:a.market,company:a.company,acct:a.acctType,asset:a.assetType},{blank:{market:'-- 선택 --',company:'-- 없음 --',asset:'-- 없음 --'}})}</div>
+            <div class="fm-a">
+              <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
+              <button class="btn btn-green" data-fm-primary onclick="confirmSaveEdit('${a.id}')">저장</button>
             </div>
-            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-              ${bondEditFields}
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                투자시장
-                <select id="tp_market_${a.id}" onchange="toggleCustomInput('tp_market_${a.id}','tp_market_custom_${a.id}')"
-                  style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value=""       ${!a.market?'selected':''}>-- 선택 --</option>
-                  <option value="kr"     ${a.market==='kr'?'selected':''}>한국</option>
-                  <option value="us"     ${a.market==='us'?'selected':''}>미국</option>
-                  <option value="jp"     ${a.market==='jp'?'selected':''}>일본</option>
-                  <option value="global" ${a.market==='global'?'selected':''}>글로벌</option>
-                  <option value="__custom__" ${tpMarketCustom?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="tp_market_custom_${a.id}" placeholder="투자시장 입력" value="${tpMarketCustom?a.market.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${tpMarketCustom?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                금융회사
-                <select id="tp_company_${a.id}" onchange="toggleCustomInput('tp_company_${a.id}','tp_company_custom_${a.id}')"
-                  style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value=""   ${!a.company?'selected':''}>-- 없음 --</option>
-                  <option value="nh" ${a.company==='nh'?'selected':''}>농협</option>
-                  <option value="mf" ${a.company==='mf'?'selected':''}>미래에셋</option>
-                  <option value="__custom__" ${tpCompanyCustom?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="tp_company_custom_${a.id}" placeholder="금융회사명 입력" value="${tpCompanyCustom?a.company.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${tpCompanyCustom?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                계좌유형
-                <select id="tp_accttype_${a.id}" onchange="toggleCustomInput('tp_accttype_${a.id}','tp_accttype_custom_${a.id}')"
-                  style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value="general"   ${a.acctType==='general'  ?'selected':''}>일반계좌</option>
-                  <option value="pension_personal"   ${a.acctType==='pension_personal'  ?'selected':''}>개인연금</option>
-                  <option value="pension_retirement" ${a.acctType==='pension_retirement'?'selected':''}>퇴직연금</option>
-                  <option value="irp"       ${a.acctType==='irp'      ?'selected':''}>IRP 개인</option>
-                  <option value="isa"       ${a.acctType==='isa'      ?'selected':''}>ISA</option>
-                  <option value="__custom__" ${tpAcctTypeCustom?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="tp_accttype_custom_${a.id}" placeholder="계좌유형명 입력" value="${tpAcctTypeCustom?a.acctType.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${tpAcctTypeCustom?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-                자산유형
-                <select id="tp_assettype_${a.id}" onchange="toggleCustomInput('tp_assettype_${a.id}','tp_assettype_custom_${a.id}')"
-                  style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;
-                         font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-                  <option value="" ${!a.assetType?'selected':''}>— 없음 —</option>
-                  <option value="Core"   ${a.assetType==='Core'  ?'selected':''}>Core</option>
-                  <option value="주도주" ${a.assetType==='주도주'?'selected':''}>주도주</option>
-                  <option value="유망주" ${a.assetType==='유망주'?'selected':''}>유망주</option>
-                  <option value="원자재" ${a.assetType==='원자재'?'selected':''}>원자재</option>
-                  <option value="안전자산" ${a.assetType==='안전자산'?'selected':''}>안전자산</option>
-                  <option value="가상자산" ${a.assetType==='가상자산'?'selected':''}>가상자산</option>
-                  <option value="__custom__" ${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'selected':''}>+ 직접입력</option>
-                </select>
-                <input id="tp_assettype_custom_${a.id}" placeholder="자산유형명 입력"
-                  value="${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?a.assetType.replace(/"/g,'&quot;'):''}"
-                  style="width:100px;display:${a.assetType && !ASSETTYPE_OPTIONS.includes(a.assetType)?'inline-block':'none'};margin-top:3px;
-                         border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-              </label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="confirmSaveEdit('${a.id}')">저장</button>
-                <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-                  onclick="closeTradePanel()">닫기</button>
-              </div>
-            </div>
-          </td>
-        </tr>`;
+          </div>
+        </td></tr>`;
       }
     }
 
@@ -5137,14 +4673,8 @@ function switchTab(tab){
     const btn=document.getElementById(`tab_${t}`);
     if(!form||!btn) return;
     const isActive=tab===t;
-    form.style.display=isActive?'flex':'none';
-    const colors={
-      buy:  {active:'var(--color-accent)', border:'var(--color-accent)'},
-      sell: {active:'var(--color-up)',     border:'var(--color-up)'},
-      cash: {active:'#34c759',             border:'#34c759'},
-    };
-    btn.style.color     = isActive ? colors[t].active : 'var(--color-tertiary)';
-    btn.style.borderBottomColor = isActive ? colors[t].border : 'transparent';
+    form.style.display=isActive?'block':'none';
+    btn.classList.toggle('active', isActive);
   });
 }
 
@@ -5414,9 +4944,9 @@ function toggleBondFields(){
   const on = document.getElementById('af_bond_toggle').checked;
   const sw = document.getElementById('af_bond_sw');
   sw.classList.toggle('on', on); sw.setAttribute('aria-checked', on ? 'true' : 'false');
-  document.getElementById('af_bond_fields').style.display = on ? 'flex' : 'none';
-  document.getElementById('af_qty_label').style.display = on ? 'none' : 'inline-block';
-  document.getElementById('af_price_label').style.display = on ? 'none' : 'inline-block';
+  document.getElementById('af_bond_fields').style.display = on ? 'grid' : 'none';
+  document.getElementById('af_qty_label').style.display = on ? 'none' : '';
+  document.getElementById('af_price_label').style.display = on ? 'none' : '';
 }
 // 예약된 구분(카테고리) 키와 충돌하는 커스텀 값 입력 방지
 const RESERVED_ACCTTYPE_KEYS = ['general','stock_kr','stock_us','stock_jp','pension_personal','pension_retirement','irp','isa','crypto','cash'];
@@ -5426,7 +4956,7 @@ function toggleCustomInput(selectId, customInputId){
   const inp = document.getElementById(customInputId);
   if(!sel||!inp) return;
   const isCustom = sel.value === '__custom__';
-  inp.style.display = isCustom ? 'inline-block' : 'none';
+  inp.style.display = isCustom ? 'block' : 'none';
   if(isCustom) inp.focus();
 }
 // select+커스텀 입력 쌍에서 실제 값을 읽어옴. isAcctType면 예약어 충돌 검사(문제 있으면 null 반환 + 경고)
@@ -5582,16 +5112,10 @@ function sellAsset(){
 const editCashModes = {};
 function setEditCashMode(id, mode){
   editCashModes[id] = mode;
-  const colors = {set:'#34c759', in:'#007aff', out:'#ff3b30'};
   const labels = {set:'잔액', in:'입금 금액', out:'출금 금액'};
   ['set','in','out'].forEach(k=>{
     const btn=document.getElementById(`ep_mode_${k}_${id}`);
-    if(!btn) return;
-    const active=k===mode;
-    btn.style.background  = active ? colors[k]+'20' : 'var(--color-section-bg)';
-    btn.style.borderColor = active ? colors[k]       : 'var(--color-border)';
-    btn.style.color       = active ? colors[k]       : 'var(--color-tertiary)';
-    btn.style.fontWeight  = active ? '700' : '400';
+    if(btn) btn.classList.toggle('active', k===mode);
   });
   const lbl=document.getElementById(`ep_amt_label_${id}`);
   if(lbl) lbl.childNodes[0].textContent = labels[mode];
@@ -5654,16 +5178,8 @@ function setCashMode(mode){
     out: document.getElementById('cf_mode_out'),
     div: document.getElementById('cf_mode_div'),
   };
-  const colors = {set:'#34c759', in:'#007aff', out:'#ff3b30', div:'#ff9500'};
   const labels = {set:'잔액', in:'입금 금액', out:'출금 금액', div:'배당 수령액(실제 입금액)'};
-  Object.entries(btns).forEach(([k,btn])=>{
-    if(!btn) return;
-    const active = k===mode;
-    btn.style.background  = active ? colors[k]+'20' : 'var(--color-section-bg)';
-    btn.style.borderColor = active ? colors[k]       : 'var(--color-border)';
-    btn.style.color       = active ? colors[k]       : 'var(--color-tertiary)';
-    btn.style.fontWeight  = active ? '700' : '400';
-  });
+  Object.entries(btns).forEach(([k,btn])=>{ if(btn) btn.classList.toggle('active', k===mode); });
   const lbl = document.getElementById('cf_amount_label');
   if(lbl) lbl.childNodes[0].textContent = labels[mode];
   const divRow = document.getElementById('cf_div_row');
@@ -5767,8 +5283,7 @@ function renderCapitalGainsTax(){
       <td style="text-align:left">${r.name}</td><td>${new Date(r.at).toLocaleDateString('ko-KR')}</td>
       <td class="${r.pnl>=0?'up':'dn'}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</td>
       <td style="white-space:nowrap;">
-        <button class="edit-btn btn-editicon" onclick="toggleTradeLogEdit('${r.id}')" title="수정">✏️</button>
-        <button class="del-btn" onclick="deleteSoldHistory('${r.id}')" title="삭제">🗑</button>
+        ${iconBtn('edit', `toggleTradeLogEdit('${r.id}')`)}${iconBtn('del', `deleteSoldHistory('${r.id}')`)}
       </td>
     </tr>`;
     if(editingTradeLogId===r.id) rowHtml += renderTradeLogEditForm(r, 4);
@@ -5880,8 +5395,7 @@ function renderPrincipalLedger(){
       <td class="${isIn?'up':'dn'}" style="font-weight:600;">${isIn?'+':'-'}${fmt(r.totalKRW||0)}</td>
       <td style="font-weight:700;">${fmt(running)}</td>
       <td style="white-space:nowrap;text-align:right;">
-        <button class="edit-btn btn-editicon" onclick="togglePrincipalLedgerEdit('${r.id}')" title="수정">✏️</button>
-        <button class="del-btn" style="border-radius:6px;padding:3px 5px;" onclick="deletePrincipalLedgerEntry('${r.id}')" title="삭제">🗑</button>
+        ${iconBtn('edit', `togglePrincipalLedgerEdit('${r.id}')`)}${iconBtn('del', `deletePrincipalLedgerEntry('${r.id}')`)}
       </td>
     </tr>`;
     return mainRow + (editingPrincipalLedgerId===r.id ? renderPrincipalLedgerEditForm(r) : '');
@@ -5895,48 +5409,21 @@ function renderPrincipalLedgerEditForm(r){
   const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
   const fxRate = r.currency==='USD'?FX.USD:r.currency==='JPY'?FX.JPY:1;
   const amountVal = r.currency==='KRW' ? (r.totalKRW||0) : Math.round((r.totalKRW||0)/fxRate);
-  return `<tr class="tr-full" style="background:#f0fff4;">
-    <td colspan="6" style="padding:14px 16px;" onclick="event.stopPropagation()">
-      <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:#34c759;">
-        ✏️ 원금 기록 수정
-        <span style="font-size:10px;color:var(--color-tertiary);font-weight:400;margin-left:6px;">날짜/구분/금액/통화를 수정합니다</span>
+  return `<tr class="tr-full fm-row"><td colspan="6" onclick="event.stopPropagation()">
+    <div class="fm">
+      <div class="fm-h"><b>원금 기록 수정</b><span>날짜 · 구분 · 금액 · 통화</span></div>
+      <div class="fm-grid">
+        ${fmField('날짜', fmInput(`ple_date_${r.id}`,{type:'date',value:dateVal}))}
+        ${fmField('구분', fmSelect(`ple_type_${r.id}`,[['deposit','입금'],['withdrawal','출금']],r.type,{custom:false}))}
+        ${fmField('금액', fmInput(`ple_amount_${r.id}`,{type:'number',value:amountVal,attrs:'min="0"'}))}
+        ${fmField('통화', fmSelect(`ple_cur_${r.id}`,FM_CUR,r.currency,{custom:false}))}
       </div>
-      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          날짜
-          <input id="ple_date_${r.id}" type="date" value="${dateVal}"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          구분
-          <select id="ple_type_${r.id}"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="deposit"    ${r.type==='deposit'   ?'selected':''}>입금</option>
-            <option value="withdrawal" ${r.type==='withdrawal'?'selected':''}>출금</option>
-          </select>
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          금액
-          <input id="ple_amount_${r.id}" type="number" min="0" value="${amountVal}"
-            style="width:130px;border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-        </label>
-        <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-          통화
-          <select id="ple_cur_${r.id}"
-            style="border:1px solid #34c75960;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--color-card);color:var(--color-text);">
-            <option value="KRW" ${r.currency==='KRW'?'selected':''}>KRW ₩</option>
-            <option value="USD" ${r.currency==='USD'?'selected':''}>USD $</option>
-            <option value="JPY" ${r.currency==='JPY'?'selected':''}>JPY ¥</option>
-          </select>
-        </label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-green" style="padding:7px 16px;font-size:13px;" onclick="savePrincipalLedgerEdit('${r.id}')">저장</button>
-          <button class="btn btn-ghost" style="padding:7px 12px;font-size:13px;"
-            onclick="closePrincipalLedgerEdit()">닫기</button>
-        </div>
+      <div class="fm-a">
+        <button class="btn btn-ghost" data-fm-cancel onclick="closePrincipalLedgerEdit()">취소</button>
+        <button class="btn btn-green" data-fm-primary onclick="savePrincipalLedgerEdit('${r.id}')">저장</button>
       </div>
-    </td>
-  </tr>`;
+    </div>
+  </td></tr>`;
 }
 
 function togglePrincipalLedgerEdit(id){
@@ -6669,25 +6156,15 @@ function renderDividendEntryRow(r){
   const dt = new Date(r.at);
   if(editingDividendId===r.id){
     const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-    return `<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--color-border);">
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        날짜
-        <input id="de_date_${r.id}" type="date" value="${dateVal}"
-          style="width:130px;border:1px solid #ff950060;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-      </label>
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:100px;">
-        종목/배당원천
-        <input id="de_name_${r.id}" value="${(r.name||'').replace(/"/g,'&quot;')}"
-          style="width:100%;border:1px solid #ff950060;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-      </label>
-      <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
-        금액(원)
-        <input id="de_amount_${r.id}" type="number" value="${r.totalKRW||0}"
-          style="width:120px;border:1px solid #ff950060;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
-      </label>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-green" style="padding:7px 14px;font-size:13px;" onclick="saveDividendEntryEdit('${r.id}')">저장</button>
-        <button class="btn btn-ghost" style="padding:7px 10px;font-size:13px;" onclick="toggleDividendEntryEdit('${r.id}')">취소</button>
+    return `<div class="fm" style="margin:8px 0;">
+      <div class="fm-grid">
+        ${fmField('날짜', fmInput(`de_date_${r.id}`,{type:'date',value:dateVal}))}
+        ${fmField('종목/배당원천', fmInput(`de_name_${r.id}`,{value:r.name||''}), {cls:'s6'})}
+        ${fmField('금액(원)', fmInput(`de_amount_${r.id}`,{type:'number',value:r.totalKRW||0}))}
+      </div>
+      <div class="fm-a">
+        <button class="btn btn-ghost" data-fm-cancel onclick="toggleDividendEntryEdit('${r.id}')">취소</button>
+        <button class="btn btn-green" data-fm-primary onclick="saveDividendEntryEdit('${r.id}')">저장</button>
       </div>
     </div>`;
   }
@@ -6698,8 +6175,7 @@ function renderDividendEntryRow(r){
     </div>
     <div style="display:flex;align-items:center;gap:6px;">
       <span class="up" style="font-weight:700;font-size:12px;">+${fmt(r.totalKRW||0)}</span>
-      <button class="btn-icon" onclick="toggleDividendEntryEdit('${r.id}')" title="수정">✏️</button>
-      <button class="btn-icon" onclick="deleteDividendEntry('${r.id}')" title="삭제">🗑</button>
+      ${iconBtn('edit', `toggleDividendEntryEdit('${r.id}')`)}${iconBtn('del', `deleteDividendEntry('${r.id}')`)}
     </div>
   </div>`;
 }
