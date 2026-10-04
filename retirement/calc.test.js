@@ -8,7 +8,7 @@ const {
   basicIncomeTax, pensionIncomeDeduction, comprehensivePensionTax, pensionTaxes,
   calcMonthlyDepositFV, growYears, stepBalance, stepBalanceDetail, pvOfMonthlyStream,
   futurePrinAdd, taxFreeBases, simulate, computeAutoPlan, buildAccRows, accumulate, npNominalAtStart,
-  pensionLimitAnnual, bridgeExtraMonthly
+  pensionLimitAnnual, bridgeExtraMonthly, healthPremiumYear, regionalIncomeMonthly
 } = c;
 
 // 화면 기본값과 같은 입력(납입 종료는 getP()처럼 은퇴나이-1로 정규화된 상태)
@@ -196,11 +196,60 @@ test('futurePrinAdd: 연금저축 600·IRP 합산 900 배분, 연 1,800 초과 �
 });
 
 /* ── 시뮬레이션: 중복·누락 방지(보존 법칙) ── */
-test('simulate: 매년 월 합계 = 구성요소 합(중복·누락 없음), 세후 = 합계 − 세금', () => {
+test('simulate: 매년 월 합계 = 구성요소 합(중복·누락 없음), 세후 = 합계 − 세금 − 건보료', () => {
   const r = simulate(withPlan(BASE));
   for(const x of r.rows){
     assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc, `${x.age}세 합계`);
-    assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal), `${x.age}세 세후`);
+    assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi), `${x.age}세 세후`);
+  }
+});
+
+/* ── 건보료(지역가입자)를 세후에서 차감 ── */
+const HI = Object.assign({}, BASE, {realestate:30000, hi_interest:600, hi_dividend:600, hi_other:100});
+test('건보료: 은퇴 전 0, 공백기 < 국민연금 수령 후, 수령 후는 오늘 가치로 일정, 행 합계 = lifetimeHi', () => {
+  assert.equal(healthPremiumYear(HI, HI.ret - 1, 0, 1).annual, 0);
+  const r = simulate(withPlan(HI));
+  const gap = r.rows.filter(x => x.age < HI.npage), full = r.rows.filter(x => x.age >= HI.npage);
+  assert.ok(gap.every(x => x.hi > 0) && full[0].hi / full[0].infMul > gap[0].hi / gap[0].infMul, '공백기 < 수령 후');
+  for(const x of full) near(x.hi / x.infMul, full[0].hi / full[0].infMul, 0.6, `${x.age}세 오늘 가치 일정`);
+  near(sum(r.rows, x => x.hi * 12), r.lifetimeHi, r.rows.length * 6, '행 합계');
+  near(r.lifetimeNetReal, sum(r.rows, x => x.netInc * 12 / x.infMul), 1e-6, '평생 세후 합계(오늘 가치)');
+});
+
+test('건보료: 패널 단독 계산(regionalHealthPremium)과 같은 해 금액(오늘 가치)이 같음', () => {
+  const y = healthPremiumYear(HI, 70, HI.np, 1.3);
+  const panel = regionalHealthPremium(regionalIncomeMonthly(HI), HI.realestate);
+  assert.equal(y.monthlyReal, panel.total);
+  near(y.annual, panel.total * 12 * 1.3, 1e-9);
+  // 이자+배당 1,000만원 이하면 금융소득 0, 초과면 전액
+  const lowFin = healthPremiumYear(Object.assign({}, HI, {hi_dividend:300}), 70, HI.np, 1).monthlyReal;
+  assert.ok(lowFin < y.monthlyReal);
+});
+
+test('건보료는 인출 계획과 무관(사적연금·ISA 부과 제외) — 인출을 바꿔도 세후 차이 = 세금 차이만', () => {
+  const p = withPlan(HI);
+  const a = simulate(p), b = simulate(Object.assign({}, p, {isam: p.isam * 1.5, nhpay: p.nhpay * 0.5}));
+  for(let i = 0; i < a.rows.length; i++) assert.equal(a.rows[i].hi, b.rows[i].hi, `${a.rows[i].age}세`);
+  near(a.lifetimeHi, b.lifetimeHi, 1e-6);
+});
+
+test('건보료: 피부양자 가족 있음이면 판정 통과한 해는 0, 소득 기준을 넘으면 지역 금액', () => {
+  const dep = Object.assign({}, BASE, {hi_dep:'yes'});
+  assert.equal(healthPremiumYear(dep, 66, 100, 1).annual, 0);        // 연 1,200만 ≤ 2,000만
+  assert.ok(healthPremiumYear(dep, 66, 200, 1).annual > 0);          // 연 2,400만 > 2,000만
+  assert.ok(healthPremiumYear(dep, 66, 150, 1.2).annual > 0);        // 명목 2,160만 > 2,000만(기준선 명목 고정)
+  assert.ok(healthPremiumYear(BASE, 66, 100, 1).annual > 0);         // 가족 없음(기본) → 항상 지역가입자
+  const r = simulate(withPlan(dep));
+  assert.ok(r.rows.filter(x => x.age < dep.npage).every(x => x.hi === 0), '공백기 소득 0 → 피부양자');
+});
+
+test('필요분만 인출: 세후(건보료 차감 후)를 생활비에 맞춤', () => {
+  const p = withPlan(Object.assign({}, HI, {exp:250}));
+  const need = simulate(p, undefined, {needOnly:true});
+  const full = simulate(p);
+  for(let i = 0; i < need.rows.length; i++){
+    const n = need.rows[i], f = full.rows[i];
+    if(f.netInc > f.curExp + 2 && n.npInc - n.taxNp - n.hi < n.curExp) near(n.netInc, n.curExp, 3, `${n.age}세`);
   }
 });
 
@@ -391,7 +440,8 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
       nh: ri(0, 50000), nhm: ri(0, 150), nhstart: ri(40, 65), nhprin: ri(0, 8000), mf: ri(0, 30000), mfm: ri(0, 150), mfstart: ri(40, 65), mfprin: ri(0, 5000),
       irp: ri(0, 20000), irpy: ri(0, 1200), irpstart: ri(40, 65), tirp: ri(0, 100000), tdc: ri(0, 3000), tdcstart: ri(40, 65), tservice: ri(1, 45),
       isa: ri(0, 20000), isay: ri(0, 2000), isastart: ri(40, 65), rnh: ri(0, 15), rmf: ri(0, 15), rirp: ri(0, 15), rtirp: ri(0, 15), risa: ri(0, 20),
-      inf: ri(0, 10) / 2, np: ri(0, 500), curYear: ri(2026, 2035)});
+      inf: ri(0, 10) / 2, np: ri(0, 500), curYear: ri(2026, 2035),
+      realestate: ri(0, 120000), hi_interest: ri(0, 1500), hi_labor: ri(0, 3000), hi_dep: rnd() < 0.3 ? 'yes' : 'no'});
     for(const k of ['nhend','mfend','irpend','isaend','tdcend']) p[k] = ret - 1;
     const q = Object.assign({}, p, computeAutoPlan(p));
     const r = simulate(q), T = taxFreeBases(q);
@@ -400,7 +450,8 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
       assert.ok(v.every(Number.isFinite), `#${i} ${x.age}세 NaN`);
       assert.ok(Object.values(x.bal).every(b => b >= -1e-6), `#${i} 음수 잔액`);
       assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc, `#${i} 합계`);
-      assert.ok(x.netInc <= x.totalInc && x.nhInc >= 0 && x.mfInc >= 0 && x.irpInc >= 0, `#${i} 세후/음수`);
+      assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi), `#${i} 세후 = 합계 − 세금 − 건보료`);
+      assert.ok(x.hi >= 0 && x.netInc <= x.totalInc && x.nhInc >= 0 && x.mfInc >= 0 && x.irpInc >= 0, `#${i} 세후/음수`);
     }
     assert.ok(sum(r.rows, x => x.freeAnnual.nh + x.freeAnnual.mf + x.freeAnnual.irp) <= T.nh + T.mf + T.irp + 1e-6, `#${i} 비과세`);
     assert.ok(sum(r.rows, x => x.tirpDeferredAnnual) <= r.tirpFV + 1e-6, `#${i} 이연`);

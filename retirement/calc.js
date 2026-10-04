@@ -377,6 +377,27 @@ function npsAdjustFactor(npage){
   return 0;
 }
 
+/* ── 은퇴 후 그해 건보료(명목, 만원/연) — 현금흐름 세후에서 세금과 함께 차감 ──
+   은퇴 전은 직장가입자(급여에서 공제)라 0. 은퇴 후는 지역가입자로 보고 2026 요율·등급표를 "오늘 가치"에 적용한 뒤
+   그해 물가(infMul)를 곱한다 — 국민연금은 물가연동이라 수령 후 건보료는 오늘 가치로 일정하다.
+   소득: 국민연금(그해 실제 수령분)·근로 50%, 사업·기타 100%, 이자+배당은 합계 1,000만원 초과 시 전액(패널 입력 = 은퇴 후 소득).
+   재산: 재산세 과세표준 + 전월세 인정액(현재값 고정). 사적연금·ISA 인출은 2026 현행 부과 대상이 아니다.
+   p.hi_dep==='yes'(피부양자 등록 가능한 직장가입자 가족 있음)이면 그해 명목 소득으로 피부양자 판정을 해 통과한 해는 0. */
+function healthPremiumYear(p, age, npRealMonthly, infMul){
+  if(age < p.ret) return {annual:0, monthlyReal:0, dependent:false};
+  const npAnnual = (npRealMonthly||0) * 12;
+  const fin = (p.hi_interest||0) + (p.hi_dividend||0);
+  const finIncl = fin > 1000 ? fin : 0;
+  const labor = p.hi_labor||0, biz = p.hi_business||0, other = p.hi_other||0;
+  if(p.hi_dep === 'yes'){
+    const nominalIncome = (npAnnual + labor + biz + other + finIncl) * infMul;  // 기준선(2,000/1,000만원)은 명목 고정
+    if(!dependentStatusCheck(nominalIncome, p.realestate||0, biz * infMul).fail) return {annual:0, monthlyReal:0, dependent:true};
+  }
+  const incomeMonthly = (npAnnual*0.5 + labor*0.5 + biz + other + finIncl) / 12;
+  const monthlyReal = regionalHealthPremium(incomeMonthly, totalPropertyBase(p)).total;
+  return {annual: monthlyReal * 12 * infMul, monthlyReal, dependent:false};
+}
+
 /* ── 과세제외금액(안세공) ──
    연금계좌 인출은 법으로 ① 과세제외금액(세액공제 안 받은 원금) → ② 이연퇴직소득 → ③ 세액공제분·운용수익
    순서로 빠져나간다(소득세법 시행령 40조의3). 과세제외금액은 원금만이고 그 운용수익은 ③(과세)이다.
@@ -468,7 +489,7 @@ function accumulate(p, adj, retAge){
    — 필요분만 인출처럼 같은 해를 여러 번 평가해야 할 때도 정확하다.
    plan: 계좌별 그해 월 인출액(명목, 잔액 상한 적용 전). 처리 순서:
    ① 잔액 진행(실제로 빠진 금액 paid 기준) ② 법정 인출순서로 과세 구분: 과세제외금액(안세공) → 이연퇴직소득 → 세액공제분·운용수익
-   ③ 연금수령한도 초과분은 법정 순서상 마지막 재원부터 연금외수령 ④ 세금 ⑤ ISA 해지 과세 */
+   ③ 연금수령한도 초과분은 법정 순서상 마지막 재원부터 연금외수령 ④ 세금 ⑤ ISA 해지 과세 ⑥ 건보료(인출액과 무관) */
 function evalYear(st, plan, ctx, age){
   const {p, r, tirpTaxRate, isaFV, isaPrin} = ctx;
   const ACCTS = ['nh','mf','irp','tirp','isa'];
@@ -524,9 +545,11 @@ function evalYear(st, plan, ctx, age){
   const taxA = pt.priv + pt.np + tirpTaxA + otherTaxA + isaTaxFromIncome;
   // 경고용: 한도를 넘어 실제로 세금이 무거워진 금액(55세 전 비과세 원금 가교 인출처럼 세금 없는 연금외수령은 제외)
   const taxedOverA = otherA + defOver;
+  // 건보료: 사적연금·ISA는 부과 대상이 아니라 인출 계획과 무관 — 국민연금(오늘 가치 일정)·패널 소득·재산으로만 정해진다
+  const hiA = healthPremiumYear(p, age, age >= p.npage ? p.np : 0, Math.pow(1 + r.inf/100, age - p.age)).annual;
   return {
     paid, free, npInc, pt, tirpDef, privTaxableA, otherA, otherTaxA, tirpTaxA, overLimitAnnual, taxedOverA,
-    isaTax, isaTaxFromIncome, grossA, taxA, netA: Math.max(0, grossA - taxA),
+    isaTax, isaTaxFromIncome, grossA, taxA, hiA, netA: Math.max(0, grossA - taxA - hiA),
     next: {
       bal: {nh:step.nh.bal, mf:step.mf.bal, irp:step.irp.bal, tirp:step.tirp.bal, isa:isaBal},
       T: nextT, tirpDeferred: st.tirpDeferred - tirpDef, isaCum, isaClosed, tirpFirstAge,
@@ -535,6 +558,7 @@ function evalYear(st, plan, ctx, age){
 }
 
 /* ── 은퇴 후 연도별 시뮬레이션 ──
+   세후 = 총수령 − 세금 − 건보료(지역가입자, healthPremiumYear).
    opts.needOnly: 그해 세후 소득이 생활비를 넘으면 사적 인출(국민연금 제외)을 같은 비율로 줄여 세후 ≈ 생활비로 맞춤.
    사적연금 1,500만원은 인출 상한이 아니라 세율 경계 — 넘는 해에도 인출은 계획대로 하고 세금만 달라진다.
    반환값의 phase(공백기/완성기)·min/maxNetReal·shortNet*은 "오늘 기준(물가 환산)" 값 — 생활비 입력과 같은 단위. */
@@ -557,7 +581,7 @@ function simulate(p, adj, opts){
             tirpDeferred:tirpFV, isaCum:0, isaClosed:false, tirpFirstAge:null};
   const expAtRet = Math.round(p.exp * Math.pow(1 + infR/100, yrs));
   let runway = p.life, isaTaxPaid = 0, isaCloseAge = null, prinExhaustAge = null;
-  let lifetimeTax = 0, maxPrivAnnual = 0, maxPrivAge = null, firstOverPlimitAge = null, firstOverLawAge = null, overPlimitYears = 0;
+  let lifetimeTax = 0, lifetimeHi = 0, lifetimeNetReal = 0, maxPrivAnnual = 0, maxPrivAge = null, firstOverPlimitAge = null, firstOverLawAge = null, overPlimitYears = 0;
   let overLimitYears = 0, firstOverLimitAge = null, overLimitTotal = 0;
   const rows = [];
   const ph = {gap:{n:0, gross:0, net:0, grossNom:0, netNom:0}, full:{n:0, gross:0, net:0, grossNom:0, netNom:0}};
@@ -598,8 +622,11 @@ function simulate(p, adj, opts){
     const prinNh = Math.min(nhW, Math.round(y.free.nh/12)), prinMf = Math.min(mfW, Math.round(y.free.mf/12)), prinIrp = Math.min(irpW, Math.round(y.free.irp/12));
     const totalInc = nhW + mfW + irpW + y.npInc + tirpW + isaW;
     const taxTotal = Math.round(y.taxA/12);
-    const netInc = Math.max(0, totalInc - taxTotal);
+    const hiM = Math.round(y.hiA/12);
+    const netInc = Math.max(0, totalInc - taxTotal - hiM);
     lifetimeTax += y.pt.priv + y.pt.np + y.tirpTaxA + y.otherTaxA + y.isaTax;
+    lifetimeHi += y.hiA;
+    lifetimeNetReal += netInc * 12 / infMul;
 
     if(y.privTaxableA > maxPrivAnnual){ maxPrivAnnual = y.privTaxableA; maxPrivAge = age; }
     if(y.privTaxableA > p.plimit){ overPlimitYears++; if(firstOverPlimitAge === null) firstOverPlimitAge = age; }
@@ -617,7 +644,7 @@ function simulate(p, adj, opts){
       nhInc: nhW - prinNh, mfInc: mfW - prinMf, irpInc: irpW - prinIrp, privInc: Math.round(y.privTaxableA/12),
       npInc: y.npInc, tirpInc: tirpW, isaInc: isaW, prinInc: prinNh + prinMf + prinIrp, totalInc, curExp,
       taxPriv: Math.round(y.pt.priv/12), taxNp: Math.round(y.pt.np/12), taxTirp: Math.round(y.tirpTaxA/12),
-      taxOther: Math.round(y.otherTaxA/12), taxTotal, taxMethod: y.pt.method, isaTax: Math.round(y.isaTax), netInc,
+      taxOther: Math.round(y.otherTaxA/12), taxTotal, hi: hiM, taxMethod: y.pt.method, isaTax: Math.round(y.isaTax), netInc,
       realTotal: totalInc/infMul, realNet: netInc/infMul,
       privTaxableAnnual: y.privTaxableA, otherAnnual: y.otherA, overLimitAnnual: y.overLimitAnnual, taxedOverAnnual: y.taxedOverA,
       gross: y.paid,                                        // 연간 실제 인출액
@@ -650,7 +677,7 @@ function simulate(p, adj, opts){
     privAnnual: firstGapRow ? Math.round(firstGapRow.privTaxableAnnual) : 0,
     maxPrivAnnual: Math.round(maxPrivAnnual), maxPrivAge, firstOverPlimitAge, firstOverLawAge, overPlimitYears,
     overLimitYears, firstOverLimitAge, overLimitTotal: Math.round(overLimitTotal),
-    lifetimeTax, isaTaxPaid, isaCloseAge, prinExhaustAge, taxFree: T, extra, tirpTaxRate,
+    lifetimeTax, lifetimeHi, lifetimeNetReal, isaTaxPaid, isaCloseAge, prinExhaustAge, taxFree: T, extra, tirpTaxRate,
     leftover: last ? last.bal.nh + last.bal.mf + last.bal.irp + last.bal.tirp + last.bal.isa : 0,
     runway, rows
   };
@@ -711,7 +738,7 @@ function pmtTodayValue(p, r, fv, ratePct, startAge, endAge, opts){
              ISA 은퇴부터, 미래에셋 55세(또는 은퇴)부터, 55세 전 은퇴면 비과세 원금 가교 인출.
    탐색 변수: 퇴직IRP 개시 나이(tage), ISA 소진 나이(isaEnd), 미래에셋 소진 나이(mfEnd).
    목표: ① 기대수명까지 자산 유지 ② 해마다 "세후·오늘 기준" 소득 중 가장 적은 해를 가장 크게(2% 넘게 좋아질 때만 채택)
-        ③ 생애 세금(명목 합)이 적게 ④ 최고−최저 폭이 작게 — 순서대로 비교. 후보별 월 수령액은 미리 계산해 두고 좌표하강으로 찾는다.
+        ③ 생애 세금+건보료(명목 합)가 적게 ④ 최고−최저 폭이 작게 — 순서대로 비교. 후보별 월 수령액은 미리 계산해 두고 좌표하강으로 찾는다.
    (최저치는 여러 조합에서 거의 같게 나와 1만원 차이로 고르면 미래에셋을 90세까지 늘려 공백기를 깎고 세금이 수천만원 느는
     조합이 뽑혔다 — 의미 있는 차이(2%)가 아니면 세금이 적은 쪽을 고른다)
    p의 납입 종료 나이는 호출 전에 정규화돼 있어야 한다(getP). */
@@ -748,7 +775,8 @@ function computeAutoPlan(p, adj){
                        irpage, irppay, tage:k.tage, tm:tmFor(k.tage), tirptax});
   const score = k => {
     const s = simulate(Object.assign({}, q, build(k)), adj);
-    return {k, ok: s.runway === q.life, minNet: s.minNetReal, spread: s.maxNetReal - s.minNetReal, tax: s.lifetimeTax};
+    return {k, ok: s.runway === q.life, minNet: s.minNetReal, spread: s.maxNetReal - s.minNetReal, tax: s.lifetimeTax + s.lifetimeHi,
+            sumNet: s.lifetimeNetReal};
   };
   const better = (a, b) => {
     if(a.ok !== b.ok) return a.ok;
@@ -780,8 +808,8 @@ function computeAutoPlan(p, adj){
 
   const plan = build(k);
   plan.info = {T, extra, hasGap, isaEnd: k.isaEnd, mfEnd: k.mfEnd, acc, tservAtRet,
-               baseline: {minNet: baseline.minNet, spread: baseline.spread, tax: baseline.tax},
-               leveled:  {minNet: best.minNet, spread: best.spread, tax: best.tax}};
+               baseline: {minNet: baseline.minNet, spread: baseline.spread, tax: baseline.tax, sumNet: baseline.sumNet},
+               leveled:  {minNet: best.minNet, spread: best.spread, tax: best.tax, sumNet: best.sumNet}};
   return plan;
 }
 
@@ -796,7 +824,7 @@ if(typeof module !== 'undefined'){
     dependentStatusCheck, healthIncomeItems, dependentTotalIncome, npNominalAtStart, totalPropertyBase,
     propertyTaxBase, PROPERTY_SCORE_TABLE, propertyInsuranceScore, regionalIncomeMonthly,
     HEALTH_RATE_INCOME, HEALTH_RATE_PROPERTY_WON, HEALTH_RATE_LTC, HEALTH_CAP_MAX, HEALTH_CAP_MIN,
-    regionalHealthPremium, npsAdjustFactor, futurePrinAdd, taxFreeBases, bridgeExtraMonthly, pensionLimitAnnual,
+    regionalHealthPremium, healthPremiumYear, npsAdjustFactor, futurePrinAdd, taxFreeBases, bridgeExtraMonthly, pensionLimitAnnual,
     accWindows, accumulate, evalYear, simulate, buildAccRows, pmtTodayValue, computeAutoPlan
   };
 }
