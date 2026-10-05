@@ -5,7 +5,8 @@
 
 - 📊 [자산 포트폴리오](./portfolio/) — 이전: [-New-portfolio-dashboard](https://withgest-lab.github.io/-New-portfolio-dashboard/)
 - 🧮 [은퇴 후 현금흐름](./retirement/) — 이전: [Retirement-dashboard-](https://withgest-lab.github.io/Retirement-dashboard-/)
-- 📈 [KIS 기반 매수·매도 전략](./signals/) — 데이터 출처: [kis-buy-signal](https://withgest-lab.github.io/kis-buy-signal/)(별도 저장소, 매일 자동 갱신)
+- 📈 [KIS 기반 매수·매도 전략](./signals/) — 화면은 이 저장소, **데이터**(scores.json·detail)는 [kis-buy-signal](https://github.com/withgest-lab/kis-buy-signal)(별도 저장소, 매일 GitHub 서버에서 계산)
+- 🛟 운영·복구 안내: [RECOVERY.md](./RECOVERY.md)
 
 ## 구조
 
@@ -16,13 +17,13 @@
 │   └── index.html     # 자산 포트폴리오 대시보드
 ├── retirement/
 │   └── index.html     # 은퇴 후 현금흐름 시뮬레이션
-├── signals/            # KIS 기반 매수·매도 전략 대시보드 - 이 저장소에는 커밋되지 않음.
-│   │                    index.html/scores.json/detail/*.json 전부 배포 시점에
-│   │                    .github/workflows/deploy.yml이 kis-buy-signal 저장소의
-│   │                    공개 Pages에서 자동으로 받아와 채운다.
-│   └── (배포 시 자동 생성)
+├── signals/            # KIS 기반 매수·매도 전략 화면
+│   └── index.html       # 화면은 이 저장소 소유. scores.json·detail/*.json 은 커밋하지 않고
+│                          배포 때 deploy.yml이 kis-buy-signal 저장소 data 브랜치에서 받아 채운다
+│                          (무결성 점검 통과 시에만 배포, signals/_source.json에 출처 기록).
 └── shared/
-    └── bridge.js       # 포트폴리오 잔액 → 은퇴 계좌 잔액 집계 (localStorage 읽기 전용)
+    ├── bridge.js       # 포트폴리오 잔액 → 은퇴 계좌 잔액 집계 (localStorage 읽기 전용)
+    └── ios-select.js   # 모든 화면 공통 iOS 풀다운
 ```
 
 ## 포트폴리오 ↔ 은퇴 연동 방식

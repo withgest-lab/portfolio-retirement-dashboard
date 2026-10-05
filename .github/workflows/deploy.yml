@@ -1,14 +1,15 @@
 name: Deploy dashboards to GitHub Pages
 
+# 이 저장소가 화면(포트폴리오·현금흐름·홈·매매전략 화면)과 사이트 조립·배포를 모두 맡는다.
+# 전략 저장소(kis-buy-signal)는 데이터(scores.json·detail/*.json)만 만들어 data 브랜치에 올린다.
+# 두 저장소를 잇는 것은 비밀값 없는 폴링 — 2시간마다 data 브랜치의 최신 커밋이 마지막 배포와 같은지 확인하고,
+# 같으면 건너뛴다(push·수동 실행은 항상 배포). 자세한 운영 방법은 RECOVERY.md 참고.
 on:
   push:
     branches:
       - main
   schedule:
-    # UTC 23:00 = KST 08:00(다음날). kis-buy-signal의 daily.yml은 매일 KST 07:30에
-    # 시작해 보통 30분 안에 docs/scores.json 발행까지 끝나므로(timeout-minutes: 30),
-    # 그 뒤 넉넉히 버퍼를 두고 새 신호 데이터를 가져온다.
-    - cron: "0 23 * * *"
+    - cron: "7 */2 * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -23,17 +24,52 @@ concurrency:
 
 env:
   SITE_DIR: _site
-  SIGNALS_BASE_URL: https://withgest-lab.github.io/kis-buy-signal
+  SIGNALS_REPO: https://github.com/withgest-lab/kis-buy-signal.git
+  SITE_URL: https://withgest-lab.github.io/portfolio-retirement-dashboard
 
 jobs:
+  # 스케줄 실행에서만: 전략 데이터가 바뀌었을 때(또는 마지막 배포가 6일 넘었을 때)만 배포한다.
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      changed: ${{ steps.c.outputs.changed }}
+    steps:
+      - name: Decide whether a deploy is needed
+        id: c
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"; echo "수동/푸시 실행 → 항상 배포"; exit 0
+          fi
+          remote=$(git ls-remote "$SIGNALS_REPO" refs/heads/data | cut -f1)
+          [ -n "$remote" ] || { echo "::error::전략 저장소 data 브랜치를 찾지 못했습니다"; exit 1; }
+          live=$(curl -fsS "$SITE_URL/signals/_source.json?cb=$GITHUB_RUN_ID" 2>/dev/null || echo '{}')
+          live_sha=$(echo "$live" | jq -r '.data_sha // ""')
+          built=$(echo "$live" | jq -r '.built_at // ""')
+          stale=false
+          if [ -n "$built" ]; then
+            age=$(( $(date -u +%s) - $(date -u -d "$built" +%s) ))
+            [ "$age" -gt 518400 ] && stale=true
+          else
+            stale=true
+          fi
+          if [ "$remote" != "$live_sha" ] || [ "$stale" = true ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"; echo "data ${live_sha:0:7} → ${remote:0:7} (stale=$stale) → 배포"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"; echo "data ${remote:0:7} 변경 없음 → 건너뜀"
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout portfolio-retirement-dashboard
         uses: actions/checkout@v4
 
-      - name: Assemble portfolio/retirement/shared (unchanged) into site dir
+      - name: Assemble site (home, portfolio, retirement, signals UI, shared)
         run: |
           set -euo pipefail
           rm -rf "$SITE_DIR"
@@ -42,40 +78,53 @@ jobs:
           cp -r portfolio "$SITE_DIR/portfolio"
           cp -r retirement "$SITE_DIR/retirement"
           cp -r shared "$SITE_DIR/shared"
+          cp signals/index.html "$SITE_DIR/signals/index.html"
 
-      # signals/ 아래는 이 저장소에 커밋된 파일이 하나도 없다 - index.html까지 포함해
-      # 매 배포마다 kis-buy-signal(별도 저장소, 완전히 독립적으로 운영되는 KIS 매수신호
-      # 파이프라인의 결과물)의 공개 Pages에서 그대로 받아온다. 이 단계들에는
-      # continue-on-error를 절대 넣지 않는다 - 셋 중 하나라도 실패하면 이 job 자체가
-      # 실패해서 아래 업로드 단계로 넘어가지 않고, 아티팩트가 없으면 deploy job도 돌지
-      # 않으므로 직전에 정상 배포됐던 사이트가 그대로 유지된다(부분/깨진 배포 불가능).
-      - name: Fetch latest KIS signal dashboard (index.html + scores.json + detail/*.json)
+      # 데이터는 전략 저장소 data 브랜치를 통째로 한 번에 받는다(공개 저장소라 토큰 불필요). Pages(CDN) 캐시를 거치지 않고,
+      # 파일 154개를 따로 받다가 중간에 갈리는 일 없이 한 시점의 스냅샷만 쓴다.
+      - name: Fetch strategy data snapshot (data branch)
         run: |
           set -euo pipefail
+          git clone --quiet --depth 1 --branch data "$SIGNALS_REPO" _data
+          echo "DATA_SHA=$(git -C _data rev-parse HEAD)" >> "$GITHUB_ENV"
+          cp _data/docs/scores.json "$SITE_DIR/signals/scores.json"
+          cp _data/docs/detail/*.json "$SITE_DIR/signals/detail/"
 
-          curl --fail --show-error --silent --retry 3 --retry-delay 5 \
-            -o "$SITE_DIR/signals/index.html" "$SIGNALS_BASE_URL/index.html"
-
-          # 풀다운 메뉴 스크립트는 이 저장소의 shared 한 벌을 signals에도 같이 둔다(signals/index.html이 같은 폴더에서 불러옴)
-          cp shared/ios-select.js "$SITE_DIR/signals/ios-select.js"
-
-          SCORES="$SITE_DIR/signals/scores.json"
-          curl --fail --show-error --silent --retry 3 --retry-delay 5 \
-            -o "$SCORES" "$SIGNALS_BASE_URL/scores.json"
-
-          # 형식이 깨졌거나 빈 스냅샷이면 여기서 즉시 실패시킨다(부분 데이터 방지).
-          jq -e '(.tickers // []) | length > 0' "$SCORES" > /dev/null
-
-          # 파이프가 아니라 프로세스 치환(< <(...))을 쓰는 이유: jq ... | while ... 로
-          # 쓰면 셸에 따라 루프가 서브셸에서 돌아서, 루프 안의 curl --fail 실패가 set -e로
-          # 이 스텝 전체를 확실히 죽인다는 보장이 없어진다. 프로세스 치환은 루프를 현재
-          # 셸에서 그대로 실행하므로 그 보장이 유지된다.
+      # 무결성 점검 — 하나라도 어기면 이 job이 실패해 직전 정상 배포가 그대로 유지된다(깨진 데이터 배포 방지).
+      - name: Validate strategy data
+        run: |
+          set -euo pipefail
+          S="$SITE_DIR/signals/scores.json"
+          jq -e '(.tickers // []) | length > 0' "$S" > /dev/null || { echo "::error::tickers가 비어 있습니다"; exit 1; }
+          jq -e '(.proxies.rules // []) | length > 0' "$S" > /dev/null || { echo "::error::proxies 규칙이 없습니다(전략 저장소 버전 확인)"; exit 1; }
+          jq -e 'all(.tickers[]; has("symb") and has("stage") and has("close") and has("currency") and has("category"))' "$S" > /dev/null \
+            || { echo "::error::ticker 필수 키(symb·stage·close·currency·category)가 빠졌습니다"; exit 1; }
+          missing=0
           while IFS= read -r symb; do
-            [ -z "$symb" ] && continue
-            curl --fail --show-error --silent --retry 3 --retry-delay 5 \
-              -o "$SITE_DIR/signals/detail/${symb}.json" \
-              "$SIGNALS_BASE_URL/detail/${symb}.json"
-          done < <(jq -r '.tickers[].symb' "$SCORES")
+            if [ ! -s "$SITE_DIR/signals/detail/${symb}.json" ]; then
+              missing=$((missing + 1)); [ "$missing" -le 5 ] && echo "::error::detail/${symb}.json 없음"
+            fi
+          done < <(jq -r '.tickers[].symb' "$S" | sed 's/[[:space:]]*$//')
+          [ "$missing" = 0 ] || { echo "::error::detail 파일 ${missing}개 누락"; exit 1; }
+          # 신선도: 기준일이 5일을 넘게 묵었으면 — 스케줄 실행은 실패(직전 배포 유지 + 실패 메일), push·수동은 경고만(화면 수정 배포는 막지 않는다)
+          asof=$(jq -r '.as_of_date' "$S")
+          age_days=$(( ( $(date -u +%s) - $(date -u -d "$asof" +%s) ) / 86400 ))
+          echo "as_of_date=$asof (${age_days}일 전)"
+          if [ "$age_days" -gt 5 ]; then
+            if [ "${{ github.event_name }}" = "schedule" ]; then
+              echo "::error::전략 데이터 기준일이 ${age_days}일 묵었습니다 — 전략 저장소 daily.yml 실행 상태를 확인하세요"; exit 1
+            else
+              echo "::warning::전략 데이터 기준일이 ${age_days}일 묵었습니다(배포는 계속) — 전략 저장소 daily.yml을 확인하세요"
+            fi
+          fi
+
+      - name: Write signals/_source.json (what this deploy contains)
+        run: |
+          set -euo pipefail
+          jq -n --arg d "$DATA_SHA" --arg s "$GITHUB_SHA" --arg a "$(jq -r '.as_of_date' "$SITE_DIR/signals/scores.json")" \
+            --arg b "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{data_sha:$d, site_sha:$s, as_of_date:$a, built_at:$b}' \
+            > "$SITE_DIR/signals/_source.json"
+          cat "$SITE_DIR/signals/_source.json"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -93,3 +142,26 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # GitHub는 공개 저장소에 60일 동안 활동이 없으면 스케줄 실행을 끈다. 마지막 커밋이 50일을 넘으면 빈 커밋 하나를 남겨 막는다
+  # (GITHUB_TOKEN 푸시는 다른 워크플로를 다시 실행하지 않는다). 쓰기 권한은 이 job에만 둔다.
+  keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keep scheduled workflows enabled
+        run: |
+          set -euo pipefail
+          last=$(git log -1 --format=%ct)
+          if [ $(( $(date -u +%s) - last )) -gt 4320000 ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit --allow-empty -m "chore: keepalive (60일 무활동 비활성화 방지)"
+            git push
+          else
+            echo "최근 커밋이 50일 이내 → 할 일 없음"
+          fi

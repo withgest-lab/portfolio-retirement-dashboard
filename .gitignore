@@ -1,7 +1,13 @@
 .DS_Store
 Thumbs.db
 
-# signals/(KIS 매수신호)는 이 저장소에 커밋하지 않는다 - index.html/scores.json/
-# detail/*.json 전부 배포 시점에 kis-buy-signal 저장소의 공개 Pages에서 자동으로
-# 받아온다(.github/workflows/deploy.yml). 로컬 테스트 중 실수로 커밋되는 것 방지.
-signals/
+# signals/index.html(매매전략 화면)은 이 저장소가 소유한다. 아래는 배포 때 전략 저장소(kis-buy-signal)의
+# data 브랜치에서 받아오는 데이터라 커밋하지 않는다(로컬에서 화면을 볼 때만 직접 복사).
+signals/scores.json
+signals/detail/
+signals/_source.json
+
+# 백업 JSON은 개인 자산 데이터라 저장소에 올리지 않는다(저장소 밖 안전한 곳에 보관)
+*백업*.json
+포트폴리오-백업-*
+*.bundle

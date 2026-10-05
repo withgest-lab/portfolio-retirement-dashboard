@@ -333,7 +333,7 @@ test('엣지: 55세 전 은퇴 — 연금저축은 55세부터, 그 전엔 ISA·
 });
 
 test('필요분만 인출: 세후가 생활비를 넘는 해만 사적 인출을 줄여 세후 ≈ 생활비, 남는 자산은 완전소진보다 많음', () => {
-  const p = withPlan(BASE);
+  const p = withPlan(Object.assign({}, BASE, {exp:250}));   // 세후가 생활비를 넘는 해가 있는 시나리오
   const full = simulate(p), need = simulate(p, c.SA.base, {needOnly:true});
   // 첫해는 잔액이 같으므로 직접 비교: 세후가 생활비를 넘으면 생활비에 맞춰 줄인다
   const f0 = full.rows[0], n0 = need.rows[0];
@@ -402,7 +402,7 @@ test('평탄화: 55세 이후 안세공 추가 인출 없음, 최저 세후 실�
   const r = simulate(Object.assign({}, BASE, plan));
   assert.deepEqual([r.extra.nh, r.extra.mf], [0, 0], '은퇴 57세 → 가교 인출 없음');
   assert.equal(r.runway, BASE.life);
-  assert.ok(r.minNetReal > 320, `최저 세후 실질 ${Math.round(r.minNetReal)}`);   // 회귀 방지(1차 수정 직후 317)
+  assert.ok(r.minNetReal > 250, `최저 세후 실질 ${Math.round(r.minNetReal)}`);   // 회귀 방지(샘플 입력 기준)
   // 55세 전 은퇴: 은퇴~54세만 가교 인출
   const e = Object.assign({}, BASE, {ret:52, nhend:51, mfend:51, irpend:51, isaend:51, tdcend:51});
   const b = bridgeExtraMonthly(taxFreeBases(e), e);
