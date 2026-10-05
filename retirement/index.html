@@ -1245,10 +1245,10 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div class="irow-top">
     <span class="ilabel">인출 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isaage" value="57" min="55" max="75" step="1" onblur="onBlurFix('isaage')" oninput="syncSlider('isaage');scheduleUpd()"><span class="unit-tag">세</span>
+      <input class="ival-input" type="number" id="isaage" value="57" min="50" max="75" step="1" onblur="onBlurFix('isaage')" oninput="syncSlider('isaage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="isaage-r" min="55" max="75" step="1" value="57"  oninput="syncInput('isaage');scheduleUpd()">
+  <input type="range" id="isaage-r" min="50" max="75" step="1" value="57"  oninput="syncInput('isaage');scheduleUpd()">
 </div><div class="irow isa">
   <div class="irow-top">
     <span class="ilabel">월 인출액</span>
@@ -1751,10 +1751,18 @@ function onBlurFix(id){
   // 그대로 빈 칸으로 둔다(값을 만들어 채우지 않음). 계산(gv())은 빈 칸을 0으로 읽고,
   // 0이 의미상 말이 안 되는 나이류 필드(납입 종료 등)는 getP()에서 별도로 보정한다.
   if(isNaN(v)){ inp.value=''; upd(); return; }
-  const mn = parseFloat(rng.min), mx = parseFloat(rng.max);
+  // 월 수령액 칸은 자동설계가 슬라이더 상한(예: ISA 300만)을 넘는 값을 정직하게 채울 수 있다(ISA를 1~2년에 몰아 받는 설계 등).
+  // 칸을 한 번 거쳐 가기만 해도 상한으로 깎여 계획이 조용히 틀어지므로 이 칸들은 하한만 강제한다(슬라이더는 상한에 머문다).
+  const NO_MAX_CLAMP = ['nhpay','mfpay','irppay','tm','isam'];
+  const mn = parseFloat(rng.min), mx = NO_MAX_CLAMP.includes(id) ? Infinity : parseFloat(rng.max);
   const clamped = Math.min(mx, Math.max(mn, v));
   inp.value = clamped;
   rng.value = clamped;
+  // 이미 은퇴한 상태(현재 나이 > 은퇴 나이)는 과거 연도를 미래로 계산하게 되므로 은퇴 나이를 현재 나이로 맞춘다
+  if(id === 'age' || id === 'ret'){
+    const a = parseFloat(document.getElementById('age').value), r = parseFloat(document.getElementById('ret').value);
+    if(a > r) sv('ret', Math.min(a, parseFloat(document.getElementById('ret-r').max)));
+  }
   upd();
 }
 
@@ -2259,6 +2267,7 @@ function getP(){
   // 계좌 적립이 통째로 0원 취급되는 오류가 생긴다. 빈 칸(=0 이하)일 때만 은퇴
   // 시점과 동일하게 계산되도록 여기서 한 번에 보정한다(화면의 빈 칸 표시는 그대로
   // 유지 — 이 보정은 계산에만 쓰이고 입력칸에 값을 채워 넣지 않음).
+  if(p.ret < p.age) p.ret = p.age;   // 현재 나이보다 이른 은퇴 나이는 계산에서만 현재 나이로 본다(과거 연도를 시뮬레이션하지 않게)
   ['isaend','irpend','tdcend','nhend','mfend'].forEach(fid => {
     if(!p[fid] || p[fid]<=0) p[fid] = p.ret - 1;
   });

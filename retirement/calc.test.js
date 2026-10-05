@@ -458,3 +458,31 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
     if(life > ret && r.totalFV > 1000) assert.equal(r.runway, life, `#${i} 자동설계 기대수명 유지`);
   }
 });
+
+/* ── 최종 점검(2026-10-05) 회귀 ── */
+test('simulate: 낙관·비관 시나리오는 그 시나리오의 DC 평가액으로 퇴직소득세를 다시 계산한다(직접 입력값은 고정)', () => {
+  const tserv = BASE.tservice + BASE.ret - BASE.age;
+  const p = Object.assign({}, BASE, { tirptax: calcRetirementIncomeTax(accumulate(BASE).tirpFV, tserv) });   // 화면의 자동값(기본 시나리오 기준)
+  const taxIn = s => s.tirpTaxRate * s.tirpFV;                       // 시뮬레이션이 실제로 안분하는 세액(지방세 포함)
+  near(taxIn(simulate(p, c.SA.base)), p.tirptax * 1.1, 1e-6, '기본 시나리오는 입력값 그대로');
+  for(const [name, adj] of [['낙관', c.SA.opt], ['비관', c.SA.pes]]){
+    const s = simulate(p, adj);
+    near(taxIn(s), calcRetirementIncomeTax(s.tirpFV, tserv) * 1.1, 1e-6, name + ' 시나리오 퇴직소득세');
+    assert.notEqual(Math.round(taxIn(s)), Math.round(p.tirptax * 1.1), name + '은 기본 시나리오 세액과 달라야 함');
+    // 직접 입력한 퇴직소득세는 시나리오가 달라도 그대로
+    const manual = simulate(Object.assign({}, p, { tirptaxManual: true }), adj);
+    near(taxIn(manual), p.tirptax * 1.1, 1e-6, name + ' 직접 입력값 고정');
+  }
+});
+
+test('입력칸 범위: 자동설계가 만드는 값이 칸 범위 안에 있어야 한다(ISA 인출 시작 나이는 은퇴 최소 나이 이하까지 허용)', () => {
+  const html = require('node:fs').readFileSync(require('node:path').join(__dirname, 'index.html'), 'utf8');
+  const attr = (id, a) => Number((new RegExp('id="' + id + '"[^>]*[ ]' + a + '="(-?[0-9]+)"').exec(html) || [])[1]);
+  // 은퇴 50~54세면 자동설계는 ISA 인출을 은퇴 나이부터 시작한다 — 칸 최소값이 55면 칸을 한 번 거치기만 해도 값이 바뀌어 52~54세 소득이 사라졌다
+  for(const ret of [50, 52, 54]){
+    const plan = computeAutoPlan(Object.assign({}, BASE, { ret, nhend: ret - 1, mfend: ret - 1, irpend: ret - 1, isaend: ret - 1, tdcend: ret - 1 }));
+    assert.equal(plan.isaage, ret);
+    assert.ok(attr('isaage', 'min') <= ret && attr('isaage-r', 'min') <= ret, `isaage 칸 최소값(${attr('isaage', 'min')})이 은퇴 ${ret}세보다 큼`);
+  }
+  assert.ok(attr('isaage', 'min') <= attr('ret', 'min'), 'isaage 최소값 ≤ 은퇴 나이 최소값');
+});

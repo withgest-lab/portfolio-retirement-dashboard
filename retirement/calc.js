@@ -574,7 +574,12 @@ function simulate(p, adj, opts){
   const T = taxFreeBases(p);                // 비과세 원금(명목 고정) — 계좌별 인출액에서 먼저 차감
   const extra = bridgeExtraMonthly(T, p);   // 55세 전 가교 인출(은퇴가 55세보다 이를 때만)
   // 이연퇴직소득 = 은퇴 시점 DC 평가액. 퇴직소득세(지방세 포함)를 그 금액에 대한 비율로 안분
-  const tirpTaxRate = tirpFV > 0 ? (p.tirptax||0) * LOCAL_TAX_MUL / tirpFV : 0;
+  // 낙관·비관 시나리오는 은퇴 시점 DC 평가액(tirpFV)이 달라지므로 자동값이면 그 평가액으로 퇴직소득세를 다시 계산한다
+  // (예전엔 기본 시나리오의 세액이 그대로 쓰여 낙관은 세금이 적게, 비관은 많게 잡혔다). 직접 입력한 값은 그대로 쓴다.
+  const tirpTaxInput = (!p.tirptaxManual && adj !== SA.base)
+    ? calcRetirementIncomeTax(tirpFV, (p.tservice||0) + Math.max(0, p.ret - p.age))
+    : (p.tirptax||0);
+  const tirpTaxRate = tirpFV > 0 ? tirpTaxInput * LOCAL_TAX_MUL / tirpFV : 0;
   const ctx = {p, r, tirpTaxRate, isaFV, isaPrin};
 
   let st = {bal:{nh:nhFV, mf:mfFV, irp:irpFV, tirp:tirpFV, isa:isaFV}, T:{nh:T.nh, mf:T.mf, irp:T.irp},
