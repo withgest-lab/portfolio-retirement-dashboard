@@ -5736,6 +5736,9 @@ function renderVBarChart(chartElId, xaxisElId, items, chartH){
     </div>`;
   }).join('');
   if(xEl) xEl.innerHTML = items.map(it=>`<div class="vbar-xlabel">${it.label}</div>`).join('');
+  // 접힘처럼 막대가 화면보다 넓으면 가장 최근(맨 오른쪽)부터 보이게 한다 — 기본이 가장 오래된 달이라 최신 달이 화면 밖에 있었다
+  const sc = chartEl.closest('.vbar-scroll');
+  if(sc && sc.scrollWidth > sc.clientWidth + 1) sc.scrollLeft = sc.scrollWidth;
 }
 
 // r.month가 있으면(undefined가 아니면) 월별 행, 없으면 연도별 행 — 두 granularity의
@@ -7605,7 +7608,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
       const pctStr = maskAmt(cell.sub!==undefined ? cell.sub : (cell.rtn>=0?'+':'')+cell.rtn.toFixed(1)+'%'); // 기본은 손익률, 분포 트리맵은 sub(비중 %)
       ctx.save();
       ctx.beginPath(); ctx.rect(cx+4,cy+4,cw-8,ch-8); ctx.clip();
-      ctx.fillStyle = cell.color ? treemapTextColor(cell.color) : (hideAmounts ? '#3a3a3c' : '#fff'); ctx.textAlign='left'; ctx.textBaseline='top';
+      ctx.fillStyle = cell.color ? treemapTextColor(cell.color) : (hideAmounts ? '#3a3a3c' : treemapTextColor(treemapColor(cell.rtn))); ctx.textAlign='left'; ctx.textBaseline='top';   // 0%에 가까운 연회색 셀에 흰 글씨(대비 1.7:1)가 되지 않게 배경에 맞춰 고른다
       const fontSize = (cw>90 && ch>60) ? 12 : 10;
       ctx.font=`700 ${fontSize}px Pretendard`;
       // 글자 수 추정(폭/(글자크기×0.62))은 영문 대문자·숫자가 많은 이름("TIGER 미국나스닥100")에서 실제 폭보다 작게 잡혀 마지막 글자가 셀 가장자리에서 잘렸다 — 실측으로 줄인다
