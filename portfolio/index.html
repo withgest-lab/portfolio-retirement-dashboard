@@ -119,6 +119,8 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .privacy-on #logoFx .up{color:var(--color-up)!important;}
 .privacy-on .index-tile .dn{color:#e5484d!important;}
 .privacy-on #logoFx .dn{color:var(--color-down)!important;}
+.privacy-on #holdMktRow .up{color:var(--color-up)!important;}
+.privacy-on #holdMktRow .dn{color:var(--color-down)!important;}   /* 시장지표는 개인 값이 아니므로 숨기기에서도 상승/하락 색 유지 */
 .privacy-on :is(#page_dashboard,#page_portfolio,#page_tradelog,#page_returns,#page_dividend,#page_tax) :is(input:not([type=checkbox],[type=radio],[type=file],[type=date],[type=button]),textarea){
   color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 
@@ -187,6 +189,15 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .dist-info .di-issuer-pick{display:flex;flex-wrap:wrap;gap:4px;margin-left:auto;}
 .dist-info .di-issuer-pick .di-go{margin-left:0;}
 .dist-info .di-tiny{flex-basis:100%;font-size:10.5px;color:var(--color-tertiary);}
+/* 보유종목 맨 위 시장지표 한 줄 — 라벨(표 th)·등락률(표 td) 위계 그대로, 7칸 균등, 한국식 상승 빨강/하락 파랑 */
+.hold-mkt{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));margin-bottom:10px;padding:6px 4px;background:var(--color-section-bg);border-radius:var(--radius-sm);}
+.hold-mkt .hm{min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0 2px;border-left:.5px solid rgba(60,60,67,.14);}
+.hold-mkt .hm:first-child{border-left:none;}
+.hold-mkt .hm-l{max-width:100%;font-size:10px;font-weight:600;line-height:1.25;color:var(--color-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hold-mkt .hm-v{font-size:12px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap;color:var(--color-tertiary);}
+.hold-mkt .hm-v.up{color:var(--color-up);} .hold-mkt .hm-v.dn{color:var(--color-down);}
+.hold-mkt .hm-s{display:none;}
+@media(max-width:600px){ .hold-mkt .hm-f{display:none;} .hold-mkt .hm-s{display:inline;} }
 .dist-cell{background:var(--color-section-bg);border-radius:var(--radius-sm);padding:8px;min-width:0;}
 .dist-canvas-wrap{min-width:0;}
 .dist-canvas-wrap canvas{display:block;max-width:100%;}
@@ -1196,6 +1207,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 <!-- 2. 자산 목록 -->
 <div class="card">
+  <div class="hold-mkt" id="holdMktRow" role="group" aria-label="시장지표 전일 대비"></div>
   <div class="filter-bar">
     <input id="assetFilterSearch" placeholder="종목명·티커 검색" oninput="setAssetFilter('search', this.value)">
     <select id="assetFilterMarket" onchange="setAssetFilter('market', this.value)"><option value="">투자시장 전체</option></select>
@@ -2951,6 +2963,7 @@ async function refreshLiveUsdKrw(){
     liveFx = {val, chg: prev>0 ? (val-prev)/prev*100 : 0, at:Date.now(), ok:true};
   }catch(e){ liveFx.ok=false; }
   renderLogoFx();
+  renderHoldMktRow();
 }
 
 function setStatus(state,text){
@@ -8044,8 +8057,36 @@ const INDEX_LIST=[
   {sym:'^KQ11',    label:'KOSDAQ',      dec:2,unit:'',  group:'kr'},
   {sym:'USDKRW=X', label:'USD/KRW',     dec:1,unit:'₩', group:'fx'},
   {sym:'JPYKRW=X', label:'JPY/KRW',     dec:2,unit:'₩', group:'fx'},
+  // 보유종목 맨 위 한 줄(HOLD_MKT)용 — 시장지표 탭 타일(us/kr/fx)에는 그리지 않는다
+  {sym:'^NDX',     label:'Nasdaq 100',  dec:2,unit:'',  group:'strip'},
+  {sym:'^KS200',   label:'Kospi 200',   dec:2,unit:'',  group:'strip'},
 ];
 let indices=INDEX_LIST.map(i=>({...i,val:null,chg:null,prev:null,series:null}));
+
+// 보유종목 맨 위 시장지표 한 줄 — 심볼·라벨은 이 목록 한 곳(순서 고정). 가격 없이 전일 대비 %만.
+const HOLD_MKT=[
+  {sym:'USDKRW=X', label:'USD/KRW',      short:'달러'},
+  {sym:'^GSPC',    label:'S&P 500',      short:'S&P'},
+  {sym:'^NDX',     label:'Nasdaq 100',   short:'나스닥'},
+  {sym:'^DJI',     label:'Dow',          short:'다우'},
+  {sym:'^RUT',     label:'Russell 2000', short:'러셀'},
+  {sym:'^KS200',   label:'Kospi 200',    short:'코스피'},
+  {sym:'^VIX',     label:'VIX',          short:'VIX'},
+];
+function renderHoldMktRow(){
+  const el=document.getElementById('holdMktRow'); if(!el) return;
+  el.innerHTML=HOLD_MKT.map(m=>{
+    let chg=null;
+    if(m.sym==='USDKRW=X' && liveFx.chg!=null) chg=liveFx.chg;          // 상단바와 같은 30초 갱신값 우선
+    else { const idx=indices.find(i=>i.sym===m.sym); if(idx && idx.chg!=null) chg=idx.chg; }
+    if(chg!=null) chg=Math.round(chg*100)/100;
+    const has=chg!=null && chg!==0;                                    // 미조회·0%는 회색 "—"
+    const v=has ? `${chg>0?'+':'−'}${Math.abs(chg).toFixed(2)}%` : '—';
+    const lbl=m.short===m.label ? `<span>${m.label}</span>` : `<span class="hm-f">${m.label}</span><span class="hm-s">${m.short}</span>`;
+    return `<div class="hm" title="${m.label} 전일 대비"><span class="hm-l">${lbl}</span><span class="hm-v${has?' '+updn(chg):''}">${v}</span></div>`;
+  }).join('');
+}
+renderHoldMktRow();
 
 const GROUP_TITLE = {us:'미국', kr:'한국', fx:'환율'};
 // 하루 인트라데이 스파크라인(SVG). 전일 종가 = 회색 점선 기준선, 기준선 위 구간은 상승색·아래 구간은 하락색으로
@@ -8145,6 +8186,7 @@ async function fetchIndices(){
     }
   });
   renderIndices();
+  renderHoldMktRow();
 }
 
 /* ════════════════════════════════════════
