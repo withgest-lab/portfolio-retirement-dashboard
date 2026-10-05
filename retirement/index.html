@@ -434,6 +434,16 @@ button{font-family:inherit;cursor:pointer;}
 .basis-view .suggest-result ul{line-height:1.7;}
 .chart-main.basis-mode .phase-cards{display:none;}
 .basis-empty{font-size:12px;color:#8e8e93;text-align:center;padding:40px 16px;}
+/* 자동설계 요약: 팝업과 같은 .pb-* 조각을 차트 자리에 — 넓은 화면은 카드 4열 1행으로 높이를 아낀다 */
+.plan-view{padding:2px 4px 6px;}
+.plan-view .pb-grid{margin-bottom:12px;}
+.plan-view .pb-tips{margin-top:12px;}
+@media (max-width:480px){ .chart-main.plan-mode .chart-canvas-wrap{height:min(78vh,620px);} }   /* 접힘: 요약이 길어 차트 자리를 키움(페이지 스크롤 허용 화면) */
+@media (min-width:700px){
+  .plan-view .pb-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+  .plan-view .pb-sub{white-space:normal;align-items:flex-start;}
+  .plan-view .pb-sub .pb-st{margin-top:5px;}
+}
 
 /* ── 계좌 카드 그리드: 평평한 5열 ──
    1행: 농협 · 미래에셋 · IRP 개인 · 퇴직연금 · ISA — 5장 모두 같은 5칸 행 구조(잔액/연납입·안세공/
@@ -666,17 +676,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
     <span>인출 플랜</span>
     <button class="pb-close" onclick="closePlanBanner()" aria-label="닫기">✕</button>
   </div>
-  <div class="pb-grid">
-    <div class="pb-card"><div class="pb-label">공백기 세후 월평균</div><div class="pb-val" id="pb-gap-total" style="color:#248a3d">-</div><div class="pb-sub" id="pb-gap-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">완성기 세후 월평균</div><div class="pb-val" id="pb-full-total" style="color:#007aff">-</div><div class="pb-sub" id="pb-full-vs">-</div></div>
-    <div class="pb-card"><div class="pb-label">사적연금 연 수령</div><div class="pb-val" id="pb-priv-annual" style="color:#c77700">-</div><div class="pb-sub" id="pb-priv-tax">-</div></div>
-    <div class="pb-card"><div class="pb-label">은퇴 시점 총 자산</div><div class="pb-val" id="pb-total-fv" style="color:#8944ab">-</div><div class="pb-sub" id="pb-runway">-</div></div>
-  </div>
-  <div class="pb-phases">
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-gap-title" style="color:#c77700;">공백기 · 인출 순서</div><div id="pb-gap-rows"></div></div>
-    <div class="pb-phase"><div class="pb-phase-title" id="pb-full-title" style="color:#007aff;">완성기 · 수입원</div><div id="pb-full-rows"></div></div>
-  </div>
-  <div class="pb-tips" id="pb-insight"></div>
+  <div id="pbBody"></div>
 </div>
 
 <!-- 최상위 탭: 설계(입력) / 예상결과(차트) -->
@@ -1380,9 +1380,10 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       <div class="tabs">
         <button class="tab-btn on" id="tb-flow" onclick="setTab('flow')">월 현금흐름</button>
         <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">자산 잔액</button>
+        <button class="tab-btn" id="tb-plan" onclick="setAltView('plan')" title="마지막 자동설계 결과 요약">자동설계 요약</button>
+        <button class="tab-btn" id="tb-basis" onclick="setAltView('basis')" title="자동설계 인출 순서·금액의 근거">자동설계 근거</button>
         <button class="tab-btn" id="tb-sc" onclick="setAltView('sc')" title="낙관·비관 시나리오 비교">수익률 민감도</button>
         <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="완전소진 플랜 vs 필요분만 인출 플랜 비교">소진 vs 필요분</button>
-        <button class="tab-btn" id="tb-basis" onclick="setAltView('basis')" title="자동설계 인출 순서·금액의 근거">자동설계 근거</button>
       </div>
       <div class="legend" id="chart-legend"></div>
     </div>
@@ -1403,6 +1404,11 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
           <div id="needWrap" style="display:none;">
             <div id="need-only-compare"></div>
           </div>
+        </div>
+        <!-- 자동설계 요약: 마지막 자동설계 결과(팝업과 같은 내용)를 차트 자리에 겹쳐 표시 -->
+        <div class="chart-alt plan-view" id="planView" style="display:none;">
+          <div class="basis-empty" id="planEmpty">설계 탭에서 <b>자동설계</b>를 실행하면 결과 요약이 여기에 표시됩니다.</div>
+          <div id="planBody"></div>
         </div>
         <!-- 자동설계 근거: 차트 자리에 같은 크기로 겹쳐 표시(레이아웃 높이 불변), 스위치로 여닫음 -->
         <div class="chart-alt basis-view" id="basisView" style="display:none;">
@@ -1952,19 +1958,15 @@ ${p.hi_dep === 'yes' && dep.check.fail ? `<div style="background:rgba(255,149,0,
 /* ── 플랜 요약 배너 ──
    자동설계 결과는 예상결과 화면 위에 오버랩되는 팝업으로 뜨고, 닫으면 그 아래에
    이미 전환되어 있던 예상결과 화면이 바로 보이도록 먼저 탭을 전환해둔다. */
-function showPlanBanner(p, plan, res){
-  const banner = document.getElementById('planBanner');
-  if(!banner) return;
-  banner.classList.add('show');
-  const backdrop = document.getElementById('planBannerBackdrop');
-  if(backdrop) backdrop.classList.add('show');
-  if(typeof setMainTab==='function') setMainTab('result');
-
+/* 팝업(#pbBody)과 "자동설계 요약" 탭(#planBody)이 같은 HTML을 쓴다 — 계산은 simulate() 결과 하나만 읽고,
+   마지막 결과는 _planHtml에 보관(다음 자동설계 실행 전까지 유지, 새로고침하면 비어 있음). */
+function planBannerHtml(p, plan, res){
   const s = planSummary(p, res);
   const sp = acctSpans(res);
   const dep = dependentAtNpStart(p);
   // 카드값 — 값 한 줄 + 상태 한 줄(색점+짧은 문구). 같은 내용을 하단에 다시 쓰지 않는다.
-  const pbSet = (id, html)=>{ document.getElementById(id).innerHTML = html; };
+  const V = {}, VC = {};   // 칸 id → 내용 / 글자색
+  const pbSet = (id, html)=>{ V[id] = html; };
   const pbSt  = (ok, text)=>`<span class="pb-st ${ok?'ok':'bad'}"></span>${text}`;
   const pbMan = n=>(n>=0?'+':'−')+Math.abs(n)+'만';
   const m = v => (Math.round(v*10)/10)+'만';
@@ -1974,15 +1976,15 @@ function showPlanBanner(p, plan, res){
   const livCol = vs => vs>=0 ? NET_OK : NET_SHORT;
   if(s.hasGap){
     pbSet('pb-gap-total', s.gapNet+'만원/월');
-    document.getElementById('pb-gap-total').style.color = livCol(s.gapVs);
+    VC['pb-gap-total'] = livCol(s.gapVs);
     pbSet('pb-gap-vs', pbLiv(s.gapVs, `생활비 ${pbMan(s.gapVs)} · 세전 ${s.gapGross}만 · 건보료 ${s.gapHi}만`));
   } else {
     pbSet('pb-gap-total', '없음');
-    document.getElementById('pb-gap-total').style.color = '#8e8e93';
+    VC['pb-gap-total'] = '#8e8e93';
     pbSet('pb-gap-vs', pbSt(true, `${p.npage}세 국민연금이 먼저 시작`));
   }
   pbSet('pb-full-total', s.fullNet+'만원/월');
-  document.getElementById('pb-full-total').style.color = livCol(s.fullVs);
+  VC['pb-full-total'] = livCol(s.fullVs);
   pbSet('pb-full-vs', pbLiv(s.fullVs, `생활비 ${pbMan(s.fullVs)} · 세전 ${s.fullGross}만 · 건보료 ${s.fullHi}만`));
 
   const over = res.firstOverPlimitAge;
@@ -2043,6 +2045,35 @@ function showPlanBanner(p, plan, res){
     : dep.check.warn ? {warn:1, t:`피부양자: ${dep.check.warn}`}
     : {warn:0, t:`피부양자 유지 예상(국민연금 명목 연 ${(dep.npNom*12).toLocaleString()}만 기준) · 건보료 0으로 계산`});
   pbSet('pb-insight', tips.map(x=>`<div class="pb-tip${x.warn?' warn':''}">${x.t}</div>`).join(''));
+
+  const card = (label, valId, subId, color)=>`<div class="pb-card"><div class="pb-label">${label}</div><div class="pb-val" style="color:${VC[valId]||color}">${V[valId]}</div><div class="pb-sub">${V[subId]}</div></div>`;
+  return `<div class="pb-grid">`
+    + card('공백기 세후 월평균','pb-gap-total','pb-gap-vs','#248a3d')
+    + card('완성기 세후 월평균','pb-full-total','pb-full-vs','#007aff')
+    + card('사적연금 연 수령','pb-priv-annual','pb-priv-tax','#c77700')
+    + card('은퇴 시점 총 자산','pb-total-fv','pb-runway','#8944ab')
+    + `</div><div class="pb-phases">`
+    + `<div class="pb-phase"><div class="pb-phase-title" style="color:#c77700;">${V['pb-gap-title']}</div><div>${V['pb-gap-rows']}</div></div>`
+    + `<div class="pb-phase"><div class="pb-phase-title" style="color:#007aff;">${V['pb-full-title']}</div><div>${V['pb-full-rows']}</div></div>`
+    + `</div><div class="pb-tips">${V['pb-insight']}</div>`;
+}
+
+let _planHtml = '';
+function renderPlanView(){
+  const pb = document.getElementById('planBody'), em = document.getElementById('planEmpty');
+  if(pb) pb.innerHTML = _planHtml;
+  if(em) em.style.display = _planHtml ? 'none' : '';
+}
+function showPlanBanner(p, plan, res){
+  _planHtml = planBannerHtml(p, plan, res);
+  renderPlanView();
+  const banner = document.getElementById('planBanner');
+  if(!banner) return;
+  banner.classList.add('show');
+  const backdrop = document.getElementById('planBannerBackdrop');
+  if(backdrop) backdrop.classList.add('show');
+  if(typeof setMainTab==='function') setMainTab('result');
+  document.getElementById('pbBody').innerHTML = _planHtml;
 }
 
 function closePlanBanner(){
@@ -2215,14 +2246,14 @@ function setTab(t){ chartTab=t; _altView=null; upd(); }
 
 /* ── 비교 보기(수익률 민감도·소진 vs 필요분) — 차트 자리에 겹쳐 표시 ──
    같은 탭을 다시 누르면 차트로 돌아감. 차트 자체는 뒤에서 계속 그려 둠(단계 카드 정렬 유지). */
-let _altView = null;   // null | 'sc' | 'need' | 'basis'
+let _altView = null;   // null | 'sc' | 'need' | 'basis' | 'plan'
 function setAltView(v){
   _altView = (_altView === v) ? null : v;
   applyViewState();
 }
 function applyViewState(){
   const on = _altView || chartTab;
-  ['flow','asset','sc','need','basis'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
+  ['flow','asset','plan','basis','sc','need'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
   const cmp = _altView==='sc' || _altView==='need';
   const alt = document.getElementById('altView');
   if(alt){
@@ -2231,14 +2262,18 @@ function applyViewState(){
     document.getElementById('needWrap').style.display = _altView==='need' ? 'block' : 'none';
   }
   // 자동설계 근거: 차트 자리에 겹쳐 보이고, 이때만 아래 단계 카드(적립기·공백기·완성기)를 숨겨 근거를 넓게 본다
-  const basis = _altView==='basis';
+  const basisV = _altView==='basis', planV = _altView==='plan';
+  const basis = basisV || planV;   // 요약·근거 보기는 둘 다 단계 카드를 숨겨 넓게 본다
+  const pv = document.getElementById('planView');
+  if(pv){ pv.style.display = planV ? 'block' : 'none'; renderPlanView(); }
   const bv = document.getElementById('basisView');
   if(bv){
-    bv.style.display = basis ? 'block' : 'none';
+    bv.style.display = basisV ? 'block' : 'none';
     document.getElementById('basisEmpty').style.display =
       document.getElementById('suggest-box').classList.contains('show') ? 'none' : '';
   }
   const cm = document.querySelector('.chart-main');
+  if(cm) cm.classList.toggle('plan-mode', planV);   // 접힘에서만 쓰는 높이 확보용
   if(cm && cm.classList.contains('basis-mode') !== basis){
     cm.classList.toggle('basis-mode', basis);
     requestAnimationFrame(()=>{ if(mainTab==='result') fitChartHeight(); requestAnimationFrame(()=>{ if(!basis) alignPhaseCards(); }); });
