@@ -7608,8 +7608,8 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
       ctx.fillStyle = cell.color ? treemapTextColor(cell.color) : (hideAmounts ? '#3a3a3c' : '#fff'); ctx.textAlign='left'; ctx.textBaseline='top';
       const fontSize = (cw>90 && ch>60) ? 12 : 10;
       ctx.font=`700 ${fontSize}px Pretendard`;
-      const maxChars = Math.max(1, Math.floor((cw-8)/(fontSize*0.62)));
-      const label = cell.name.length>maxChars ? cell.name.slice(0,Math.max(1,maxChars-1))+'…' : cell.name;
+      // 글자 수 추정(폭/(글자크기×0.62))은 영문 대문자·숫자가 많은 이름("TIGER 미국나스닥100")에서 실제 폭보다 작게 잡혀 마지막 글자가 셀 가장자리에서 잘렸다 — 실측으로 줄인다
+      const label = fitCanvasText(ctx, cell.name, cw-12);
       ctx.fillText(label, cx+6, cy+6);
       if(ch>44){
         ctx.font=`${fontSize-1}px Pretendard`;
@@ -7896,6 +7896,7 @@ function fitCanvasText(ctx, text, maxW){
 // 트리맵 셀 라벨: 종목명(여러 줄) + 총자산 대비 %. 셀 크기에 맞춰 글자 크기를 3단계로 줄이고, 그래도 안 들어가면 %만/생략
 function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg, retStr){
   const PAD=5, iw=w-PAD*2, ih=h-PAD*2;
+  const iwS=iw-4;   // measureText가 실제로 그려지는 글자보다 2~3px 작게 나와, 폭이 꼭 맞는 이름의 마지막 글자가 셀 가장자리에서 잘렸다 — 맞춤 폭에 여유를 둔다
   if(iw<20 || ih<10) return true;
   let trunc = false;
   const fs = (w>=130&&h>=70)?13 : (w>=84&&h>=46)?11.5 : 10;
@@ -7912,7 +7913,7 @@ function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg, retStr)
   const maxLines = Math.floor((ih-pctH-(withAmt?amtH:0)-(retRows?amtH:0))/lineH);
   if(maxLines>=1){
     ctx.font=font(700);
-    const lines=wrapCanvasText(ctx,name,iw,Math.min(maxLines,3));
+    const lines=wrapCanvasText(ctx,name,iwS,Math.min(maxLines,3));
     lines.forEach((ln,i)=>ctx.fillText(ln,x+PAD,y+PAD+i*lineH));
     ctx.font=font(500);
     let ty = y+PAD+lines.length*lineH+1;
@@ -7920,17 +7921,17 @@ function drawTreemapCellLabel(ctx, name, pctStr, amtStr, x, y, w, h, fg, retStr)
     let pctLine = pctStr;
     if(retStr && !retRows){
       const shortRet = retStr.replace(/^\(([^,)]*).*$/, '($1)');
-      if(ctx.measureText(pctStr+' '+shortRet).width <= iw) pctLine = pctStr+' '+shortRet;
+      if(ctx.measureText(pctStr+' '+shortRet).width <= iwS) pctLine = pctStr+' '+shortRet;
     }
     ctx.fillText(pctLine,x+PAD,ty); ty += pctH;
-    if(withAmt){ ctx.fillText(fitCanvasText(ctx,amtStr,iw),x+PAD,ty); ty += amtH; }
-    if(retRows){ const fitted=fitCanvasText(ctx,retStr,iw); ctx.fillText(fitted,x+PAD,ty); if(fitted!==retStr) trunc=true; }
+    if(withAmt){ ctx.fillText(fitCanvasText(ctx,amtStr,iwS),x+PAD,ty); ty += amtH; }
+    if(retRows){ const fitted=fitCanvasText(ctx,retStr,iwS); ctx.fillText(fitted,x+PAD,ty); if(fitted!==retStr) trunc=true; }
     else if(retStr) trunc=true;
     if(amtStr && !withAmt) trunc=true;
   }else{
     // 세로가 얕은 셀: 이름이 두 글자 이상 들어가면 "이름 %" 한 줄, 아니면 %만
     ctx.font=font(700);
-    const both=fitCanvasText(ctx,name+' '+pctStr,iw);
+    const both=fitCanvasText(ctx,name+' '+pctStr,iwS);
     if(ih>=fs && iw>=44 && both.length>pctStr.length+2) ctx.fillText(both,x+PAD,y+Math.max(2,(h-fs)/2));
     else if(ih>=fs-1 && iw>=26) ctx.fillText(pctStr,x+PAD,y+Math.max(2,(h-fs)/2));
     trunc = true;
