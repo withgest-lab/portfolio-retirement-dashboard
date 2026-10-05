@@ -56,6 +56,9 @@ jobs:
           curl --fail --show-error --silent --retry 3 --retry-delay 5 \
             -o "$SITE_DIR/signals/index.html" "$SIGNALS_BASE_URL/index.html"
 
+          # 풀다운 메뉴 스크립트는 이 저장소의 shared 한 벌을 signals에도 같이 둔다(signals/index.html이 같은 폴더에서 불러옴)
+          cp shared/ios-select.js "$SITE_DIR/signals/ios-select.js"
+
           SCORES="$SITE_DIR/signals/scores.json"
           curl --fail --show-error --silent --retry 3 --retry-delay 5 \
             -o "$SCORES" "$SIGNALS_BASE_URL/scores.json"

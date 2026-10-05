@@ -66,6 +66,9 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 /* 시세 갱신↔홈, 현금흐름↔스냅샷 사이를 조금 더 벌려 묶음을 구분 */
 .topbar-actions .btn-home,.topbar-actions .btn-snap{width:32px;padding:0;}
 @media(min-width:768px){ .topbar-actions{overflow-x:hidden;} }
+/* 펼침·펼침+90도: 스냅샷↔홈 간격만 넓힌다. actions 폭이 홈 여백만큼 커지는 것을 같은 크기의 음수 우측 여백으로 상쇄해
+   업데이트·스냅샷 위치는 그대로(그대로 두면 space-between 때문에 둘이 왼쪽으로 밀림). 야간/주간 아이콘까지 여유는 ≈150px 이상. */
+@media(min-width:768px){ .topbar-actions .btn-home{margin-left:22px;} .topbar-actions{margin-right:-22px;} }
 /* 폭이 모자란 펼침 화면(≈900~1100px): 상태 문구를 숨겨 버튼이 잘리지 않게 한다 */
 @media(min-width:768px) and (max-width:1120px){ .logo-fx{display:none;} .topbar-actions .status-wrap span{display:none;} .topbar-actions .btn{padding:0 10px;} }
 .status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);
@@ -453,10 +456,13 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .form-status{font-size:12px;color:var(--color-secondary);padding-top:8px;min-height:18px;}
 
 /* ── 자산 목록 필터 ── */
-.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
+.filter-bar .tgl-banner{margin-left:auto;flex-shrink:0;}   /* 수동 입력 스위치(·이력 초기화)는 항상 줄 맨 오른쪽 */
+/* 펼침·펼침+90도는 반드시 한 줄 — 검색창만 줄어든다. 접힘(≤599)만 줄바꿈 허용 */
 .filter-bar input,.filter-bar select{border:1px solid var(--color-border);border-radius:7px;padding:5px 8px;
   font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);}
 .filter-bar input{flex:1;min-width:120px;}
+@media(min-width:600px){ .filter-bar{flex-wrap:nowrap;} .filter-bar input{min-width:90px;} .filter-bar select{flex-shrink:0;} }
 
 /* ── 자동완성 ── */
 .suggest-box{display:none;position:absolute;top:100%;left:0;z-index:200;
@@ -600,7 +606,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* ── 스냅샷 ── */
 .snap-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 /* 스냅샷 이력 — iOS 목록형(날짜별 섹션 + 열 정렬 + 옅은 헤어라인). 열 폭은 시각 짧게·금액 열 균등 */
-.snap-row{display:grid;grid-template-columns:minmax(110px,1.1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) 34px;column-gap:12px;align-items:center;
+.snap-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(72px,120px) minmax(72px,120px) minmax(64px,96px) 34px;column-gap:12px;align-items:center;
   padding:8px 6px;border-bottom:.5px solid rgba(60,60,67,.12);font-size:13px;font-variant-numeric:tabular-nums;}
 .snap-row > span{text-align:right;white-space:nowrap;}
 .snap-row > span:first-child{text-align:left;}
@@ -623,6 +629,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .tl-total b{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;}
 table.tl-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;}
 .tl-table col.tl-c-date{width:72px;} .tl-table col.tl-c-price{width:27%;} .tl-table col.tl-c-pnl{width:20%;} .tl-table col.tl-c-act{width:76px;}
+/* 펼침: 체결가·손익 열은 내용 폭만(남는 폭은 종목 열이 가져 "제목 | 값 묶음"으로 읽힘 — 값 사이가 100px씩 벌어지던 문제) */
+@media(min-width:600px){ .tl-table col.tl-c-price{width:136px;} .tl-table col.tl-c-pnl{width:92px;} }
 .tl-table th{font-size:10.5px;font-weight:600;color:var(--color-tertiary);text-transform:none;letter-spacing:0;text-align:right;padding:10px 8px 7px;border-bottom:.5px solid rgba(60,60,67,.18);background:var(--color-card);}
 .tl-table th:nth-child(1),.tl-table th:nth-child(2){text-align:left;}
 .tl-table td{padding:10px 8px;border-bottom:.5px solid rgba(60,60,67,.12);vertical-align:middle;background:var(--color-card);white-space:nowrap;font-size:13px;}
@@ -651,6 +659,16 @@ table.tl-table{width:100%;table-layout:fixed;border-collapse:separate;border-spa
 .tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 8px 4px!important;}
 tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
 .tl-empty{text-align:center!important;padding:20px!important;color:var(--color-tertiary);}
+/* 수익률분석·배당·세금의 숫자 표: 펼침에서 폭 상한(+iOS 목록 모양) — 열이 남는 폭을 나눠 가져 값 사이가 100~200px 벌어지던 문제 */
+@media(min-width:600px){
+  /* 첫 열(월·일시·종목)이 남는 폭을 가지고 값 열은 내용 폭만 — 매매이력과 같은 "제목 | 값 묶음" 목록형 */
+  .card .tbl-wrap.tbl-cap table.table-auto{table-layout:auto;font-variant-numeric:tabular-nums;}
+  .card .tbl-wrap.tbl-cap table.table-auto th:first-child,.card .tbl-wrap.tbl-cap table.table-auto td:first-child{width:100%;}
+  .card .tbl-wrap.tbl-cap table.table-auto th:not(:first-child),.card .tbl-wrap.tbl-cap table.table-auto td:not(:first-child){white-space:nowrap;}
+  .card .tbl-wrap.tbl-cap table.table-auto th{font-size:10.5px;font-weight:600;color:var(--color-tertiary);text-transform:none;letter-spacing:0;padding:10px 8px 7px;border-bottom:.5px solid rgba(60,60,67,.18);}
+  .card .tbl-wrap.tbl-cap table.table-auto td{font-size:13px;padding:10px 8px;border-bottom:.5px solid rgba(60,60,67,.12);}
+  .card .tbl-wrap.tbl-cap table.table-auto th:first-child,.card .tbl-wrap.tbl-cap table.table-auto td:first-child{padding-left:4px;}
+}
 @media(max-width:599px){
   .tl-table .tl-price{display:none;}
   .tl-table col.tl-c-price{width:0;}
@@ -660,13 +678,17 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
 @media(max-width:599px){ .snap-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) 30px;column-gap:8px;font-size:12px;} .snap-row .col-hide{display:none;} }
 
 .notice{font-size:11px;color:var(--color-tertiary);padding:6px 0 0;}
+.notice:empty{display:none;}
+/* 원금 기록장 합계 카드: 전폭 카드는 라벨 왼쪽·금액 오른쪽(iOS 목록 행) */
+#page_returns .summary-grid[style*="1fr;"] .sum-card{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+#page_returns .summary-grid[style*="1fr;"] .sum-card .sum-lbl{margin-bottom:0;}
 
 /* ── 원금 vs 자산가치 차트: 캔버스 + 선택 지점 상세 패널을 나란히 배치
    (넓은 화면), 좁은 화면에서는 패널이 아래로 자동으로 쌓임 — 정보가
    그림 위에 겹치는 플로팅 툴팁 대신 항상 빈 공간에 고정 표시됨 */
 .pv-chart-body{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
 .pv-canvas-wrap{position:relative;width:calc(100% - 28px);align-self:center;min-width:0;margin-top:0;}
-.pv-detail{order:-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;background:var(--color-section-bg);
+.pv-detail{order:-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 18px;background:var(--color-section-bg);
   border:1px solid var(--color-border);border-radius:10px;padding:8px 12px;min-height:36px;}
 .pv-detail .pd-empty{font-size:11px;color:var(--color-tertiary);}
 .pv-detail .pd-title{font-size:10.5px;font-weight:700;color:var(--color-secondary);}
@@ -703,7 +725,6 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   table{font-size:11px;}
   th,td{padding:7px 4px;}
   .name-main{max-width:200px;font-size:12px;}
-  #soldTbody td{padding:4px 3px!important;line-height:1.2!important;font-size:10px!important;}
   .card .tbl-wrap table.table-auto th,
   .card .tbl-wrap table.table-auto td{padding-left:4px;padding-right:4px;}
   .card .tbl-wrap table.table-fit th,
@@ -912,7 +933,7 @@ body.cmp-on{overflow:hidden;}
 .cmp-seg button.active{color:var(--color-text);}
 .cmp-seg button.mode-buy.active{color:#ff3b30;}
 .cmp-seg button.mode-sell.active{color:#0a84ff;}
-.cmp-close{flex:0 0 auto;width:30px;height:30px;padding:0;}
+.cmp-close{flex:0 0 auto;width:44px;height:30px;padding:0;}   /* 가로로 넓혀 누르기 쉽게 */
 .cmp-body{flex:1 1 auto;min-height:0;display:grid;gap:8px;padding:8px;}
 .cmp-body.v-split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
 .cmp-body.v-detail,.cmp-body.v-strat{grid-template-columns:minmax(0,1fr);}
@@ -1176,7 +1197,19 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <select id="assetFilterCompany" onchange="setAssetFilter('company', this.value)"><option value="">금융회사 전체</option></select>
     <select id="assetFilterAcctType" onchange="setAssetFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
     <select id="assetFilterAssetType" onchange="setAssetFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
-    <button class="btn btn-ghost" id="sigMatchBtn" onclick="openSigMatch()" title="보유 종목이 매매전략의 어떤 종목과 연결되는지 확인">전략 매칭</button>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addAssetWrap" onclick="toggleBanner(this)">매매 수동 입력<span class="sw"></span></button>
+  </div>
+  <!-- 매수/매도/현금 수동 입력 — 필터 줄 오른쪽 끝 스위치 "매매 수동 입력"으로 열고 닫는다(스위치 바로 아래에 펼쳐 스크롤 없이 보임) -->
+  <div id="addAssetWrap" style="display:none;margin:0 0 14px;">
+    <div class="period-tabs fm-seg fm-tabs">
+      <button type="button" class="m-buy active" id="tab_buy" onclick="switchTab('buy')">매수</button>
+      <button type="button" class="m-sell" id="tab_sell" onclick="switchTab('sell')">매도</button>
+      <button type="button" class="m-cash" id="tab_cash" onclick="switchTab('cash')">현금</button>
+    </div>
+    <div id="form_buy" class="fm"></div>
+    <div id="form_sell" class="fm" style="display:none;"></div>
+    <div id="form_cash" class="fm" style="display:none;"></div>
+    <div class="form-status" id="formStatus"></div>
   </div>
   <div class="tbl-wrap">
     <table class="table-fit">
@@ -1195,21 +1228,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     </table>
   </div>
 
-  <!-- 매수/매도 탭 -->
-  <details class="collapsible" style="margin-top:16px;">
-    <summary style="color:#2C5B8A;">매수/매도/현금 기록 추가</summary>
-  <div style="margin-top:10px;">
-    <div class="period-tabs fm-seg fm-tabs">
-      <button type="button" class="m-buy active" id="tab_buy" onclick="switchTab('buy')">매수</button>
-      <button type="button" class="m-sell" id="tab_sell" onclick="switchTab('sell')">매도</button>
-      <button type="button" class="m-cash" id="tab_cash" onclick="switchTab('cash')">현금</button>
-    </div>
-    <div id="form_buy" class="fm"></div>
-    <div id="form_sell" class="fm" style="display:none;"></div>
-    <div id="form_cash" class="fm" style="display:none;"></div>
-    <div class="form-status" id="formStatus"></div>
-  </div>
-  </details>
 </div>
 
 <div class="notice" style="text-align:center;padding-bottom:8px;">
@@ -1220,15 +1238,19 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 <section class="page" id="page_tradelog">
 <div class="card">
-  <div class="snap-header" style="justify-content:flex-end;">
-    <button class="btn btn-ghost" onclick="clearTradeLog()">이력 초기화</button>
-  </div>
   <div class="filter-bar">
     <input id="tradeLogFilterSearch" placeholder="종목명·티커 검색" oninput="setTradeLogFilter('search', this.value)">
     <select id="tradeLogFilterMarket" onchange="setTradeLogFilter('market', this.value)"><option value="">투자시장 전체</option></select>
     <select id="tradeLogFilterCompany" onchange="setTradeLogFilter('company', this.value)"><option value="">금융회사 전체</option></select>
     <select id="tradeLogFilterAcctType" onchange="setTradeLogFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
     <select id="tradeLogFilterAssetType" onchange="setTradeLogFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addTradeLogWrap" onclick="toggleBanner(this)">이력 수동 입력<span class="sw"></span></button>
+    <button class="btn btn-ghost" onclick="clearTradeLog()" style="flex-shrink:0;">이력 초기화</button>
+  </div>
+  <!-- 이력 수동 입력: 위 스위치로 열고 닫는다. 기록 전용 — 자산·현금 잔액에는 반영되지 않는다 -->
+  <div id="addTradeLogWrap" style="display:none;margin:0 0 14px;">
+    <div class="notice" style="margin:0 0 8px;">자산·현금 잔액에는 반영되지 않는 기록 전용 입력입니다.</div>
+    <div class="fm" id="form_tl"></div>
   </div>
   <div id="soldTotal" class="tl-total" style="display:none;"></div>
   <!-- iOS 목록형 표: 날짜(두 줄) · 종목(매수/매도 캡슐+이름, 아래 배지) · 체결가×수량(아래 총액) · 실현손익 · 작은 아이콘 -->
@@ -1245,10 +1267,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <tbody id="soldTbody"></tbody>
     </table>
   </div>
-  <details class="collapsible" style="margin-top:14px;border-top:1px solid var(--color-section-bg);padding-top:10px;">
-    <summary style="color:#A8433C;">이력 수동 기록 추가 <b>(자산/현금에는 반영되지 않음)</b></summary>
-  <div class="fm" id="form_tl" style="margin-top:12px;"></div>
-  </details>
   <div id="tradeLogStatus" style="font-size:12px;color:var(--color-secondary);min-height:16px;padding:4px 0;"></div>
 </div>
 </section>
@@ -1275,7 +1293,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <div class="vbar-chart" id="monthlyPerfBars" style="display:none;"></div>
       <div class="vbar-xaxis" id="monthlyPerfBarsAxis" style="display:none;"></div>
     </div>
-    <div class="tbl-wrap" id="monthlyPerfTableWrap">
+    <div class="tbl-wrap tbl-cap" id="monthlyPerfTableWrap">
       <table class="table-auto">
         <thead><tr>
           <th style="text-align:left" id="monthlyPerfPeriodHeader">월</th><th>시작 잔액</th><th>종료 잔액</th><th>순입출금</th>
@@ -1304,7 +1322,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <div class="vbar-chart" id="yearlyReturnsBars" style="display:none;"></div>
       <div class="vbar-xaxis" id="yearlyReturnsBarsAxis" style="display:none;"></div>
     </div>
-    <div class="tbl-wrap" id="yearlyReturnsTableWrap">
+    <div class="tbl-wrap tbl-cap c4" id="yearlyReturnsTableWrap">
       <table class="table-auto">
         <thead><tr><th style="text-align:left" id="yearlyReturnsPeriodHeader">연도</th><th>실현손익</th><th>미실현손익</th><th>합계</th></tr></thead>
         <tbody id="yearlyReturnsBody"></tbody>
@@ -1334,9 +1352,9 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     </div>
     <div class="pv-chart-body">
       <div class="pv-canvas-wrap chart-wrap"><canvas id="pvChart" height="280"></canvas></div>
-      <div class="pv-detail" id="pvDetail"><div class="pd-empty">차트의 지점을 선택하면 상세 정보가 표시됩니다</div></div>
+      <div class="pv-detail" id="pvDetail"><div class="pd-empty">차트에서 지점을 선택하세요</div></div>
     </div>
-    <div class="notice">💡 실선=자산가치, 점선=투입원금(원금기록장에 기록된 입출금 기준). 두 선 사이 채움은 현재 손익 구간을 나타냅니다. 원금선 위의 ●/● 표시는 실제 입금·출금이 발생한 시점입니다.</div>
+    <div class="notice">💡 실선=자산가치, 점선=투입원금(원금기록장 기준), 사이 채움=손익 구간, <span style="color:#34c759;">●</span>입금 <span style="color:#ff3b30;">●</span>출금 시점.</div>
     <div class="notice" id="chartSnapStartNotice"></div>
   </div>
 </div>
@@ -1362,15 +1380,14 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
         <div class="sum-val" id="principalLedgerTotal">0원</div>
       </div>
     </div>
-    <div class="tbl-wrap">
-      <table class="table-auto" style="table-layout:fixed;">
+    <div class="tbl-wrap tbl-cap c6">
+      <table class="table-auto">
         <thead><tr>
-          <th style="text-align:left;width:22%;">일시</th>
-          <th style="text-align:left;width:16%;">이름</th>
-          <th style="text-align:center;width:16%;">구분</th>
-          <th style="width:16%;">금액</th>
-          <th style="width:16%;">누적 잔액</th>
-          <th style="width:14%;white-space:nowrap;"></th>
+          <th style="text-align:left;">일시</th>
+          <th style="text-align:center;">구분</th>
+          <th>금액</th>
+          <th>누적 잔액</th>
+          <th style="white-space:nowrap;"></th>
         </tr></thead>
         <tbody id="principalLedgerBody"></tbody>
       </table>
@@ -1390,18 +1407,18 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <div class="vbar-chart" id="divMonthlyBars"></div>
       <div class="vbar-xaxis" id="divMonthlyBarsAxis"></div>
     </div>
-    <div class="tbl-wrap">
+    <div class="tbl-wrap tbl-cap c4">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">월</th><th>확정 배당</th><th>예상 배당</th></tr></thead>
         <tbody id="divMonthlyBody"></tbody>
       </table>
     </div>
-    <div class="notice">💡 "예상"은 최근 배당 간격·금액을 바탕으로 이 앱이 추정한 값입니다(실제 배당 일정과 다를 수 있음). 월을 탭하면 해당 월의 확정 배당 기록을 수정·삭제할 수 있습니다.</div>
+    <div class="notice">💡 '예상'은 최근 배당 간격·금액으로 추정한 값이라 실제 일정과 다를 수 있습니다. 월을 탭하면 확정 배당을 수정·삭제할 수 있습니다.</div>
   </div>
 </div>
 <div class="subpage" data-sub="stock">
   <div class="card">
-    <div class="tbl-wrap">
+    <div class="tbl-wrap tbl-cap">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">종목</th><th>지급 횟수</th><th>누적 배당금</th><th>다음 예상</th></tr></thead>
         <tbody id="divStockBody"></tbody>
@@ -1481,7 +1498,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <div style="background:var(--color-surface);border-radius:12px;padding:14px;margin-bottom:12px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📥 백업</div>
       <div style="font-size:11px;color:var(--color-secondary);margin-bottom:10px;line-height:1.5;">
-        자산목록·환율·스냅샷·매매이력(배당/입출금 포함)·기타 금융소득·<b>현금흐름 대시보드 입력값</b>을 JSON 파일로 저장합니다. 수익률분석·배당금관리·세금관리는 이 데이터로부터 계산되므로 함께 백업됩니다. 다운로드 후 구글 드라이브에 수동 업로드하세요.
+        보유종목·환율·스냅샷·매매이력(배당·입출금 포함)·기타 금융소득·<b>현금흐름 입력값</b>을 JSON 파일로 저장합니다. 수익률·배당·세금 화면은 이 데이터로 계산되므로 따로 백업하지 않아도 됩니다. 구글 드라이브 등에 직접 보관하세요.
       </div>
       <label style="font-size:11px;color:var(--color-tertiary);display:block;margin-bottom:4px;">파일 이름</label>
       <input id="sheetsFileName" type="text"
@@ -1494,10 +1511,19 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <div style="background:var(--color-surface);border-radius:12px;padding:14px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📤 복원</div>
       <div style="font-size:11px;color:var(--color-secondary);margin-bottom:10px;line-height:1.5;">
-        구글 드라이브에서 백업 파일을 선택하면 복원됩니다. 덮어쓰기 전에 현재 데이터를 「복원전」 파일로 먼저 내려받고, 복원 후 저장된 값이 파일과 같은지 검증 결과를 보여줍니다.
+        백업 JSON 파일을 선택하면 확인 후 복원합니다. 복원 전 현재 데이터는 '복원전' 파일로 자동 저장되고, 복원 후 저장 값이 파일과 일치하는지 검증 결과를 보여줍니다.
       </div>
       <input type="file" id="restoreFileInput" accept=".json" style="display:none;" onchange="restoreFromFile(event)">
       <button class="btn" style="width:100%;background:#34c75920;color:#34c759;" onclick="document.getElementById('restoreFileInput').click()">📂 JSON 파일 선택</button>
+    </div>
+
+    <!-- 전략 매칭: 보유 종목이 매매전략의 어떤 종목과 연결되는지 확인(점검용이라 필터 줄이 아니라 여기에 둔다) -->
+    <div style="background:var(--color-surface);border-radius:12px;padding:14px;margin-top:12px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📈 전략 매칭</div>
+      <div style="font-size:11px;color:var(--color-secondary);margin-bottom:10px;line-height:1.5;">
+        보유 종목이 매매전략의 어떤 종목과 연결되는지(직접·대응·대상 아님·미매칭) 확인합니다. 미매칭 종목은 "나란히 비교"를 쓸 수 없습니다.
+      </div>
+      <button class="btn btn-ghost" style="width:100%;" onclick="closeSheetsModal();openSigMatch()">연결 상태 보기</button>
     </div>
 
     <div id="sheetsStatus" style="font-size:12px;margin-top:10px;min-height:18px;text-align:center;"></div>
@@ -1515,6 +1541,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 <script src="../shared/dialog.js"></script>
 <script src="../shared/icons.js"></script>
+<script src="../shared/ios-select.js"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
 /* ════════════════════════════════════════
@@ -3886,9 +3913,9 @@ function renderSnaps(){
 ════════════════════════════════════════ */
 let editingId=null, quickTradeId=null, chartDetailId=null;
 // 종목 상세 ⇄ 매매전략 비교 화면 상태(아래 "종목 상세 ⇄ 매매전략 비교" 절)
-const CMP_VIEW_KEY = 'pf_cmp_view_v1';
+// 보기(pref)는 열 때마다 "나란히"로 시작한다 — 열린 동안만 상세/전략으로 바꿔 보고, 기억하지 않는다
 const cmp = {open:false, id:null, symb:null, via:null, frame:null, ready:false, frameSymb:null, frameMode:null,
-  pref: (()=>{ try{ const v=localStorage.getItem(CMP_VIEW_KEY); return ['split','detail','strat'].includes(v)?v:'split'; }catch(e){ return 'split'; } })(),
+  pref: 'split',
   focus: 'strat',
   mode: (()=>{ try{ return localStorage.getItem('kis-mode')==='sell'?'sell':'buy'; }catch(e){ return 'buy'; } })()};
 
@@ -5334,7 +5361,7 @@ function renderCapitalGainsTax(){
   );
 
   if(!sells.length){
-    el.innerHTML = '<div class="notice" style="margin:0;">올해 실현된 해외주식 매도 이력이 없습니다.</div>';
+    el.innerHTML = '<div class="notice" style="margin:0;">올해 해외주식 매도 이력이 없습니다.</div>';
     return;
   }
 
@@ -5363,7 +5390,7 @@ function renderCapitalGainsTax(){
         <div class="sum-val ${updn(gainMan)}">${maskAmt((gainMan>=0?'+':'')+gainMan.toLocaleString()+'만원')}</div>
       </div>
       <div class="sum-card" style="flex:1;min-width:140px;">
-        <div class="sum-lbl">기본공제 250만원 후 과세대상</div>
+        <div class="sum-lbl">과세대상(기본공제 250만원 차감)</div>
         <div class="sum-val">${maskAmt(taxableMan.toLocaleString()+'만원')}</div>
       </div>
       <div class="sum-card" style="flex:1;min-width:140px;">
@@ -5377,7 +5404,7 @@ function renderCapitalGainsTax(){
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>
-    <div class="notice">💡 종합소득세와는 별도 세목 — 매년 5/1~5/31 양도소득세 확정신고 대상(다른 소득과 합산 안 됨). 올해 남은 손실 종목을 추가로 매도해 손익을 통산하면 세금을 줄일 수 있습니다. 종목의 ✏️를 누르면 매도 기록을 바로 수정할 수 있습니다.</div>
+    <div class="notice">💡 종합소득세와 별개로 다른 소득과 합산되지 않으며, 내년 5/1~5/31에 확정신고합니다. 손실 종목을 올해 안에 매도하면 손익이 통산돼 세금이 줄 수 있습니다. ✏️로 매도 기록을 수정할 수 있습니다.</div>
   `;
 }
 
@@ -5403,17 +5430,17 @@ function renderFinIncomeThreshold(){
   const overMan = totalMan - THRESHOLD;
 
   const statusHtml = overMan > 0
-    ? `<span class="dn" style="font-weight:700;">⚠️ 기준 초과 ${maskAmt('+'+overMan.toLocaleString()+'만원')} — 종합과세 대상(다른 소득과 합산해 누진세율 적용)</span>`
-    : `<span class="up" style="font-weight:700;">✅ 기준 이내 (${maskAmt(Math.abs(overMan).toLocaleString()+'만원')} 여유) — 15.4% 원천징수로 과세 종결</span>`;
+    ? `<span class="dn" style="font-weight:700;">⚠️ 기준 초과 ${maskAmt('+'+overMan.toLocaleString()+'만원')} — 초과분은 다른 소득과 합산해 종합과세</span>`
+    : `<span class="up" style="font-weight:700;">✅ 기준 이내 (${maskAmt(Math.abs(overMan).toLocaleString()+'만원')} 여유) — 15.4% 원천징수로 종결</span>`;
 
   el.innerHTML = `
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;">
       <div class="sum-card" style="flex:1;min-width:140px;">
-        <div class="sum-lbl">배당 로그 합계</div>
+        <div class="sum-lbl">배당 기록 합계</div>
         <div class="sum-val">${maskAmt(divSumMan.toLocaleString()+'만원')}</div>
       </div>
       <div class="sum-card" style="flex:1;min-width:180px;">
-        <div class="sum-lbl">기타 이자·배당 소득(연, 수동입력)</div>
+        <div class="sum-lbl">기타 이자·배당 소득(연, 만원)</div>
         <input type="number" id="otherFinIncomeInput" value="${otherMan}" min="0" step="1"
           style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:5px 8px;
                  font-size:14px;font-weight:800;font-family:inherit;background:var(--color-card);color:var(--color-text);"
@@ -5424,7 +5451,7 @@ function renderFinIncomeThreshold(){
         <div class="sum-val">${maskAmt(totalMan.toLocaleString())} / 2,000만원</div>
       </div>
     </div>
-    <div class="notice" style="margin:0;">${statusHtml}<br>💡 이 앱의 배당 로그와 수동 입력값만 반영합니다 — 예금 이자, 다른 계좌 배당 등 여기 기록되지 않은 금액이 있으면 "기타 이자·배당 소득"에 직접 더해 넣으세요. "배당 로그 합계"를 고치려면 배당금관리 탭에서 해당 배당 기록을 수정·삭제하세요.</div>
+    <div class="notice" style="margin:0;">${statusHtml}<br>💡 이 앱의 배당 기록과 직접 입력값만 합산합니다. 예금이자·타 계좌 배당 등은 "기타 이자·배당 소득"에 더해 넣고, 배당 기록은 배당금관리 탭에서 수정하세요.</div>
   `;
 }
 PAGE_RENDER_HOOKS['tax'] = function(){ renderCapitalGainsTax(); renderFinIncomeThreshold(); };
@@ -5441,7 +5468,7 @@ function renderPrincipalLedger(){
   const arr = loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal').slice().sort((a,b)=>a.at-b.at);
   const totalEl = document.getElementById('principalLedgerTotal');
   if(!arr.length){
-    el.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--color-tertiary);">기록된 입출금이 없습니다.</td></tr>`;
+    el.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--color-tertiary);">기록된 입출금이 없습니다.</td></tr>`;
     if(totalEl) totalEl.textContent = '0원';
     return;
   }
@@ -5456,8 +5483,7 @@ function renderPrincipalLedger(){
       : `<span class="acctType-badge" style="background:#ff3b3020;color:var(--color-up);">출금</span>`;
     const mainRow = `<tr>
       <td style="text-align:left;font-size:12px;color:var(--color-tertiary);">${dtStr}</td>
-      <td style="text-align:left;font-size:12px;">${r.name && r.name!=='현금' ? r.name : ''}</td>
-      <td style="text-align:center;">${badge}</td>
+      <td style="text-align:center;">${badge}${r.name && r.name!=='현금' ? `<div class="tl-sub">${r.name}</div>` : ''}</td>
       <td class="${isIn?'up':'dn'}" style="font-weight:600;">${isIn?'+':'-'}${fmt(r.totalKRW||0)}</td>
       <td style="font-weight:700;">${fmt(running)}</td>
       <td style="white-space:nowrap;text-align:right;">
@@ -5475,7 +5501,7 @@ function renderPrincipalLedgerEditForm(r){
   const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
   const fxRate = r.currency==='USD'?FX.USD:r.currency==='JPY'?FX.JPY:1;
   const amountVal = r.currency==='KRW' ? (r.totalKRW||0) : Math.round((r.totalKRW||0)/fxRate);
-  return `<tr class="tr-full fm-row"><td colspan="6" onclick="event.stopPropagation()">
+  return `<tr class="tr-full fm-row"><td colspan="5" onclick="event.stopPropagation()">
     <div class="fm">
       <div class="fm-h"><b>원금 기록 수정</b></div>
       <div class="fm-grid">
@@ -5615,7 +5641,7 @@ function buildMonthlyPerformance(){
 function renderSnapStartNotices(){
   const dateStr = firstSnapDateStr();
   const msg = dateStr
-    ? `💡 수익률(%)은 최초 스냅샷 기록일(${dateStr})부터 계산됩니다. 원금기록장에 그 이전 날짜의 입출금을 소급 기록하면 "원금 vs 자산가치" 차트의 점선(투입원금)은 그 날짜부터 표시되지만, 실선(자산가치)과 수익률(%)은 여전히 최초 스냅샷 기록일부터만 표시됩니다 — 그 이전엔 실제 자산가치 기록이 없기 때문입니다.`
+    ? `💡 자산가치·수익률(%)은 최초 스냅샷 기록일(${dateStr})부터만 표시됩니다. 소급 입출금은 점선(투입원금)만 앞당겨 표시됩니다.`
     : '';
   ['yearlySnapStartNotice','monthlySnapStartNotice','chartSnapStartNotice'].forEach(id=>{
     const el = document.getElementById(id);
@@ -5848,7 +5874,7 @@ function drawPrincipalVsValueChart(){
     ctx.fillStyle = '#8e8e93';
     ctx.font = '12px Pretendard';
     ctx.textAlign = 'center';
-    ctx.fillText('표시할 데이터가 부족합니다', cssW/2, cssH/2);
+    ctx.fillText('스냅샷이 2개 이상 쌓이면 표시됩니다', cssW/2, cssH/2);
     renderPvDetail(null, []);
     return;
   }
@@ -6068,7 +6094,7 @@ function renderPvDetail(idx, series){
   const panel = document.getElementById('pvDetail');
   if(!panel) return;
   if(idx===null || !series || !series.length || !series[idx]){
-    panel.innerHTML = `<div class="pd-empty">차트의 지점을 선택하면 상세 정보가 표시됩니다</div>`;
+    panel.innerHTML = `<div class="pd-empty">차트에서 지점을 선택하세요</div>`;
     return;
   }
   const p = series[idx];
@@ -6104,7 +6130,7 @@ function renderPvEventDetail(point){
     <div class="pd-title">📅 ${dateStr}</div>
     <div class="pd-row"><span style="color:${isDeposit?'#34c759':'#ff3b30'};font-weight:700;">${isDeposit?'입금':'출금'}</span><b>${fmt(r.totalKRW||0)}</b></div>
     <div class="pd-row"><span>누적 투입원금</span><b>${fmt(point.principal)}</b></div>
-    <div class="pd-note">원금기록장에 기록된 입출금 — 자산/현금 잔액에는 반영되지 않습니다.</div>
+    <div class="pd-note">원금기록장 기록 — 자산·현금 잔액에는 반영되지 않습니다.</div>
   `;
 }
 SUBPAGE_RENDER_HOOKS['returns_monthly_table'] = renderMonthlyTable;
@@ -6173,7 +6199,7 @@ function renderAllDividendViews(){
   renderDividendMonthly();
   renderDividendByStock();
   renderDividendCalendar();
-  renderFinIncomeThreshold(); // 금융소득종합과세 합계가 배당 로그를 그대로 쓰므로 함께 갱신
+  renderFinIncomeThreshold(); // 금융소득종합과세 합계가 배당 기록을 그대로 쓰므로 함께 갱신
 }
 
 function toggleDivMonthExpand(key){
@@ -6202,7 +6228,7 @@ function saveDividendEntryEdit(id){
   const dateV  = document.getElementById(`de_date_${id}`).value;
   const name   = document.getElementById(`de_name_${id}`).value.trim();
   const amount = parseFloat(document.getElementById(`de_amount_${id}`).value);
-  if(!name){ fieldError(`de_name_${id}`,'종목/배당원천을 입력해 주세요.'); return; }
+  if(!name){ fieldError(`de_name_${id}`,'종목/배당처를 입력해 주세요.'); return; }
   if(isNaN(amount) || amount<=0){ fieldError(`de_amount_${id}`,'금액을 입력해 주세요.'); return; }
   if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
   r.name = name;
@@ -6225,7 +6251,7 @@ function renderDividendEntryRow(r){
     return `<div class="fm" style="margin:8px 0;">
       <div class="fm-grid">
         ${fmField('날짜', fmInput(`de_date_${r.id}`,{type:'date',value:dateVal}))}
-        ${fmField('종목/배당원천', fmInput(`de_name_${r.id}`,{value:r.name||''}), {cls:'s6'})}
+        ${fmField('종목/배당처', fmInput(`de_name_${r.id}`,{value:r.name||''}), {cls:'s6'})}
         ${fmField('금액(원)', fmInput(`de_amount_${r.id}`,{type:'number',value:r.totalKRW||0}))}
       </div>
       <div class="fm-a">
@@ -6256,16 +6282,21 @@ function renderDividendEntryPanel(entries, hasProjected){
 }
 
 // 신규 배당 기록 추가 폼 — 종목별 집계·월별 캘린더 탭 상단에 배치(기록 전용, 자산/현금 잔액 미반영)
+// "배당 수동 입력" 스위치 — 다시 그려져도 열림 상태를 유지한다
+const divAddOpen = {};
+function toggleDivAdd(ctx, btn){ divAddOpen[ctx] = !divAddOpen[ctx]; toggleBanner(btn); }
 function renderDividendAddForm(ctx){
-  return `<details class="collapsible" style="margin-top:14px;border-top:1px solid var(--color-section-bg);padding-top:10px;">
-    <summary>배당 기록 추가 <b>(자산/현금에는 반영되지 않음)</b></summary>
-    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding-top:14px;">
+  const on = !!divAddOpen[ctx];
+  return `<div class="tgl-banner-row" style="margin:0 0 10px;justify-content:flex-end;"><button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" data-target="dnew_wrap_${ctx}" onclick="toggleDivAdd('${ctx}',this)">배당 수동 입력<span class="sw"></span></button></div>
+    <div id="dnew_wrap_${ctx}" style="${on?'':'display:none;'}margin-bottom:14px;">
+    <div class="notice" style="margin:0 0 8px;">자산·현금 잔액에는 반영되지 않는 기록 전용 입력입니다.</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
       <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;">
         배당일
         <input id="dnew_date_${ctx}" type="date" style="width:130px;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;">
       </label>
       <label style="font-size:10px;color:var(--color-tertiary);display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px;position:relative;">
-        종목/배당원천
+        종목/배당처
         <input id="dnew_name_${ctx}" placeholder="예: SCHD" style="width:100%;border:1px solid var(--color-border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;"
           oninput="searchTickerDiv('${ctx}', this.value)" autocomplete="off">
         <div class="suggest-box" id="dnew_suggestions_${ctx}"></div>
@@ -6280,7 +6311,7 @@ function renderDividendAddForm(ctx){
         <div style="display:flex;gap:4px;">
           <input id="dnew_pershare_${ctx}" type="number" placeholder="0" min="0" step="0.0001" style="width:78px;border:1px solid var(--color-border);border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;"
             oninput="updateDividendAmount('${ctx}')">
-          <select id="dnew_cur_${ctx}" style="border:1px solid var(--color-border);border-radius:8px;padding:6px 2px;font-size:12px;font-family:inherit;background:var(--color-card);color:var(--color-text);"
+          <select id="dnew_cur_${ctx}" style="padding:6px 24px 6px 10px;font-size:12px;font-family:inherit;color:var(--color-text);"
             onchange="updateDividendAmount('${ctx}')">
             <option value="KRW">KRW ₩</option>
             <option value="USD">USD $</option>
@@ -6294,9 +6325,9 @@ function renderDividendAddForm(ctx){
       </label>
       <button class="btn" style="background:#ff950020;color:#ff9500;padding:7px 14px;font-size:13px;" onclick="addDividendEntry('${ctx}')">+ 배당 추가</button>
     </div>
-    <div class="notice" style="margin:6px 0 0;">💡 기준수량 × 1주당 배당금(선택한 통화 기준)을 입력하면 환율을 반영해 배당금(원)이 자동 계산됩니다 — 배당금(원)은 직접 수정도 가능합니다.</div>
+    <div class="notice" style="margin:6px 0 0;">기준수량 × 1주당 배당금을 입력하면 환율을 반영해 배당금(원)이 자동 계산되며, 직접 고쳐도 됩니다.</div>
     <div class="form-status" id="dnew_status_${ctx}"></div>
-  </details>`;
+    </div>`;
 }
 // 기준수량 × 1주당 배당금(선택 통화) × 환율 → 배당금(원) 자동 계산. 원화 배당이면
 // FX 변환 없이(fxRate=1) 그대로 반영됨. 사용자가 배당금(원)을 나중에 직접 고치면
@@ -6325,8 +6356,8 @@ function addDividendEntry(ctx){
   const cur   = curEl.value || 'KRW';
   const amount = parseFloat(amtEl.value);
   if(!dateV){ if(st) st.textContent='❌ 날짜를 입력해 주세요.'; return; }
-  if(!name){ if(st) st.textContent='❌ 종목/배당원천을 입력해 주세요.'; return; }
-  if(isNaN(amount) || amount<=0){ if(st) st.textContent='❌ 배당금(원)을 입력하거나 기준수량·1주당 배당금을 입력해 주세요.'; return; }
+  if(!name){ if(st) st.textContent='❌ 종목/배당처를 입력해 주세요.'; return; }
+  if(isNaN(amount) || amount<=0){ if(st) st.textContent='❌ 배당금(원) 또는 기준수량·1주당 배당금을 입력해 주세요.'; return; }
   addTradeLog({
     name, ticker:'—', type:'dividend', at: new Date(dateV+'T00:00:00').getTime(),
     acctType:'cash', assetType:null, company:null,
@@ -6334,7 +6365,7 @@ function addDividendEntry(ctx){
     totalKRW: Math.round(amount), pnl: Math.round(amount), pnlPct:null,
     reason:'', cashAdjusted:null
   });
-  if(st){ st.textContent = `✅ ${dateV} ${name} 배당 기록 추가 (자산/현금 잔액 미반영)`; setTimeout(()=>{ if(st.querySelector('.ic-check-circle') || st.textContent.startsWith('✅')) st.textContent=''; }, 3000); }
+  if(st){ st.textContent = `✅ ${dateV} ${name} 배당 기록 추가`; setTimeout(()=>{ if(st.querySelector('.ic-check-circle') || st.textContent.startsWith('✅')) st.textContent=''; }, 3000); }
   nameEl.value=''; qtyEl.value=''; perEl.value=''; amtEl.value=''; curEl.value='KRW';
   renderAllDividendViews();
 }
@@ -6481,7 +6512,7 @@ function renderDividendCalendar(){
     else{
       const m = byMonth[divExpandedMonthKey] || {confirmed:[], projectedSum:0};
       detailEl.style.display='block';
-      detailEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--color-tertiary);margin:12px 0 2px;">${divExpandedMonthKey} 확정 배당 내역</div>
+      detailEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:var(--color-tertiary);margin:12px 0 2px;">${divExpandedMonthKey} 확정 배당 기록</div>
         ${renderDividendEntryPanel(m.confirmed, m.projectedSum>0)}`;
     }
   }
@@ -9053,6 +9084,7 @@ function toggleBanner(btn){
   const t = document.getElementById(btn.dataset.target);
   if(t) t.style.display = on ? '' : 'none';
   if(on && btn.dataset.onopen && typeof window[btn.dataset.onopen] === 'function') window[btn.dataset.onopen]();
+  scheduleFitScroll();
 }
 
 function renderToggles(){
@@ -9241,7 +9273,7 @@ function triggerJsonDownload(obj, fileName){
 }
 
 function backupCountsText(c){
-  return `종목 ${c.assets}개 · 스냅샷 ${c.snaps}개 · 매매이력 ${c.tradeLog}건 · 현금흐름 입력 ${c.retirementFields}개`;
+  return `보유종목 ${c.assets}개 · 스냅샷 ${c.snaps}개 · 매매이력 ${c.tradeLog}건 · 현금흐름 입력값 ${c.retirementFields}개`;
 }
 
 // ── 백업: JSON 다운로드 ──
@@ -9253,29 +9285,29 @@ function downloadBackup(){
     const data = buildBackupData();
     triggerJsonDownload(data, fileName);
     statusEl.style.color = '#34c759';
-    statusEl.textContent = `✅ ${fileName}.json 다운로드 완료!\n${backupCountsText(data.counts)}\n구글 드라이브에 업로드해두세요.`;
+    statusEl.textContent = `✅ ${fileName}.json 저장 완료\n${backupCountsText(data.counts)}`;
   }catch(e){
     statusEl.style.color = '#ff3b30';
-    statusEl.textContent = '❌ 오류: '+e.message;
+    statusEl.textContent = '❌ 백업 실패: '+e.message;
   }
 }
 
 // 파일 내용을 저장소에 쓰기 전에 형식을 먼저 검증 — 손상/잘린/다른 형식 파일이 기존 데이터를 덮어쓰지 못하게 한다
 function validateBackupData(d){
   const isObj = v => v && typeof v==='object' && !Array.isArray(v);
-  if(!isObj(d) || !Array.isArray(d.assets) || !d.assets.every(isObj)) return '올바른 백업 파일이 아닙니다.';
+  if(!isObj(d) || !Array.isArray(d.assets) || !d.assets.every(isObj)) return '이 앱의 백업 파일이 아닙니다.';
   if(d.snaps!==undefined && (!Array.isArray(d.snaps) || !d.snaps.every(s=>isObj(s) && typeof s.timestamp==='number'))) return '스냅샷 데이터가 올바르지 않습니다.';
   if(d.tradeLog!==undefined && (!Array.isArray(d.tradeLog) || !d.tradeLog.every(isObj))) return '매매이력 데이터가 올바르지 않습니다.';
   if(d.fx!=null && !isObj(d.fx)) return '환율 데이터가 올바르지 않습니다.';
   if(d.otherFinIncome!=null && !isFinite(parseFloat(d.otherFinIncome))) return '기타 금융소득 데이터가 올바르지 않습니다.';
   if(d.retirement!=null && (!isObj(d.retirement) || !Object.values(d.retirement).every(v=>v===null || typeof v==='string' || typeof v==='number'))) return '현금흐름 데이터가 올바르지 않습니다.';
-  if(d.flags!=null && !isObj(d.flags)) return '보정 표시 데이터가 올바르지 않습니다.';
+  if(d.flags!=null && !isObj(d.flags)) return '백업 파일의 내부 표식이 올바르지 않습니다.';
   if(isObj(d.counts)){
     const c = d.counts;
-    if(c.assets!==undefined && c.assets!==d.assets.length) return '파일이 손상되었거나 일부만 저장되었습니다(종목 수 불일치).';
-    if(c.snaps!==undefined && c.snaps!==(d.snaps||[]).length) return '파일이 손상되었거나 일부만 저장되었습니다(스냅샷 수 불일치).';
-    if(c.tradeLog!==undefined && c.tradeLog!==(d.tradeLog||[]).length) return '파일이 손상되었거나 일부만 저장되었습니다(매매이력 수 불일치).';
-    if(c.retirementFields!==undefined && c.retirementFields!==(d.retirement?Object.keys(d.retirement).length:0)) return '파일이 손상되었거나 일부만 저장되었습니다(현금흐름 항목 수 불일치).';
+    if(c.assets!==undefined && c.assets!==d.assets.length) return '백업 파일이 손상되었습니다(보유종목 수 불일치).';
+    if(c.snaps!==undefined && c.snaps!==(d.snaps||[]).length) return '백업 파일이 손상되었습니다(스냅샷 수 불일치).';
+    if(c.tradeLog!==undefined && c.tradeLog!==(d.tradeLog||[]).length) return '백업 파일이 손상되었습니다(매매이력 수 불일치).';
+    if(c.retirementFields!==undefined && c.retirementFields!==(d.retirement?Object.keys(d.retirement).length:0)) return '백업 파일이 손상되었습니다(현금흐름 항목 수 불일치).';
   }
   return null;
 }
@@ -9362,7 +9394,7 @@ function restoreFromFile(event){
   reader.onload = async (e)=>{
     try{
       let data;
-      try{ data = JSON.parse(e.target.result); }catch(_){ throw new Error('올바른 JSON 파일이 아닙니다.'); }
+      try{ data = JSON.parse(e.target.result); }catch(_){ throw new Error('JSON 형식이 아닙니다.'); }
       const invalid = validateBackupData(data);
       if(invalid) throw new Error(invalid);
 
@@ -9371,13 +9403,13 @@ function restoreFromFile(event){
         assets: data.assets.length, snaps: (data.snaps||[]).length, tradeLog: (data.tradeLog||[]).length,
         retirementFields: data.retirement ? Object.keys(data.retirement).length : 0
       };
-      const noRetirementNote = data.retirement ? '' : '\n\n※ 이 백업 파일에는 현금흐름 입력값이 없어 현재 기기의 현금흐름 값은 그대로 유지됩니다.';
+      const noRetirementNote = data.retirement ? '' : '\n\n백업에 현금흐름 입력값이 없어 현재 값을 유지합니다.';
       if(!await iosConfirm({title:'백업 복원', message:`${file.name}
 
 현재: ${backupCountsText(cur)}
 백업: ${backupCountsText(inc)}
 
-현재 데이터는 덮어씌워지며, 덮어쓰기 전에 현재 데이터를 '복원전' 파일로 먼저 자동 다운로드해요.${noRetirementNote}`, okText:'복원', destructive:true})){
+복원하면 현재 데이터가 덮어써집니다. 먼저 '복원전' 파일로 자동 저장됩니다.${noRetirementNote}`, okText:'복원', destructive:true})){
         statusEl.textContent = '';
         return;
       }
@@ -9391,12 +9423,12 @@ function restoreFromFile(event){
 
       const converted = result.rows.filter(r=>!r.sameAsFile).map(r=>r.label);
       const lines = [
-        converted.length ? '✅ 복원 완료 — 저장 값 검증 통과 (일부 구버전 형식은 현재 형식으로 변환됨)' : '✅ 복원 완료 — 파일과 100% 일치',
+        converted.length ? '✅ 복원 완료 — 일부 구버전 항목은 현재 형식으로 변환됨' : '✅ 복원 완료 — 파일과 일치',
         backupCountsText(inc),
-        '검증: '+result.rows.map(r=>r.label+(r.sameAsFile?' ✔':' ✔(형식 변환)')).join(' · '),
       ];
-      if(!result.retirementInFile) lines.push('현금흐름: 백업에 없어 현재 값 유지');
-      lines.push('복원 전 데이터는 「복원전」 파일로 다운로드되었습니다(다운로드 폴더 확인).');
+      if(converted.length) lines.push('형식 변환: '+converted.join(', '));
+      if(!result.retirementInFile) lines.push('백업에 현금흐름 입력값이 없어 현재 값을 유지합니다.');
+      lines.push("이전 데이터는 '복원전' 파일(다운로드 폴더)에 있습니다.");
       statusEl.style.color = '#34c759';
       statusEl.textContent = lines.join('\n');
     }catch(err){
@@ -9659,7 +9691,7 @@ async function cmpMarkButton(id){
   const b = document.getElementById('cmpBtn_'+id); if(!b) return;
   if(!m.symb){
     b.disabled = true; b.textContent = '전략 대상 아님';
-    b.title = m.kind==='none' ? m.why : '매매전략 목록에 없는 종목입니다 — 목록 필터줄의 "전략 매칭"에서 확인하세요';
+    b.title = m.kind==='none' ? m.why : '매매전략 목록에 없는 종목입니다 — 백업/복원 창의 "전략 매칭"에서 확인하세요';
   }
   else b.title = (m.kind==='proxy' ? `대응 종목 ${m.symb} 기준 ` : '') + '매수·매도 전략과 나란히 비교 (S)';
 }
@@ -9701,7 +9733,7 @@ async function cmpOpen(id){
   document.getElementById('cmpSymb').textContent = '';
   document.getElementById('cmpView').classList.add('open');
   document.body.classList.add('cmp-on');
-  if(!wasOpen){ try{ history.pushState({pfCmp:1}, ''); }catch(e){} if(cmpFolded()) cmp.focus = 'strat'; }
+  if(!wasOpen){ try{ history.pushState({pfCmp:1}, ''); }catch(e){} cmp.pref = 'split'; cmp.focus = 'strat'; }   // 이전 보기와 무관하게 나란히(접힘은 split이 없어 전략)
   renderTable();                    // 표의 상세 행을 거둬 id 중복을 없앤다
   cmpApplyView(false);
   cmpRenderLeft();
@@ -9792,7 +9824,6 @@ window.addEventListener('message', e=>{
 function cmpSetView(v){
   if(cmpFolded()){ if(v==='split') return; cmp.focus = v; if(cmp.pref!=='split') cmp.pref = v; }
   else { cmp.pref = v; if(v!=='split') cmp.focus = v; }
-  try{ localStorage.setItem(CMP_VIEW_KEY, cmp.pref); }catch(e){}
   cmpApplyView(true);
 }
 let _cmpLastView = null, _cmpLastW = 0;
