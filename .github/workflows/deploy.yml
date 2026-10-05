@@ -127,7 +127,7 @@ jobs:
           cat "$SITE_DIR/signals/_source.json"
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ env.SITE_DIR }}
 
