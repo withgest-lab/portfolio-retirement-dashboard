@@ -461,6 +461,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* ── 자산 목록 필터 ── */
 .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
 .filter-bar .tgl-banner{margin-left:auto;flex-shrink:0;}   /* 수동 입력 스위치(·이력 초기화)는 항상 줄 맨 오른쪽 */
+/* 원금 기록장 상단 줄: 합계 칩(내용 폭만) + 오른쪽 끝 스위치. 줄 아래는 표와 12px */
+.filter-bar.pl-bar{margin-bottom:12px;}
+.sum-chip{display:inline-flex;align-items:baseline;gap:8px;flex:0 0 auto;padding:4px 10px;background:var(--color-section-bg);border-radius:var(--radius-sm);white-space:nowrap;}
+.sum-chip-l{font-size:11px;font-weight:600;color:var(--color-tertiary);}
+.sum-chip-v{font-size:13.5px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
 /* 펼침·펼침+90도는 반드시 한 줄 — 검색창만 줄어든다. 접힘(≤599)만 줄바꿈 허용 */
 .filter-bar input,.filter-bar select{border:1px solid var(--color-border);border-radius:7px;padding:5px 8px;
   font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);}
@@ -682,9 +687,6 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
 
 .notice{font-size:11px;color:var(--color-tertiary);padding:6px 0 0;}
 .notice:empty{display:none;}
-/* 원금 기록장 합계 카드: 전폭 카드는 라벨 왼쪽·금액 오른쪽(iOS 목록 행) */
-#page_returns .summary-grid[style*="1fr;"] .sum-card{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
-#page_returns .summary-grid[style*="1fr;"] .sum-card .sum-lbl{margin-bottom:0;}
 
 /* ── 원금 vs 자산가치 차트: 캔버스 + 선택 지점 상세 패널을 나란히 배치
    (넓은 화면), 좁은 화면에서는 패널이 아래로 자동으로 쌓임 — 정보가
@@ -1363,9 +1365,12 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 </div>
 <div class="subpage" data-sub="principal">
   <div class="card">
-    <div class="tgl-banner-row" style="margin:0;"><button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="principalAddWrap" onclick="toggleBanner(this)">원금 입출금 추가<span class="sw"></span></button></div>
-    <div id="principalAddWrap" style="display:none;margin:0 0 14px;">
-      <div class="notice" style="margin:10px 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다.</div>
+    <div class="filter-bar pl-bar">
+      <div class="sum-chip" title="기록된 입출금 기준"><span class="sum-chip-l">누적 순입금액</span><span class="sum-chip-v" id="principalLedgerTotal">0원</span></div>
+      <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="principalAddWrap" onclick="toggleBanner(this)">원금 입출금 추가<span class="sw"></span></button>
+    </div>
+    <div id="principalAddWrap" style="display:none;margin:0 0 12px;">
+      <div class="notice" style="margin:0 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다.</div>
       <div class="fm">
         <div class="fm-grid">
           <label class="fm-f"><span class="fm-l">날짜</span><input class="fm-input" id="pl_date" type="date"></label>
@@ -1376,12 +1381,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
         <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addPrincipalLedgerEntry()">추가</button></div>
       </div>
       <div class="form-status" id="principalLedgerStatus"></div>
-    </div>
-    <div class="summary-grid" style="grid-template-columns:1fr;margin-bottom:14px;">
-      <div class="sum-card">
-        <div class="sum-lbl">누적 순입금액(기록된 입출금 기준)</div>
-        <div class="sum-val" id="principalLedgerTotal">0원</div>
-      </div>
     </div>
     <div class="tbl-wrap tbl-cap c6">
       <table class="table-auto">
