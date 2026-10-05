@@ -79,7 +79,8 @@
     var r = sel.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
     if (!sheet) {
       var w = Math.max(r.width, 132); menu.style.minWidth = w + 'px';
-      var mw = menu.offsetWidth, mh = Math.min(menu.scrollHeight, Math.min(vh * 0.6, 360)); menu.style.maxHeight = mh + 'px';
+      var bd = menu.offsetHeight - menu.clientHeight;      // 테두리(border-box maxHeight엔 포함, scrollHeight엔 제외) — 빼먹으면 1px 넘쳐 스크롤바가 생김
+      var mw = menu.offsetWidth, mh = Math.min(menu.scrollHeight + bd + 1, Math.min(vh * 0.6, 360)); menu.style.maxHeight = mh + 'px';
       var left = Math.min(Math.max(8, r.left), vw - mw - 8);
       if (r.right - mw >= 8 && r.left + mw > vw - 8) left = r.right - mw;        // 오른쪽 끝 select는 오른쪽 맞춤
       var below = vh - r.bottom - 8, above = r.top - 8, top;
@@ -87,6 +88,7 @@
       else { var h2 = Math.min(mh, above); top = r.top - h2 - 6; menu.style.maxHeight = h2 + 'px'; menu.style.setProperty('--oy', '100%'); }
       menu.style.left = left + 'px'; menu.style.top = top + 'px'; menu.style.setProperty('--ox', Math.max(0, Math.min(100, (r.left + r.width / 2 - left) / mw * 100)) + '%');
     }
+    menu.style.overflowY = menu.scrollHeight > menu.clientHeight + 1 ? 'auto' : 'hidden';   // 실제로 넘칠 때만 스크롤바(팝오버·시트 공통)
     var c = { sel: sel, dim: dim, menu: menu, items: items, idx: Math.max(0, selIdx) };
     c.onClose = function () { close(false); };
     c.onScroll = function (e) { if (!menu.contains(e.target)) close(false); };
