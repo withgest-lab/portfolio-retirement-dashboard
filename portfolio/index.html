@@ -7495,18 +7495,38 @@ function buildTreemapItems(assetList, mode, period){
 }
 
 // 트리맵 셀이 작아 수익률·금액을 다 못 그렸을 때 "…"로 표시하고, 눌렀을 때 내용을 말풍선으로 보여준다
-let tmBubbleEl = null, tmBubbleKey = null;
-function hideTmBubble(){ if(tmBubbleEl){ tmBubbleEl.style.display='none'; } tmBubbleKey=null; }
+let tmBubbleEl = null, tmBubbleKey = null, tmBubbleDismiss = null, tmBubbleAt = 0, tmHoverTimer = null;
+function hideTmBubble(){ if(tmBubbleEl){ tmBubbleEl.style.display='none'; } tmBubbleKey=null; tmBubbleDismiss=null; clearTimeout(tmHoverTimer); }
+// 바깥 탭·스크롤로 말풍선이 닫힐 때는 선택도 함께 푼다 — 말풍선만 사라지고 선택이 남으면 해제할 방법이 없다
+function dismissTmBubble(){
+  const d = tmBubbleDismiss, was = tmBubbleEl && tmBubbleEl.style.display==='block';
+  hideTmBubble();
+  if(was && d) d();
+}
+// 마우스가 말풍선(+여백) 가까이 있나 — 말풍선으로 가는 길목의 셀을 스쳐도 선택이 바뀌지 않게 한다
+function tmNearBubble(e, pad){
+  if(!tmBubbleEl || tmBubbleEl.style.display!=='block') return false;
+  const r = tmBubbleEl.getBoundingClientRect(), d = pad===undefined ? 14 : pad;
+  return e.clientX>=r.left-d && e.clientX<=r.right+d && e.clientY>=r.top-d && e.clientY<=r.bottom+d;
+}
+// 마우스 호버 선택: 셀 위에 잠깐(120ms) 머물렀을 때만 바꾼다 — 이동 중 스쳐 지나가는 셀은 무시
+function tmHoverPick(e, hit, hitId, curId, pick){
+  clearTimeout(tmHoverTimer);
+  if(!hit || hitId===curId || tmNearBubble(e)) return;
+  tmHoverTimer = setTimeout(()=>pick(hit), 120);
+}
 // onTap: 주면 말풍선 자체를 누를 수 있게 하고(그때 실행), 없으면 기존처럼 터치를 통과시킨다
-function showTmBubble(canvas, box, lines, key, onTap){
+// onDismiss: 바깥 탭·스크롤로 닫힐 때 실행(선택 해제용)
+function showTmBubble(canvas, box, lines, key, onTap, onDismiss){
   if(!tmBubbleEl){
     tmBubbleEl = document.createElement('div');
     tmBubbleEl.style.cssText='position:fixed;z-index:400;max-width:240px;padding:8px 10px;border-radius:10px;background:rgba(28,28,30,.94);color:#fff;font-size:12px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.28);pointer-events:none;';
     document.body.appendChild(tmBubbleEl);
-    document.addEventListener('click', e=>{ if(!e.target.closest || !e.target.closest('canvas[data-tmb]')) hideTmBubble(); });
-    window.addEventListener('scroll', hideTmBubble, true);
+    document.addEventListener('click', e=>{ if(!e.target.closest || !e.target.closest('canvas[data-tmb]')) dismissTmBubble(); });
+    window.addEventListener('scroll', ()=>{ if(Date.now()-tmBubbleAt > 350) dismissTmBubble(); }, true);   // 선택 직후 레이아웃 재계산 스크롤은 무시
   }
   canvas.dataset.tmb='1';
+  tmBubbleDismiss = onDismiss || null; tmBubbleAt = Date.now();
   tmBubbleEl.style.pointerEvents = onTap ? 'auto' : 'none';
   tmBubbleEl.style.cursor = onTap ? 'pointer' : '';
   tmBubbleEl.onclick = onTap ? (e=>{ e.stopPropagation(); hideTmBubble(); onTap(); }) : null;
@@ -7609,21 +7629,24 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
     const bubbleOf = c=>{
       const pct = maskAmt((c.rtn>=0?'+':'')+c.rtn.toFixed(1)+'%');
       const pnl = c.pnl!==undefined ? ' '+(c.pnlParen ? `(${fmtCompactSigned(c.pnl)})` : fmtCompactSigned(c.pnl)) : '';
+      const release = ()=>{ opts.setSel(null); opts.redraw(); };
       showTmBubble(canvas, c, [c.name, fmt(c.value), pct+pnl, '<span style="opacity:.7;font-size:11px;white-space:nowrap;">한 번 더 누르면 상세 · 이 창 누르면 해제</span>'], canvasId+'|'+c.id,
-        ()=>{ opts.setSel(null); opts.redraw(); });
+        release, release);
     };
     const pick = c=>{ opts.setSel(c.id); opts.redraw(); bubbleOf(c); };
     canvas.onclick = e=>{
       const hit = hitAt(e);
       if(!hit){ hideTmBubble(); return; }
-      if(hit.id===opts.sel() && (e.pointerType==='mouse' || tmBubbleKey===canvasId+'|'+hit.id)){
+      // 마우스는 호버가 미리보기(선택)이므로 클릭이 곧 상세, 터치·펜은 선택된 셀을 말풍선이 떠 있는 동안 한 번 더 누르면 상세
+      if(e.pointerType==='mouse' || (hit.id===opts.sel() && tmBubbleKey===canvasId+'|'+hit.id)){
         hideTmBubble(); opts.setSel(null);
         if(typeof onCellClick==='function') onCellClick(hit.id);
         return;
       }
       pick(hit);
     };
-    canvas.onpointermove = e=>{ if(e.pointerType!=='mouse') return; const hit=hitAt(e); if(hit && hit.id!==opts.sel()) pick(hit); };
+    canvas.onpointermove = e=>{ if(e.pointerType!=='mouse') return; { const h=hitAt(e); tmHoverPick(e, h, h&&h.id, opts.sel(), pick); } };
+    canvas.onpointerleave = ()=>clearTimeout(tmHoverTimer);
     return;
   }
   canvas.onclick = (e)=>{
@@ -7689,13 +7712,13 @@ function returnToTreemap(assetId){
 // 자산 Quick View 트리맵 — 대시보드 기본값: 기간별 주가 변화율(market) × 1D
 let qvTreemapMode = 'market', qvTreemapPeriod = localStorage.getItem('qvTreemapPeriod') || '1D';
 function setQuickViewMode(mode){
-  qvTreemapMode = mode; qvTmSel = null; hideTmBubble();
+  qvTreemapMode = mode; qvTmSel = null; qvHighlightId = null; hideTmBubble();
   syncQuickViewPeriodTabs();
   document.querySelectorAll('#qvModeTabs button').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
   drawQuickViewTreemap();
 }
 function setQuickViewPeriod(period){
-  qvTreemapPeriod = period; qvTmSel = null; hideTmBubble();
+  qvTreemapPeriod = period; qvTmSel = null; qvHighlightId = null; hideTmBubble();
   localStorage.setItem('qvTreemapPeriod', period);
   document.querySelectorAll('#qvPeriodTabs button').forEach(b=>b.classList.toggle('active', b.dataset.p===period));
   drawQuickViewTreemap();
@@ -7718,7 +7741,7 @@ function drawQuickViewTreemap(){
   const items = buildTreemapItems(assets, qvTreemapMode, qvTreemapPeriod);
   if(qvTmSel && !items.some(i=>i.id===qvTmSel)) qvTmSel = null;
   renderTreemapCanvas('qvTreemapCanvas', items, h, goToStockDetail, undefined, qvTmSel || qvHighlightId,
-    {select:true, sel:()=>qvTmSel, setSel:id=>{ qvTmSel=id; }, redraw:drawQuickViewTreemap});
+    {select:true, sel:()=>qvTmSel, setSel:id=>{ qvTmSel=id; qvHighlightId=null; }, redraw:drawQuickViewTreemap});   // 셀을 한 번이라도 만지면 "돌아온 종목 강조"는 끈다(해제 후 이전 종목이 되살아나 선택처럼 보이던 문제)
 }
 // 스크롤 컨테이너(getScroller()) 안에서 el의 위쪽부터 화면 아래까지 남는 높이(스크롤 위치 불변). bottomGap = 카드 하단 패딩+여백
 function remainingHeight(el, bottomGap){
@@ -7984,8 +8007,9 @@ function drawDetailTreemap(){
   const cellBubble = c=>{
     const cur = detailTmCells.find(x=>x.key===c.key); if(!cur) return;
     // 말풍선을 누르면 선택(검정 테두리)을 해제하고 닫는다
+    const release = ()=>{ detailTmSel = null; drawDetailTreemap(); };
     showTmBubble(canvas, cur, [cur.child.label, cur.type.key+' · 총자산의 '+cur.pct, fmt(cur.child.value)+' '+returnText(cur.child.agg), '<span style="opacity:.7;font-size:11px;white-space:nowrap;">한 번 더 누르면 상세 · 이 창 누르면 해제</span>'], cur.key,
-      ()=>{ detailTmSel = null; drawDetailTreemap(); });
+      release, release);
   };
   const goDetail = c=>{
     const top = c.child.names && c.child.names.length>1 ? c.child.names.slice().sort((a,b)=>b.value-a.value)[0].ids[0] : c.child.ids[0];
@@ -8003,10 +8027,11 @@ function drawDetailTreemap(){
       return;
     }
     if(!c){ hideTmBubble(); return; }
-    if(c.key===detailTmSel && (e.pointerType==='mouse' || tmBubbleKey===c.key)){ goDetail(c); return; }
+    if(e.pointerType==='mouse' || (c.key===detailTmSel && tmBubbleKey===c.key)){ goDetail(c); return; }
     select(c); cellBubble(c);
   };
-  canvas.onpointermove = e=>{ if(e.pointerType==='mouse'){ const c=hit(e); if(c){ select(c); cellBubble(c); } } };
+  canvas.onpointermove = e=>{ if(e.pointerType==='mouse') { const c=hit(e); tmHoverPick(e, c, c&&c.key, detailTmSel, c=>{ select(c); cellBubble(c); }); } };
+  canvas.onpointerleave = ()=>clearTimeout(tmHoverTimer);
 }
 function drawAssetClassDistribution(){
   const positive = assets.filter(a=>evKRW(a)>0);
