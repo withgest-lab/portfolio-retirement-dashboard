@@ -823,6 +823,16 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   #page_tradelog .tbl-wrap table.table-auto th:nth-child(6),
   #page_tradelog .tbl-wrap table.table-auto td:nth-child(6){width:11%;}
 }
+/* 종목 상세 이력 미니 표(날짜/구분/단가/수량/메모)는 메인 표(table-fit) 안에 중첩돼 있어, 위의 `.tbl-wrap table.table-fit th:nth-child(n)`
+   열 폭 규칙이 후손 선택자로 이 표의 th까지 덮어썼다(펼침 904px에서 날짜 열 50%·메모 열 11% → "세부 정보 닫기" 버튼이 잘림).
+   `.stock-trades`를 더해 한 단계 높은 선택자로 본래 배분(16/14/18/14/36%)을 되돌린다. */
+@media(min-width:481px) and (max-width:960px){
+  #page_portfolio .tbl-wrap.stock-trades table.table-auto th:nth-child(1),#page_portfolio .tbl-wrap.stock-trades table.table-auto td:nth-child(1){width:16%;}
+  #page_portfolio .tbl-wrap.stock-trades table.table-auto th:nth-child(2),#page_portfolio .tbl-wrap.stock-trades table.table-auto td:nth-child(2){width:14%;}
+  #page_portfolio .tbl-wrap.stock-trades table.table-auto th:nth-child(3),#page_portfolio .tbl-wrap.stock-trades table.table-auto td:nth-child(3){width:18%;}
+  #page_portfolio .tbl-wrap.stock-trades table.table-auto th:nth-child(4),#page_portfolio .tbl-wrap.stock-trades table.table-auto td:nth-child(4){width:14%;}
+  #page_portfolio .tbl-wrap.stock-trades table.table-auto th:nth-child(5),#page_portfolio .tbl-wrap.stock-trades table.table-auto td:nth-child(5){width:36%;}
+}
 /* ── Z Fold7 펼침 기본(세로, 사용자 실기기 실측 ~904px 부근) ── 12칼럼 재설계 v2
    v1(직전 커밋)은 2~12번째를 전부 똑같이 균등 배분했는데, 연필(11)·휴지통(12)이 둘 다
    text-align:right라 각 칸의 여백이 전부 아이콘 왼쪽에 쌓여서 "상세정보~연필", "연필~
@@ -4220,7 +4230,7 @@ function stockDetailPanelHtml(a, SL, inCmp){
           </div>`;
   const memoHead = inCmp ? '메모' : `<div style="display:flex;justify-content:space-between;align-items:center;">
                   <span>메모</span>
-                  <button class="btn btn-ghost" style="padding:3px 10px;font-size:11px;font-weight:400;" onclick="closeStockDetail();renderTable();">✕ 세부 정보 닫기</button>
+                  <button class="btn btn-ghost" style="padding:3px 8px;font-size:11px;font-weight:400;" onclick="closeStockDetail();renderTable();">✕ 세부 정보 닫기</button>
                 </div>`;
   return `${head}
           <div class="chart-wrap" style="position:relative;">
@@ -4681,6 +4691,7 @@ function switchPage(pageId){
     b.classList.toggle('active', b.dataset.page===pageId);
   });
   localStorage.setItem('currentPage', pageId);
+  revealActiveTab();
   // 스크롤을 유지한 채 탭을 바꾸면, 새로 보여지는 페이지는 이전 페이지보다 짧을 수
   // 있는데 스크롤 위치는 그대로라 clipSubpageUnderSubtabbar()가 서브탭바 바로
   // 아래 콘텐츠(요약카드, 토글 등)를 실제보다 훨씬 많이 잘라내 버린다 — 탭 전환 시
@@ -4690,6 +4701,14 @@ function switchPage(pageId){
   scheduleSubtabbarClip();
   scheduleFitScroll();
 }
+function revealActiveTab(){
+  const sc = document.querySelector('#tabbar .tabbar-scroll'), act = sc && sc.querySelector('button.active');
+  if(!sc || !act) return;
+  const tr = sc.getBoundingClientRect(), ar = act.getBoundingClientRect();
+  if(ar.left < tr.left + 8) sc.scrollLeft += ar.left - tr.left - 8;
+  else if(ar.right > tr.right - 8) sc.scrollLeft += ar.right - tr.right + 8;
+}
+window.addEventListener('resize', revealActiveTab);
 // window.scrollTo(0,0)만으로는 안 되는 경우가 있어(overflow-x:hidden을 html/body에
 // 걸면서 두 요소 모두 auto 스크롤 컨테이너가 될 수 있음 — 위 body{overflow-y:hidden}로
 // 대부분 막았지만, 혹시 남아있는 브라우저별 예외에 대비해 세 가지를 모두 0으로 맞춘다.
@@ -6751,7 +6770,7 @@ function drawDonut(canvasId,data,size){
   if(center){
     const v = center.querySelector('.dc-val'), l = center.querySelector('.dc-lbl');
     if(v) v.style.fontSize = donutClamp(Math.round(size*0.075),10,15)+'px';
-    if(l) l.style.fontSize = donutClamp(Math.round(size*0.055),8,11)+'px';
+    if(l) l.style.fontSize = donutClamp(Math.round(size*0.055),9,11)+'px';
   }
 }
 
@@ -6900,7 +6919,7 @@ function donutSetCenterFont(cv, R){
   if(!center) return;
   const v = center.querySelector('.dc-val'), l = center.querySelector('.dc-lbl');
   if(v) v.style.fontSize = donutClamp(Math.round(R*0.13),11,18)+'px';
-  if(l) l.style.fontSize = donutClamp(Math.round(R*0.09),8,11)+'px';
+  if(l) l.style.fontSize = donutClamp(Math.round(R*0.09),9,11)+'px';
 }
 // 좁은 화면용: 도넛만(조각 안에 %) — 이름은 아래 그룹 범례가 전부 보여준다
 function drawDonutRings(canvasId, tree, size, typeNames){
