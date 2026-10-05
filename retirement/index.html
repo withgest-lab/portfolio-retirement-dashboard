@@ -438,6 +438,15 @@ button{font-family:inherit;cursor:pointer;}
 .plan-view{padding:2px 4px 6px;}
 .plan-view .pb-grid{margin-bottom:12px;}
 .plan-view .pb-tips{margin-top:12px;}
+/* 한 화면 맞춤 단계(fitPlanView): 넘칠 때만 켜짐 — 간격 → 글자 → 행 높이 */
+.plan-view.pv1 .pb-grid{margin-bottom:8px;gap:6px;} .plan-view.pv1 .pb-card{padding:8px 12px;} .plan-view.pv1 .pb-val{font-size:17px;}
+.plan-view.pv1 .pb-sub{margin-top:4px;} .plan-view.pv1 .pb-phase-row{height:26px;} .plan-view.pv1 .pb-tips{margin-top:8px;padding:8px 12px;gap:5px;}
+.plan-view.pv2 .pb-grid{margin-bottom:6px;gap:6px;} .plan-view.pv2 .pb-card{padding:6px 10px;} .plan-view.pv2 .pb-val{font-size:15px;} .plan-view.pv2 .pb-label{font-size:10px;margin-bottom:2px;}
+.plan-view.pv2 .pb-sub{margin-top:2px;font-size:10.5px;} .plan-view.pv2 .pb-phase-title{font-size:11.5px;padding-bottom:4px;} .plan-view.pv2 .pb-phase-row{height:23px;font-size:12px;}
+.plan-view.pv2 .pb-tips{margin-top:6px;padding:6px 10px;gap:3px;} .plan-view.pv2 .pb-tip{font-size:11px;}
+.plan-view.pv3 .pb-grid{margin-bottom:4px;gap:5px;} .plan-view.pv3 .pb-card{padding:5px 8px;} .plan-view.pv3 .pb-val{font-size:14px;} .plan-view.pv3 .pb-sub{white-space:nowrap;display:flex;}
+.plan-view.pv3 .pb-phase-row{height:20px;font-size:11.5px;} .plan-view.pv3 .pb-phase-title{padding-bottom:3px;font-size:11px;}
+.plan-view.pv3 .pb-tips{margin-top:4px;padding:5px 9px;gap:2px;} .plan-view.pv3 .pb-tip{font-size:10.5px;}
 @media (max-width:480px){ .chart-main.plan-mode .chart-canvas-wrap{height:min(78vh,620px);} }   /* 접힘: 요약이 길어 차트 자리를 키움(페이지 스크롤 허용 화면) */
 @media (min-width:700px){
   .plan-view .pb-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
@@ -2063,6 +2072,20 @@ function renderPlanView(){
   const pb = document.getElementById('planBody'), em = document.getElementById('planEmpty');
   if(pb) pb.innerHTML = _planHtml;
   if(em) em.style.display = _planHtml ? 'none' : '';
+  requestAnimationFrame(fitPlanView);
+}
+/* 요약 보기는 펼침·펼침+90도에서 세로 스크롤 없이 한 화면에 — 차트 자리(#planView) 높이에 안 들어가면
+   간격→글자→행 높이 순으로 단계(pv1~pv3)를 올려 실측으로 맞춘다. 접힘(≤480px)은 스크롤 허용이라 대상 아님.
+   차트 자리 높이는 fitChartHeight가 정하고 요약 내용은 거기에 영향을 주지 않으므로 되먹임이 없다. */
+function fitPlanView(){
+  const v = document.getElementById('planView');
+  if(!v) return;
+  v.classList.remove('pv1','pv2','pv3');
+  if(v.style.display==='none' || window.innerWidth <= 480 || v.clientHeight === 0) return;
+  for(const c of ['pv1','pv2','pv3']){
+    if(v.scrollHeight <= v.clientHeight + 1) break;
+    v.classList.add(c); v.classList.remove(...['pv1','pv2','pv3'].filter(x=>x!==c));
+  }
 }
 function showPlanBanner(p, plan, res){
   _planHtml = planBannerHtml(p, plan, res);
@@ -2372,7 +2395,7 @@ function fitChartHeight(){
 // 렌더링 뒤 아이콘 변환(shared/icons.js MutationObserver)·글꼴 로드·회전 등으로 카드 높이가
 // 나중에 바뀌어도 다시 맞춘다. 2px 미만 변화는 무시(반복 트리거 방지).
 let _fitTimer = null;
-function scheduleFit(){ clearTimeout(_fitTimer); _fitTimer = setTimeout(()=>{ fitDensity(); if(mainTab==='result'){ fitMetricCards(); fitChartHeight(); } }, 150); }
+function scheduleFit(){ clearTimeout(_fitTimer); _fitTimer = setTimeout(()=>{ fitDensity(); if(mainTab==='result'){ fitMetricCards(); fitChartHeight(); fitPlanView(); } }, 150); }
 window.addEventListener('resize', scheduleFit);
 (function(){
   if(typeof ResizeObserver !== 'function') return;
