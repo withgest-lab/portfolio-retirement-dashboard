@@ -505,7 +505,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .donut-legend{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;margin-top:12px;max-width:320px;}
 /* 비중현황: 2열 그리드(윗줄 투자시장·계좌유형 / 아랫줄 자산유형·종목 비중). minmax(0,1fr)+min-width:0으로 가로 스크롤 방지 */
 .alloc-card{position:relative;}
-.alloc-view-tabs{position:absolute;top:10px;right:12px;z-index:5;}
+.alloc-view-tabs{width:fit-content;margin:-4px 0 6px auto;}  /* 카드 맨 위 우측 정렬 한 줄 — 흐름 안이라 아래 콘텐츠와 겹치지 않음(트리맵 높이는 computeAllocTmHeights가 실측으로 흡수) */
 .alloc-grid{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);gap:14px 20px;align-items:start;}
 .alloc-left{min-width:0;display:flex;flex-direction:column;gap:14px;}
 .alloc-right{min-width:0;display:flex;flex-direction:column;}
@@ -8109,16 +8109,17 @@ const INDEX_LIST=[
   // 보유종목 맨 위 한 줄(HOLD_MKT)용 — 시장지표 탭 타일(us/kr/fx)에는 그리지 않는다
   {sym:'^NDX',     label:'Nasdaq 100',  dec:2,unit:'',  group:'strip'},
   {sym:'^KS200',   label:'Kospi 200',   dec:2,unit:'',  group:'strip'},
+  {sym:'SOXX',     label:'SOXX',        dec:2,unit:'$', group:'strip'},
 ];
 let indices=INDEX_LIST.map(i=>({...i,val:null,chg:null,prev:null,series:null}));
 
 // 보유종목 맨 위 시장지표 한 줄 — 심볼·라벨은 이 목록 한 곳(순서 고정). 가격 없이 전일 대비 %만.
 const HOLD_MKT=[
-  {sym:'USDKRW=X', label:'USD/KRW',      short:'달러'},
   {sym:'^GSPC',    label:'S&P 500',      short:'S&P'},
   {sym:'^NDX',     label:'Nasdaq 100',   short:'나스닥'},
   {sym:'^DJI',     label:'Dow',          short:'다우'},
   {sym:'^RUT',     label:'Russell 2000', short:'러셀'},
+  {sym:'SOXX',     label:'SOXX',         short:'SOXX'},
   {sym:'^KS200',   label:'Kospi 200',    short:'코스피'},
   {sym:'^VIX',     label:'VIX',          short:'VIX'},
 ];
@@ -8126,8 +8127,7 @@ function renderHoldMktRow(){
   const el=document.getElementById('holdMktRow'); if(!el) return;
   el.innerHTML=HOLD_MKT.map(m=>{
     let chg=null;
-    if(m.sym==='USDKRW=X' && liveFx.chg!=null) chg=liveFx.chg;          // 상단바와 같은 30초 갱신값 우선
-    else { const idx=indices.find(i=>i.sym===m.sym); if(idx && idx.chg!=null) chg=idx.chg; }
+    const idx=indices.find(i=>i.sym===m.sym); if(idx && idx.chg!=null) chg=idx.chg;
     if(chg!=null) chg=Math.round(chg*100)/100;
     const has=chg!=null && chg!==0;                                    // 미조회·0%는 회색 "—"
     const v=has ? `${chg>0?'+':'−'}${Math.abs(chg).toFixed(2)}%` : '—';
@@ -9236,7 +9236,7 @@ document.addEventListener('pointerdown', e=>{
   CHART_POP_BTNS.forEach(id=>{
     const b = document.getElementById(id), pop = b && document.getElementById(b.dataset.target);
     if(!pop || pop.style.display==='none') return;
-    if(pop.contains(e.target) || e.target.closest('#'+id)) return;
+    if(pop.contains(e.target) || e.target.closest('#'+id) || e.target.closest('#periodTabs')) return; // 기간 탭은 팝업과 함께 쓰는 도구 — 바꿔도 팝업 유지
     toggleBanner(b);
   });
 }, true);
