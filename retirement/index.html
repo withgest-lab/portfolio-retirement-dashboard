@@ -149,7 +149,9 @@ h1{font-size:16px;font-weight:700;color:#1c1c1e;}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translate(-50%,-12px);z-index:2147483200;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:rgba(28,28,30,.92);color:#fff;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .toast.in{opacity:1;transform:translate(-50%,0);}
 .pk-note{margin-top:12px;font-size:10.5px;color:#8e8e93;line-height:1.55;word-break:keep-all;}
-.pb-mode{font-size:11.5px;font-weight:600;color:#007aff;margin:0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pb-mode{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:600;color:#007aff;margin:0 0 8px;white-space:nowrap;}
+.pb-mode > span{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.pb-link{flex:0 0 auto;border:0;border-radius:999px;background:rgba(0,122,255,.12);color:#007aff;font:inherit;font-weight:600;padding:2px 11px;cursor:pointer;}
 @media (max-width:640px){ .pk-grid{grid-template-columns:1fr;} .pk-desc{min-height:0;} }
 
 /* ── 메인 레이아웃: 입력(상단, 가로 활용) → 결과(하단, 전체폭) ── */
@@ -399,7 +401,6 @@ th:first-child{text-align:left;}
 td{padding:5px 4px;text-align:right;border-bottom:.5px solid rgba(60,60,67,.1);color:#1c1c1e;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 td:first-child{text-align:left;}
-tr.cur-row{background:#FAFFFE;}
 .note{font-size:10px;color:#8e8e93;line-height:1.7;margin-top:6px;word-break:keep-all;}
 button{font-family:inherit;cursor:pointer;}
 
@@ -479,7 +480,7 @@ button{font-family:inherit;cursor:pointer;}
 .plan-view.pv3 .pb-grid{margin-bottom:4px;gap:5px;} .plan-view.pv3 .pb-card{padding:5px 8px;} .plan-view.pv3 .pb-val{font-size:14px;} .plan-view.pv3 .pb-sub{white-space:nowrap;display:flex;}
 .plan-view.pv3 .pb-phase-row{height:20px;font-size:11.5px;} .plan-view.pv3 .pb-phase-title{padding-bottom:3px;font-size:11px;}
 .plan-view.pv3 .pb-tips{margin-top:4px;padding:5px 9px;gap:2px;} .plan-view.pv3 .pb-tip{font-size:10.5px;}
-@media (max-width:480px){ .chart-main.plan-mode .chart-canvas-wrap{height:min(78vh,620px);} }   /* 접힘: 요약이 길어 차트 자리를 키움(페이지 스크롤 허용 화면) */
+@media (max-width:480px){ .chart-main.plan-mode .chart-canvas-wrap{height:min(78vh,620px);} }   /* 접힘: 보기 4종이 단계 카드를 숨기고 차트 자리를 키움(페이지 스크롤 허용 화면) */
 @media (min-width:700px){
   .plan-view .pb-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
   .plan-view .pb-sub{white-space:normal;align-items:flex-start;}
@@ -538,8 +539,6 @@ button{font-family:inherit;cursor:pointer;}
 .acct-body .fv-row .unit-tag{font-size:8.5px;}
 
 /* 카드 하단 고정 안내 한 줄 — 카드가 늘어난 만큼 생기는 빈 공간을 정보로 채움 */
-.need-head{font-size:11.5px;margin:2px 0 6px;color:#1c1c1e;}
-.need-head span{color:#8e8e93;font-size:10px;}
 .mini-note{margin-top:auto;font-size:9px;color:#8e8e93;line-height:1.5;
   background:rgba(118,118,128,.08);border-radius:10px;padding:6px 7px;}
 
@@ -798,14 +797,33 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 /* ══ 결과 탭 보기 4종(요약·근거·위기 점검·부족 대책) — 차트 자리를 꽉 채움: fitAltView가 --vs(0~8)를 정하면 글자·행·간격이 같이 커지고 남는 높이는 flex·표 행이 나눠 가진다 ══ */
 .chart-alt{--vs:0;flex-direction:column;}
 .chart-alt.alt-fit{overflow-y:hidden;}   /* 맞춤 성공 시 스크롤 잠금(맞춤 실패·접힘만 auto) */
-#scWrap,#needWrap{flex:1 1 auto;min-height:0;flex-direction:column;}
-#scWrap table,#needWrap table{flex:1 1 auto;}
-.chart-alt table{font-size:clamp(12px, calc(12px + .55px*var(--vs)), 15.5px);}
-.chart-alt table th{padding-top:calc(2px + .4px*var(--vs));padding-bottom:calc(2px + .4px*var(--vs));}
-.chart-alt table td{padding-top:calc(3px + .9px*var(--vs));padding-bottom:calc(3px + .9px*var(--vs));}
-.chart-alt .mini-note,.chart-alt .need-head{font-size:clamp(10.5px, calc(10.5px + .3px*var(--vs)), 12.5px);}
-.chart-alt .mini-note{margin-top:calc(6px + .5px*var(--vs));}
-.chart-alt .need-head{font-size:clamp(12px, calc(12px + .4px*var(--vs)), 15px);margin:2px 0 calc(6px + .5px*var(--vs));}
+#scWrap,#needWrap{flex:1 1 auto;min-height:0;flex-direction:column;gap:calc(6px + .6px*var(--vs));}
+.chart-alt .mini-note{font-size:clamp(10.5px, calc(10.5px + .3px*var(--vs)), 12.5px);margin:0;flex:0 0 auto;}
+/* 위기 점검·부족 대책: iOS 목록형 — 표 격자·진한 헤더 없이 회색 카드 + 헤어라인 행, 값은 오른쪽 정렬 숫자, 상태는 색 점 */
+.al-card{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:rgba(118,118,128,.06);border-radius:12px;padding:calc(6px + .5px*var(--vs)) 0 calc(2px + .3px*var(--vs));}
+.al-head,.al-row{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(3,minmax(0,1fr));column-gap:12px;align-items:center;padding:0 calc(14px + .5px*var(--vs));}
+.al-head{flex:0 0 auto;font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);font-weight:600;color:#8e8e93;padding-bottom:calc(4px + .3px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
+.al-head > span:not(:first-child){text-align:right;}
+.al-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+.al-row{flex:1 1 0;min-height:calc(30px + 1.2px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.1);}
+.al-row:last-child{border-bottom:0;}
+.al-row.cur{background:rgba(0,122,255,.09);border-radius:10px;border-bottom-color:transparent;}
+.al-name{display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.al-name b{font-size:clamp(12.5px, calc(12.5px + .45px*var(--vs)), 16px);font-weight:600;color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-row.cur .al-name b{color:#007aff;font-weight:700;}
+.al-sub{font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-v .al-sub{display:block;font-weight:600;}
+.al-v{text-align:right;font-size:clamp(12.5px, calc(12.5px + .5px*var(--vs)), 16.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-res{font-weight:600;white-space:normal;line-height:1.25;overflow:visible;}
+#needWrap .al-head,#needWrap .al-row{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,1.55fr);}
+.al-dim{color:#c7c7cc;font-weight:500;}
+.al-st{font-weight:600;color:#3a3a3c;}
+.al-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:.45em;vertical-align:.05em;}
+.al-dot.ok{background:#34c759;} .al-dot.bad{background:#ff3b30;}
+.al-hero{flex:0 0 auto;display:flex;gap:calc(8px + .8px*var(--vs));}
+.al-tile{flex:1 1 0;min-width:0;display:flex;flex-direction:column;background:rgba(118,118,128,.08);border-radius:12px;padding:calc(7px + .9px*var(--vs)) 14px;}
+.al-cap,.al-s{font-size:clamp(10.5px, calc(10.5px + .3px*var(--vs)), 13px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-tile b{font-size:clamp(18px, calc(18px + 1px*var(--vs)), 28px);font-weight:800;letter-spacing:-.02em;line-height:1.2;color:#1c1c1e;font-variant-numeric:tabular-nums;white-space:nowrap;}
 /* 요약 */
 .plan-view #planBody{display:flex;flex-direction:column;justify-content:space-between;flex:1 1 auto;min-height:0;gap:calc(4px + .8px*var(--vs));}
 .plan-view .pb-mode{margin:0;font-size:clamp(11.5px, calc(11.5px + .4px*var(--vs)), 14px);}
@@ -1755,12 +1773,11 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
   <div class="chart-wrap chart-main">
     <div class="chart-head">
       <div class="tabs">
-        <button class="tab-btn on" id="tb-flow" onclick="setTab('flow')">월 현금흐름</button>
-        <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">자산 잔액</button>
-        <button class="tab-btn" id="tb-plan" onclick="setAltView('plan')" title="마지막 자동설계 결과 요약">자동설계 요약</button>
-        <button class="tab-btn" id="tb-basis" onclick="setAltView('basis')" title="자동설계 인출 순서·금액의 근거">자동설계 근거</button>
+        <button class="tab-btn on" id="tb-flow" onclick="setTab('flow')">연 현금흐름</button>
+        <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">연 자산 흐름</button>
+        <button class="tab-btn" id="tb-plan" onclick="setAltView('plan')" title="마지막 자동 설계 결과 요약(근거는 요약 오른쪽 위 버튼)">자동 설계 요약</button>
         <button class="tab-btn" id="tb-sc" onclick="setAltView('sc')" title="수익률·물가·폭락·장수·간병 같은 위기에서 계획이 버티는지">위기 점검</button>
-        <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="생활비가 부족할 때 무엇을 얼마나 바꾸면 되는지(자동설계를 다시 계산)">부족 대책</button>
+        <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="생활비가 부족할 때 무엇을 얼마나 바꾸면 되는지(자동 설계를 다시 계산)">부족 대책</button>
       </div>
       <div class="legend" id="chart-legend"></div>
     </div>
@@ -1770,22 +1787,18 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
         <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
         <div class="chart-alt" id="altView" style="display:none;">
           <div id="scWrap" style="display:none;">
-            <table>
-              <thead><tr>
-                <th style="text-align:left">상황</th><th>최저 세후</th><th>생활비 미달</th><th>자산 유지</th>
-              </tr></thead>
-              <tbody id="sc-body"></tbody>
-            </table>
+            <div class="al-card">
+              <div class="al-head"><span>상황</span><span>최저 세후</span><span>생활비 미달</span><span>자산 유지</span></div>
+              <div class="al-body" id="sc-body"></div>
+            </div>
             <div class="mini-note" id="sc-note"></div>
           </div>
           <div id="needWrap" style="display:none;">
             <div id="need-head"></div>
-            <table>
-              <thead><tr>
-                <th style="text-align:left">바꾸는 것</th><th>바꾼 값</th><th>최저 세후</th><th id="need-th4">충족하려면</th>
-              </tr></thead>
-              <tbody id="need-body"></tbody>
-            </table>
+            <div class="al-card">
+              <div class="al-head"><span>바꾸는 것</span><span>바꾼 값</span><span>최저 세후</span><span id="need-th4">충족하려면</span></div>
+              <div class="al-body" id="need-body"></div>
+            </div>
             <div class="mini-note" id="need-note"></div>
           </div>
         </div>
@@ -1796,6 +1809,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
         </div>
         <!-- 자동설계 근거: 차트 자리에 같은 크기로 겹쳐 표시(레이아웃 높이 불변), 스위치로 여닫음 -->
         <div class="chart-alt basis-view" id="basisView" style="display:none;">
+          <div class="pb-mode"><span id="basisMode"></span><button type="button" class="pb-link" onclick="setAltView('plan')">‹ 요약</button></div>
           <div class="basis-empty" id="basisEmpty">2단계 설계 탭에서 <b>자동 설계</b>를 실행하면 계좌별 인출 순서·금액의 근거가 여기에 표시됩니다.</div>
           <div class="suggest-result" id="suggest-box"></div>
         </div>
@@ -1817,7 +1831,8 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 // 계좌 이름 한 곳 — 카드 제목과 같은 이름(full)을 화면 어디서나 쓰고, 범례처럼 좁은 곳만 short.
 // 금액 숨기기는 금융회사 이름만 CO_RE로 바꾼다(농협→계좌 1, 미래→계좌 2).
 const ACCT_NAME = {gen:'일반계좌 미래', nh:'개인연금 농협', mf:'개인연금 미래', irp:'IRP 개인 미래', tirp:'퇴직연금 DC 농협', isa:'ISA', np:'국민연금'};
-const ACCT_SHORT = {gen:'일반 미래', nh:'연금 농협', mf:'연금 미래', irp:'IRP 미래', tirp:'퇴직IRP', isa:'ISA', np:'국민연금'};
+const LEG = {irp:'IRP 개인 미래', tirp:'IRP 퇴직 농협', prin:'안세공 농협/미래'};   // 차트 범례·데이터셋·툴팁에서 같이 쓰는 이름(카드 제목은 ACCT_NAME)
+const ACCT_SHORT = {gen:'일반 미래', nh:'연금 농협', mf:'연금 미래', irp:LEG.irp, tirp:LEG.tirp, isa:'ISA', np:'국민연금'};
 const NET_OK = '#007AFF', NET_SHORT = '#FF3B30';
 const C={
   // 계좌 카드 머리(--ac)와 같은 iOS 시스템 컬러 — 사적연금 3계좌는 초록→민트→시안 계열, 나머지는 따로 식별
@@ -2461,7 +2476,7 @@ function renderSuggestBox(p, plan, res){
     res.overLimitYears > 0 && li(`연금수령한도 초과 ${res.overLimitYears}년(${res.firstOverLimitAge}세~) · 합계 ${res.overLimitTotal.toLocaleString()}만`, '연금수령한도(평가액÷(11−연차)×120%)를 넘는 분은 연금외수령으로 16.5%(퇴직IRP는 감면 없는 퇴직소득세) 과세해 반영합니다.', true),
     li(`건보료 ${hiTxt(p, s)}`, p.hi_dep === 'yes' ? '피부양자 등록 가능한 가족이 있어, 소득·재산 기준을 넘는 해만 지역가입자로 계산합니다.' : '피부양자 등록 가족이 없어 은퇴한 해부터 지역가입자(국민연금 50%·재산·패널 소득)로 계산합니다. 사적연금·ISA 인출은 부과 대상이 아닙니다.'),
     li(`생애 세금 약 <b>${fmtW(res.lifetimeTax)}원</b> · 건보료 약 ${fmtW(res.lifetimeHi)}원(명목) · ${p.life}세 잔여 약 ${fmtW(res.leftover)}원`, `평생 쓸 수 있는 돈(세금·건보료 뺀 오늘 가치 합계) 약 ${fmtW(res.lifetimeNetReal)}원`),
-    p.hi_dep === 'yes' && dep.check.fail && li(`피부양자 탈락 예상 · 그해부터 지역가입자 건보료를 세후에서 뺌`, `${dep.check.reason} (국민연금 명목 연 ${(dep.npNom*12).toLocaleString()}만 등 합산 연 ${Math.round(dep.income).toLocaleString()}만원, 현행 기준선 유지 가정) · 상세는 건보료 설계 탭`, true),
+    p.hi_dep === 'yes' && dep.check.fail && li(`피부양자 탈락 예상 · 그해부터 지역가입자 건보료를 세후에서 뺌`, `${dep.check.reason} (국민연금 명목 연 ${(dep.npNom*12).toLocaleString()}만 등 합산 연 ${Math.round(dep.income).toLocaleString()}만원, 현행 기준선 유지 가정) · 상세는 2단계 설계 탭`, true),
     p.hi_dep === 'yes' && !dep.check.fail && dep.check.warn && li(`건보료 피부양자: ${dep.check.warn}`, '', true),
   ].filter(Boolean);
 
@@ -2571,7 +2586,8 @@ function planBannerHtml(p, plan, res){
   pbSet('pb-insight', tips.map(x=>`<div class="pb-tip${x.warn?' warn':''}">${x.t}</div>`).join(''));
 
   const card = (label, valId, subId, color)=>`<div class="pb-card"><div class="pb-label">${label}</div><div class="pb-val" style="color:${VC[valId]||color}">${V[valId]}</div><div class="pb-sub">${V[subId]}</div></div>`;
-  return `<div class="pb-mode">${PLAN_MODES[p.plan_mode] ? PLAN_MODES[p.plan_mode].name : ''}</div><div class="pb-grid">`
+  _planName = PLAN_MODES[p.plan_mode] ? PLAN_MODES[p.plan_mode].name : '';
+  return `<div class="pb-mode"><span>${_planName}</span><button type="button" class="pb-link" onclick="setAltView('basis')">자동 설계 근거 ›</button></div><div class="pb-grid">`
     + card('공백기 세후 월평균','pb-gap-total','pb-gap-vs','#248a3d')
     + card('완성기 세후 월평균','pb-full-total','pb-full-vs','#007aff')
     + card('사적연금 연 수령','pb-priv-annual','pb-priv-tax','#c77700')
@@ -2582,9 +2598,10 @@ function planBannerHtml(p, plan, res){
     + `</div><div class="pb-tips">${V['pb-insight']}</div>`;
 }
 
-let _planHtml = '';
+let _planHtml = '', _planName = '';
 function renderPlanView(){
   const pb = document.getElementById('planBody'), em = document.getElementById('planEmpty');
+  const bm = document.getElementById('basisMode'); if(bm) bm.textContent = _planName;
   if(pb) pb.innerHTML = _planHtml;
   if(em) em.style.display = _planHtml ? 'none' : '';
   requestAnimationFrame(fitAltView);
@@ -2834,12 +2851,16 @@ function renderNeedView(){
     const b = got.base;
     const head = document.getElementById('need-head'), th4 = document.getElementById('need-th4'), note = document.getElementById('need-note');
     if(!b){ head.innerHTML = '<div class="mini-note" style="margin:0 0 6px;">계산 중…</div>'; body.innerHTML = ''; return; }
-    const short = b.short, vs = b.minNet - p.exp;
-    head.innerHTML = `<div class="need-head">매년 최소 <b style="color:${short ? NET_SHORT : NET_OK}">${M(b.minNet)}</b> · 평균 ${M(b.avgNet)} <span>(세후·오늘 가치) 생활비 ${M(p.exp)} 대비</span> <b style="color:${short ? NET_SHORT : NET_OK}">${sg(vs)}만</b></div>`;
+    const short = b.short, vs = b.minNet - p.exp, col = short ? NET_SHORT : NET_OK;
+    head.innerHTML = `<div class="al-hero">
+      <div class="al-tile"><span class="al-cap">매년 최소</span><b style="color:${col}">${M(b.minNet)}</b><span class="al-s">가장 적은 해</span></div>
+      <div class="al-tile"><span class="al-cap">평균</span><b>${M(b.avgNet)}</b><span class="al-s">전 기간</span></div>
+      <div class="al-tile"><span class="al-cap">생활비 ${M(p.exp)} 대비</span><b style="color:${col}">${sg(vs)}만</b><span class="al-s">세후·오늘 가치</span></div>
+    </div>`;
     th4.textContent = short ? '충족하려면' : '가능한 만큼';
     const rows = [];
-    const cell = (v, d) => v == null ? '<td>—</td>' : `<td><b>${M(v)}</b> <span style="color:${d >= 0 ? NET_OK : NET_SHORT}">(${sg(d)})</span></td>`;
-    const row = (name, change, minNet, delta, result) => rows.push(`<tr><td style="text-align:left;font-weight:600;">${name}</td><td>${change}</td>${minNet == null ? '<td>—</td>' : cell(minNet, delta)}<td>${result}</td></tr>`);
+    const cell = (v, d) => v == null ? '<div class="al-v al-dim">—</div>' : `<div class="al-v">${M(v)}<span class="al-sub" style="color:${d >= 0 ? NET_OK : NET_SHORT}">${sg(d)}</span></div>`;
+    const row = (name, change, minNet, delta, result) => rows.push(`<div class="al-row"><div class="al-name"><b>${name}</b></div><div class="al-v">${change}</div>${minNet == null ? '<div class="al-v al-dim">—</div>' : cell(minNet, delta)}<div class="al-v al-res">${result}</div></div>`);
     const e = got.exp, r = got.ret, sv = got.save, n = got.np, d = got.need;
     if(e) row('월 생활비', `${p.exp} → ${e.to}만`, null, 0, short ? `${M(e.to)}이면 충족` : `최대 ${M(e.to)}까지`);
     if(r){
@@ -2853,10 +2874,8 @@ function renderNeedView(){
     if(short && n && !n.none) row('국민연금 수령', `${p.npage} → ${n.to}세`, n.minNet, n.delta, n.ok ? '—' : '자산 유지 못함');
     if(short && got.hp && !got.hp.none) row('주택연금 가입', `${got.hp.age}세 · 월 ${got.hp.monthly}만`, got.hp.minNet, got.hp.delta, got.hp.ok ? '정액(물가연동 아님)' : '자산 유지 못함');
     if(d && !d.none) row('필요분만 인출', `여유 ${d.surplusYears}년`, null, 0, `${p.life}세 잔여 ${(Math.round(d.leftoverFull/1000)/10)}억 → ${(Math.round(d.leftoverNeed/1000)/10)}억`);
-    body.innerHTML = rows.join('') || '<tr><td colspan="4" style="color:#8e8e93;">계산 중…</td></tr>';
-    if(note) note.textContent = short
-      ? '각 행은 그것 하나만 바꾸고 자동설계를 다시 계산한 값입니다. 괄호는 지금 자동설계 대비 변화.'
-      : '생활비를 채우고도 남는 구간입니다. 각 행은 그것 하나만 바꾸고 자동설계를 다시 계산한 값입니다.';
+    body.innerHTML = rows.join('') || '<div class="al-row"><div class="al-name al-dim">계산 중…</div></div>';
+    if(note) note.textContent = (short ? '' : '생활비를 채우고도 남는 구간 · ') + '각 행은 그 항목 하나만 바꿔 다시 계산한 값 · 작은 숫자는 지금 대비 변화';
   };
   paint();
   const tasks = whatIfTasks(p);
@@ -2882,17 +2901,19 @@ function renderStressView(){
   const p = getP();
   const rows = stressRows(p);
   const M = v => Math.round(v).toLocaleString() + '만';
+  const dot = good => '<i class="al-dot '+(good ? 'ok' : 'bad')+'"></i>';
   body.innerHTML = rows.map(r => {
-    const ok = r.ok, shortTxt = r.mc ? (r.shortYears ? `중앙값 ${r.shortYears}년` : '없음') : (r.shortYears ? `${r.shortYears}년 (${r.firstShortAge}세~)` : '없음');
-    return '<tr class="'+(r.key==='base' ? 'cur-row' : '')+'">'
-      + '<td style="text-align:left;font-weight:'+(r.key==='base'?700:500)+';">'+r.label+(r.note ? '<div style="font-size:9px;color:#8e8e93;font-weight:400;">'+r.note+'</div>' : '')+'</td>'
-      + '<td style="font-weight:700;color:'+(r.minNet >= p.exp - 0.5 ? NET_OK : NET_SHORT)+'">'+M(r.minNet)+'</td>'
-      + '<td style="color:'+(r.shortYears ? NET_SHORT : '#248a3d')+'">'+shortTxt+'</td>'
-      + '<td style="font-weight:700;color:'+(r.mc ? (r.successPct >= 80 ? '#248a3d' : r.successPct >= 50 ? '#c77700' : '#ff3b30') : ok ? '#248a3d' : '#ff3b30')+'">'+(r.mc ? r.successPct+'% 유지' : (ok ? r.life+'세+' : r.runway+'세 소진'))+'</td>'
-      + '</tr>';
+    const ok = r.ok, shortTxt = r.mc ? (r.shortYears ? '중앙값 '+r.shortYears+'년' : '없음') : (r.shortYears ? r.shortYears+'년 ('+r.firstShortAge+'세~)' : '없음');
+    const keepCol = r.mc ? (r.successPct >= 80 ? '#248a3d' : r.successPct >= 50 ? '#c77700' : '#ff3b30') : ok ? '#248a3d' : '#ff3b30';
+    return '<div class="al-row'+(r.key==='base' ? ' cur' : '')+'">'
+      + '<div class="al-name"><b>'+r.label+'</b>'+(r.note ? '<span class="al-sub">'+r.note+'</span>' : '')+'</div>'
+      + '<div class="al-v" style="color:'+(r.minNet >= p.exp - 0.5 ? NET_OK : NET_SHORT)+'">'+M(r.minNet)+'</div>'
+      + '<div class="al-v al-st">'+dot(!r.shortYears)+shortTxt+'</div>'
+      + '<div class="al-v" style="color:'+keepCol+'">'+(r.mc ? r.successPct+'% 유지' : (ok ? r.life+'세+' : r.runway+'세 소진'))+'</div>'
+      + '</div>';
   }).join('');
   const note = document.getElementById('sc-note');
-  if(note) note.textContent = '지금 입력한 인출 계획을 그대로 두고 상황만 바꾼 결과입니다. 최저 세후는 매년 중 가장 적은 해(오늘 돈 가치), 시장 변동 행은 하위 10% 경우 — ' + (p0Mode() === 'long' ? '100세까지 나눠 쓰는 플랜이라 기대수명 시점 성공 확률이 최대로 쓰기보다 높습니다.' : '최대로 쓰기는 기대수명에 0원이 되도록 맞추므로 성공 확률이 50% 안팎인 게 정상입니다(여유는 플랜 선택·남길 금액으로).');
+  if(note) note.textContent = '인출 계획은 그대로 두고 상황만 바꾼 결과 · 최저 세후는 매년 중 가장 적은 해 · 시장 변동은 하위 10% — ' + (p0Mode() === 'long' ? '100세까지 플랜이라 성공 확률이 더 높아요' : '최대로 쓰기는 성공 확률 50% 안팎이 정상이에요');
 }
 
 let _altView = null;   // null | 'sc' | 'need' | 'basis' | 'plan'
@@ -2901,8 +2922,8 @@ function setAltView(v){
   applyViewState();
 }
 function applyViewState(){
-  const on = _altView || chartTab;
-  ['flow','asset','plan','basis','sc','need'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
+  const on = _altView === 'basis' ? 'plan' : (_altView || chartTab);   // 근거 화면에서도 "자동 설계 요약" 탭 강조
+  ['flow','asset','plan','sc','need'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
   const cmp = _altView==='sc' || _altView==='need';
   const alt = document.getElementById('altView');
   if(alt){
@@ -2912,9 +2933,9 @@ function applyViewState(){
   }
   if(_altView==='need') renderNeedView();
   if(_altView==='sc') renderStressView();
-  // 자동설계 근거: 차트 자리에 겹쳐 보이고, 이때만 아래 단계 카드(적립기·공백기·완성기)를 숨겨 근거를 넓게 본다
+  // 보기 4종(요약·근거·위기 점검·부족 대책): 차트 자리에 겹쳐 보이고, 이때만 아래 단계 카드(적립기·공백기·완성기)를 숨겨 넓게 본다
   const basisV = _altView==='basis', planV = _altView==='plan';
-  const basis = basisV || planV;   // 요약·근거 보기는 둘 다 단계 카드를 숨겨 넓게 본다
+  const basis = !!_altView;   // 요약·근거·위기 점검·부족 대책은 모두 단계 카드를 숨기고 차트 자리를 아래 끝까지(fitChartHeight 상한 해제)
   const pv = document.getElementById('planView');
   if(pv){ pv.style.display = planV ? 'flex' : 'none'; renderPlanView(); }
   const bv = document.getElementById('basisView');
@@ -2924,13 +2945,13 @@ function applyViewState(){
       document.getElementById('suggest-box').classList.contains('show') ? 'none' : '';
   }
   const cm = document.querySelector('.chart-main');
-  if(cm) cm.classList.toggle('plan-mode', planV);   // 접힘에서만 쓰는 높이 확보용
+  if(cm) cm.classList.toggle('plan-mode', !!_altView);   // 접힘에서만 쓰는 높이 확보용(보기 4종 모두 단계 카드를 숨기므로 차트 자리를 키움)
   if(cm && cm.classList.contains('basis-mode') !== basis){
     cm.classList.toggle('basis-mode', basis);
     requestAnimationFrame(()=>{ if(mainTab==='result') fitChartHeight(); requestAnimationFrame(()=>{ if(!basis) alignPhaseCards(); }); });
   }
   const lg = document.getElementById('chart-legend');
-  if(lg) lg.style.visibility = _altView ? 'hidden' : '';
+  if(lg) lg.style.display = _altView ? 'none' : '';   // 숨긴 범례가 자리를 차지하지 않게(보기 4종은 탭 줄 바로 아래부터 시작)
   requestAnimationFrame(fitAltView);
   if(_altView){
     const tip = document.getElementById('chartTooltip'); if(tip) tip.style.display = 'none';
@@ -3049,7 +3070,7 @@ function fitChartHeight(){
   const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 6;
   const cur = wrap.getBoundingClientRect().height;
   const bottom = rt.getBoundingClientRect().bottom + window.scrollY;
-  const maxH = document.querySelector('.chart-main.basis-mode') ? 2000 : 620; // 근거 보기는 단계 카드를 숨기고 아래 끝까지
+  const maxH = document.querySelector('.chart-main.basis-mode') ? 2000 : 620; // 보기 4종(요약·근거·위기 점검·부족 대책)은 단계 카드를 숨기고 아래 끝까지
   let next = Math.max(170, Math.min(maxH, Math.floor(cur + (window.innerHeight - bottom - gap))));
   // 그래도 body가 넘치면(글꼴·아이콘 변환 등으로 다른 요소가 늦게 커진 경우) 넘친 만큼 더 줄임
   const overflow = document.body.scrollHeight - document.body.clientHeight;
@@ -3334,10 +3355,10 @@ function showCustomTooltip(evt, activeEls, chart){
     {label:ACCT_NAME.mf, val:row.mfInc, dot:C.mf.line},
     {label:ACCT_NAME.irp, val:row.irpInc, dot:C.irp.line},
     {label:'국민연금', val:row.npInc, dot:C.np.line},
-    {label:'퇴직IRP', val:row.tirpInc, dot:C.dc.line},
+    {label:LEG.tirp, val:row.tirpInc, dot:C.dc.line},
     {label:'ISA인출', val:row.isaInc, dot:C.isa.line},
     {label:ACCT_NAME.gen, val:row.genInc, dot:C.gen.line},
-    {label:'안세공 비과세인출', val:row.prinInc, dot:C.prin.line},
+    {label:LEG.prin+' 비과세인출', val:row.prinInc, dot:C.prin.line},
     {label:'근로·기타 소득', val:row.othInc, dot:C.oth.line},
     {label:'주택연금', val:row.hpInc, dot:C.hp.line},
   ];
@@ -3434,10 +3455,10 @@ function drawChart(rows, p){
       {c:C.mf.fill, l:ACCT_SHORT.mf},
       {c:C.irp.fill,l:ACCT_SHORT.irp},
       {c:C.np.fill, l:'국민연금'},
-      {c:C.dc.fill, l:'퇴직IRP'},
+      {c:C.dc.fill, l:LEG.tirp},
       {c:C.isa.fill,l:'ISA'},
       {c:C.gen.fill,l:ACCT_SHORT.gen},
-      {c:C.prin.fill,l:'안세공'},
+      {c:C.prin.fill,l:LEG.prin},
       {c:C.oth.fill,l:'근로·기타'},
       {c:C.hp.fill,l:'주택연금'},
       {c:C.exp.line,l:'생활비',dashed:true},
@@ -3452,10 +3473,10 @@ function drawChart(rows, p){
         {label:ACCT_NAME.mf+'(세공)', data:rows.map(r=>isAcc(r)?r.mfDep:r.mfInc),   backgroundColor:tone('mf'), stack:'s'},
         {label:ACCT_NAME.irp, data:rows.map(r=>isAcc(r)?r.irpDep:r.irpInc),  backgroundColor:tone('irp'),stack:'s'},
         {label:'국민연금',         data:rows.map(r=>isAcc(r)?0:r.npInc),         backgroundColor:tone('np'), stack:'s'},
-        {label:'퇴직IRP',          data:rows.map(r=>isAcc(r)?r.dcDep:r.tirpInc), backgroundColor:tone('dc'), stack:'s'},
+        {label:LEG.tirp,           data:rows.map(r=>isAcc(r)?r.dcDep:r.tirpInc), backgroundColor:tone('dc'), stack:'s'},
         {label:'ISA인출',          data:rows.map(r=>isAcc(r)?r.isaDep:r.isaInc), backgroundColor:tone('isa'),stack:'s'},
         {label:ACCT_NAME.gen,       data:rows.map(r=>isAcc(r)?0:r.genInc),        backgroundColor:tone('gen'),stack:'s'},
-        {label:'안세공 비과세인출', data:rows.map(r=>isAcc(r)?0:r.prinInc),        backgroundColor:tone('prin'),stack:'s'},
+        {label:LEG.prin+' 비과세인출', data:rows.map(r=>isAcc(r)?0:r.prinInc),        backgroundColor:tone('prin'),stack:'s'},
         {label:'근로·기타 소득',   data:rows.map(r=>isAcc(r)?0:r.othInc),         backgroundColor:tone('oth'), stack:'s'},
         {label:'주택연금',        data:rows.map(r=>isAcc(r)?0:r.hpInc),          backgroundColor:tone('hp'),  stack:'s'},
         // 세후 합계 선 — 그해 세후가 생활비 이상이면 파랑, 미만이면 빨강. 두 해 사이에서 넘나들면
@@ -3498,7 +3519,7 @@ function drawChart(rows, p){
 
   } else {
     document.getElementById('chart-legend').innerHTML=[
-      {c:C.nh.line,l:'연금저축합계'},{c:C.dc.line,l:'퇴직IRP'},{c:C.isa.line,l:'ISA'},{c:C.gen.line,l:ACCT_SHORT.gen}
+      {c:C.nh.line,l:'연금저축합계'},{c:C.dc.line,l:LEG.tirp},{c:C.isa.line,l:'ISA'},{c:C.gen.line,l:ACCT_SHORT.gen}
     ].map(x=>`<span class="leg-item"><span class="leg-swatch" style="background:${x.c}"></span>${x.l}</span>`).join('');
 
     mainChart=new Chart(ctx,{type:'line',
@@ -3507,7 +3528,7 @@ function drawChart(rows, p){
           pointRadius:2,pointHoverRadius:5,
           pointBackgroundColor:C.nh.line,pointBorderColor:'#fff',pointBorderWidth:1,
           pointHoverBackgroundColor:C.nh.line,pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2},
-        {label:'퇴직IRP',    data:rows.map(r=>r.tirpB), borderColor:C.dc.line, backgroundColor:C.dc.line+'22',fill:true,tension:0.3,
+        {label:LEG.tirp,   data:rows.map(r=>r.tirpB), borderColor:C.dc.line, backgroundColor:C.dc.line+'22',fill:true,tension:0.3,
           pointRadius:2,pointHoverRadius:5,
           pointBackgroundColor:C.dc.line,pointBorderColor:'#fff',pointBorderWidth:1,
           pointHoverBackgroundColor:C.dc.line,pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2},

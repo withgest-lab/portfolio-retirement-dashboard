@@ -1,7 +1,7 @@
 // 화면 꽉 채움·입력 박스 통일 검사 — ios-design 스킬 8절. 보고 전 "모든 화면 × 펼침·펼침+90도"에서 돌린다.
 //
 // 사용(CLI, playwright가 NODE_PATH에 있어야 함):
-//   node .claude/skills/ios-design/fit-audit.js retirement            # 현금흐름 5탭
+//   node .claude/skills/ios-design/fit-audit.js retirement            # 현금흐름 4탭(1·2단계 설계/결과/세금 상식) + 결과 보기 6종(연 현금흐름·연 자산 흐름·요약·근거·위기 점검·부족 대책, 자동 설계 확정 경로 포함)
 //   node .claude/skills/ios-design/fit-audit.js portfolio --seed      # 포트폴리오 전 화면(가상 데이터 25종목·매매 60건·스냅샷 30개를 심어서)
 //   node .claude/skills/ios-design/fit-audit.js home | signals | all
 //   옵션: --boxes(입력 박스 통일 검사 추가) --base http://localhost:4173/ --extra(실기기 근사 높이 3개 추가)
@@ -129,8 +129,24 @@ const seedSnaps = () => {
 };
 const seedAll = () => ({ pf_assets_v1: seedAssets(), pf_tradelog_v1: seedTradeLog(), pf_snaps_v5: seedSnaps() });
 
+// 현금흐름 결과 탭 보기 6종 — 요약·근거·위기 점검·부족 대책은 자동 설계 결과가 있어야 의미가 있어 순회 전에 한 번 확정한다(confirmPlan 경로 검증 겸).
+const RESULT_VIEWS = ['flow', 'asset', 'plan', 'basis', 'sc', 'need'];
+const seedPlan = async page => {
+  await page.evaluate(() => autoSuggest());
+  await page.waitForFunction(() => typeof _planPickOpts !== 'undefined' && _planPickOpts && _planPickOpts.length, null, { timeout: 30000 });
+  await page.waitForTimeout(300);
+  await page.evaluate(() => confirmPlan());   // 확정하면 결과 탭의 "연 현금흐름"으로 이동
+  await page.waitForTimeout(600);
+};
+const goRetirement = (page, t, v) => page.evaluate(([t, v]) => {
+  setMainTab(t);
+  if (t !== 'result') return;
+  chartTab = 'flow'; _altView = null;
+  if (v === 'flow' || v === 'asset') setTab(v); else setAltView(v);
+}, [t, v]);
+
 const SCREENS = {
-  retirement: { base: 'retirement/', tabs: ['design', 'step2', 'result', 'tax'], go: (page, t) => page.evaluate(x => setMainTab(x), t), long: t => t === 'tax' },
+  retirement: { base: 'retirement/', tabs: ['design', 'step2', 'result', 'tax'], go: goRetirement, long: t => t === 'tax' },
   portfolio: { base: 'portfolio/', seed: true },
   home: { base: '' },
   signals: { base: 'signals/', long: () => true },
@@ -146,17 +162,17 @@ async function sweep(browser, preset, o) {
     if (o.seed && cfg.seed) await page.evaluate(m => { try { Object.keys(m).forEach(k => localStorage.setItem(k, JSON.stringify(m[k]))); } catch (e) {} }, seedAll());
     else if (preset === 'retirement') await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
     await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(preset === 'portfolio' ? 2500 : 1200);
-    let targets = [['', '']];
-    if (preset === 'retirement') targets = cfg.tabs.map(t => [t, '']);
+    let targets = [['', '']], seeded = false;
+    if (preset === 'retirement') targets = cfg.tabs.flatMap(t => t === 'result' ? RESULT_VIEWS.map(v => [t, v]) : [[t, '']]);
     if (preset === 'portfolio') {
       const pages = await page.evaluate(() => [...document.querySelectorAll('#tabbar [data-page]')].map(b => b.dataset.page));
       targets = [];
       for (const p of pages) { const subs = await page.evaluate(pg => { const c = document.getElementById('page_' + pg); return c ? [...c.querySelectorAll(':scope > .subtabbar [data-sub], :scope > nav [data-sub]')].map(b => b.dataset.sub) : []; }, p); (subs.length ? subs : ['']).forEach(s => targets.push([p, s])); }
     }
     for (const [a, b] of targets) {
-      if (preset === 'retirement') await cfg.go(page, a);
+      if (preset === 'retirement') { if (a === 'result' && !seeded) { await seedPlan(page); seeded = true; } await cfg.go(page, a, b); }
       if (preset === 'portfolio') { await page.evaluate(([p, s]) => { switchPage(p); if (s) switchSubPage(p, s); }, [a, b]); }
-      await page.waitForTimeout(preset === 'portfolio' ? 1000 : 600);
+      await page.waitForTimeout(preset === 'portfolio' ? 1000 : b === 'need' ? 3600 : 600);   // 부족 대책은 행마다 자동 설계를 다시 계산해 늦게 채워진다
       const name = preset + (a ? '/' + a : '') + (b ? '/' + b : '');
       const isLong = folded || LONG.has(name) || (cfg.long && cfg.long(a));
       const fit = await measureFit(page), fails = judgeFit(fit, isLong);
