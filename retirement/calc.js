@@ -361,10 +361,10 @@ function totalPropertyBase(p){
   return (p.realestate||0) + (p.hi_rentprop||0);
 }
 
-/* 집 1·2·3 공시가격(만원) → 합계·채수·주택 유형. 2채 이상이면 다주택('multi'), 아니면 1세대 1주택('single').
+/* 집 1·2 공시가격(만원) → 합계·채수·주택 유형. 2채 이상이면 다주택('multi'), 아니면 1세대 1주택('single').
    집별 입력이 하나도 없으면 옛 단일 값(p.gongsiga)을 1채로 본다(호환). */
 function houseSummary(p){
-  const v = [p.gongsiga1, p.gongsiga2, p.gongsiga3].map(x => Math.max(0, +x || 0));
+  const v = [p.gongsiga1, p.gongsiga2].map(x => Math.max(0, +x || 0));
   const any = v.some(x => x > 0);
   const sum = any ? v.reduce((a, b) => a + b, 0) : Math.max(0, +p.gongsiga || 0);
   const count = any ? v.filter(x => x > 0).length : (sum > 0 ? 1 : 0);
@@ -497,7 +497,7 @@ function housingPensionMonthly(age, priceMan){
 function housingPensionOf(p){
   // 주택연금은 가입하는 1채(집1, 비었으면 첫 번째 집) 가격으로 월지급금을 구하고, 가입 요건은 보유 주택 합산 공시가격 12억 이하(다주택도 합산 기준)
   const hs = houseSummary(p);
-  const list = [p.gongsiga1, p.gongsiga2, p.gongsiga3].map(x => +x || 0).filter(x => x > 0);
+  const list = [p.gongsiga1, p.gongsiga2].map(x => +x || 0).filter(x => x > 0);
   const house1 = list.length ? list[0] : hs.sum;
   if(!(p.hp_age >= 55) || hs.sum > 120000) return 0;   // 합산 공시가격 12억원 초과는 가입 불가로 본다(2주택 3년 내 처분 조건 가입은 반영 안 함)
   const price = p.hp_price > 0 ? p.hp_price : (house1 > 0 ? house1 / 0.69 : 0);

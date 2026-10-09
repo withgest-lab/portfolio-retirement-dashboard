@@ -838,8 +838,8 @@ test('남길 금액·일시 지출을 일반계좌에서 떼어 두면 끝 나�
 test('houseSummary: 집별 공시가격 합계·채수·주택 유형(2채 이상 = 다주택), 입력이 없으면 옛 단일 값 1채', () => {
   const { houseSummary } = c;
   assert.deepEqual(houseSummary({gongsiga1: 50000}), {sum: 50000, count: 1, type: 'single'});
-  assert.deepEqual(houseSummary({gongsiga1: 50000, gongsiga3: 20000}), {sum: 70000, count: 2, type: 'multi'});
-  assert.deepEqual(houseSummary({gongsiga1: 10000, gongsiga2: 20000, gongsiga3: 30000}), {sum: 60000, count: 3, type: 'multi'});
+  assert.deepEqual(houseSummary({gongsiga1: 50000, gongsiga2: 20000}), {sum: 70000, count: 2, type: 'multi'});
+  assert.deepEqual(houseSummary({gongsiga1: 10000, gongsiga2: 20000, gongsiga3: 30000}), {sum: 30000, count: 2, type: 'multi'});   // 집3 입력은 더 이상 읽지 않는다
   assert.deepEqual(houseSummary({}), {sum: 0, count: 0, type: 'single'});
   assert.deepEqual(houseSummary({gongsiga: 40000}), {sum: 40000, count: 1, type: 'single'});          // 옛 저장값 호환
   assert.deepEqual(houseSummary({gongsiga1: 0, gongsiga2: -5, gongsiga: 40000}), {sum: 40000, count: 1, type: 'single'});
@@ -911,8 +911,8 @@ test('horizon 100: 일반계좌·ISA가 있어도 기대수명 직후 세후가 
 });
 
 test('주택연금: 가입 주택은 집1(없으면 첫 집), 요건은 보유 주택 합산 공시가격 12억 이하', () => {
-  assert.equal(housingPensionOf({hp_age: 70, gongsiga2: 20700, gongsiga3: 20700}), housingPensionMonthly(70, 30000), '집1이 비면 첫 집(집2) 한 채 가격');
-  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 50000, gongsiga2: 50000, gongsiga3: 50000}) > 0, false, '합산 15억 초과 → 불가');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga2: 20700}), housingPensionMonthly(70, 30000), '집1이 비면 첫 집(집2) 한 채 가격');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 70000, gongsiga2: 70000}) > 0, false, '합산 14억 초과 → 불가');
   assert.ok(housingPensionOf({hp_age: 70, gongsiga1: 50000, gongsiga2: 50000}) > 0, '합산 10억 이하 다주택은 가입(집1 기준)');
   assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 150000}), 0);
 });
