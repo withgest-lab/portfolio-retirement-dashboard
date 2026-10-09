@@ -22,6 +22,13 @@ const PENSION_TOTAL_DEDUCT_CAP = 900;   // 연금저축+IRP 합산 세액공제 
 const PENSION_ANNUAL_PAY_CAP = 1800;    // 연금계좌 합산 연 납입한도
 const PRIN_CONFIRMED_YEAR = 2026;       // 안세공 입력칸 = 이 해 말 확정 금액. 다음 해부터 세액공제 초과 납입분을 자동 합산
 const STD_TAX_CREDIT = 7;               // 종합소득 표준세액공제(만원)
+const STD_TAX_CREDIT_WAGE = 13;         // 근로소득이 있을 때 표준세액공제(만원)
+const FIN_COMP_THRESHOLD = 2000;        // 금융소득종합과세 기준금액(이자+배당 연, 만원)
+const FIN_WITHHOLD = 0.14;              // 이자·배당 원천징수세율(지방세 제외)
+const NPS_MIN_YEARS = 10;               // 노령연금 최소 가입기간(년)
+const NPS_FULL_AGE = 60;                // 국민연금 보험료 납부 종료 나이(공단 예상액은 여기까지 계속 납부 가정)
+const NPS_VOL_PREMIUM_RATE = 0.095;     // 2026 국민연금 임의가입·임의계속가입 보험료율(기준소득월액 대비)
+const VOL_HEALTH_MONTHS = 36;           // 건강보험 임의계속가입 최대 기간(개월)
 
 // 수익률·물가(시나리오 반영)
 function scenarioRates(p, adj){
@@ -229,28 +236,85 @@ function pensionIncomeDeduction(total){
   return Math.min(900, d);
 }
 
-/* 연금소득 종합과세 세액(연, 지방세 포함) — 다른 종합소득이 없는 은퇴자 가정.
-   총연금액 − 연금소득공제 − 본인 기본공제 150(70세 이상 경로우대 +100) → 기본세율 − 표준세액공제 7 → ×1.1
-   ※ 국민연금은 2002년 이후 납입분만 과세되지만 그 비율을 알 수 없어 전액 과세로 본다(보수적). */
-function comprehensivePensionTax(totalAnnual, age){
-  if(!(totalAnnual > 0)) return 0;
-  const income = totalAnnual - pensionIncomeDeduction(totalAnnual);
+/* 근로소득공제(소득세법 47조, 한도 2,000만원): 총급여(만원) → 공제액 */
+function wageIncomeDeduction(gross){
+  const g = Math.max(0, gross);
+  let d;
+  if(g <= 500)        d = g * 0.7;
+  else if(g <= 1500)  d = 350 + (g - 500) * 0.4;
+  else if(g <= 4500)  d = 750 + (g - 1500) * 0.15;
+  else if(g <= 10000) d = 1200 + (g - 4500) * 0.05;
+  else                d = 1475 + (g - 10000) * 0.02;
+  return Math.min(2000, d);
+}
+
+/* 근로소득세액공제(소득세법 59조): 산출세액(만원, 지방세 제외)·총급여 → 공제액. 130만원 이하 55%, 초과분 30%, 총급여별 한도 */
+function wageTaxCredit(calcTax, gross){
+  const t = Math.max(0, calcTax);
+  const raw = t <= 130 ? t * 0.55 : 71.5 + (t - 130) * 0.30;
+  let cap;
+  if(gross <= 3300)       cap = 74;
+  else if(gross <= 7000)  cap = Math.max(66, 74 - (gross - 3300) * 0.008);
+  else if(gross <= 12000) cap = Math.max(50, 66 - (gross - 7000) * 0.5);
+  else                    cap = Math.max(20, 50 - (gross - 12000) * 0.5);
+  return Math.min(raw, cap);
+}
+
+/* 종합과세 산출세액과 세액공제 — 공적연금 + 근로·사업·기타 + 금융소득 초과분.
+   ex: {labor(총급여), business, other, finExcess} (모두 만원, 기본 0). ex가 전부 0이면 연금만 과세하는 기존 식과 같다.
+   총연금액 − 연금소득공제 + 근로소득금액 + 사업 + 기타 − 본인 기본공제 150(70세 이상 +100) → 기본세율(산출세액)
+   세액공제 = 근로세액공제 + 표준세액공제(근로소득이 있으면 13, 없으면 7) — 비교과세는 산출세액끼리 비교한 뒤 공제한다 */
+function comprehensiveCore(pensionAnnual, ex, age){
+  const labor = (ex && ex.labor) || 0, biz = (ex && ex.business) || 0, oth = (ex && ex.other) || 0, fe = (ex && ex.finExcess) || 0;
+  const pen = Math.max(0, pensionAnnual);
+  const laborInc = Math.max(0, labor - wageIncomeDeduction(labor));
+  const income = pen - pensionIncomeDeduction(pen) + laborInc + biz + oth + fe;
+  if(!(income > 0)) return {calc: 0, credit: 0};
   const personal = 150 + (age >= 70 ? 100 : 0);
-  const tax = Math.max(0, basicIncomeTax(income - personal) - STD_TAX_CREDIT);
-  return tax * LOCAL_TAX_MUL;
+  const calc = basicIncomeTax(income - personal);
+  const credit = (labor > 0 ? wageTaxCredit(calc * (laborInc / income), labor) + STD_TAX_CREDIT_WAGE : STD_TAX_CREDIT);
+  return {calc, credit};
+}
+
+/* 그해 전체 종합과세 세액(지방세 포함): 금융소득(이자+배당) 2,000만원 이하는 14% 원천징수로 끝, 초과분은 종합합산 후 비교과세
+   (금융소득 전체×14% + 다른 소득 산출세액  vs  2,000만원×14% + 합산 산출세액 중 큰 쪽 → 그 뒤 세액공제).
+   배당가산(Gross-up)·배당세액공제는 반영하지 않는다(CALC_SOURCES) */
+function comprehensiveTotal(pensionAnnual, ex, age){
+  const fin = (ex && ex.fin) || 0;
+  const base = Object.assign({}, ex, {finExcess: 0});
+  const c0 = comprehensiveCore(pensionAnnual, base, age);
+  if(fin <= FIN_COMP_THRESHOLD){
+    const t = Math.max(0, c0.calc - c0.credit) + Math.max(0, fin) * FIN_WITHHOLD;
+    return t * LOCAL_TAX_MUL;
+  }
+  const c1 = comprehensiveCore(pensionAnnual, Object.assign({}, ex, {finExcess: fin - FIN_COMP_THRESHOLD}), age);
+  const a = FIN_WITHHOLD * FIN_COMP_THRESHOLD + c1.calc;
+  const b = FIN_WITHHOLD * fin + c0.calc;
+  // 금융소득 초과분이 종합소득에 들어가므로 어느 쪽이 선택돼도 합산 기준(c1)의 세액공제를 받는다
+  return Math.max(0, Math.max(a, b) - c1.credit) * LOCAL_TAX_MUL;
+}
+
+/* 연금소득 종합과세 세액(연, 지방세 포함) — 다른 종합소득이 없는 은퇴자 가정(ex를 주면 그 소득과 합산).
+   ※ 국민연금은 2002년 이후 납입분만 과세되지만 그 비율을 알 수 없어 전액 과세로 본다(보수적). */
+function comprehensivePensionTax(totalAnnual, age, ex){
+  if(!(totalAnnual > 0) && !(ex && (ex.labor || ex.business || ex.other || ex.fin))) return 0;
+  return comprehensiveTotal(totalAnnual, ex, age);
 }
 
 /* 그해 연금소득세(연, 만원) — npAnnual: 국민연금, privAnnual: 사적연금 과세분
    (연금저축·IRP의 세액공제분·운용수익 + 퇴직IRP의 이연퇴직소득 소진 후 운용수익. 과세제외금액·이연퇴직소득은 제외)
-   사적연금은 1,500만원 이하면 연령별 저율 분리과세, 초과면 16.5% 분리과세 — 어느 쪽이든 종합과세가 더 싸면 종합과세 선택. */
-function pensionTaxes(npAnnual, privAnnual, age){
-  const npOnly = comprehensivePensionTax(npAnnual, age);
-  if(!(privAnnual > 0)) return {priv:0, np:npOnly, method:'none'};
+   사적연금은 1,500만원 이하면 연령별 저율 분리과세, 초과면 16.5% 분리과세 — 어느 쪽이든 종합과세가 더 싸면 종합과세 선택.
+   ex(근로·사업·기타·금융소득)가 있으면 그 소득의 세금은 oth로 따로 돌려주고, np·priv는 그 위에 얹히는 증가분으로 계산한다(합계 = oth+np+priv). */
+function pensionTaxes(npAnnual, privAnnual, age, ex){
+  const f = pen => comprehensiveTotal(pen, ex, age);
+  const t0 = f(0);
+  const npOnly = f(npAnnual) - t0;
+  if(!(privAnnual > 0)) return {priv:0, np:npOnly, oth:t0, method:'none'};
   const low = privAnnual <= PRIVATE_PENSION_SEP_LIMIT;
   const sepTax = privAnnual * (low ? pensionTaxRate(age)/100 : SEP_TAX_HIGH);
-  const compAll = comprehensivePensionTax(npAnnual + privAnnual, age);
-  if(compAll - npOnly < sepTax) return {priv: compAll - npOnly, np: npOnly, method:'comp'};
-  return {priv: sepTax, np: npOnly, method: low ? 'low' : 'sep165'};
+  const compAll = f(npAnnual + privAnnual) - f(npAnnual);
+  if(compAll < sepTax) return {priv: compAll, np: npOnly, oth: t0, method:'comp'};
+  return {priv: sepTax, np: npOnly, oth: t0, method: low ? 'low' : 'sep165'};
 }
 
 /* ── 건강보험 피부양자 자격 판정(소득+재산 기준) ──
@@ -267,20 +331,20 @@ function dependentStatusCheck(totalAnnualIncome, realEstateBase, businessIncome)
 }
 
 /* 건보료 산정용 소득 항목 — npMonthly를 주면 국민연금을 그 금액(예: 수령 개시 시점 명목)으로 본다 */
-function healthIncomeItems(p, npMonthly){
+function healthIncomeItems(p, npMonthly, age){
+  const a = age !== undefined ? age : Math.max(p.ret, p.npage || p.ret);   // 기본: 국민연금 수령 개시 시점(소득 기간 칸 반영)
+  const o = otherIncomeReal(p, a);
   const pensionAnnual = (npMonthly !== undefined ? npMonthly : p.np) * 12;
-  const laborAnnual = p.hi_labor || 0;
-  const businessAnnual = p.hi_business || 0;
-  const otherAnnual = p.hi_other || 0;
-  const financeAnnual = (p.hi_interest||0) + (p.hi_dividend||0);
-  const financeIncluded = financeAnnual > 1000 ? financeAnnual : 0; // 이자+배당 1,000만원 초과 시 전액, 이하면 0
-  return {pensionAnnual, laborAnnual, businessAnnual, otherAnnual, financeIncluded};
+  const financeIncluded = o.fin > 1000 ? o.fin : 0; // 이자+배당 1,000만원 초과 시 전액, 이하면 0
+  return {pensionAnnual, laborAnnual: o.labor, businessAnnual: o.business, otherAnnual: o.other, financeIncluded};
 }
 
-// 피부양자 판정용 총소득(연) — 전 항목 100% 합산
-function dependentTotalIncome(p, npMonthly){
-  const it = healthIncomeItems(p, npMonthly);
-  return it.pensionAnnual + it.laborAnnual + it.businessAnnual + it.otherAnnual + it.financeIncluded;
+// 피부양자 판정용 총소득(연) — 전 항목 100% 합산. 기준선이 명목 고정이라 국민연금(npMonthly)은 명목, 나머지 소득은 그 해 물가를 곱해 명목으로
+function dependentTotalIncome(p, npMonthly, age){
+  const a = age !== undefined ? age : Math.max(p.ret, p.npage || p.ret);
+  const it = healthIncomeItems(p, npMonthly, a);
+  const mul = Math.pow(1 + (p.inf || 0)/100, Math.max(0, a - p.age));
+  return it.pensionAnnual + (it.laborAnnual + it.businessAnnual + it.otherAnnual + it.financeIncluded) * mul;
 }
 
 // 국민연금 수령 개시 시점의 명목 월액 — 피부양자 2,000만원 기준선은 명목 고정이라 이 금액으로 판정한다
@@ -334,8 +398,8 @@ function propertyInsuranceScore(totalPropertyMan){
 }
 
 // 지역가입자 소득월액(만원/월) — 공적연금·근로 50%, 사업·기타 100%, 금융소득(1,000만원 초과 시 전액) 100%
-function regionalIncomeMonthly(p){
-  const it = healthIncomeItems(p);
+function regionalIncomeMonthly(p, age){
+  const it = healthIncomeItems(p, undefined, age);
   const weightedAnnual = it.pensionAnnual*0.5 + it.laborAnnual*0.5 + it.businessAnnual + it.otherAnnual + it.financeIncluded;
   return weightedAnnual / 12;
 }
@@ -348,9 +412,9 @@ const HEALTH_CAP_MAX = 4591740;         // 월 상한(원)
 const HEALTH_CAP_MIN = 20160;           // 월 하한(원) — 소득분에만 적용(연소득 336만원 이하 세대 최저보험료)
 
 /* 건강보험료 = max(하한, 소득월액×7.19%) + 재산점수×211.5원, 월 상한 적용 / 장기요양 = 건강보험료×13.14% */
-function regionalHealthPremium(incomeMonthly, propertyMan){
+function regionalHealthPremium(incomeMonthly, propertyMan, incomeRate){
   const score = propertyInsuranceScore(propertyMan);
-  const rawIncomeWon = (incomeMonthly||0) * 10000 * HEALTH_RATE_INCOME;
+  const rawIncomeWon = (incomeMonthly||0) * 10000 * (incomeRate || HEALTH_RATE_INCOME);
   const incomePremiumWon = Math.max(HEALTH_CAP_MIN, rawIncomeWon);
   const propertyPremiumWon = score * HEALTH_RATE_PROPERTY_WON;
   const rawHealthWon = incomePremiumWon + propertyPremiumWon;
@@ -377,25 +441,60 @@ function npsAdjustFactor(npage){
   return 0;
 }
 
+/* ── 은퇴 후 근로·사업·기타 소득(오늘 가치, 연) — 칸마다 시작~종료 나이(0·빈칸이면 은퇴~기대수명). 이자·배당은 은퇴 후 계속.
+   건보료(healthPremiumYear)와 현금흐름 수입·세금(evalYear)이 같은 값을 쓴다. */
+function otherIncomeReal(p, age){
+  const win = (amt, from, to) => {
+    if(!(amt > 0)) return 0;
+    const a = from > 0 ? Math.max(from, p.ret) : p.ret, b = to > 0 ? to : p.life;
+    return (age >= a && age <= b) ? amt : 0;
+  };
+  const fin = (p.hi_interest||0) + (p.hi_dividend||0);
+  return {
+    labor: win(p.hi_labor, p.hi_labor_from, p.hi_labor_to),
+    business: win(p.hi_business, p.hi_business_from, p.hi_business_to),
+    other: win(p.hi_other, p.hi_other_from, p.hi_other_to),
+    fin: age >= p.ret ? fin : 0,
+  };
+}
+
+/* 국민연금 가입기간 보정 — 공단 예상액은 만 60세까지 보험료를 계속 낸다고 가정한다. 60세 전에 은퇴하고 "중단"을 고르면
+   가입기간이 줄어든 만큼 연금도 줄어든다(가입기간 비례 근사 — CALC_SOURCES). 계속 납부(기본)는 보정 없음(임의가입 보험료는 evalYear에서 지출로). */
+function npsMembershipFactor(p){
+  const n = p.npyears;
+  if(p.npcont !== 'stop' || !(n > 0) || p.ret >= NPS_FULL_AGE) return 1;
+  const have = n + Math.max(0, p.ret - p.age), full = n + Math.max(0, NPS_FULL_AGE - p.age);
+  if(have < NPS_MIN_YEARS) return 0;   // 가입기간 10년 미만이면 노령연금이 아니라 반환일시금 — 연금 0
+  return Math.min(1, have / full);
+}
+
 /* ── 은퇴 후 그해 건보료(명목, 만원/연) — 현금흐름 세후에서 세금과 함께 차감 ──
    은퇴 전은 직장가입자(급여에서 공제)라 0. 은퇴 후는 지역가입자로 보고 2026 요율·등급표를 "오늘 가치"에 적용한 뒤
    그해 물가(infMul)를 곱한다 — 국민연금은 물가연동이라 수령 후 건보료는 오늘 가치로 일정하다.
-   소득: 국민연금(그해 실제 수령분)·근로 50%, 사업·기타 100%, 이자+배당은 합계 1,000만원 초과 시 전액(패널 입력 = 은퇴 후 소득).
+   소득: 국민연금(그해 실제 수령분)·근로 50%, 사업·기타 100%, 이자+배당은 합계 1,000만원 초과 시 전액(칸마다 해당 기간만).
    재산: 재산세 과세표준 + 전월세 인정액(현재값 고정). 사적연금·ISA 인출은 2026 현행 부과 대상이 아니다.
-   p.hi_dep==='yes'(피부양자 등록 가능한 직장가입자 가족 있음)이면 그해 명목 소득으로 피부양자 판정을 해 통과한 해는 0. */
-function healthPremiumYear(p, age, npRealMonthly, infMul){
-  if(age < p.ret) return {annual:0, monthlyReal:0, dependent:false};
+   p.hi_dep==='yes'(피부양자 등록 가능한 직장가입자 가족 있음)이면 그해 명목 소득으로 피부양자 판정을 해 통과한 해는 0.
+   p.hi_vol==='yes'(임의계속가입 신청)이면 은퇴 후 36개월은 min(지역가입자 보험료, 임의계속 보험료) — 임의계속 보험료는
+   p.hi_volprem(월, 퇴직 직전 보수월액 기준 건강보험료+장기요양 전액, 오늘 가치)을 퇴직 시점 물가로 환산해 36개월 고정(재산 미반영).
+   infRate: 물가상승률(%) — 임의계속 고정액의 퇴직 시점 환산에 쓴다. */
+function healthPremiumYear(p, age, npRealMonthly, infMul, infRate){
+  if(age < p.ret) return {annual:0, monthlyReal:0, dependent:false, volContinued:false};
   const npAnnual = (npRealMonthly||0) * 12;
-  const fin = (p.hi_interest||0) + (p.hi_dividend||0);
-  const finIncl = fin > 1000 ? fin : 0;
-  const labor = p.hi_labor||0, biz = p.hi_business||0, other = p.hi_other||0;
+  const o = otherIncomeReal(p, age);
+  const finIncl = o.fin * infMul > 1000 ? o.fin : 0;   // 1,000만원 기준선은 명목 고정
+  const labor = o.labor, biz = o.business, other = o.other;
   if(p.hi_dep === 'yes'){
     const nominalIncome = (npAnnual + labor + biz + other + finIncl) * infMul;  // 기준선(2,000/1,000만원)은 명목 고정
-    if(!dependentStatusCheck(nominalIncome, p.realestate||0, biz * infMul).fail) return {annual:0, monthlyReal:0, dependent:true};
+    if(!dependentStatusCheck(nominalIncome, p.realestate||0, biz * infMul).fail) return {annual:0, monthlyReal:0, dependent:true, volContinued:false};
   }
   const incomeMonthly = (npAnnual*0.5 + labor*0.5 + biz + other + finIncl) / 12;
-  const monthlyReal = regionalHealthPremium(incomeMonthly, totalPropertyBase(p)).total;
-  return {annual: monthlyReal * 12 * infMul, monthlyReal, dependent:false};
+  const monthlyReal = regionalHealthPremium(incomeMonthly, totalPropertyBase(p), p.hiRate).total;   // p.hiRate: 위기 점검용 소득 보험료율 덮어쓰기
+  const regionalAnnual = monthlyReal * 12 * infMul;
+  if(p.hi_vol === 'yes' && p.hi_volprem > 0 && age < p.ret + VOL_HEALTH_MONTHS/12){
+    const volAnnual = p.hi_volprem * 12 * Math.pow(1 + (infRate||0)/100, p.ret - p.age);   // 퇴직 시점 명목 고정액
+    if(volAnnual < regionalAnnual) return {annual: volAnnual, monthlyReal: volAnnual / 12 / infMul, dependent:false, volContinued:true};
+  }
+  return {annual: regionalAnnual, monthlyReal, dependent:false, volContinued:false};
 }
 
 /* ── 과세제외금액(안세공) ──
@@ -523,7 +622,12 @@ function evalYear(st, plan, ctx, age){
   const privTaxableA = taxWithin.nh + taxWithin.mf + taxWithin.irp + (tirpGain - gainOver);
   const otherA = taxOver.nh + taxOver.mf + taxOver.irp + gainOver;
   const npInc = age >= p.npage ? Math.round(p.np * Math.pow(1 + r.inf/100, age - p.age)) : 0; // 국민연금: 현재가치 입력 → 매년 물가연동
-  const pt = pensionTaxes(npInc*12, privTaxableA, age);
+  // 은퇴 후 근로·사업·기타 소득과 이자·배당(명목) — 수입에 더하고, 연금소득과 합산해 종합과세(금융소득은 2,000만원 기준)
+  const infMulY = Math.pow(1 + r.inf/100, age - p.age);
+  const oR = otherIncomeReal(p, age);
+  const ex = {labor: oR.labor*infMulY, business: oR.business*infMulY, other: oR.other*infMulY, fin: oR.fin*infMulY};
+  const othA = ex.labor + ex.business + ex.other + ex.fin;
+  const pt = pensionTaxes(npInc*12, privTaxableA, age, othA > 0 ? ex : undefined);
   // 퇴직소득세 감면 연차는 실제로 처음 받은 해부터(p.tage가 은퇴보다 앞이어도 은퇴 전에는 못 받음)
   const tirpFirstAge = st.tirpFirstAge !== null ? st.tirpFirstAge : (paid.tirp > 0 ? age : null);
   const tirpYear = tirpFirstAge === null ? 1 : age - tirpFirstAge + 1;
@@ -541,15 +645,19 @@ function evalYear(st, plan, ctx, age){
     isaTaxFromIncome = isaTax - fromBal; // 잔액이 모자라면 그해 인출액에서 부담
   }
 
-  const grossA = paid.nh + paid.mf + paid.irp + paid.tirp + paid.isa + npInc*12;
-  const taxA = pt.priv + pt.np + tirpTaxA + otherTaxA + isaTaxFromIncome;
+  // 60세 전 은퇴 + "계속 납부"면 국민연금 임의가입 보험료(오늘 가치 월 금액 × 물가)를 만 60세 전까지 낸다
+  const npPremA = (p.npcont !== 'stop' && p.np_volprem > 0 && age >= p.ret && age < NPS_FULL_AGE) ? p.np_volprem * 12 * infMulY : 0;
+  const grossA = paid.nh + paid.mf + paid.irp + paid.tirp + paid.isa + npInc*12 + othA;
+  const taxA = pt.priv + pt.np + (pt.oth||0) + tirpTaxA + otherTaxA + isaTaxFromIncome;
   // 경고용: 한도를 넘어 실제로 세금이 무거워진 금액(55세 전 비과세 원금 가교 인출처럼 세금 없는 연금외수령은 제외)
   const taxedOverA = otherA + defOver;
   // 건보료: 사적연금·ISA는 부과 대상이 아니라 인출 계획과 무관 — 국민연금(오늘 가치 일정)·패널 소득·재산으로만 정해진다
-  const hiA = healthPremiumYear(p, age, age >= p.npage ? p.np : 0, Math.pow(1 + r.inf/100, age - p.age)).annual;
+  const hiR = healthPremiumYear(p, age, age >= p.npage ? p.np : 0, infMulY, r.inf);
+  const hiA = hiR.annual;
   return {
     paid, free, npInc, pt, tirpDef, privTaxableA, otherA, otherTaxA, tirpTaxA, overLimitAnnual, taxedOverA,
-    isaTax, isaTaxFromIncome, grossA, taxA, hiA, netA: Math.max(0, grossA - taxA - hiA),
+    othA, ex, npPremA, hiVol: hiR.volContinued,
+    isaTax, isaTaxFromIncome, grossA, taxA, hiA, netA: Math.max(0, grossA - taxA - hiA - npPremA),
     next: {
       bal: {nh:step.nh.bal, mf:step.mf.bal, irp:step.irp.bal, tirp:step.tirp.bal, isa:isaBal},
       T: nextT, tirpDeferred: st.tirpDeferred - tirpDef, isaCum, isaClosed, tirpFirstAge,
@@ -580,10 +688,15 @@ function simulate(p, adj, opts){
     ? calcRetirementIncomeTax(tirpFV, (p.tservice||0) + Math.max(0, p.ret - p.age))
     : (p.tirptax||0);
   const tirpTaxRate = tirpFV > 0 ? tirpTaxInput * LOCAL_TAX_MUL / tirpFV : 0;
-  const ctx = {p, r, tirpTaxRate, isaFV, isaPrin};
+  const ctx = {p: opts.hiRate > 0 ? Object.assign({}, p, {hiRate: opts.hiRate}) : p, r, tirpTaxRate, isaFV, isaPrin};
 
   let st = {bal:{nh:nhFV, mf:mfFV, irp:irpFV, tirp:tirpFV, isa:isaFV}, T:{nh:T.nh, mf:T.mf, irp:T.irp},
             tirpDeferred:tirpFV, isaCum:0, isaClosed:false, tirpFirstAge:null};
+  // opts.retShock(0<x<1): 은퇴 시점 계좌 평가액이 그 비율로 줄어든 상황(위기 점검 "은퇴 직후 폭락") — 인출 계획은 그대로
+  if(opts.retShock > 0 && opts.retShock < 1){
+    for(const k in st.bal) st.bal[k] *= opts.retShock;
+    st.tirpDeferred *= opts.retShock;
+  }
   const expAtRet = Math.round(p.exp * Math.pow(1 + infR/100, yrs));
   let runway = p.life, isaTaxPaid = 0, isaCloseAge = null, prinExhaustAge = null;
   let lifetimeTax = 0, lifetimeHi = 0, lifetimeNetReal = 0, maxPrivAnnual = 0, maxPrivAge = null, firstOverPlimitAge = null, firstOverLawAge = null, overPlimitYears = 0;
@@ -625,11 +738,12 @@ function simulate(p, adj, opts){
     const nhW = Math.round(y.paid.nh/12), mfW = Math.round(y.paid.mf/12), irpW = Math.round(y.paid.irp/12);
     const tirpW = Math.round(y.paid.tirp/12), isaW = Math.round(y.paid.isa/12);
     const prinNh = Math.min(nhW, Math.round(y.free.nh/12)), prinMf = Math.min(mfW, Math.round(y.free.mf/12)), prinIrp = Math.min(irpW, Math.round(y.free.irp/12));
-    const totalInc = nhW + mfW + irpW + y.npInc + tirpW + isaW;
+    const othW = Math.round(y.othA/12), npPremW = Math.round(y.npPremA/12);
+    const totalInc = nhW + mfW + irpW + y.npInc + tirpW + isaW + othW;
     const taxTotal = Math.round(y.taxA/12);
     const hiM = Math.round(y.hiA/12);
-    const netInc = Math.max(0, totalInc - taxTotal - hiM);
-    lifetimeTax += y.pt.priv + y.pt.np + y.tirpTaxA + y.otherTaxA + y.isaTax;
+    const netInc = Math.max(0, totalInc - taxTotal - hiM - npPremW);
+    lifetimeTax += y.pt.priv + y.pt.np + (y.pt.oth||0) + y.tirpTaxA + y.otherTaxA + y.isaTax;
     lifetimeHi += y.hiA;
     lifetimeNetReal += netInc * 12 / infMul;
 
@@ -647,8 +761,8 @@ function simulate(p, adj, opts){
     rows.push({
       age, label: age+'세', infMul,
       nhInc: nhW - prinNh, mfInc: mfW - prinMf, irpInc: irpW - prinIrp, privInc: Math.round(y.privTaxableA/12),
-      npInc: y.npInc, tirpInc: tirpW, isaInc: isaW, prinInc: prinNh + prinMf + prinIrp, totalInc, curExp,
-      taxPriv: Math.round(y.pt.priv/12), taxNp: Math.round(y.pt.np/12), taxTirp: Math.round(y.tirpTaxA/12),
+      npInc: y.npInc, tirpInc: tirpW, isaInc: isaW, prinInc: prinNh + prinMf + prinIrp, othInc: othW, npPrem: npPremW, totalInc, curExp,
+      taxPriv: Math.round(y.pt.priv/12), taxNp: Math.round(y.pt.np/12), taxOth: Math.round((y.pt.oth||0)/12), hiVol: y.hiVol, taxTirp: Math.round(y.tirpTaxA/12),
       taxOther: Math.round(y.otherTaxA/12), taxTotal, hi: hiM, taxMethod: y.pt.method, isaTax: Math.round(y.isaTax), netInc,
       realTotal: totalInc/infMul, realNet: netInc/infMul,
       privTaxableAnnual: y.privTaxableA, otherAnnual: y.otherA, overLimitAnnual: y.overLimitAnnual, taxedOverAnnual: y.taxedOverA,
@@ -826,6 +940,8 @@ if(typeof module !== 'undefined'){
     scenarioRates, growYears, calcISA_Detail, calcISA_FV, isaClosingTax, calcMonthlyDepositFV, stepBalance, stepBalanceDetail,
     cappedOut, pvOfMonthlyStream, pmtAnnualGrowing, basicIncomeTax, pensionTaxRate, tirpTaxDiscount,
     calcRetirementIncomeTax, pensionIncomeDeduction, comprehensivePensionTax, pensionTaxes,
+    NPS_MIN_YEARS, wageIncomeDeduction, wageTaxCredit, comprehensiveCore, comprehensiveTotal, otherIncomeReal, npsMembershipFactor,
+    STD_TAX_CREDIT_WAGE, FIN_COMP_THRESHOLD, FIN_WITHHOLD, NPS_FULL_AGE, NPS_VOL_PREMIUM_RATE, VOL_HEALTH_MONTHS,
     dependentStatusCheck, healthIncomeItems, dependentTotalIncome, npNominalAtStart, totalPropertyBase,
     propertyTaxBase, PROPERTY_SCORE_TABLE, propertyInsuranceScore, regionalIncomeMonthly,
     HEALTH_RATE_INCOME, HEALTH_RATE_PROPERTY_WON, HEALTH_RATE_LTC, HEALTH_CAP_MAX, HEALTH_CAP_MIN,

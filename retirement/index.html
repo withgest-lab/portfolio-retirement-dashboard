@@ -8,7 +8,8 @@
 <script src="../shared/theme.js?v=20260927"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
 <script src="../shared/bridge.js"></script>
-<script src="calc.js?v=20261004c"></script>
+<script src="calc.js?v=20261009a"></script>
+<script src="calc-whatif.js?v=20261009a"></script>
 <style>
 /* ── 리셋 & 기본 ── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -499,6 +500,8 @@ button{font-family:inherit;cursor:pointer;}
 .acct-body .fv-row .unit-tag{font-size:8.5px;}
 
 /* 카드 하단 고정 안내 한 줄 — 카드가 늘어난 만큼 생기는 빈 공간을 정보로 채움 */
+.need-head{font-size:11.5px;margin:2px 0 6px;color:#1c1c1e;}
+.need-head span{color:#8e8e93;font-size:10px;}
 .mini-note{margin-top:auto;font-size:9px;color:#8e8e93;line-height:1.5;
   background:rgba(118,118,128,.08);border-radius:10px;padding:6px 7px;}
 
@@ -523,6 +526,11 @@ button{font-family:inherit;cursor:pointer;}
 .inline-panel-title{font-size:12px;font-weight:700;color:#1c1c1e;margin-bottom:4px;}
 .health-ref-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0;padding:5px 8px;background:rgba(118,118,128,.08);border-radius:10px;}
 .health-ref-chip{font-size:10.5px;color:#636366;}
+.health-strip{display:flex;align-items:flex-end;gap:1px;height:46px;margin:2px 0 8px;padding:4px 6px 0;background:rgba(118,118,128,.08);border-radius:10px;}
+.health-strip i{flex:1 1 0;min-width:2px;border-radius:2px 2px 0 0;background:#8e8e93;}
+.health-strip i.vol{background:#007aff;}
+.health-strip i.dep{background:#34c759;}
+.health-strip-cap{display:flex;justify-content:space-between;font-size:9px;color:#8e8e93;margin:-6px 6px 6px;}
 .health-ref-chip b{color:#1c1c1e;font-size:11.5px;}
 .health-input-list{display:flex;flex-direction:column;margin:2px 0 8px;}
 .health-input-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:.5px solid rgba(60,60,67,.1);flex-wrap:wrap;}
@@ -530,6 +538,7 @@ button{font-family:inherit;cursor:pointer;}
 .hir-input{font-size:13px;font-weight:700;padding:3px 5px;border-radius:8px;width:76px;
   text-align:right;border:none;background:rgba(118,118,128,.12);outline:none;-moz-appearance:textfield;}
 .hir-input::-webkit-inner-spin-button,.hir-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+.hir-age{width:44px;}
 .hir-hint{font-size:9.5px;color:#8e8e93;flex:1;min-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .health-badge-ok{background:rgba(52,199,89,.14);color:#248a3d;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;display:inline-block;}
 .health-badge-warn{background:rgba(255,149,0,.14);color:#c93400;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;display:inline-block;}
@@ -691,6 +700,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <!-- 최상위 탭: 설계(입력) / 예상결과(차트) -->
 <div class="main-tabs">
   <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')"><span class="t-e">📝 </span>설계</button>
+  <button class="tab-btn" id="mtb-income" onclick="setMainTab('income')"><span class="t-e">💸 </span>소득·지출</button>
   <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')"><span class="t-e">📊 </span>예상결과</button>
   <button class="tab-btn" id="mtb-health" onclick="setMainTab('health')"><span class="t-e">🏥 </span>건보료<span class="t-x"> 설계</span></button>
   <button class="tab-btn" id="mtb-tax" onclick="setMainTab('tax')"><span class="t-e">📖 </span>세금<span class="t-x"> 상식</span></button>
@@ -706,7 +716,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
     <p><b>연금수령한도</b> — 연금계좌는 연금수령연차 1~10년차에 "연초 평가액 ÷ (11 − 연차) × 120%"까지만 연금으로 인정됩니다. 넘게 빼면 넘는 금액은 연금외수령이 되어 세액공제분·운용수익은 16.5%(기타소득), 퇴직IRP의 이연퇴직소득은 감면 없는 퇴직소득세가 붙습니다. 연차는 연금을 받을 수 있게 된 해(연금저축·IRP는 55세, 퇴직IRP는 퇴직한 해)부터 셉니다. 이 앱은 한도 초과분을 이 기준으로 계산하고 경고합니다.</p>
     <p><b>생활비 비교는 세후</b> — 예상결과의 여유/부족, 지표 카드의 공백기·완성기 월평균은 모두 세금과 건보료(은퇴 후 지역가입자, 피부양자 가족 설정에 따름)를 뺀 금액을 오늘 돈 가치로 환산해 월 생활비와 비교합니다. 차트 막대는 그해 실제로 받는 세전 금액이고, 생활비는 검정 점선, 세후 합계는 생활비보다 많으면 파랑·적으면 빨강 선으로 표시합니다.</p>
     <p><b>ISA 비과세</b> — 만기 수익 200만원(서민형 400만원)까지 세금이 없고, 초과분만 9.9%로 낮게 과세됩니다. 2026.9.1 세제개편 최종안 기준 일반 ISA는 만기 연장 횟수 제한이 없어 계속 보유할 수 있고, 계속 보유하면 <b>총 납입한도 1억원</b>(연 2,000만원)이 적용됩니다. 이 앱는 해지·재개설 없이 유지하다가 은퇴 후 원금을 다 인출하는 해에 전 기간 순이익 기준으로 한 번 과세하고, 1억원을 넘는 납입은 계산에서 제외합니다.<br><span style="color:#636366;">예: 보유기간 전체 수익이 500만원(일반형)이면 200만원까지 비과세, 나머지 300만원에만 9.9% 과세 → 세금 약 30만원.</span></p>
-    <p><b>퇴직소득세 감면</b> — 퇴직금을 일시금 대신 연금으로 나눠 받으면, 실제로 받은 햇수(수령연차)가 쌓일수록 세금이 더 깎입니다(1~10년차 30%, 11~20년차 40%, <b>21년차 이상 50%</b> 감면 — 21년차 구간은 2026.1.1 시행 개정으로 신설됨). DC형은 회사 적립금에 운용수익까지 합친 퇴직 시 평가액 전체가 퇴직소득(이연퇴직소득)이고, 이를 다 받은 뒤 인출되는 운용수익은 연금소득세(1,500만원 판정 포함)가 붙습니다. 자동설계는 퇴직IRP 개시 나이를 ISA·미래에셋 소진 나이와 함께 골라, 해마다 세후 소득(오늘 돈 가치) 중 가장 적은 해가 가장 크게 되도록(비슷하면 생애 세금이 적은 쪽) 정합니다(55세 이상부터).<br><span style="color:#636366;">예: 산출세액이 같아도 1~10년차엔 30%만 깎이지만 21년차 이후엔 50%가 깎입니다 — 오래 나눠 받을수록 유리.</span></p>
+    <p><b>퇴직소득세 감면</b> — 퇴직금을 일시금 대신 연금으로 나눠 받으면, 실제로 받은 햇수(수령연차)가 쌓일수록 세금이 더 깎입니다(1~10년차 30%, 11~20년차 40%, <b>21년차 이상 50%</b> 감면 — 21년차 구간은 2026.1.1 시행 개정으로 신설됨). DC형은 회사 적립금에 운용수익까지 합친 퇴직 시 평가액 전체가 퇴직소득(이연퇴직소득)이고, 이를 다 받은 뒤 인출되는 운용수익은 연금소득세(1,500만원 판정 포함)가 붙습니다. 자동설계는 퇴직IRP 개시 나이를 ISA·개인연금 미래 소진 나이와 함께 골라, 해마다 세후 소득(오늘 돈 가치) 중 가장 적은 해가 가장 크게 되도록(비슷하면 생애 세금이 적은 쪽) 정합니다(55세 이상부터).<br><span style="color:#636366;">예: 산출세액이 같아도 1~10년차엔 30%만 깎이지만 21년차 이후엔 50%가 깎입니다 — 오래 나눠 받을수록 유리.</span></p>
     <p><b>퇴직연금 카드의 "근속연수"·"퇴직소득세"는 왜 있나요</b> — 참고용이 아니라 <b>월 현금흐름에 실제로 반영되는 입력값</b>입니다. 연금으로 받아도 세금은 "일시금으로 받았다면 낼 세액"에 위 감면율을 곱해 정하기 때문입니다. 근속연수를 넣으면 국세청 공식(근속연수공제→환산급여→환산급여공제→누진세율)으로 퇴직소득세를 자동 계산해 채우며, 회사 안내 금액이 있으면 직접 덮어써도 됩니다(칸을 비우면 다시 자동). 지방소득세 10%는 세후 계산 때 더합니다.<br><span style="color:#636366;">예: 근속 20년이면 근속연수공제만 4,000만원 — 근속이 길수록 이 공제가 커져 기준 세액 자체가 줄어들고, 여기에 수령연차별 감면율까지 추가로 적용됩니다.</span></p>
   </div>
   <div class="guide-sec">
@@ -747,12 +757,52 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div class="note" style="margin-top:2px;">※ 소득세법·국민건강보험법 시행령·보건복지부 고시·국민연금공단의 공개 기준(2026년)을 정리한 참고용 자료입니다. 실제 세액·보험료는 개인 상황에 따라 다릅니다.</div>
 </div>
 
+<!-- 소득·지출 인라인 패널 (탭 전환, 모달 아님) — 은퇴 후에도 받는 소득. 건보료 패널의 같은 칸을 옮겨 왔다(id·저장값 그대로) -->
+<div class="inline-panel" id="incomePanel">
+  <div class="note" style="margin-top:0;">은퇴 후 현금흐름 수입에 더하고, 세금(국민연금·사적연금과 합산 종합과세)과 건보료에 반영합니다. 금액은 <b>오늘 돈 가치</b>(매년 물가만큼 오름)·세전, 기간 빈칸은 은퇴~기대수명입니다.</div>
+  <div class="health-input-list">
+    <div class="health-input-row">
+      <span class="hir-label">근로소득(연)</span>
+      <input class="hir-input" type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="hir-input hir-age" type="number" id="hi_labor_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_labor_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <span class="hir-hint">세전 총급여 · 근로소득공제·근로세액공제 반영 · 예: 3,600만이면 3600</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">사업소득(연)</span>
+      <input class="hir-input" type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="hir-input hir-age" type="number" id="hi_business_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_business_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <span class="hir-hint">매출−필요경비(세전) · 피부양자는 사업자등록 시 소득 1원부터, 미등록은 연 500만원 초과 시 탈락</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">기타소득(연)</span>
+      <input class="hir-input" type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <input class="hir-input hir-age" type="number" id="hi_other_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_other_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <span class="hir-hint">강연료·원고료 등(필요경비 차감 후) · 종합과세로 계산</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">이자소득(연)</span>
+      <input class="hir-input" type="number" id="hi_interest" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">세전 · 은퇴 후 계속 · 이자+배당 2,000만 이하 15.4% 분리과세, 초과분은 종합과세 · 건보료는 합산 1,000만 초과 시 반영</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">배당소득(연)</span>
+      <input class="hir-input" type="number" id="hi_dividend" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint">세전 · 이자와 같은 기준</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">국민연금 임의가입</span>
+      <input class="hir-input" type="number" id="np_volprem" value="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
+      <span class="hir-hint">60세 전 은퇴 + 국민연금 "계속 납부"일 때 만 60세 전까지 내는 월 보험료(오늘 가치, 기준소득월액×9.5%) · 0이면 비용 없이 예상액 그대로</span>
+    </div>
+  </div>
+</div>
+
 <!-- 건보료 설계 인라인 패널 (버튼 클릭 시 펼침/접힘, 모달 아님) -->
 <div class="inline-panel" id="healthPanel">
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
     <span style="font-size:12px;font-weight:700;color:#1c1c1e;">은퇴 후 지역가입자 보험료</span>
   </div>
-  <div class="note" style="margin-top:0;">피부양자가 될 수 없으면 은퇴 후 지역가입자로 바뀌어 소득+재산에 보험료가 붙습니다. 이 보험료는 <b>은퇴한 해부터 매년 세후 현금흐름에서 뺍니다</b>(2026년 요율, 오늘 돈 가치). 사적연금·ISA 인출은 부과 대상이 아닙니다. 아래 소득에는 은퇴 후에도 받을 금액만 넣으세요. 개념은 "세금 상식" 탭 참고.</div>
+  <div class="note" style="margin-top:0;">피부양자가 될 수 없으면 은퇴 후 지역가입자로 바뀌어 소득+재산에 보험료가 붙습니다. 이 보험료는 <b>은퇴한 해부터 매년 세후 현금흐름에서 뺍니다</b>(2026년 요율, 오늘 돈 가치). 사적연금·ISA 인출은 부과 대상이 아닙니다. 근로·사업·이자 같은 소득은 소득·지출 탭 값을 그대로 씁니다. 개념은 "세금 상식" 탭 참고.</div>
 
   <div class="health-ref-row">
     <span class="health-ref-chip">재산세 과표(자동계산) <b id="hrefRe" data-amt>-</b>만원</span>
@@ -788,39 +838,26 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       <span class="hir-hint">국민연금 카드의 월 수령액을 자동 반영(수정은 해당 카드에서) · 보험료는 50%만 반영 · 피부양자 판정은 수령 개시 시점의 물가 반영 금액 기준</span>
     </div>
     <div class="health-input-row">
-      <span class="hir-label">사업소득(연)</span>
-      <input class="hir-input" type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">매출−필요경비(세전) · 예: 8,000−3,000=5000 · 피부양자는 사업자등록 시 소득 1원부터, 미등록은 연 500만원 초과 시 탈락</span>
-    </div>
-    <div class="health-input-row">
-      <span class="hir-label">근로소득(연)</span>
-      <input class="hir-input" type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">세전 총급여 · 예: 3,600만이면 3600</span>
-    </div>
-    <div class="health-input-row">
-      <span class="hir-label">이자소득(연)</span>
-      <input class="hir-input" type="number" id="hi_interest" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">세전 · 이자+배당 합이 연 1,000만원을 넘을 때만 반영 · 예: 300</span>
-    </div>
-    <div class="health-input-row">
-      <span class="hir-label">배당소득(연)</span>
-      <input class="hir-input" type="number" id="hi_dividend" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">세전 · 이자와 같은 기준(합산 1,000만원 초과 시 반영) · 예: 400</span>
-    </div>
-    <div class="health-input-row">
-      <span class="hir-label">기타소득(연)</span>
-      <input class="hir-input" type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">강연료·원고료 등(필요경비 차감 후) · 예: 200</span>
-    </div>
-    <div class="health-input-row">
       <span class="hir-label">전월세 재산 인정액</span>
       <input class="hir-input" type="number" id="hi_rentprop" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
       <span class="hir-hint">무주택자만 · 보증금+월세환산액의 약 30% · 예: 전세 3억 → 9000</span>
     </div>
   </div>
 
+  <div class="health-input-list">
+    <div class="health-input-row">
+      <span class="hir-label">임의계속가입</span>
+      <select class="hir-input" id="hi_vol" style="width:auto;min-width:112px;font-size:12px;" onchange="scheduleUpd()">
+        <option value="no">신청 안 함</option>
+        <option value="yes">신청 (퇴직 후 36개월)</option>
+      </select>
+      <input class="hir-input" type="number" id="hi_volprem" value="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
+      <span class="hir-hint">급여명세서의 본인 부담분(건강+장기요양) · 재산 미반영 · 36개월 동안 더 낮은 쪽 적용</span>
+    </div>
+  </div>
   <button type="button" class="suggest-btn health-calc-btn" id="healthCalcBtn" style="margin:2px 0 8px;" onclick="calcHealthPremiumClick(this)">📊 예상 건보료 계산하기</button>
 
+  <div id="healthStrip"></div>
   <div id="healthStatusBadge"></div>
   <div class="health-detail" id="healthDetail"></div>
 </div>
@@ -890,7 +927,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <!-- 1행: 농협 · 미래에셋 · IRP 개인 · 퇴직연금 · ISA (같은 높이로 늘어나 하단 외곽이 일직선, 행 순서도 같음)
      2행: 사적연금 합계 게이지(1~3열) + 수익률·물가 설정(좌하단) · 국민연금(5열, ISA 바로 아래) -->
 <div class="acct-card" style="--ac:#34C759;--ac-ink:#1F7A37;">
-<div class="acct-head"><span class="name">농협 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head"><span class="name">개인연금 농협</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow nh">
   <div class="irow-top">
@@ -958,7 +995,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 
 <div class="acct-card" style="--ac:#00C7BE;--ac-ink:#0A7570;">
-<div class="acct-head"><span class="name">미래에셋 연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head"><span class="name">개인연금 미래</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow mf">
   <div class="irow-top">
@@ -1026,7 +1063,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 
 <div class="acct-card" style="--ac:#32ADE6;--ac-ink:#0071A4;">
-<div class="acct-head"><span class="name">IRP 개인</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head"><span class="name">IRP 개인 미래</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow irp">
   <div class="irow-top">
@@ -1103,7 +1140,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 
 <div class="acct-card c-tirp" style="--ac:#AF52DE;--ac-ink:#8944AB;">
-<div class="acct-head"><span class="name">퇴직연금</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-head"><span class="name">퇴직연금 DC 농협</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('tirp')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow dc">
   <div class="irow-top">
@@ -1277,7 +1314,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="rates-fields">
 <div class="irow nh">
   <div class="irow-top">
-    <span class="ilabel">농협 연금저축</span>
+    <span class="ilabel">개인연금 농협</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
@@ -1285,7 +1322,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
-    <span class="ilabel">미래에셋 연금저축</span>
+    <span class="ilabel">개인연금 미래</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
@@ -1293,7 +1330,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
-    <span class="ilabel">미래에셋 IRP</span>
+    <span class="ilabel">IRP 개인 미래</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
@@ -1301,7 +1338,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
-    <span class="ilabel">퇴직연금</span>
+    <span class="ilabel">퇴직연금 DC 농협</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
@@ -1364,6 +1401,27 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <input type="range" id="np-r" min="0" max="500" step="1" value="170"  oninput="syncInput('np');scheduleUpd()">
 </div>
 </div>
+<div class="fv-row">
+<div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel" title="지금까지 낸 가입기간(년). 60세 전에 은퇴하고 중단을 고르면 60세까지 냈을 때보다 가입기간이 줄어 연금이 비례해 줄어듭니다">가입기간</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="npyears" value="20" min="1" max="45" step="1" onblur="onBlurFix('npyears')" oninput="syncSlider('npyears');scheduleUpd()"><span class="unit-tag">년</span>
+      </div>
+  </div>
+  <input type="range" id="npyears-r" min="1" max="45" step="1" value="20"  oninput="syncInput('npyears');scheduleUpd()">
+</div><div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel" title="공단 예상액은 만 60세까지 보험료를 계속 낸다고 가정합니다. 60세 전 은퇴 시 계속 내면(임의가입, 보험료는 소득·지출 탭) 예상액 그대로, 중단하면 가입기간이 줄어 연금이 줄어듭니다">60세까지</span>
+    <div class="irow-ctrl">
+      <select class="ymon-select" id="npcont" onchange="scheduleUpd()" title="60세 전 은퇴 시 국민연금 납부">
+        <option value="cont" selected>계속 납부</option><option value="stop">중단</option>
+      </select>
+      </div>
+  </div>
+  <input type="range" disabled style="visibility:hidden" aria-hidden="true" tabindex="-1">
+</div>
+</div>
 </div>
 </div>
 
@@ -1391,8 +1449,8 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
         <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">자산 잔액</button>
         <button class="tab-btn" id="tb-plan" onclick="setAltView('plan')" title="마지막 자동설계 결과 요약">자동설계 요약</button>
         <button class="tab-btn" id="tb-basis" onclick="setAltView('basis')" title="자동설계 인출 순서·금액의 근거">자동설계 근거</button>
-        <button class="tab-btn" id="tb-sc" onclick="setAltView('sc')" title="낙관·비관 시나리오 비교">수익률 민감도</button>
-        <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="완전소진 플랜 vs 필요분만 인출 플랜 비교">소진 vs 필요분</button>
+        <button class="tab-btn" id="tb-sc" onclick="setAltView('sc')" title="수익률·물가·폭락·장수·간병 같은 위기에서 계획이 버티는지">위기 점검</button>
+        <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="생활비가 부족할 때 무엇을 얼마나 바꾸면 되는지(자동설계를 다시 계산)">부족 대책</button>
       </div>
       <div class="legend" id="chart-legend"></div>
     </div>
@@ -1404,14 +1462,21 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
           <div id="scWrap" style="display:none;">
             <table>
               <thead><tr>
-                <th style="text-align:left">시나리오</th>
-                <th>수익률</th><th>물가</th><th>공백기</th><th>완성기</th><th>은퇴시 총자산</th><th>런웨이</th>
+                <th style="text-align:left">상황</th><th>최저 세후</th><th>생활비 미달</th><th>자산 유지</th>
               </tr></thead>
               <tbody id="sc-body"></tbody>
             </table>
+            <div class="mini-note" id="sc-note"></div>
           </div>
           <div id="needWrap" style="display:none;">
-            <div id="need-only-compare"></div>
+            <div id="need-head"></div>
+            <table>
+              <thead><tr>
+                <th style="text-align:left">바꾸는 것</th><th>바꾼 값</th><th>최저 세후</th><th id="need-th4">충족하려면</th>
+              </tr></thead>
+              <tbody id="need-body"></tbody>
+            </table>
+            <div class="mini-note" id="need-note"></div>
           </div>
         </div>
         <!-- 자동설계 요약: 마지막 자동설계 결과(팝업과 같은 내용)를 차트 자리에 겹쳐 표시 -->
@@ -1439,6 +1504,10 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <script>
 // 생활비 여유/부족 색 축 — 월 현금흐름 차트의 세후 합계 선·지표 카드·배너·툴팁 공통(생활비 기준선은 C.exp 검정 점선).
 // 파랑/빨강은 적록색약에도 구분되고 계좌 막대 색과 겹치지 않는다. 포트폴리오의 한국식 상승(빨강)/하락(파랑)과는 별개 축.
+// 계좌 이름 한 곳 — 카드 제목과 같은 이름(full)을 화면 어디서나 쓰고, 범례처럼 좁은 곳만 short.
+// 금액 숨기기는 금융회사 이름만 CO_RE로 바꾼다(농협→계좌 1, 미래→계좌 2).
+const ACCT_NAME = {nh:'개인연금 농협', mf:'개인연금 미래', irp:'IRP 개인 미래', tirp:'퇴직연금 DC 농협', isa:'ISA', np:'국민연금'};
+const ACCT_SHORT = {nh:'연금 농협', mf:'연금 미래', irp:'IRP 미래', tirp:'퇴직IRP', isa:'ISA', np:'국민연금'};
 const NET_OK = '#007AFF', NET_SHORT = '#FF3B30';
 const C={
   // 계좌 카드 머리(--ac)와 같은 iOS 시스템 컬러 — 사적연금 3계좌는 초록→민트→시안 계열, 나머지는 따로 식별
@@ -1449,6 +1518,7 @@ const C={
   np:  {fill:'rgba(255,149,0,0.88)',   line:'#FF9500'},  // 국민연금: Orange
   isa: {fill:'rgba(255,100,130,0.78)', line:'#FF6482'},  // ISA: Pink(세후 부족 빨강 선과 구분되게 밝은 핑크)
   prin:{fill:'rgba(212,172,43,0.85)',  line:'#D4AC2B'},  // 안세공: 옐로우(국민연금 오렌지와 분리)
+  oth: {fill:'rgba(162,132,94,0.85)',  line:'#A2845E'},  // 은퇴 후 근로·기타 소득: Brown
   exp: {line:'#1C1C1E'},  // 생활비 기준선: 검정 점선(중립 — 빨강은 "세후 부족" 전용)
 };
 
@@ -1708,7 +1778,7 @@ function sv(id, v){
 /* ── 포트폴리오 대시보드 잔액 연동 ──
    shared/bridge.js 가 pf_assets_v1(포트폴리오 localStorage)을 읽어 계좌별 KRW 합계를 계산해준다.
    버튼을 누를 때마다 항상 현재 포트폴리오 값으로 덮어쓴다(직접 입력한 값도 포함). */
-const PF_SYNC_LABELS = {nh:'농협 연금저축', mf:'미래에셋 연금저축', irp:'IRP(개인납입)', tirp:'퇴직연금(DC→퇴직IRP)', isa:'ISA'};
+const PF_SYNC_LABELS = {nh:ACCT_NAME.nh, mf:ACCT_NAME.mf, irp:ACCT_NAME.irp, tirp:ACCT_NAME.tirp, isa:ACCT_NAME.isa};
 function fillFromPortfolio(id){
   const statusEl = document.getElementById('pfSyncStatus');
   const setStatus = (msg) => { if(statusEl) statusEl.textContent = msg; };
@@ -1734,7 +1804,7 @@ function fillFromPortfolio(id){
   upd();
   let msg = `✅ 포트폴리오 값(${v.toLocaleString()}만원)으로 채웠습니다.`;
   if((id==='nh'||id==='mf') && snap.unclassifiedPersonalPension>0){
-    msg += ` · ⚠️ 세부계좌 미지정 개인연금 ${snap.unclassifiedPersonalPension.toLocaleString()}만원은 반영되지 않았습니다 — 포트폴리오에서 농협/미래에셋 세부계좌를 지정해 주세요.`;
+    msg += ` · ⚠️ 세부계좌 미지정 개인연금 ${snap.unclassifiedPersonalPension.toLocaleString()}만원은 반영되지 않았습니다 — 포트폴리오에서 개인연금의 금융회사(농협/미래에셋)를 지정해 주세요.`;
   }
   setStatus(msg);
 }
@@ -1874,7 +1944,7 @@ function acctSpans(res){
     return a.length ? [a[0].age, a[a.length-1].age] : null;
   };
   return {prin: span(x => x.prinInc), isa: span(x => x.gross.isa), mf: span(x => x.gross.mf), nh: span(x => x.gross.nh),
-          irp: span(x => x.gross.irp), tirp: span(x => x.gross.tirp), np: span(x => x.npInc)};
+          irp: span(x => x.gross.irp), tirp: span(x => x.gross.tirp), np: span(x => x.npInc), oth: span(x => x.othInc)};
 }
 const spanTxt = s => s ? (s[0] === s[1] ? s[0]+'세' : s[0]+'~'+s[1]+'세') : '';
 
@@ -1936,10 +2006,10 @@ function renderSuggestBox(p, plan, res){
   box.innerHTML = `<div style="font-size:9px;color:#636366;margin:2px 0 4px;">※ 금액은 "오늘(${p.age}세) 돈 가치"이며 실제로는 매년 물가(${p.inf}%)만큼 늘어납니다(국민연금도 매년 물가연동). 생활비 비교는 세후(세금·건보료를 뺀 금액)입니다.</div>
 ${s.hasGap ? `<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 공백기 (${p.ret}~${p.npage-1}세)</div>
 <ul>
-  ${prinTotal > 0 ? `<li>비과세 원금(안세공) <b>${prinTotal.toLocaleString()}만</b> → 법정 인출순서상 농협·미래에셋 인출액에서 가장 먼저 빠져${res.prinExhaustAge ? ` 약 ${res.prinExhaustAge}세까지` : ''} 세금 없음·1,500만원 판정 제외${sub(`입력 ${(T.nhInput+T.mfInput).toLocaleString()}만(2026년 말 확정)${prinAuto > 0 ? ` + 2027년~ 세액공제 한도 초과 납입분 자동 ${prinAuto.toLocaleString()}만` : ''}${ex.years > 0 ? ` · 연금저축을 연금으로 못 받는 ${p.ret}~54세에는 월 ${ex.nh + ex.mf}만(정액) 가교 인출` : ''}`)}</li>` : ''}
+  ${prinTotal > 0 ? `<li>비과세 원금(안세공) <b>${prinTotal.toLocaleString()}만</b> → 법정 인출순서상 ${ACCT_NAME.nh}·${ACCT_NAME.mf} 인출액에서 가장 먼저 빠져${res.prinExhaustAge ? ` 약 ${res.prinExhaustAge}세까지` : ''} 세금 없음·1,500만원 판정 제외${sub(`입력 ${(T.nhInput+T.mfInput).toLocaleString()}만(2026년 말 확정)${prinAuto > 0 ? ` + 2027년~ 세액공제 한도 초과 납입분 자동 ${prinAuto.toLocaleString()}만` : ''}${ex.years > 0 ? ` · 연금저축을 연금으로 못 받는 ${p.ret}~54세에는 월 ${ex.nh + ex.mf}만(정액) 가교 인출` : ''}`)}</li>` : ''}
   <li>ISA <b>${spanTxt(sp.isa) || plan.isaage+'세~'} 월 ${m(plan.isam)}만</b> → ${plan.info.isaEnd}세까지 소진${sub(isaTxt)}</li>
-  <li>미래에셋 <b>${spanTxt(sp.mf) || plan.mfage+'세~'} 월 ${m(plan.mfpay)}만</b> → ${plan.info.mfEnd}세까지 소진</li>
-  <li>농협 <b>${plan.nhage}세~ 월 ${m(plan.nhpay)}만</b> → ${p.life}세까지 나눠 받음</li>
+  <li>${ACCT_NAME.mf} <b>${spanTxt(sp.mf) || plan.mfage+'세~'} 월 ${m(plan.mfpay)}만</b> → ${plan.info.mfEnd}세까지 소진</li>
+  <li>${ACCT_NAME.nh} <b>${plan.nhage}세~ 월 ${m(plan.nhpay)}만</b> → ${p.life}세까지 나눠 받음</li>
   ${plan.mfage > p.ret ? `<li>연금저축·IRP는 만 55세부터 연금 수령 가능 — <b>${p.ret}~54세는 ISA·비과세 원금</b>으로 충당</li>` : ''}
   ${tirpInGap ? `<li>${tirpLi}</li>` : ''}
   <li>공백기 세후 월평균 <b>${s.gapNet}만원</b>${sub(`생활비 ${p.exp}만 대비 ${vs(s.gapVs)} · 세전 ${s.gapGross}만`)}</li>
@@ -1948,15 +2018,15 @@ ${s.hasGap ? `<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 
 <ul>
   <li>국민연금 <b>${p.npage}세~ 월 ${p.np}만</b> → 첫해 명목 약 ${dep.npNom}만, 이후 매년 물가연동</li>
   ${tirpInGap ? `<li>퇴직IRP 월 ${m(plan.tm)}만 — ${sp.tirp[0]}세부터 계속(위 참고)</li>` : `<li>${tirpLi}</li>`}
-  <li>IRP개인 <b>${plan.irpage}세~ 월 ${m(plan.irppay)}만</b> → ${p.life}세 소진</li>
-  <li>농협 <b>월 ${m(plan.nhpay)}만</b> 계속 → ${p.life}세 소진</li>
+  <li>${ACCT_NAME.irp} <b>${plan.irpage}세~ 월 ${m(plan.irppay)}만</b> → ${p.life}세 소진</li>
+  <li>${ACCT_NAME.nh} <b>월 ${m(plan.nhpay)}만</b> 계속 → ${p.life}세 소진</li>
   ${sp.isa && sp.isa[1] >= fullStart ? `<li>ISA ${spanTxt(sp.isa)} — 완성기에도 계속</li>` : ''}
-  ${sp.mf && sp.mf[1] >= fullStart ? `<li>미래에셋 ${spanTxt(sp.mf)} — 완성기에도 계속</li>` : ''}
+  ${sp.mf && sp.mf[1] >= fullStart ? `<li>${ACCT_NAME.mf} ${spanTxt(sp.mf)} — 완성기에도 계속</li>` : ''}
   <li>완성기 세후 월평균 <b>${s.fullNet}만원</b>${sub(`생활비 ${p.exp}만 대비 ${vs(s.fullVs)} · 세전 ${s.fullGross}만`)}</li>
 </ul>
 <div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 평탄화·세금</div>
 <ul>
-  <li>퇴직IRP 개시 ${plan.tage}세·ISA ${plan.info.isaEnd}세·미래에셋 ${plan.info.mfEnd}세 소진은 해마다 세후 소득 중 가장 적은 해가 가장 크도록 자동 탐색(비슷하면 세금이 적은 쪽)
+  <li>퇴직IRP 개시 ${plan.tage}세·ISA ${plan.info.isaEnd}세·${ACCT_NAME.mf} ${plan.info.mfEnd}세 소진은 해마다 세후 소득 중 가장 적은 해가 가장 크도록 자동 탐색(비슷하면 세금이 적은 쪽)
     ${sub(`세후 월 소득 최저 ${Math.round(res.minNetReal)}만 ~ 최고 ${Math.round(res.maxNetReal)}만 · ${res.shortNetYears > 0 ? `생활비 ${p.exp}만에 못 미치는 해 ${res.shortNetYears}년(${res.firstShortNetAge}세부터)` : `전 기간 생활비 ${p.exp}만 이상`}`)}</li>
   <li>사적연금 과세분(연금저축·IRP 세액공제분·운용수익 + 퇴직IRP 운용수익) 최대 연 <b>${res.maxPrivAnnual.toLocaleString()}만</b>${res.maxPrivAge ? `(${res.maxPrivAge}세)` : ''}
     ${sub(over ? `${over}세부터 저율과세 기준 ${p.plimit.toLocaleString()}만 초과(${res.overPlimitYears}년) — 인출은 계획대로 하고, 해마다 16.5% 분리과세·종합과세 중 적은 쪽으로 계산해 세후에 반영` : `전 기간 저율과세 기준 ${p.plimit.toLocaleString()}만 이내 — 연령별 저율 분리과세(종합과세가 더 유리하면 종합과세)`)}</li>
@@ -2027,8 +2097,8 @@ function planBannerHtml(p, plan, res){
     const gapItems = [
       prinTotal > 0 && {dot:C.prin.line, label:'안세공', val:prinTotal.toLocaleString()+'만', unit:'', note: res.prinExhaustAge ? `먼저 비과세 · ~${res.prinExhaustAge}세` : '먼저 비과세'},
       sp.isa && {dot:C.isa.line, label:'ISA',      val:m(plan.isam),  note:spanTxt(sp.isa)},
-      sp.mf  && {dot:C.mf.line,  label:'미래에셋', val:m(plan.mfpay), note:spanTxt(sp.mf)},
-      {dot:C.nh.line,  label:'농협',     val:m(plan.nhpay), note:plan.nhage+'세~'},
+      sp.mf  && {dot:C.mf.line,  label:ACCT_NAME.mf, val:m(plan.mfpay), note:spanTxt(sp.mf)},
+      {dot:C.nh.line,  label:ACCT_NAME.nh, val:m(plan.nhpay), note:plan.nhage+'세~'},
       tirpInGap && tirpItem,
     ].filter(Boolean);
     pbSet('pb-gap-rows', pbRows(gapItems));
@@ -2043,10 +2113,10 @@ function planBannerHtml(p, plan, res){
   pbSet('pb-full-rows', pbRows([
     {dot:C.np.line,  label:'국민연금',     val:p.np+'만',       note:p.npage+'세~ 물가연동'},
     tirpItem,
-    {dot:C.nh.line,  label:'농협연금저축', val:m(plan.nhpay),  note:'물가반영'},
-    {dot:C.irp.line, label:'IRP개인납입',  val:m(plan.irppay), note:plan.irpage+'세~'},
+    {dot:C.nh.line,  label:ACCT_NAME.nh, val:m(plan.nhpay),  note:'물가반영'},
+    {dot:C.irp.line, label:ACCT_NAME.irp, val:m(plan.irppay), note:plan.irpage+'세~'},
     sp.isa && sp.isa[1] >= fullStart && {dot:C.isa.line, label:'ISA', val:m(plan.isam), note:'~'+sp.isa[1]+'세'},
-    sp.mf && sp.mf[1] >= fullStart && {dot:C.mf.line, label:'미래에셋', val:m(plan.mfpay), note:'~'+sp.mf[1]+'세'},
+    sp.mf && sp.mf[1] >= fullStart && {dot:C.mf.line, label:ACCT_NAME.mf, val:m(plan.mfpay), note:'~'+sp.mf[1]+'세'},
   ].filter(Boolean)));
 
   // 팁 — 카드 상태줄과 겹치는 문장은 두지 않고, 부족할 때의 행동 제안 + 세율·한도·건보료만 한 줄씩
@@ -2128,7 +2198,9 @@ const ALL_FIELDS = [
   'np','npbase','npage',
   'isa','isay','isaymon','isastart','isaend','isaage','isam',
   'rnh','rmf','rirp','rtirp','risa','inf',
-  'hi_business','hi_labor','hi_interest','hi_dividend','hi_other','hi_rentprop','hi_dep'
+  'hi_business','hi_labor','hi_interest','hi_dividend','hi_other','hi_rentprop','hi_dep',
+  'hi_labor_from','hi_labor_to','hi_business_from','hi_business_to','hi_other_from','hi_other_to',
+  'hi_vol','hi_volprem','np_volprem','npyears','npcont'
 ];
 
 // 초기화 버튼이 location.reload()에만 의존하면, 일부 모바일 브라우저가 새로고침 시
@@ -2258,6 +2330,10 @@ function getP(){
     hi_business:gv('hi_business'),hi_labor:gv('hi_labor'),hi_interest:gv('hi_interest'),
     hi_dividend:gv('hi_dividend'),hi_other:gv('hi_other'),hi_rentprop:gv('hi_rentprop'),
     hi_dep:document.getElementById('hi_dep')?.value === 'yes' ? 'yes' : 'no',
+    hi_labor_from:gv('hi_labor_from'),hi_labor_to:gv('hi_labor_to'),hi_business_from:gv('hi_business_from'),hi_business_to:gv('hi_business_to'),
+    hi_other_from:gv('hi_other_from'),hi_other_to:gv('hi_other_to'),
+    hi_vol:document.getElementById('hi_vol')?.value === 'yes' ? 'yes' : 'no', hi_volprem:gv('hi_volprem'),
+    np_volprem:gv('np_volprem'), npyears:gv('npyears'), npcont:document.getElementById('npcont')?.value === 'stop' ? 'stop' : 'cont',
     curYear:new Date().getFullYear(), // 미래 안세공 자동 합산(2027년~)의 연도 기준
     tirptaxManual:_tirptaxManual      // 퇴직소득세를 직접 입력했으면 자동설계도 그 값 사용
   };
@@ -2278,6 +2354,83 @@ function setTab(t){ chartTab=t; _altView=null; upd(); }
 
 /* ── 비교 보기(수익률 민감도·소진 vs 필요분) — 차트 자리에 겹쳐 표시 ──
    같은 탭을 다시 누르면 차트로 돌아감. 차트 자체는 뒤에서 계속 그려 둠(단계 카드 정렬 유지). */
+/* ── 부족 대책 보기 ──
+   계산은 calc-whatif.js whatIfTasks(순수 함수) — 입력을 하나만 바꿔 자동설계+시뮬레이션을 다시 돌린 실제 결과다.
+   행마다 0.1~0.3초 걸려 하나씩 실행해 채운다. 입력이 같으면 다시 계산하지 않고, 바뀌면 이전 실행을 취소한다. */
+let _needKey = '', _needRun = 0, _needTimer = null;
+function scheduleNeedView(){ clearTimeout(_needTimer); _needTimer = setTimeout(renderNeedView, 350); }
+function renderNeedView(){
+  const body = document.getElementById('need-body');
+  if(!body || _altView !== 'need') return;
+  const p = getP(), key = JSON.stringify(p);
+  if(key === _needKey) return;
+  _needKey = key;
+  const run = ++_needRun;
+  const got = {};
+  const M = v => Math.round(v).toLocaleString() + '만', sg = v => (v >= 0 ? '+' : '−') + Math.abs(Math.round(v)).toLocaleString();
+  const paint = () => {
+    const b = got.base;
+    const head = document.getElementById('need-head'), th4 = document.getElementById('need-th4'), note = document.getElementById('need-note');
+    if(!b){ head.innerHTML = '<div class="mini-note" style="margin:0 0 6px;">계산 중…</div>'; body.innerHTML = ''; return; }
+    const short = b.short, vs = b.minNet - p.exp;
+    head.innerHTML = `<div class="need-head">자동설계 기준 매년 최소 <b style="color:${short ? NET_SHORT : NET_OK}">${M(b.minNet)}</b> · 평균 ${M(b.avgNet)} <span>(세후·오늘 가치) 생활비 ${M(p.exp)} 대비</span> <b style="color:${short ? NET_SHORT : NET_OK}">${sg(vs)}만</b></div>`;
+    th4.textContent = short ? '충족하려면' : '가능한 만큼';
+    const rows = [];
+    const cell = (v, d) => v == null ? '<td>—</td>' : `<td><b>${M(v)}</b> <span style="color:${d >= 0 ? NET_OK : NET_SHORT}">(${sg(d)})</span></td>`;
+    const row = (name, change, minNet, delta, result) => rows.push(`<tr><td style="text-align:left;font-weight:600;">${name}</td><td>${change}</td>${minNet == null ? '<td>—</td>' : cell(minNet, delta)}<td>${result}</td></tr>`);
+    const e = got.exp, r = got.ret, sv = got.save, n = got.np, d = got.need;
+    if(e) row('월 생활비', `${p.exp} → ${e.to}만`, null, 0, short ? `${M(e.to)}이면 충족` : `최대 ${M(e.to)}까지`);
+    if(r){
+      if(short) row('은퇴 나이', r.to ? `${p.ret} → ${r.to}세` : '—', r.to ? r.minNet : null, r.delta, r.reach ? `${r.reach}세면 충족` : '70세까지 늦춰도 부족');
+      else row('은퇴 나이', r.reach ? `${p.ret} → ${r.reach}세` : '—', r.reach ? r.minNet : null, r.delta, r.reach ? `${r.reach}세까지 앞당겨도 충족` : '더 앞당기면 부족');
+    }
+    if(short && sv){
+      if(sv.none) row('연금저축 월 납입', '—', null, 0, '납입할 해가 없음');
+      else row('연금저축 월 납입', `+${sv.extra}만/월`, sv.minNet, sv.delta, sv.reach ? `+${sv.reach}만이면 충족` : `한도(+${sv.room}만) 안에선 부족`);
+    }
+    if(short && n && !n.none) row('국민연금 수령', `${p.npage} → ${n.to}세`, n.minNet, n.delta, n.ok ? '—' : '자산 유지 못함');
+    if(d && !d.none) row('필요분만 인출', `여유 ${d.surplusYears}년`, null, 0, `${p.life}세 잔여 ${(Math.round(d.leftoverFull/1000)/10)}억 → ${(Math.round(d.leftoverNeed/1000)/10)}억`);
+    body.innerHTML = rows.join('') || '<tr><td colspan="4" style="color:#8e8e93;">계산 중…</td></tr>';
+    if(note) note.textContent = short
+      ? '각 행은 그것 하나만 바꾸고 자동설계를 다시 계산한 값입니다. 괄호는 지금 자동설계 대비 변화.'
+      : '생활비를 채우고도 남는 구간입니다. 각 행은 그것 하나만 바꾸고 자동설계를 다시 계산한 값입니다.';
+  };
+  paint();
+  const tasks = whatIfTasks(p);
+  let i = 0;
+  const step = () => {
+    if(run !== _needRun) return;                       // 입력이 바뀌어 새 실행이 시작됨
+    const t = tasks[i++];
+    if(!t){ return; }
+    const r = t.run();
+    got[r.key] = r;
+    paint();
+    setTimeout(step, 0);
+  };
+  setTimeout(step, 0);
+}
+
+/* ── 위기 점검 보기 — 지금 입력한 계획(인출액 그대로)에 위기 상황을 하나씩 얹어 본다.
+   계산은 calc-whatif.js stressRows(순수 함수). 한 번에 7~8번의 시뮬레이션이라 즉시 계산한다. */
+function renderStressView(){
+  const body = document.getElementById('sc-body');
+  if(!body || _altView !== 'sc') return;
+  const p = getP();
+  const rows = stressRows(p);
+  const M = v => Math.round(v).toLocaleString() + '만';
+  body.innerHTML = rows.map(r => {
+    const ok = r.ok, shortTxt = r.shortYears ? `${r.shortYears}년 (${r.firstShortAge}세~)` : '없음';
+    return '<tr class="'+(r.key==='base' ? 'cur-row' : '')+'">'
+      + '<td style="text-align:left;font-weight:'+(r.key==='base'?700:500)+';">'+r.label+(r.note ? '<div style="font-size:9px;color:#8e8e93;font-weight:400;">'+r.note+'</div>' : '')+'</td>'
+      + '<td style="font-weight:700;color:'+(r.minNet >= p.exp - 0.5 ? NET_OK : NET_SHORT)+'">'+M(r.minNet)+'</td>'
+      + '<td style="color:'+(r.shortYears ? NET_SHORT : '#248a3d')+'">'+shortTxt+'</td>'
+      + '<td style="font-weight:700;color:'+(ok ? '#248a3d' : '#ff3b30')+'">'+(ok ? r.life+'세+' : r.runway+'세 소진')+'</td>'
+      + '</tr>';
+  }).join('');
+  const note = document.getElementById('sc-note');
+  if(note) note.textContent = '지금 입력한 인출 계획을 그대로 두고 상황만 바꾼 결과입니다. 최저 세후는 매년 중 가장 적은 해(오늘 돈 가치).';
+}
+
 let _altView = null;   // null | 'sc' | 'need' | 'basis' | 'plan'
 function setAltView(v){
   _altView = (_altView === v) ? null : v;
@@ -2293,6 +2446,8 @@ function applyViewState(){
     document.getElementById('scWrap').style.display   = _altView==='sc'   ? 'block' : 'none';
     document.getElementById('needWrap').style.display = _altView==='need' ? 'block' : 'none';
   }
+  if(_altView==='need') renderNeedView();
+  if(_altView==='sc') renderStressView();
   // 자동설계 근거: 차트 자리에 겹쳐 보이고, 이때만 아래 단계 카드(적립기·공백기·완성기)를 숨겨 근거를 넓게 본다
   const basisV = _altView==='basis', planV = _altView==='plan';
   const basis = basisV || planV;   // 요약·근거 보기는 둘 다 단계 카드를 숨겨 넓게 본다
@@ -2433,13 +2588,14 @@ window.addEventListener('resize', scheduleFit);
 // 그려지면 크기가 0으로 굳어버리므로, 결과 탭으로 전환할 때는 항상 upd()를 다시 호출해
 // 실제로 보이는 크기로 다시 그린다.
 let mainTab='design';
-// 4개 탭(설계/예상결과/건보료 설계/세금 상식) 중 하나만 아래 화면으로 보인다.
+// 5개 탭(설계/소득·지출/예상결과/건보료 설계/세금 상식) 중 하나만 아래 화면으로 보인다.
 function setMainTab(t){
   mainTab=t;
-  const on = {design:'mtb-design', result:'mtb-result', health:'mtb-health', tax:'mtb-tax'};
+  const on = {design:'mtb-design', income:'mtb-income', result:'mtb-result', health:'mtb-health', tax:'mtb-tax'};
   Object.keys(on).forEach(k=>{ document.getElementById(on[k]).className='tab-btn'+(k===t?' on':''); });
   document.getElementById('designTab').style.display = t==='design' ? '' : 'none';
   document.getElementById('resultTab').style.display = t==='result' ? '' : 'none';
+  document.getElementById('incomePanel').classList.toggle('show', t==='income');
   document.getElementById('healthPanel').classList.toggle('show', t==='health');
   document.getElementById('taxGuidePanel').classList.toggle('show', t==='tax');
   if(t==='result') upd();
@@ -2474,11 +2630,23 @@ function calcHealthPremiumClick(btn){
 function renderHealthPanel(){
   const el = document.getElementById('healthPanel');
   if(!el || !el.classList.contains('show')) return;
+  const stripEl = document.getElementById('healthStrip');
   const badgeEl = document.getElementById('healthStatusBadge');
   const detailEl = document.getElementById('healthDetail');
   if(!badgeEl || !detailEl) return;
 
   const p = getP();
+  // 은퇴~기대수명 연도별 건보료(오늘 가치 월) — 임의계속가입 구간은 파랑, 피부양자 해는 초록(0)
+  if(stripEl){
+    const rows = simulate(p, SA.base).rows;
+    const mx = Math.max(1, ...rows.map(x => x.hi / x.infMul));
+    stripEl.innerHTML = rows.length
+      ? '<div class="health-strip">' + rows.map(x => {
+          const v = x.hi / x.infMul;
+          return '<i class="'+(x.hiVol ? 'vol' : v === 0 ? 'dep' : '')+'" style="height:'+Math.max(6, Math.round(v / mx * 38))+'px" title="'+x.age+'세 월 '+(Math.round(v*10)/10)+'만'+(x.hiVol ? ' (임의계속)' : v === 0 ? ' (피부양자)' : '')+'"></i>';
+        }).join('') + '</div><div class="health-strip-cap"><span>'+rows[0].age+'세</span><span>월 · 오늘 가치</span><span>'+rows[rows.length-1].age+'세</span></div>'
+      : '';
+  }
   // 피부양자 판정: 국민연금 개시 시점의 명목 금액으로(기준선 2,000만원은 물가로 오르지 않는 명목 고정)
   const dep = dependentAtNpStart(p);
   const totalIncome = dep.income;
@@ -2491,8 +2659,9 @@ function renderHealthPanel(){
   if(refRe) refRe.textContent = p.realestate.toLocaleString();
 
   // 현금흐름에 실제로 빼는 금액(오늘 가치) — calc.js healthPremiumYear와 같은 계산
-  const hiGap = healthPremiumYear(p, p.ret, 0, 1).monthlyReal;
-  const hiFull = healthPremiumYear(p, Math.max(p.ret, p.npage), p.np, 1).monthlyReal;
+  const hiAt = age => Math.round(healthPremiumYear(p, age, age >= p.npage ? p.np : 0, Math.pow(1 + p.inf/100, age - p.age), p.inf).monthlyReal * 10) / 10;   // simulate와 같은 단위(그 해 물가 배수)
+  const hiFull = hiAt(Math.max(p.ret, p.npage));
+  const hiGap = hiAt(p.ret);
   const flowNote = '<div style="margin:0 0 6px;font-size:10.5px;color:#1c1c1e;">현금흐름에서 차감: '
     + (p.npage > p.ret ? '공백기('+p.ret+'~'+(p.npage-1)+'세) 월 <b>'+hiGap+'만</b> · ' : '')
     + '국민연금 수령 후 월 <b>'+hiFull+'만</b> (오늘 돈 가치, 매년 물가만큼 증가)</div>';
@@ -2565,9 +2734,9 @@ function renderAssetTooltip(idx){
     <div class="tt-total">📅 ${row.label}${row.phase==='acc'?' (은퇴 전)':''} &nbsp;|&nbsp; 총 자산 <b style="color:#8944ab">${total}억원</b></div>
     <div class="tt-grid">
       <div class="tt-row full">${dot(C.nh.line)}<b>연금저축 합계 ${privTotal}억</b></div>
-      <div class="tt-row">${dot(C.nh.line)}농협 ${nhB}억</div>
-      <div class="tt-row">${dot(C.mf.line)}미래에셋 ${mfB}억</div>
-      <div class="tt-row">${dot(C.irp.line)}IRP개인 ${irpB2}억</div>
+      <div class="tt-row">${dot(C.nh.line)}${ACCT_NAME.nh} ${nhB}억</div>
+      <div class="tt-row">${dot(C.mf.line)}${ACCT_NAME.mf} ${mfB}억</div>
+      <div class="tt-row">${dot(C.irp.line)}${ACCT_NAME.irp} ${irpB2}억</div>
       <div class="tt-row">${dot(C.dc.line)}<b>퇴직연금 ${tirp}억</b></div>
       <div class="tt-row">${dot(C.isa.line)}<b>ISA ${isa}억</b></div>
     </div>
@@ -2609,8 +2778,8 @@ function showCustomTooltip(evt, activeEls, chart){
     const p = _chartP || getP();
     const d = row.dep, m = v => (v>=1 && v<=12 ? v : 1) + '월';
     const acts = [
-      d.nh  > 0 && {c:C.nh.line,  t:`농협 연금저축 매월 ${d.nh.toLocaleString()}만`},
-      d.mf  > 0 && {c:C.mf.line,  t:`미래에셋 연금저축 매월 ${d.mf.toLocaleString()}만`},
+      d.nh  > 0 && {c:C.nh.line,  t:`${ACCT_NAME.nh} 매월 ${d.nh.toLocaleString()}만`},
+      d.mf  > 0 && {c:C.mf.line,  t:`${ACCT_NAME.mf} 매월 ${d.mf.toLocaleString()}만`},
       d.irp > 0 && {c:C.irp.line, t:`IRP ${m(p.irpymon)} ${d.irp.toLocaleString()}만 일시납`},
       d.isa > 0 && {c:C.isa.line, t:`ISA ${m(p.isaymon)} ${d.isa.toLocaleString()}만 일시납`},
       d.dc  > 0 && {c:C.dc.line,  t:`퇴직연금 DC ${m(p.tdcymon)} ${d.dc.toLocaleString()}만 회사 적립`},
@@ -2646,13 +2815,14 @@ function showCustomTooltip(evt, activeEls, chart){
 
   let rows_html = '';
   const items = [
-    {label:'농협연금저축', val:row.nhInc, dot:C.nh.line},
-    {label:'미래에셋연금저축', val:row.mfInc, dot:C.mf.line},
-    {label:'IRP(개인납입)', val:row.irpInc, dot:C.irp.line},
+    {label:ACCT_NAME.nh, val:row.nhInc, dot:C.nh.line},
+    {label:ACCT_NAME.mf, val:row.mfInc, dot:C.mf.line},
+    {label:ACCT_NAME.irp, val:row.irpInc, dot:C.irp.line},
     {label:'국민연금', val:row.npInc, dot:C.np.line},
     {label:'퇴직IRP', val:row.tirpInc, dot:C.dc.line},
     {label:'ISA인출', val:row.isaInc, dot:C.isa.line},
     {label:'안세공 비과세인출', val:row.prinInc, dot:C.prin.line},
+    {label:'근로·기타 소득', val:row.othInc, dot:C.oth.line},
   ];
   items.forEach(it=>{
     if((it.val||0)>0){
@@ -2663,7 +2833,7 @@ function showCustomTooltip(evt, activeEls, chart){
   // 계좌 항목은 2열 — 최대 7줄이 4줄로 줄어 차트 최소 높이(180px) 안에 들어감
   tip.innerHTML = `
     <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 월 수령 합계 <b style="color:#248a3d">${totalInc}만원</b> <span style="color:#8e8e93;font-weight:500;">(오늘 기준 ${realTotal}만)</span></div>
-    <div class="tt-exp" style="color:#8944ab;">💸 세후 약 <b>${row.netInc}만원</b> <span style="color:#8e8e93;">(세금 ${row.taxTotal}만 · 건보료 ${row.hi}만)</span></div>
+    <div class="tt-exp" style="color:#8944ab;">💸 세후 약 <b>${row.netInc}만원</b> <span style="color:#8e8e93;">(세금 ${row.taxTotal}만 · 건보료 ${row.hi}만${row.hiVol ? '·임의계속' : ''}${row.npPrem > 0 ? ' · 국민연금 보험료 '+row.npPrem+'만' : ''})</span></div>
     <div class="tt-exp">📉 월 생활비 예측: <b style="color:#1c1c1e">${curExp}만원</b></div>
     <div class="tt-net" style="color:${netColor};">${net>=0?'✅':'⚠️'} ${netLabel}</div>
     ${row.taxedOverAnnual > 0.5 ? `<div class="tt-exp" style="color:#c93400;">연금수령한도 초과 연 ${Math.round(row.taxedOverAnnual).toLocaleString()}만 → 16.5%(퇴직IRP는 감면 없음) 과세</div>` : ''}
@@ -2743,13 +2913,14 @@ function drawChart(rows, p){
   if(chartTab==='flow'){
     // 보기 탭이 4개라 범례가 다음 줄로 밀리지 않게 짧은 이름 사용(자세한 이름은 팝업에)
     document.getElementById('chart-legend').innerHTML=[
-      {c:C.nh.fill, l:'농협'},
-      {c:C.mf.fill, l:'미래에셋'},
-      {c:C.irp.fill,l:'IRP'},
+      {c:C.nh.fill, l:ACCT_SHORT.nh},
+      {c:C.mf.fill, l:ACCT_SHORT.mf},
+      {c:C.irp.fill,l:ACCT_SHORT.irp},
       {c:C.np.fill, l:'국민연금'},
       {c:C.dc.fill, l:'퇴직IRP'},
       {c:C.isa.fill,l:'ISA'},
       {c:C.prin.fill,l:'안세공'},
+      {c:C.oth.fill,l:'근로·기타'},
       {c:C.exp.line,l:'생활비',dashed:true},
       {c:NET_OK,l:'세후 여유',line:true},
       {c:NET_SHORT,l:'세후 부족',line:true},
@@ -2758,13 +2929,14 @@ function drawChart(rows, p){
 
     mainChart=new Chart(ctx,{type:'bar',
       data:{labels:rows.map(r=>r.label), datasets:[
-        {label:'농협연금저축(세공)',    data:rows.map(r=>isAcc(r)?r.nhDep:r.nhInc),   backgroundColor:tone('nh'), stack:'s'},
-        {label:'미래에셋연금저축(세공)',data:rows.map(r=>isAcc(r)?r.mfDep:r.mfInc),   backgroundColor:tone('mf'), stack:'s'},
-        {label:'IRP(개인납입)',   data:rows.map(r=>isAcc(r)?r.irpDep:r.irpInc),  backgroundColor:tone('irp'),stack:'s'},
+        {label:ACCT_NAME.nh+'(세공)', data:rows.map(r=>isAcc(r)?r.nhDep:r.nhInc),   backgroundColor:tone('nh'), stack:'s'},
+        {label:ACCT_NAME.mf+'(세공)', data:rows.map(r=>isAcc(r)?r.mfDep:r.mfInc),   backgroundColor:tone('mf'), stack:'s'},
+        {label:ACCT_NAME.irp, data:rows.map(r=>isAcc(r)?r.irpDep:r.irpInc),  backgroundColor:tone('irp'),stack:'s'},
         {label:'국민연금',         data:rows.map(r=>isAcc(r)?0:r.npInc),         backgroundColor:tone('np'), stack:'s'},
         {label:'퇴직IRP',          data:rows.map(r=>isAcc(r)?r.dcDep:r.tirpInc), backgroundColor:tone('dc'), stack:'s'},
         {label:'ISA인출',          data:rows.map(r=>isAcc(r)?r.isaDep:r.isaInc), backgroundColor:tone('isa'),stack:'s'},
         {label:'안세공 비과세인출', data:rows.map(r=>isAcc(r)?0:r.prinInc),        backgroundColor:tone('prin'),stack:'s'},
+        {label:'근로·기타 소득',   data:rows.map(r=>isAcc(r)?0:r.othInc),         backgroundColor:tone('oth'), stack:'s'},
         // 세후 합계 선 — 그해 세후가 생활비 이상이면 파랑, 미만이면 빨강. 두 해 사이에서 넘나들면
         // 차이(세후−생활비)가 0이 되는 지점(t = d0/(d0−d1))에서 색이 바뀌도록 구간을 그라디언트로 칠한다.
         {label:'세후 합계(선)', data:rows.map(r=>isAcc(r)?null:r.netInc),
@@ -2862,11 +3034,18 @@ function upd(){
     });
   })();
 
+  // 은퇴 후 소득 기간 칸 placeholder = 빈칸일 때 적용되는 값(은퇴 나이·기대수명)
+  ['hi_labor','hi_business','hi_other'].forEach(k=>{
+    const f = document.getElementById(k+'_from'), t = document.getElementById(k+'_to');
+    if(f) f.placeholder = String(p.ret);
+    if(t) t.placeholder = String(p.life);
+  });
+
   // 국민연금 "실제 월 수령액"(np)은 "65세 기준 예상액"(npbase)에 조기·연기수령
   // 가산율을 자동 반영해 매번 다시 계산 — 수령 시작 나이만 바꾸면 자동으로 맞춰짐
   (function(){
     const factor = npsAdjustFactor(p.npage);
-    const npAuto = Math.round(p.npbase * (1 + factor));
+    const npAuto = Math.round(p.npbase * (1 + factor) * npsMembershipFactor(p));
     sv('np', npAuto);
     p.np = npAuto; // 이번 렌더링에도 바로 반영되도록 로컬 값도 함께 갱신(한 박자 늦게 반영되는 것 방지)
   })();
@@ -2899,37 +3078,6 @@ function upd(){
       mx.toLocaleString()+'만'+(res.maxPrivAge?' ('+res.maxPrivAge+'세)':'')+' · 저율과세 기준 '+p.plimit.toLocaleString()+'만의 '+pct+'%'
       + (mx > law ? ' · '+(res.firstOverLawAge||res.firstOverPlimitAge)+'세부터 기준 초과' : pct > 100 ? ' · 여유 소진(세율은 그대로)' : '')
       + (pct > 200 ? ' ▸' : '');
-  })();
-
-  // ── 완전소진 vs 필요분만 인출 비교 ──
-  // "여유자금 있고 재투자로 시장 평균 이상 수익을 못 낼 자신이면, 다 빼지 말고 남겨두는 게 유리"하다는 논의를
-  // 시각화 — 해마다 세후 소득이 생활비를 넘으면 사적 인출만 비율 축소해 세후 ≈ 생활비로 맞춘 시나리오를
-  // simulate(…, {needOnly:true})로 따로 돌려 기대수명 시점 잔여자산을 비교한다(시기별로 정확히, 국민연금 포함).
-  (function(){
-    const el = document.getElementById('need-only-compare');
-    if(!el) return;
-    const surplusYears = res.rows.filter(x => x.netInc > x.curExp).length;
-    if(surplusYears === 0){
-      el.innerHTML = '<div class="mini-note" style="margin:0;">💡 지금 계획의 세후 소득이 모든 해에 생활비(오늘 기준 월 '+p.exp+'만원) 이하라, 비교할 "여유분"이 없습니다.</div>';
-      return;
-    }
-    const needRes = simulate(p, SA.base, {needOnly:true});
-    const leftoverFull = Math.round(res.leftover/10000*10)/10;
-    const leftoverNeed = Math.round(needRes.leftover/10000*10)/10;
-    el.innerHTML =
-      '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
-        '<div style="flex:1;min-width:180px;background:#F5F6FA;border-radius:10px;padding:10px;">'+
-          '<div style="font-size:10px;font-weight:700;color:#636366;margin-bottom:4px;">완전소진 플랜 (현재 설정)</div>'+
-          '<div style="font-size:13px;font-weight:700;">계획대로 인출'+(s.hasGap?' (공백기 세후 월평균 '+s.gapNet+'만)':'')+'</div>'+
-          '<div style="font-size:10px;color:#636366;margin-top:4px;">'+p.life+'세 시점 잔여자산 약 '+leftoverFull+'억원</div>'+
-        '</div>'+
-        '<div style="flex:1;min-width:180px;background:#EEF6F1;border-radius:10px;padding:10px;">'+
-          '<div style="font-size:10px;font-weight:700;color:#2E7D5B;margin-bottom:4px;">필요분만 인출 플랜</div>'+
-          '<div style="font-size:13px;font-weight:700;">해마다 세후 생활비(오늘 기준 월 '+p.exp.toLocaleString()+'만)만큼만 인출</div>'+
-          '<div style="font-size:10px;color:#2E7D5B;margin-top:4px;">'+p.life+'세 시점 잔여자산 약 '+leftoverNeed+'억원 (계좌 안에서 계속 과세이연 성장)</div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="mini-note" style="margin-top:8px;">💡 세후 소득이 생활비보다 많은 해('+surplusYears+'년)에만 사적 인출을 줄여 생활비에 맞추면, 나머지는 계좌 안에서 계속 굴러가 '+p.life+'세 시점 약 '+leftoverNeed+'억원이 남습니다. 재투자로 시장 평균 이상 수익을 못 낼 자신이면, 필요 이상으로 빼지 않는 쪽이 세금·복리 양면에서 유리합니다. (줄일 때는 그해 사적 인출 계좌를 같은 비율로 축소)</div>';
   })();
 
   // 메트릭 카드 — 공백기·완성기는 오늘 돈 가치·세후 평균, 옆 숫자는 월 생활비 대비(세후 판정)
@@ -2976,25 +3124,27 @@ function upd(){
   const gA = p.ret, gB = npEff - 1, fA = npEff, fB = p.life;
   document.getElementById('phase-cards').innerHTML=[
     p.ret > p.age && {key:'acc', ph:'적립기',range:p.age+'~'+p.ret+'세 · '+(p.ret-p.age)+'년',bg:'rgba(0,122,255,.10)',items:[
-      {dot:C.nh.line, t:'농협·미래에셋 연금저축 월 납입'},
+      {dot:C.nh.line, t:ACCT_SHORT.nh+'·'+ACCT_SHORT.mf+' 월 납입'},
       {dot:C.isa.line,t:'IRP·ISA 연 일시납'},
       {dot:C.dc.line, t:'퇴직IRP DC 회사 적립'},
     ]},
     npEff > p.ret && {key:'gap', ph:'공백기',range:p.ret+'~'+p.npage+'세 · '+(p.npage-p.ret)+'년',bg:'rgba(255,149,0,.12)',items:[
       overlap(sp.prin, gA, gB) && {dot:C.prin.line, t:'안세공 비과세 원금 — 먼저 빠짐(~'+(res.prinExhaustAge || sp.prin[1])+'세)'},
       overlap(sp.isa, gA, gB)  && {dot:C.isa.line,  t:'ISA ('+spanTxt(sp.isa)+') 비과세'},
-      overlap(sp.mf, gA, gB)   && {dot:C.mf.line,   t:'미래에셋 ('+spanTxt(sp.mf)+')'},
-      overlap(sp.nh, gA, gB)   && {dot:C.nh.line,   t:'농협 ('+sp.nh[0]+'세~)'},
-      overlap(sp.irp, gA, gB)  && {dot:C.irp.line,  t:'IRP 개인 ('+sp.irp[0]+'세~)'},
+      overlap(sp.mf, gA, gB)   && {dot:C.mf.line,   t:ACCT_NAME.mf+' ('+spanTxt(sp.mf)+')'},
+      overlap(sp.nh, gA, gB)   && {dot:C.nh.line,   t:ACCT_NAME.nh+' ('+sp.nh[0]+'세~)'},
+      overlap(sp.irp, gA, gB)  && {dot:C.irp.line,  t:ACCT_NAME.irp+' ('+sp.irp[0]+'세~)'},
       overlap(sp.tirp, gA, gB) && {dot:C.dc.line,   t:'퇴직IRP ('+sp.tirp[0]+'세~, 감면 과세)'},
+      overlap(sp.oth, gA, gB)  && {dot:C.oth.line,  t:'근로·기타 소득 ('+spanTxt(sp.oth)+')'},
     ].filter(Boolean)},
     {key:'full', ph:'완성기',range:npEff+'~'+p.life+'세 · '+(p.life-npEff)+'년',bg:'rgba(52,199,89,.12)',items:[
       overlap(sp.np, fA, fB)   && {dot:C.np.line,  t:'국민연금 ('+sp.np[0]+'세~, 물가연동)'},
-      overlap(sp.nh, fA, fB)   && {dot:C.nh.line,  t:'농협 (~'+sp.nh[1]+'세)'},
+      overlap(sp.nh, fA, fB)   && {dot:C.nh.line,  t:ACCT_NAME.nh+' (~'+sp.nh[1]+'세)'},
       overlap(sp.tirp, fA, fB) && {dot:C.dc.line,  t:'퇴직IRP (~'+sp.tirp[1]+'세)'},
-      overlap(sp.irp, fA, fB)  && {dot:C.irp.line, t:'IRP 개인 ('+spanTxt(sp.irp)+')'},
+      overlap(sp.irp, fA, fB)  && {dot:C.irp.line, t:ACCT_NAME.irp+' ('+spanTxt(sp.irp)+')'},
       overlap(sp.isa, fA, fB)  && {dot:C.isa.line, t:'ISA (~'+sp.isa[1]+'세)'},
-      overlap(sp.mf, fA, fB)   && {dot:C.mf.line,  t:'미래에셋 (~'+sp.mf[1]+'세)'},
+      overlap(sp.mf, fA, fB)   && {dot:C.mf.line,  t:ACCT_NAME.mf+' (~'+sp.mf[1]+'세)'},
+      overlap(sp.oth, fA, fB)  && {dot:C.oth.line, t:'근로·기타 소득 ('+spanTxt(sp.oth)+')'},
     ].filter(Boolean)},
   ].filter(Boolean).map(ph=>'<div class="phase-card'+(_selectedPhase===ph.key?' sel':'')+'" data-ph="'+ph.key+'" onclick="selectPhase(\''+ph.key+'\')" style="background:'+ph.bg+';--ph-c:'+PHASE_COLOR[ph.key]+';" title="누르면 차트에 이 기간을 점선으로 표시">'
     +'<div class="phase-card-title" style="color:'+PHASE_COLOR[ph.key]+';">'+ph.ph+'<span class="phase-card-range">'+ph.range+'</span></div>'
@@ -3006,20 +3156,9 @@ function upd(){
   applyViewState();
   if(mainTab === 'result') fitChartHeight();
 
-  // 시나리오 비교 — 공백기·완성기는 오늘 돈 가치·세후 평균(시나리오마다 물가가 달라 명목 평균은 비교가 안 됨)
-  const scList=['opt','base','pes'], scL={opt:'낙관',base:'기본',pes:'비관'};
-  document.getElementById('sc-body').innerHTML=scList.map(k=>{
-    const r=scenarioResults[k], a=SA[k], isCur=k==='base', ok=r.runway===p.life;
-    return '<tr class="'+(isCur?'cur-row':'')+'">'
-      +'<td style="font-weight:'+(isCur?700:400)+';color:'+(k==='opt'?'#248a3d':k==='pes'?'#c77700':'#007aff')+'">'+scL[k]+'</td>'
-      +'<td>'+(p.rnh+a.r)+'%</td>'
-      +'<td>'+(p.inf+a.inf)+'%</td>'
-      +'<td>'+(r.phase.gap.years ? r.phase.gap.net+'만원' : '-')+'</td>'
-      +'<td>'+r.phase.full.net+'만원</td>'
-      +'<td>'+fmtW(r.totalFV)+'원</td>'   /* totalFV는 만원 단위, fmtW가 알아서 변환 */
-      +'<td style="font-weight:700;color:'+(ok?'#248a3d':'#ff3b30')+'">'+(ok?p.life+'세+':r.runway+'세')+'</td>'
-      +'</tr>';
-  }).join('');
+  // 부족 대책·위기 점검 보기가 열려 있으면 입력이 바뀐 뒤 다시 계산(부족 대책은 행마다 자동설계를 돌려 잠깐 걸림 → 디바운스)
+  if(_altView==='need') scheduleNeedView();
+  if(_altView==='sc') renderStressView();
 
   // 건보료 설계 패널이 열려 있으면 슬라이더 조작 시에도 실시간 갱신
   renderHealthPanel();
@@ -3049,7 +3188,7 @@ const AMT_SKIP = 'input,textarea,select,script,style,#taxGuidePanel,.hir-hint,.u
 const maskedOriginals = new Map();
 // 금융회사 이름은 개인정보 — 포트폴리오 앱의 별칭(농협→계좌 1, 미래에셋→계좌 2)과 같게 바꾼다.
 // 연금저축·IRP·퇴직연금·국민연금·ISA 같은 상품/제도 이름은 개인정보가 아니라 그대로 둔다.
-const CO_RE = /농협|미래에셋/g;
+const CO_RE = /농협|미래에셋|(?:개인연금|IRP 개인|일반계좌|연금|IRP) 미래/g;
 const CO_MAP = {'농협':'계좌 1', '미래에셋':'계좌 2'};
 function maskTextNode(n){
   if(!hideAmounts || n.nodeType!==3) return;
@@ -3063,7 +3202,7 @@ function maskTextNode(n){
   }
   if(el.closest('input,textarea,select,script,style')) return;
   // 금융회사 이름은 고정 안내문·세금 상식·건보료 패널까지 모든 글자에서 바꾼다(금액 마스킹 제외 영역 포함)
-  let nv = v.replace(CO_RE, m=>CO_MAP[m]);
+  let nv = v.replace(CO_RE, m=>CO_MAP[m] || m.replace(/ 미래$/, ' 계좌 2'));
   if(!el.closest(AMT_SKIP)) nv = el.closest('[data-amt]') ? (/\d/.test(nv) ? AMOUNT_MASK : nv) : nv.replace(AMT_RE, AMOUNT_MASK);
   if(nv===v) return;
   if(maskedOriginals.size>3000) maskedOriginals.forEach((o,k)=>{ if(!k.isConnected) maskedOriginals.delete(k); });

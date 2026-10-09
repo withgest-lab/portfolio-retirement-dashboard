@@ -8,7 +8,8 @@ const {
   basicIncomeTax, pensionIncomeDeduction, comprehensivePensionTax, pensionTaxes,
   calcMonthlyDepositFV, growYears, stepBalance, stepBalanceDetail, pvOfMonthlyStream,
   futurePrinAdd, taxFreeBases, simulate, computeAutoPlan, buildAccRows, accumulate, npNominalAtStart,
-  pensionLimitAnnual, bridgeExtraMonthly, healthPremiumYear, regionalIncomeMonthly
+  pensionLimitAnnual, bridgeExtraMonthly, healthPremiumYear, regionalIncomeMonthly,
+  wageIncomeDeduction, wageTaxCredit, comprehensiveTotal, otherIncomeReal, npsMembershipFactor
 } = c;
 
 // 화면 기본값과 같은 입력(납입 종료는 getP()처럼 은퇴나이-1로 정규화된 상태)
@@ -199,8 +200,8 @@ test('futurePrinAdd: 연금저축 600·IRP 합산 900 배분, 연 1,800 초과 �
 test('simulate: 매년 월 합계 = 구성요소 합(중복·누락 없음), 세후 = 합계 − 세금 − 건보료', () => {
   const r = simulate(withPlan(BASE));
   for(const x of r.rows){
-    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc, `${x.age}세 합계`);
-    assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi), `${x.age}세 세후`);
+    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc, `${x.age}세 합계`);
+    assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi - x.npPrem), `${x.age}세 세후`);
   }
 });
 
@@ -449,8 +450,8 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
       const v = [x.totalInc, x.netInc, x.taxTotal, ...Object.values(x.bal)];
       assert.ok(v.every(Number.isFinite), `#${i} ${x.age}세 NaN`);
       assert.ok(Object.values(x.bal).every(b => b >= -1e-6), `#${i} 음수 잔액`);
-      assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc, `#${i} 합계`);
-      assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi), `#${i} 세후 = 합계 − 세금 − 건보료`);
+      assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc, `#${i} 합계`);
+      assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi - x.npPrem), `#${i} 세후 = 합계 − 세금 − 건보료`);
       assert.ok(x.hi >= 0 && x.netInc <= x.totalInc && x.nhInc >= 0 && x.mfInc >= 0 && x.irpInc >= 0, `#${i} 세후/음수`);
     }
     assert.ok(sum(r.rows, x => x.freeAnnual.nh + x.freeAnnual.mf + x.freeAnnual.irp) <= T.nh + T.mf + T.irp + 1e-6, `#${i} 비과세`);
@@ -485,4 +486,124 @@ test('입력칸 범위: 자동설계가 만드는 값이 칸 범위 안에 있�
     assert.ok(attr('isaage', 'min') <= ret && attr('isaage-r', 'min') <= ret, `isaage 칸 최소값(${attr('isaage', 'min')})이 은퇴 ${ret}세보다 큼`);
   }
   assert.ok(attr('isaage', 'min') <= attr('ret', 'min'), 'isaage 최소값 ≤ 은퇴 나이 최소값');
+});
+
+
+/* ── 2026-10-09: 은퇴 후 소득 수입 반영·국민연금 60세 전 공백·임의계속가입 ── */
+test('근로소득공제·근로세액공제: 국세청 구간과 한도', () => {
+  assert.equal(wageIncomeDeduction(500), 350);
+  assert.equal(wageIncomeDeduction(1500), 750);
+  assert.equal(wageIncomeDeduction(4500), 1200);
+  assert.equal(wageIncomeDeduction(10000), 1475);
+  assert.equal(wageIncomeDeduction(20000), 1675);
+  assert.equal(wageIncomeDeduction(100000), 2000);   // 한도 2,000만원
+  near(wageTaxCredit(100, 3000), 55, 1e-9, '130만원 이하 55%');
+  assert.equal(wageTaxCredit(200, 3000), 74);        // 71.5 + 70×30% = 92.5 → 총급여 3,300만 이하 한도 74만
+  near(wageTaxCredit(200, 5000), 66, 1e-9, '총급여 5,000만 한도(74−1700×0.8%=60.4 → 최소 66)');
+});
+
+test('금융소득: 2,000만원 이하는 14%(+지방세) 분리, 초과분은 비교과세로 더 큰 쪽', () => {
+  near(comprehensiveTotal(0, {fin: 1500}, 65), 1500 * 0.154, 1e-9, '1,500만 → 15.4%');
+  const t = comprehensiveTotal(0, {fin: 3000}, 65);
+  assert.ok(t > comprehensiveTotal(0, {fin: 2000}, 65));
+});
+
+test('pensionTaxes: 다른 소득이 있어도 합계 = 소득세 + 국민연금 + 사적연금(중복 없음), 없으면 기존 식과 같음', () => {
+  const ex = {labor: 3600, business: 0, other: 0, fin: 0};
+  const a = pensionTaxes(2400, 800, 60, ex);
+  near(a.oth + a.np + (a.method === 'comp' ? a.priv : 0), comprehensiveTotal(2400 + (a.method === 'comp' ? 800 : 0), ex, 60), 1e-6, '합계');
+  const b = pensionTaxes(2400, 800, 60), d = pensionTaxes(2400, 800, 60, {labor:0, business:0, other:0, fin:0});
+  near(b.np, d.np, 1e-9, '빈 ex = 없는 ex'); near(b.priv, d.priv, 1e-9);
+  assert.equal(b.oth, 0);
+  assert.ok(a.np > b.np, '근로소득이 있으면 국민연금에 붙는 세금이 더 커진다(누진)');
+});
+
+test('simulate: 은퇴 후 근로소득은 기간 안 해에만 수입·세금·건보료에 반영(중복 없음)', () => {
+  const p = withPlan(Object.assign({}, BASE, {hi_labor: 3000, hi_labor_from: 57, hi_labor_to: 61}));
+  const r = simulate(p), r0 = simulate(withPlan(BASE));
+  for(const x of r.rows){
+    const inWin = x.age >= 57 && x.age <= 61;
+    assert.equal(x.othInc > 0, inWin, `${x.age}세 근로소득 기간`);
+    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc, `${x.age}세 합계`);
+  }
+  assert.ok(r.rows[0].othInc > 0 && r.rows[0].taxOth > 0, '근로소득 세금(oth)');
+  const gap = r.rows.find(x => x.age === 57), gap0 = r0.rows.find(x => x.age === 57);
+  assert.ok(gap.hi > gap0.hi, '근로소득이 있으면 건보료도 오른다');
+  assert.ok(gap.netInc > gap0.netInc, '그래도 세후는 늘어난다(소득 > 세금+건보료)');
+  assert.equal(r.rows.find(x => x.age === 62).othInc, 0);
+});
+
+test('otherIncomeReal: 기간 빈칸 = 은퇴~기대수명, 이자·배당은 은퇴 후 계속', () => {
+  const p = Object.assign({}, BASE, {hi_labor: 100, hi_interest: 30, hi_dividend: 20});
+  assert.equal(otherIncomeReal(p, 56).labor, 0); assert.equal(otherIncomeReal(p, 56).fin, 0);
+  assert.equal(otherIncomeReal(p, 57).labor, 100); assert.equal(otherIncomeReal(p, 90).labor, 100);
+  assert.equal(otherIncomeReal(p, 57).fin, 50);
+});
+
+test('npsMembershipFactor: 60세 전 은퇴 + 중단 → 가입기간 비례 감소, 계속·60세 이후 은퇴는 보정 없음', () => {
+  const p = Object.assign({}, BASE, {npyears: 20});          // 51세·가입 20년, 57세 은퇴
+  assert.equal(npsMembershipFactor(p), 1);                   // 기본 = 계속 납부
+  near(npsMembershipFactor(Object.assign({}, p, {npcont: 'stop'})), (20 + 6) / (20 + 9), 1e-12, '26/29');
+  assert.equal(npsMembershipFactor(Object.assign({}, p, {npcont: 'stop', ret: 60})), 1);
+  assert.equal(npsMembershipFactor(Object.assign({}, p, {npcont: 'stop', npyears: 0})), 1);
+});
+
+test('국민연금 임의가입 보험료: 60세 전 은퇴 + 계속 납부일 때만, 만 60세 전까지 세후에서 차감', () => {
+  const p = withPlan(Object.assign({}, BASE, {np_volprem: 10}));
+  const r = simulate(p);
+  assert.ok(r.rows.filter(x => x.age < 60).every(x => x.npPrem > 0), '57~59세 보험료');
+  assert.ok(r.rows.filter(x => x.age >= 60).every(x => x.npPrem === 0), '60세부터 없음');
+  const stop = simulate(Object.assign({}, p, {npcont: 'stop'}));
+  assert.ok(stop.rows.every(x => x.npPrem === 0), '중단이면 보험료 없음');
+});
+
+test('임의계속가입: 36개월만 min(지역가입자, 임의계속) — 더 싸면 적용, 비싸면 지역가입자 그대로', () => {
+  const p = Object.assign({}, BASE, {realestate: 40000, hi_vol: 'yes', hi_volprem: 10});
+  const off = healthPremiumYear(Object.assign({}, p, {hi_vol: 'no'}), 57, 0, 1, 0);
+  assert.ok(off.annual > 10 * 12, '지역가입자 보험료 > 월 10만');
+  const on = healthPremiumYear(p, 57, 0, 1, 0);
+  assert.ok(on.volContinued && on.annual < off.annual && Math.abs(on.annual - 120) < 1e-9, '월 10만 × 12');
+  assert.equal(healthPremiumYear(p, 59, 0, 1, 0).volContinued, true);   // 57·58·59세 = 36개월
+  assert.equal(healthPremiumYear(p, 60, 0, 1, 0).volContinued, false);
+  const cheap = healthPremiumYear(Object.assign({}, p, {hi_volprem: 500}), 57, 0, 1, 0);
+  assert.equal(cheap.volContinued, false); assert.equal(cheap.annual, off.annual);
+});
+
+/* ── 2026-10-09 Opus 검토 반영: 근로세액공제 한도, 비교과세 순서, 임의계속 단위, 판정 기간, 가입기간 10년 ── */
+test('근로세액공제 한도: 7,000만 초과 1/2씩 감소(최소 50만), 1.2억 초과 1/2씩(최소 20만)', () => {
+  near(wageTaxCredit(1000, 7010), 61, 1e-9, '7,010만');
+  near(wageTaxCredit(1000, 8000), 50, 1e-9, '8,000만(최소 50)');
+  near(wageTaxCredit(1000, 9000), 50, 1e-9);
+  near(wageTaxCredit(1000, 13000), 20, 1e-9, '1.3억(최소 20)');
+  near(wageTaxCredit(1000, 15000), 20, 1e-9);
+  near(wageTaxCredit(1000, 4000), 74 - 700 * 0.008, 1e-9, '3,300~7,000만 구간');
+});
+
+test('금융소득 비교과세: 산출세액끼리 비교한 뒤 세액공제(표준세액공제 7만) — 정확한 값', () => {
+  // 3,000만: 분리 14%×2000 + 기본세율(1000−기본공제150 = 850 → 51) = 331 vs 14%×3000 = 420 → 420 − 7 = 413, ×1.1
+  near(comprehensiveTotal(0, {fin: 3000}, 65), 413 * 1.1, 1e-6, '3,000만');
+  // 2,500만: 280 + 기본세율(500−150=350 → 21) = 301 vs 350 → 350 − 7 = 343, ×1.1
+  near(comprehensiveTotal(0, {fin: 2500}, 65), 343 * 1.1, 1e-6, '2,500만');
+  near(comprehensiveTotal(0, {fin: 1500}, 65), 1500 * 0.154, 1e-9, '2,000만 이하는 15.4% 분리, 공제 없음');
+});
+
+test('판정·상세 헬퍼는 소득 기간(from/to)을 따른다: 62세 이후 근로소득이 끝나면 합산에서 빠진다', () => {
+  const p = Object.assign({}, BASE, {hi_labor: 3000, hi_labor_from: 57, hi_labor_to: 61, np: 100, npage: 65});
+  const at = (a) => c.dependentTotalIncome(p, 100 * Math.pow(1.025, 14), a);
+  assert.ok(at(60) > at(62) + 3000, '근로소득 기간 안/밖');
+  assert.equal(c.healthIncomeItems(p).laborAnnual, 0, '기본 판정 시점 = 국민연금 개시 65세 → 기간 밖');
+});
+
+test('임의계속가입: 단위가 실질값끼리 비교된다(물가가 있어도 simulate와 같은 선택)', () => {
+  const p = withPlan(Object.assign({}, BASE, {realestate: 50000, hi_business: 500, hi_vol: 'yes', hi_volprem: 17}));
+  const r = simulate(p);
+  const x = r.rows[0], infMul = Math.pow(1.025, 6);
+  const direct = healthPremiumYear(p, p.ret, 0, infMul, p.inf);
+  assert.equal(Math.round(direct.annual / 12), x.hi, '표시용 호출과 simulate가 같은 값');
+  assert.ok(direct.volContinued ? Math.abs(direct.monthlyReal - 17) < 1e-6 : direct.monthlyReal < 17);
+});
+
+test('npsMembershipFactor: 가입기간 10년 미만이면 노령연금 0', () => {
+  assert.equal(npsMembershipFactor(Object.assign({}, BASE, {npyears: 3, ret: 55, npcont: 'stop'})), 0);
+  assert.ok(npsMembershipFactor(Object.assign({}, BASE, {npyears: 8, ret: 57, npcont: 'stop'})) > 0);   // 8+6=14년
 });
