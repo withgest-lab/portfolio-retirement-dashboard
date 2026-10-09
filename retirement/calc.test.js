@@ -10,7 +10,7 @@ const {
   futurePrinAdd, taxFreeBases, simulate, computeAutoPlan, buildAccRows, accumulate, npNominalAtStart,
   pensionLimitAnnual, bridgeExtraMonthly, healthPremiumYear, regionalIncomeMonthly,
   wageIncomeDeduction, wageTaxCredit, comprehensiveTotal, otherIncomeReal, npsMembershipFactor,
-  housingPensionMonthly, housingPensionOf, expPct, lumpsAt
+  housingPensionMonthly, housingPensionOf, expPct, lumpsAt, genYear, genInit, genSum, genGrow
 } = c;
 
 // 화면 기본값과 같은 입력(납입 종료는 getP()처럼 은퇴나이-1로 정규화된 상태)
@@ -201,7 +201,7 @@ test('futurePrinAdd: 연금저축 600·IRP 합산 900 배분, 연 1,800 초과 �
 test('simulate: 매년 월 합계 = 구성요소 합(중복·누락 없음), 세후 = 합계 − 세금 − 건보료', () => {
   const r = simulate(withPlan(BASE));
   for(const x of r.rows){
-    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc, `${x.age}세 합계`);
+    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc + x.genInc, `${x.age}세 합계`);
     assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi - x.npPrem), `${x.age}세 세후`);
   }
 });
@@ -449,7 +449,9 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
       hi_vol: rnd() < 0.3 ? 'yes' : 'no', hi_volprem: ri(0, 30), npyears: ri(5, 35), npcont: rnd() < 0.5 ? 'stop' : 'cont', np_volprem: ri(0, 40),
       exp_s1_age: rnd() < 0.4 ? ri(ret + 5, ret + 20) : 0, exp_s1_pct: ri(60, 110), exp_s2_age: rnd() < 0.3 ? ri(ret + 15, ret + 25) : 0, exp_s2_pct: ri(50, 100),
       hp_age: rnd() < 0.3 ? ri(60, 85) : 0, hp_price: ri(0, 80000), bequest: rnd() < 0.3 ? ri(0, 5000) : 0,
-      lump1_age: rnd() < 0.3 ? ri(ret, life) : 0, lump1_amt: ri(0, 3000)});
+      lump1_age: rnd() < 0.3 ? ri(ret, life) : 0, lump1_amt: ri(0, 3000),
+      gen_ov: rnd() < 0.5 ? ri(0, 30000) : 0, gen_ovr: ri(-30, 80), gen_etf: rnd() < 0.4 ? ri(0, 10000) : 0, gen_etfr: ri(-20, 60), gen_kr: rnd() < 0.5 ? ri(0, 10000) : 0,
+      gen_harvest: rnd() < 0.5 ? 'yes' : 'no', rgen: ri(0, 10)});
     for(const k of ['nhend','mfend','irpend','isaend','tdcend']) p[k] = ret - 1;
     const q = Object.assign({}, p, computeAutoPlan(p));
     const r = simulate(q), T = taxFreeBases(q);
@@ -457,7 +459,7 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
       const v = [x.totalInc, x.netInc, x.taxTotal, ...Object.values(x.bal)];
       assert.ok(v.every(Number.isFinite), `#${i} ${x.age}세 NaN`);
       assert.ok(Object.values(x.bal).every(b => b >= -1e-6), `#${i} 음수 잔액`);
-      assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc, `#${i} 합계`);
+      assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc + x.genInc, `#${i} 합계`);
       assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi - x.npPrem), `#${i} 세후 = 합계 − 세금 − 건보료`);
       assert.ok(x.hi >= 0 && x.netInc <= x.totalInc && x.nhInc >= 0 && x.mfInc >= 0 && x.irpInc >= 0, `#${i} 세후/음수`);
     }
@@ -531,7 +533,7 @@ test('simulate: 은퇴 후 근로소득은 기간 안 해에만 수입·세금·
   for(const x of r.rows){
     const inWin = x.age >= 57 && x.age <= 61;
     assert.equal(x.othInc > 0, inWin, `${x.age}세 근로소득 기간`);
-    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc, `${x.age}세 합계`);
+    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc + x.genInc, `${x.age}세 합계`);
   }
   assert.ok(r.rows[0].othInc > 0 && r.rows[0].taxOth > 0, '근로소득 세금(oth)');
   const gap = r.rows.find(x => x.age === 57), gap0 = r0.rows.find(x => x.age === 57);
@@ -715,4 +717,119 @@ test('생활비 단계 순서: 입력 순서와 무관하게 그 나이 이하 �
 test('주택연금: 공시가격 12억 초과는 가입 불가', () => {
   assert.equal(housingPensionOf({hp_age: 70, gongsiga: 150000}), 0);
   assert.ok(housingPensionOf({hp_age: 70, gongsiga: 120000}) > 0);
+});
+
+
+/* ── 2026-10-09 단계 ④: 일반계좌(해외주식·국내상장 해외ETF·국내/현금) ── */
+test('genInit: 평가액과 현재 수익률로 원가를 만든다(국내·현금은 원가 = 평가액)', () => {
+  const g = genInit({gen_ov: 1400, gen_ovr: 40, gen_etf: 1200, gen_etfr: 20, gen_kr: 500});
+  near(g.ov.cost, 1000, 1e-9); near(g.etf.cost, 1000, 1e-9);
+  assert.deepEqual(g.kr, {bal: 500, cost: 500});
+  assert.equal(genSum(g), 3100);
+  assert.equal(genSum(genInit({})), 0);
+});
+
+test('genYear: 해외주식은 그해 이익 250만 공제 후 22%, 인출은 공제 이내 → 국내·현금 → 해외ETF → 해외주식(과세) 순, 합계 보존', () => {
+  const g0 = {ov: {bal: 10000, cost: 6000}, etf: {bal: 0, cost: 0}, kr: {bal: 0, cost: 0}};   // 이익률 40%
+  const y = genYear(g0, 1000, 9000, 0, false);                                                  // 수익률 0, 1,000만 인출
+  near(y.ovGain, 400, 1e-9); near(y.ovTax, (400 - 250) * 0.22, 1e-9, '(400−250)×22%');
+  near(genSum(y.next), 9000, 1e-9, '합계 보존');
+  near(y.next.ov.cost, 6000 * 0.9, 1e-9, '원가도 같은 비율로 줄어듦');
+  // 국내·현금이 있으면 공제 이내 해외주식 다음에 먼저 쓴다 → 세금 줄어듦
+  const g1 = {ov: {bal: 10000, cost: 6000}, etf: {bal: 0, cost: 0}, kr: {bal: 2000, cost: 2000}};
+  const y1 = genYear(g1, 1000, 11000, 0, false);
+  near(y1.ovGain, 250, 1e-9, '해외주식은 공제 이내(250만)만 실현'); assert.equal(y1.ovTax, 0);
+  near(y1.take.kr, 1000 - 625, 1e-9, '나머지 375는 국내·현금');
+  // ETF: 이익이 금융소득으로 넘어간다
+  const g2 = {ov: {bal: 0, cost: 0}, etf: {bal: 5000, cost: 4000}, kr: {bal: 0, cost: 0}};
+  const y2 = genYear(g2, 1000, 4000, 0, false);
+  near(y2.etfGain, 200, 1e-9); assert.equal(y2.ovTax, 0);
+});
+
+test('genYear: 250만 공제 활용(harvest)은 남은 공제만큼 해마다 이익을 실현해 원가를 올린다(세금 0)', () => {
+  const g0 = {ov: {bal: 10000, cost: 6000}, etf: {bal: 0, cost: 0}, kr: {bal: 0, cost: 0}};
+  const y = genYear(g0, 0, 10000, 0, true);
+  near(y.next.ov.cost, 6250, 1e-9); assert.equal(y.ovTax, 0);
+  const grown = genGrow(g0, 0, 4, true);
+  near(grown.ov.cost, 7000, 1e-9, '4년 × 250만'); near(grown.ov.bal, 10000, 1e-9);
+  assert.equal(genGrow(g0, 0, 4, false).ov.cost, 6000);
+});
+
+test('일반계좌 simulate: 자동설계가 인출 구간을 정하고, 합계·세금·보존이 맞고, 입력이 없으면 기존 결과와 같다', () => {
+  const p = Object.assign({}, BASE, {gen_ov: 4000, gen_ovr: 35, gen_etf: 1000, gen_etfr: 20, gen_kr: 500});
+  const pl = computeAutoPlan(p);
+  assert.ok(pl.genage === p.ret && pl.genpay > 0 && pl.info.genEnd >= p.ret);
+  const q = Object.assign({}, p, pl), r = simulate(q);
+  assert.ok(r.rows.some(x => x.genInc > 0));
+  for(const x of r.rows) assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc + x.genInc, `${x.age}세 합계`);
+  assert.ok(r.lifetimeGenTax > 0 && r.runway === p.life);
+  const none = simulate(withPlan(BASE));
+  assert.equal(none.rows.every(x => x.genInc === 0) && none.lifetimeGenTax === 0, true);
+  assert.equal(computeAutoPlan(BASE).genpay, 0);
+});
+
+test('해외ETF 매매차익은 금융소득에 합산된다: 이익이 있는 해 세금이 늘고 건보료 금융소득 판정에 들어간다', () => {
+  const base = Object.assign({}, BASE, {gen_etf: 20000, gen_etfr: 100});   // 평가 2억, 원가 1억
+  const q = Object.assign({}, withPlan(base), {genage: 57, genpay: 100});
+  const r = simulate(q), x = r.rows[0];
+  assert.ok(x.genInc > 0 && x.taxOth > 0, '금융소득 세금이 oth로 잡힘');
+  const noEtf = simulate(Object.assign({}, q, {gen_etf: 0, gen_kr: 20000}));    // 같은 인출이지만 비과세 칸
+  assert.ok(x.taxTotal > noEtf.rows[0].taxTotal, 'ETF 이익은 과세, 국내·현금은 비과세');
+});
+
+test('retShock·path 옵션은 일반계좌에도 적용되고, path가 0이면 변화 없다', () => {
+  const p = Object.assign({}, withPlan(BASE), {gen_ov: 4000, gen_ovr: 35, genage: 57, genpay: 20});
+  const a = simulate(p), b = simulate(p, undefined, {path: new Array(40).fill(0)});
+  assert.deepEqual(a.rows.map(x => x.netInc), b.rows.map(x => x.netInc));
+  const down = simulate(p, undefined, {path: new Array(40).fill(-8)});
+  assert.ok(down.rows.reduce((s, x) => s + x.netInc, 0) < a.rows.reduce((s, x) => s + x.netInc, 0) || down.runway < a.runway);
+  assert.ok(simulate(p, undefined, {retShock: 0.5}).leftover < a.leftover);
+});
+
+
+/* ── 2026-10-09 Opus 검토 반영(단계 ④) ── */
+test('genYear: 한 칸을 다 꺼내는 해·수익률 양수/음수에서도 합계는 balNext와 정확히 같다(돈이 생기거나 사라지지 않음)', () => {
+  for(const [rate, paid] of [[6, 4000], [10, 5000], [5, 1800], [-20, 3000], [-35, 2000], [0, 1000]]){
+    const g0 = {ov: {bal: 10000, cost: 6000}, etf: {bal: 3000, cost: 2500}, kr: {bal: 2000, cost: 2000}};
+    const B = genSum(g0), f = Math.pow(1 + rate/1200, 12);
+    const balNext = Math.max(0, B * f - paid * (1 + (f - 1) / 2));            // 임의의 합계 진행(월중 인출 근사)
+    const y = genYear(g0, paid, balNext, rate, false);
+    near(genSum(y.next), balNext, 1e-6, `r=${rate}% 합계`);
+    for(const k of ['ov','etf','kr']){ assert.ok(y.next[k].bal >= 0 && Number.isFinite(y.next[k].cost) && y.next[k].cost >= 0, `${k} 음수·NaN`); }
+  }
+  // 칸을 모두 비우는 해
+  const all = genYear({ov: {bal: 1000, cost: 500}, etf: {bal: 0, cost: 0}, kr: {bal: 0, cost: 0}}, 2000, 0, 5, false);
+  assert.equal(genSum(all.next), 0);
+});
+
+test('genInit: 수익률을 안 넣거나 NaN이면 원가 = 평가액(이익 0), 손실 종목은 원가 > 평가액이라도 세금 음수 없음', () => {
+  assert.equal(genInit({gen_ov: 1000}).ov.cost, 1000);
+  assert.equal(genInit({gen_ov: 1000, gen_ovr: NaN}).ov.cost, 1000);
+  near(genInit({gen_ov: 800, gen_ovr: -20}).ov.cost, 1000, 1e-9);
+  const y = genYear(genInit({gen_ov: 800, gen_ovr: -20}), 500, 300, 0, false);
+  assert.equal(y.ovTax, 0); assert.equal(y.ovGain, 0);
+});
+
+test('일반계좌 잔여자산: 인출 계획이 없어도 기대수명 시점 일반계좌 잔액이 leftover에 들어간다', () => {
+  const p = withPlan(Object.assign({}, BASE, {gen_kr: 10000}));
+  const q = Object.assign({}, p, {genage: 0, genpay: 0});
+  const r = simulate(q), last = r.rows[r.rows.length - 1];
+  assert.ok(last.bal.gen > 40000);
+  assert.equal(r.leftover, last.bal.nh + last.bal.mf + last.bal.irp + last.bal.tirp + last.bal.isa + last.bal.gen);
+  assert.ok(simulate(q, undefined, {retShock: 0.5}).leftover < r.leftover, '폭락하면 잔여가 줄어든다(일반계좌 포함)');
+});
+
+test('남길 금액·일시 지출을 일반계좌에서 떼어 두면 끝 나이 뒤에 인출돼 사라지지 않는다(남길 금액이 실제로 남음, 일시 지출 해 미달 없음)', () => {
+  const b = withPlan(Object.assign({}, BASE, {gen_kr: 5000, bequest: 5000}));
+  const r = simulate(b), target = 5000 * Math.pow(1.025, 90 - 51);
+  assert.ok(r.leftover >= target * 0.85, `남은 돈 ${Math.round(r.leftover)} < 목표 ${Math.round(target)}의 85%`);
+  const big = withPlan(Object.assign({}, BASE, {exp: 250, gen_ov: 20000, gen_ovr: 50, gen_etf: 5000, gen_etfr: 30, gen_kr: 5000, rgen: 6, bequest: 20000}));
+  const rb = simulate(big), t2 = 20000 * Math.pow(1.025, 90 - 51);
+  assert.ok(rb.leftover >= t2 * 0.8, `2억 남기기: ${Math.round(rb.leftover)} vs ${Math.round(t2)}`);
+  const lump = withPlan(Object.assign({}, BASE, {exp: 250, gen_ov: 20000, gen_ovr: 50, gen_etf: 5000, gen_etfr: 30, gen_kr: 5000, rgen: 6, lump1_age: 80, lump1_amt: 5000}));
+  const x = simulate(lump).rows.find(v => v.age === 80);
+  assert.ok(x.netInc >= x.curExp - 2, `80세 일시 지출 해 세후 ${x.netInc} < ${x.curExp}`);
+  // 미래에셋도 같은 구조: 농협이 작아 남길 금액이 미래에셋까지 넘어가는 경우
+  const mf = withPlan(Object.assign({}, BASE, {nh: 1000, nhm: 0, bequest: 10000}));
+  assert.ok(simulate(mf).leftover >= 10000 * Math.pow(1.025, 39) * 0.7 || computeAutoPlan(Object.assign({}, BASE, {nh: 1000, nhm: 0, bequest: 10000})).info.reserveUnmet > 0);
 });

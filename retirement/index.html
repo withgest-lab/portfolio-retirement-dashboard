@@ -8,8 +8,8 @@
 <script src="../shared/theme.js?v=20260927"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
 <script src="../shared/bridge.js"></script>
-<script src="calc.js?v=20261009a"></script>
-<script src="calc-whatif.js?v=20261009a"></script>
+<script src="calc.js?v=20261009b"></script>
+<script src="calc-whatif.js?v=20261009b"></script>
 <style>
 /* ── 리셋 & 기본 ── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -461,10 +461,17 @@ button{font-family:inherit;cursor:pointer;}
    2행: 사적연금 합계 게이지(1~3열, 위) + 수익률·물가 설정(1열, 아래 = 박스 좌하단) · 국민연금(5열, ISA 바로 아래).
    2행 높이는 국민연금 카드가 정하고, 나머지는 자기 내용만큼만 차지한다. */
 .acct-grid{display:grid;gap:6px;grid-template-columns:repeat(5,1fr);margin-top:3px;align-items:stretch;}
-.acct-grid .c-isa{grid-column:5;grid-row:1;}
+.acct-grid .c-gen{grid-column:1;grid-row:1;}
+.acct-grid .c-nh{grid-column:2;grid-row:1;}
+.acct-grid .c-mf{grid-column:3;grid-row:1;}
+.acct-grid .c-irp{grid-column:4;grid-row:1;}
+.acct-grid .c-tirp{grid-column:5;grid-row:1;}
+.acct-grid .c-isa{grid-column:1;grid-row:2;align-self:start;}
 .acct-grid .c-np{grid-column:5;grid-row:2;align-self:start;}
-.acct-grid .limit-gauge-wrap{grid-column:1 / 4;grid-row:2;align-self:start;margin:0;}
-.acct-grid .rates-anchor{grid-column:1 / 4;grid-row:2;align-self:end;justify-self:start;}
+.acct-grid .limit-gauge-wrap{grid-column:2 / 5;grid-row:2;align-self:start;margin:0;}
+.acct-grid .rates-anchor{grid-column:5;grid-row:2;align-self:end;justify-self:end;}
+.acct-grid .rates-anchor .rates-pop{left:auto;right:0;}
+.ival-input.gen-auto{background:rgba(118,118,128,.06);color:#8e8e93;cursor:default;}
 .acct-card{border:.5px solid rgba(60,60,67,.18);border-radius:12px;overflow:hidden;background:#fff;min-width:0;
   display:flex;flex-direction:column;}
 /* 계좌 카드 머리: 계좌 색(--ac) 12% 틴트 띠 + 같은 색의 iOS 고대비 글자(--ac-ink, 틴트 위 대비 4.7:1 이상).
@@ -573,12 +580,20 @@ button{font-family:inherit;cursor:pointer;}
   th,td{padding:4px 2px;}
   /* 접힘: 1행만 3열(농협·미래에셋·IRP), 그 아래는 전체 폭 — 게이지 → 퇴직연금 → ISA → 국민연금 → 설정 스위치 */
   .acct-grid{grid-template-columns:repeat(3,1fr);}
+  .acct-grid .c-nh{grid-column:1;grid-row:1;}
+  .acct-grid .c-mf{grid-column:2;grid-row:1;}
+  .acct-grid .c-irp{grid-column:3;grid-row:1;}
+  /* 접힘 3열은 칸이 좁아 "IRP 개인 미래"가 두 줄로 접힘 — 세 카드 머리 높이를 두 줄로 맞춰 본문 행이 어긋나지 않게 */
+  .acct-grid .c-nh .acct-head,.acct-grid .c-mf .acct-head,.acct-grid .c-irp .acct-head{min-height:42px;box-sizing:border-box;}
+  .acct-grid .c-nh .acct-head .name,.acct-grid .c-mf .acct-head .name,.acct-grid .c-irp .acct-head .name{white-space:normal;}
   .acct-grid .limit-gauge-wrap{grid-column:1 / -1;grid-row:2;}
   .acct-grid .c-tirp{grid-column:1 / -1;grid-row:3;}
-  .acct-grid .c-isa{grid-column:1 / -1;grid-row:4;}
-  .acct-grid .c-np{grid-column:1 / -1;grid-row:5;}
-  .acct-grid .rates-anchor{grid-column:1 / -1;grid-row:6;}
-  .c-isa .irow[aria-hidden]{display:none;} /* 전체 폭이라 맞출 옆 카드가 없음 — 정렬용 빈칸 불필요 */
+  .acct-grid .c-gen{grid-column:1 / -1;grid-row:4;}
+  .acct-grid .c-isa{grid-column:1 / -1;grid-row:5;}
+  .acct-grid .c-np{grid-column:1 / -1;grid-row:6;}
+  .acct-grid .rates-anchor{grid-column:1 / -1;grid-row:7;justify-self:start;}
+  .acct-grid .rates-anchor .rates-pop{left:0;right:auto;}
+  .c-isa .irow[aria-hidden]{display:none;}
   .inline-panel{padding:8px 10px 10px;}
   .health-input-row{flex-direction:column;align-items:flex-start;gap:2px;}
   .hir-hint{min-width:0;white-space:normal;overflow:visible;text-overflow:clip;}
@@ -973,7 +988,83 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 
 <!-- 1행: 농협 · 미래에셋 · IRP 개인 · 퇴직연금 · ISA (같은 높이로 늘어나 하단 외곽이 일직선, 행 순서도 같음)
      2행: 사적연금 합계 게이지(1~3열) + 수익률·물가 설정(좌하단) · 국민연금(5열, ISA 바로 아래) -->
-<div class="acct-card" style="--ac:#34C759;--ac-ink:#1F7A37;">
+<div class="acct-card c-gen" style="--ac:#5856D6;--ac-ink:#3634A3;">
+<div class="acct-head"><span class="name">일반계좌 미래</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('gen')" title="포트폴리오 값으로 채우기">🔗</button></div>
+<div class="acct-body">
+<input type="hidden" id="genage" value="0"><input type="hidden" id="genpay" value="0"><input type="hidden" id="genpayend" value="0"><input type="hidden" id="mfpayend" value="0">
+<div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="세 칸(해외주식·해외ETF·국내·현금)의 합계 — 자동">현재 잔액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input gen-auto" type="text" id="gen_total" value="0" readonly tabindex="-1"><span class="unit-tag">만</span>
+    </div>
+  </div>
+</div>
+<div class="fv-row">
+<div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="해외 상장 종목(달러·엔)의 평가액 — 팔 때 양도소득세 22%(연 250만원 공제), 건보료·피부양자 소득에는 영향 없음">해외주식</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="gen_ov" value="0" min="0" step="100" onblur="onBlurFix('gen_ov')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+    </div>
+  </div>
+</div><div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="현재 수익률(평가손익률) — 원가를 계산해 팔 때 세금을 구합니다. 증권사 원화 기준 수익률을 넣으세요">수익률</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="gen_ovr" value="0" min="-90" max="1000" step="1" onblur="onBlurFix('gen_ovr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+    </div>
+  </div>
+</div>
+</div>
+<div class="fv-row">
+<div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="국내 상장 해외 ETF(원화 거래)의 평가액 — 매매차익에 15.4%(배당소득), 금융소득으로 합산되어 건보료·종합과세 판정에 들어갑니다">해외ETF</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="gen_etf" value="0" min="0" step="100" onblur="onBlurFix('gen_etf')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+    </div>
+  </div>
+</div><div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="현재 수익률(평가손익률) — 원가를 계산해 팔 때 세금을 구합니다">수익률</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="gen_etfr" value="0" min="-90" max="1000" step="1" onblur="onBlurFix('gen_etfr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+    </div>
+  </div>
+</div>
+</div>
+<div class="fv-row">
+<div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="국내 주식·국내 ETF·현금 — 매매차익 비과세로 봅니다">국내·현금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="gen_kr" value="0" min="0" step="100" onblur="onBlurFix('gen_kr')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+    </div>
+  </div>
+</div><div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="해외주식 이익을 해마다 연 250만원 공제 한도만큼 실현했다 다시 사는 방법 — 원가가 올라 나중 세금이 줄어듭니다">250만 공제</span>
+    <div class="irow-ctrl">
+      <select class="ymon-select" id="gen_harvest" onchange="scheduleUpd()" title="해마다 250만원 공제 활용">
+        <option value="no" selected>안 함</option><option value="yes">활용</option>
+      </select>
+    </div>
+  </div>
+</div>
+</div>
+<div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel" title="자동설계 인출 계획 기준 일반계좌에서 평생 내는 양도·매매차익 세금(명목) — 자동설계 전에는 —">예상 세금</span>
+    <div class="irow-ctrl">
+      <input class="ival-input gen-auto" type="text" id="gen_tax" value="—" readonly tabindex="-1"><span class="unit-tag">만</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="acct-card c-nh" style="--ac:#34C759;--ac-ink:#1F7A37;">
 <div class="acct-head"><span class="name">개인연금 농협</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('nh')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow nh">
@@ -1041,7 +1132,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 </div>
 
-<div class="acct-card" style="--ac:#00C7BE;--ac-ink:#0A7570;">
+<div class="acct-card c-mf" style="--ac:#00C7BE;--ac-ink:#0A7570;">
 <div class="acct-head"><span class="name">개인연금 미래</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('mf')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow mf">
@@ -1109,7 +1200,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 </div>
 
-<div class="acct-card" style="--ac:#32ADE6;--ac-ink:#0071A4;">
+<div class="acct-card c-irp" style="--ac:#32ADE6;--ac-ink:#0071A4;">
 <div class="acct-head"><span class="name">IRP 개인 미래</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('irp')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
 <div class="irow irp">
@@ -1296,15 +1387,6 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       </div>
   </div>
   <input type="range" id="isay-r" min="0" max="2000" step="100" value="2000"  oninput="syncInput('isay');scheduleUpd()">
-</div><div class="irow isa" style="visibility:hidden;" aria-hidden="true">
-  <!-- IRP 개인 카드와 같은 투명 스페이서 — 옆 4장의 3번째 칸(안세공 원금/근속연수) 자리를 비워 둬
-       ISA의 "납입 시작"·"인출 시작" 행이 다른 카드의 납입 시작·수령 시작 행과 같은 높이에 오게 함 -->
-  <div class="irow-top">
-    <span class="ilabel">-</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" value="0" tabindex="-1"><span class="unit-tag">만</span>
-    </div>
-  </div>
 </div><div class="fv-row">
 <div class="irow isa">
   <div class="irow-top">
@@ -1353,69 +1435,6 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   </div>
   <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#34c759;"></div><i class="limit-gauge-tick" aria-hidden="true"></i></div>
 </div>
-<!-- 수익률·물가 설정: 카드 박스 좌측 하단 모서리(ISA 열 아래 빈 자리). 설정 창은 위로 뜨는 팝오버라 레이아웃 높이 불변 -->
-<div class="rates-anchor">
-<button type="button" class="tgl-banner" id="ratesToggleBtn" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button>
-<div id="ratesWrap" class="rates-pop" style="display:none;">
-<div class="sec-label">계좌별 수익률</div>
-<div class="rates-fields">
-<div class="irow nh">
-  <div class="irow-top">
-    <span class="ilabel">개인연금 농협</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
-</div><div class="irow mf">
-  <div class="irow-top">
-    <span class="ilabel">개인연금 미래</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
-</div><div class="irow irp">
-  <div class="irow-top">
-    <span class="ilabel">IRP 개인 미래</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
-</div><div class="irow dc">
-  <div class="irow-top">
-    <span class="ilabel">퇴직연금 DC 농협</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
-</div><div class="irow isa">
-  <div class="irow-top">
-    <span class="ilabel">ISA</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
-</div>
-</div>
-<hr class="div">
-<div class="rates-fields">
-<div class="irow exp">
-  <div class="irow-top">
-    <span class="ilabel">물가상승률</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
-      </div>
-  </div>
-  <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
-</div>
-</div>
-</div>
-</div>
-
 <div class="acct-card c-np" style="--ac:#FF9500;--ac-ink:#C93400;">
 <div class="acct-head"><span class="name">국민연금</span></div>
 <div class="acct-body">
@@ -1467,6 +1486,83 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       </div>
   </div>
   <input type="range" disabled style="visibility:hidden" aria-hidden="true" tabindex="-1">
+</div>
+</div>
+</div>
+</div>
+
+<!-- 수익률·물가 설정: 카드 박스 좌측 하단 모서리(ISA 열 아래 빈 자리). 설정 창은 위로 뜨는 팝오버라 레이아웃 높이 불변 -->
+<div class="rates-anchor">
+<button type="button" class="tgl-banner" id="ratesToggleBtn" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button>
+<div id="ratesWrap" class="rates-pop" style="display:none;">
+<div class="sec-label">계좌별 수익률</div>
+<div class="rates-fields">
+<div class="irow nh">
+  <div class="irow-top">
+    <span class="ilabel">개인연금 농협</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
+</div><div class="irow mf">
+  <div class="irow-top">
+    <span class="ilabel">개인연금 미래</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
+</div><div class="irow irp">
+  <div class="irow-top">
+    <span class="ilabel">IRP 개인 미래</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
+</div><div class="irow dc">
+  <div class="irow-top">
+    <span class="ilabel">퇴직연금 DC 농협</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
+</div><div class="irow isa">
+  <div class="irow-top">
+    <span class="ilabel">ISA</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
+</div><div class="irow gen">
+  <div class="irow-top">
+    <span class="ilabel">일반계좌 미래</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rgen" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('rgen')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+</div>
+</div>
+<hr class="div">
+<div class="rates-fields">
+<div class="irow exp">
+  <div class="irow-top">
+    <span class="ilabel" title="위기 점검 '시장 변동' 시뮬레이션에서 은퇴 후 해마다 수익률이 평균에서 벗어나는 폭(표준편차, %p)">수익률 변동폭</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="rvol" value="12" min="1" max="40" step="1" onblur="onBlurFix('rvol')" oninput="scheduleUpd()"><span class="unit-tag">%p</span>
+      </div>
+  </div>
+</div><div class="irow exp">
+  <div class="irow-top">
+    <span class="ilabel">물가상승률</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
+      </div>
+  </div>
+  <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
 </div>
 </div>
 </div>
@@ -1553,8 +1649,8 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 // 파랑/빨강은 적록색약에도 구분되고 계좌 막대 색과 겹치지 않는다. 포트폴리오의 한국식 상승(빨강)/하락(파랑)과는 별개 축.
 // 계좌 이름 한 곳 — 카드 제목과 같은 이름(full)을 화면 어디서나 쓰고, 범례처럼 좁은 곳만 short.
 // 금액 숨기기는 금융회사 이름만 CO_RE로 바꾼다(농협→계좌 1, 미래→계좌 2).
-const ACCT_NAME = {nh:'개인연금 농협', mf:'개인연금 미래', irp:'IRP 개인 미래', tirp:'퇴직연금 DC 농협', isa:'ISA', np:'국민연금'};
-const ACCT_SHORT = {nh:'연금 농협', mf:'연금 미래', irp:'IRP 미래', tirp:'퇴직IRP', isa:'ISA', np:'국민연금'};
+const ACCT_NAME = {gen:'일반계좌 미래', nh:'개인연금 농협', mf:'개인연금 미래', irp:'IRP 개인 미래', tirp:'퇴직연금 DC 농협', isa:'ISA', np:'국민연금'};
+const ACCT_SHORT = {gen:'일반 미래', nh:'연금 농협', mf:'연금 미래', irp:'IRP 미래', tirp:'퇴직IRP', isa:'ISA', np:'국민연금'};
 const NET_OK = '#007AFF', NET_SHORT = '#FF3B30';
 const C={
   // 계좌 카드 머리(--ac)와 같은 iOS 시스템 컬러 — 사적연금 3계좌는 초록→민트→시안 계열, 나머지는 따로 식별
@@ -1567,6 +1663,7 @@ const C={
   prin:{fill:'rgba(212,172,43,0.85)',  line:'#D4AC2B'},  // 안세공: 옐로우(국민연금 오렌지와 분리)
   oth: {fill:'rgba(162,132,94,0.85)',  line:'#A2845E'},  // 은퇴 후 근로·기타 소득: Brown
   hp:  {fill:'rgba(110,123,139,0.85)', line:'#6E7B8B'},  // 주택연금: Slate
+  gen: {fill:'rgba(88,86,214,0.82)',   line:'#5856D6'},  // 일반계좌: Indigo
   exp: {line:'#1C1C1E'},  // 생활비 기준선: 검정 점선(중립 — 빨강은 "세후 부족" 전용)
 };
 
@@ -1826,7 +1923,7 @@ function sv(id, v){
 /* ── 포트폴리오 대시보드 잔액 연동 ──
    shared/bridge.js 가 pf_assets_v1(포트폴리오 localStorage)을 읽어 계좌별 KRW 합계를 계산해준다.
    버튼을 누를 때마다 항상 현재 포트폴리오 값으로 덮어쓴다(직접 입력한 값도 포함). */
-const PF_SYNC_LABELS = {nh:ACCT_NAME.nh, mf:ACCT_NAME.mf, irp:ACCT_NAME.irp, tirp:ACCT_NAME.tirp, isa:ACCT_NAME.isa};
+const PF_SYNC_LABELS = {gen:ACCT_NAME.gen, nh:ACCT_NAME.nh, mf:ACCT_NAME.mf, irp:ACCT_NAME.irp, tirp:ACCT_NAME.tirp, isa:ACCT_NAME.isa};
 function fillFromPortfolio(id){
   const statusEl = document.getElementById('pfSyncStatus');
   const setStatus = (msg) => { if(statusEl) statusEl.textContent = msg; };
@@ -1839,6 +1936,16 @@ function fillFromPortfolio(id){
   let snap;
   try{ snap = window.PortfolioBridge.getPortfolioSnapshot(); }
   catch(e){ setStatus('⚠️ 포트폴리오 데이터를 읽는 중 오류가 발생했습니다.'); return; }
+  if(id === 'gen'){
+    const g = snap && snap.gen;
+    if(!g){ setStatus('⚠️ 포트폴리오에서 일반계좌 정보를 찾을 수 없습니다.'); return; }
+    const pct = b => b.cost > 0 ? Math.round((b.ev / b.cost - 1) * 100) : 0;
+    sv('gen_ov', g.ov.ev); sv('gen_ovr', pct(g.ov)); sv('gen_etf', g.etf.ev); sv('gen_etfr', pct(g.etf)); sv('gen_kr', g.kr.ev);
+    upd();
+    const tot = g.ov.ev + g.etf.ev + g.kr.ev;
+    setStatus(`✅ 포트폴리오 일반계좌(${tot.toLocaleString()}만원)를 해외주식·해외ETF·국내/현금으로 나눠 채웠습니다. 수익률은 환율 변동을 포함한 원화 기준이니 증권사 값으로 고쳐도 됩니다.`);
+    return;
+  }
   let v = snap ? snap[id] : undefined;
   if(typeof v !== 'number' || isNaN(v)){
     setStatus('⚠️ 포트폴리오에서 해당 계좌 잔액을 찾을 수 없습니다.');
@@ -1992,7 +2099,7 @@ function acctSpans(res){
     return a.length ? [a[0].age, a[a.length-1].age] : null;
   };
   return {prin: span(x => x.prinInc), isa: span(x => x.gross.isa), mf: span(x => x.gross.mf), nh: span(x => x.gross.nh),
-          irp: span(x => x.gross.irp), tirp: span(x => x.gross.tirp), np: span(x => x.npInc), oth: span(x => x.othInc), hp: span(x => x.hpInc)};
+          irp: span(x => x.gross.irp), tirp: span(x => x.gross.tirp), np: span(x => x.npInc), oth: span(x => x.othInc), hp: span(x => x.hpInc), gen: span(x => x.gross.gen)};
 }
 const spanTxt = s => s ? (s[0] === s[1] ? s[0]+'세' : s[0]+'~'+s[1]+'세') : '';
 
@@ -2021,6 +2128,7 @@ function autoSuggest(){
   sv('nhage',  plan.nhage);  sv('nhpay',  plan.nhpay);
   sv('irpage', plan.irpage); sv('irppay', plan.irppay);
   sv('tage',   plan.tage);   sv('tm',     plan.tm);
+  sv('genage', plan.genage); sv('genpay', plan.genpay); sv('genpayend', plan.genpayend); sv('mfpayend', plan.mfpayend);
 
   const p = getP();
   const res = simulate(p, SA.base);
@@ -2056,6 +2164,7 @@ ${s.hasGap ? `<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 
 <ul>
   ${prinTotal > 0 ? `<li>비과세 원금(안세공) <b>${prinTotal.toLocaleString()}만</b> → 법정 인출순서상 ${ACCT_NAME.nh}·${ACCT_NAME.mf} 인출액에서 가장 먼저 빠져${res.prinExhaustAge ? ` 약 ${res.prinExhaustAge}세까지` : ''} 세금 없음·1,500만원 판정 제외${sub(`입력 ${(T.nhInput+T.mfInput).toLocaleString()}만(2026년 말 확정)${prinAuto > 0 ? ` + 2027년~ 세액공제 한도 초과 납입분 자동 ${prinAuto.toLocaleString()}만` : ''}${ex.years > 0 ? ` · 연금저축을 연금으로 못 받는 ${p.ret}~54세에는 월 ${ex.nh + ex.mf}만(정액) 가교 인출` : ''}`)}</li>` : ''}
   <li>ISA <b>${spanTxt(sp.isa) || plan.isaage+'세~'} 월 ${m(plan.isam)}만</b> → ${plan.info.isaEnd}세까지 소진${sub(isaTxt)}</li>
+  ${sp.gen ? `<li>${ACCT_NAME.gen} <b>${spanTxt(sp.gen)} 월 ${m(plan.genpay)}만</b> → ${plan.info.genEnd}세까지 소진${sub(`해외주식 이익은 연 250만 공제 이내부터 → 국내·현금 → 해외ETF → 해외주식(22%) 순으로 인출 · 평생 세금 약 ${res.lifetimeGenTax.toLocaleString()}만`)}</li>` : ''}
   <li>${ACCT_NAME.mf} <b>${spanTxt(sp.mf) || plan.mfage+'세~'} 월 ${m(plan.mfpay)}만</b> → ${plan.info.mfEnd}세까지 소진</li>
   <li>${ACCT_NAME.nh} <b>${plan.nhage}세~ 월 ${m(plan.nhpay)}만</b> → ${p.life}세까지 나눠 받음</li>
   ${plan.mfage > p.ret ? `<li>연금저축·IRP는 만 55세부터 연금 수령 가능 — <b>${p.ret}~54세는 ISA·비과세 원금</b>으로 충당</li>` : ''}
@@ -2145,6 +2254,7 @@ function planBannerHtml(p, plan, res){
     const gapItems = [
       prinTotal > 0 && {dot:C.prin.line, label:'안세공', val:prinTotal.toLocaleString()+'만', unit:'', note: res.prinExhaustAge ? `먼저 비과세 · ~${res.prinExhaustAge}세` : '먼저 비과세'},
       sp.isa && {dot:C.isa.line, label:'ISA',      val:m(plan.isam),  note:spanTxt(sp.isa)},
+      sp.gen && {dot:C.gen.line, label:ACCT_NAME.gen, val:m(plan.genpay), note:spanTxt(sp.gen)},
       sp.mf  && {dot:C.mf.line,  label:ACCT_NAME.mf, val:m(plan.mfpay), note:spanTxt(sp.mf)},
       {dot:C.nh.line,  label:ACCT_NAME.nh, val:m(plan.nhpay), note:plan.nhage+'세~'},
       tirpInGap && tirpItem,
@@ -2164,6 +2274,7 @@ function planBannerHtml(p, plan, res){
     {dot:C.nh.line,  label:ACCT_NAME.nh, val:m(plan.nhpay),  note:'물가반영'},
     {dot:C.irp.line, label:ACCT_NAME.irp, val:m(plan.irppay), note:plan.irpage+'세~'},
     sp.isa && sp.isa[1] >= fullStart && {dot:C.isa.line, label:'ISA', val:m(plan.isam), note:'~'+sp.isa[1]+'세'},
+    sp.gen && sp.gen[1] >= fullStart && {dot:C.gen.line, label:ACCT_NAME.gen, val:m(plan.genpay), note:'~'+sp.gen[1]+'세'},
     sp.mf && sp.mf[1] >= fullStart && {dot:C.mf.line, label:ACCT_NAME.mf, val:m(plan.mfpay), note:'~'+sp.mf[1]+'세'},
   ].filter(Boolean)));
 
@@ -2251,7 +2362,8 @@ const ALL_FIELDS = [
   'hi_labor_from','hi_labor_to','hi_business_from','hi_business_to','hi_other_from','hi_other_to',
   'hi_vol','hi_volprem','np_volprem','npyears','npcont',
   'hp_age','hp_price','exp_s1_age','exp_s1_pct','exp_s2_age','exp_s2_pct',
-  'lump1_age','lump1_amt','lump2_age','lump2_amt','lump3_age','lump3_amt','bequest'
+  'lump1_age','lump1_amt','lump2_age','lump2_amt','lump3_age','lump3_amt','bequest',
+  'gen_ov','gen_ovr','gen_etf','gen_etfr','gen_kr','gen_harvest','rgen','rvol','genage','genpay','genpayend','mfpayend'
 ];
 
 // 초기화 버튼이 location.reload()에만 의존하면, 일부 모바일 브라우저가 새로고침 시
@@ -2386,6 +2498,8 @@ function getP(){
     hi_vol:document.getElementById('hi_vol')?.value === 'yes' ? 'yes' : 'no', hi_volprem:gv('hi_volprem'),
     hp_age:gv('hp_age'), hp_price:gv('hp_price'), exp_s1_age:gv('exp_s1_age'), exp_s1_pct:gv('exp_s1_pct'), exp_s2_age:gv('exp_s2_age'), exp_s2_pct:gv('exp_s2_pct'),
     lump1_age:gv('lump1_age'), lump1_amt:gv('lump1_amt'), lump2_age:gv('lump2_age'), lump2_amt:gv('lump2_amt'), lump3_age:gv('lump3_age'), lump3_amt:gv('lump3_amt'), bequest:gv('bequest'),
+    gen_ov:gv('gen_ov'), gen_ovr:gv('gen_ovr'), gen_etf:gv('gen_etf'), gen_etfr:gv('gen_etfr'), gen_kr:gv('gen_kr'),
+    gen_harvest:document.getElementById('gen_harvest')?.value === 'yes' ? 'yes' : 'no', rgen:gv('rgen'), rvol:gv('rvol'), genage:gv('genage'), genpay:gv('genpay'), genpayend:gv('genpayend'), mfpayend:gv('mfpayend'),
     np_volprem:gv('np_volprem'), npyears:gv('npyears'), npcont:document.getElementById('npcont')?.value === 'stop' ? 'stop' : 'cont',
     curYear:new Date().getFullYear(), // 미래 안세공 자동 합산(2027년~)의 연도 기준
     tirptaxManual:_tirptaxManual      // 퇴직소득세를 직접 입력했으면 자동설계도 그 값 사용
@@ -2426,7 +2540,7 @@ function renderNeedView(){
     const head = document.getElementById('need-head'), th4 = document.getElementById('need-th4'), note = document.getElementById('need-note');
     if(!b){ head.innerHTML = '<div class="mini-note" style="margin:0 0 6px;">계산 중…</div>'; body.innerHTML = ''; return; }
     const short = b.short, vs = b.minNet - p.exp;
-    head.innerHTML = `<div class="need-head">자동설계 기준 매년 최소 <b style="color:${short ? NET_SHORT : NET_OK}">${M(b.minNet)}</b> · 평균 ${M(b.avgNet)} <span>(세후·오늘 가치) 생활비 ${M(p.exp)} 대비</span> <b style="color:${short ? NET_SHORT : NET_OK}">${sg(vs)}만</b></div>`;
+    head.innerHTML = `<div class="need-head">매년 최소 <b style="color:${short ? NET_SHORT : NET_OK}">${M(b.minNet)}</b> · 평균 ${M(b.avgNet)} <span>(세후·오늘 가치) 생활비 ${M(p.exp)} 대비</span> <b style="color:${short ? NET_SHORT : NET_OK}">${sg(vs)}만</b></div>`;
     th4.textContent = short ? '충족하려면' : '가능한 만큼';
     const rows = [];
     const cell = (v, d) => v == null ? '<td>—</td>' : `<td><b>${M(v)}</b> <span style="color:${d >= 0 ? NET_OK : NET_SHORT}">(${sg(d)})</span></td>`;
@@ -2473,16 +2587,16 @@ function renderStressView(){
   const rows = stressRows(p);
   const M = v => Math.round(v).toLocaleString() + '만';
   body.innerHTML = rows.map(r => {
-    const ok = r.ok, shortTxt = r.shortYears ? `${r.shortYears}년 (${r.firstShortAge}세~)` : '없음';
+    const ok = r.ok, shortTxt = r.mc ? (r.shortYears ? `중앙값 ${r.shortYears}년` : '없음') : (r.shortYears ? `${r.shortYears}년 (${r.firstShortAge}세~)` : '없음');
     return '<tr class="'+(r.key==='base' ? 'cur-row' : '')+'">'
       + '<td style="text-align:left;font-weight:'+(r.key==='base'?700:500)+';">'+r.label+(r.note ? '<div style="font-size:9px;color:#8e8e93;font-weight:400;">'+r.note+'</div>' : '')+'</td>'
       + '<td style="font-weight:700;color:'+(r.minNet >= p.exp - 0.5 ? NET_OK : NET_SHORT)+'">'+M(r.minNet)+'</td>'
       + '<td style="color:'+(r.shortYears ? NET_SHORT : '#248a3d')+'">'+shortTxt+'</td>'
-      + '<td style="font-weight:700;color:'+(ok ? '#248a3d' : '#ff3b30')+'">'+(ok ? r.life+'세+' : r.runway+'세 소진')+'</td>'
+      + '<td style="font-weight:700;color:'+(r.mc ? (r.successPct >= 80 ? '#248a3d' : r.successPct >= 50 ? '#c77700' : '#ff3b30') : ok ? '#248a3d' : '#ff3b30')+'">'+(r.mc ? r.successPct+'% 유지' : (ok ? r.life+'세+' : r.runway+'세 소진'))+'</td>'
       + '</tr>';
   }).join('');
   const note = document.getElementById('sc-note');
-  if(note) note.textContent = '지금 입력한 인출 계획을 그대로 두고 상황만 바꾼 결과입니다. 최저 세후는 매년 중 가장 적은 해(오늘 돈 가치).';
+  if(note) note.textContent = '지금 입력한 인출 계획을 그대로 두고 상황만 바꾼 결과입니다. 최저 세후는 매년 중 가장 적은 해(오늘 돈 가치), 시장 변동 행은 하위 10% 경우 — 자동설계는 기대수명에 0원이 되도록 맞추므로 성공 확률이 50% 안팎인 게 정상입니다(여유를 두려면 남길 금액을 입력).';
 }
 
 let _altView = null;   // null | 'sc' | 'need' | 'basis' | 'plan'
@@ -2773,7 +2887,8 @@ function renderAssetTooltip(idx){
   const irpB2 = row.irpB_억 || 0;
   const tirp  = row.tirpB   || 0;
   const isa   = row.isaB    || 0;
-  const total = Math.round((privTotal + tirp + isa) * 10) / 10;
+  const genB  = row.genB    || 0;
+  const total = Math.round((privTotal + tirp + isa + genB) * 10) / 10;
   const p = _chartP || getP();
   const dot = c => `<span class="tt-dot" style="background:${c}"></span>`;
 
@@ -2793,6 +2908,7 @@ function renderAssetTooltip(idx){
       <div class="tt-row">${dot(C.irp.line)}${ACCT_NAME.irp} ${irpB2}억</div>
       <div class="tt-row">${dot(C.dc.line)}<b>퇴직연금 ${tirp}억</b></div>
       <div class="tt-row">${dot(C.isa.line)}<b>ISA ${isa}억</b></div>
+      ${genB > 0 ? `<div class="tt-row">${dot(C.gen.line)}<b>${ACCT_NAME.gen} ${genB}억</b></div>` : ''}
     </div>
     <div class="tt-sep"></div>
     ${notes}
@@ -2875,6 +2991,7 @@ function showCustomTooltip(evt, activeEls, chart){
     {label:'국민연금', val:row.npInc, dot:C.np.line},
     {label:'퇴직IRP', val:row.tirpInc, dot:C.dc.line},
     {label:'ISA인출', val:row.isaInc, dot:C.isa.line},
+    {label:ACCT_NAME.gen, val:row.genInc, dot:C.gen.line},
     {label:'안세공 비과세인출', val:row.prinInc, dot:C.prin.line},
     {label:'근로·기타 소득', val:row.othInc, dot:C.oth.line},
     {label:'주택연금', val:row.hpInc, dot:C.hp.line},
@@ -2974,6 +3091,7 @@ function drawChart(rows, p){
       {c:C.np.fill, l:'국민연금'},
       {c:C.dc.fill, l:'퇴직IRP'},
       {c:C.isa.fill,l:'ISA'},
+      {c:C.gen.fill,l:ACCT_SHORT.gen},
       {c:C.prin.fill,l:'안세공'},
       {c:C.oth.fill,l:'근로·기타'},
       {c:C.hp.fill,l:'주택연금'},
@@ -2991,6 +3109,7 @@ function drawChart(rows, p){
         {label:'국민연금',         data:rows.map(r=>isAcc(r)?0:r.npInc),         backgroundColor:tone('np'), stack:'s'},
         {label:'퇴직IRP',          data:rows.map(r=>isAcc(r)?r.dcDep:r.tirpInc), backgroundColor:tone('dc'), stack:'s'},
         {label:'ISA인출',          data:rows.map(r=>isAcc(r)?r.isaDep:r.isaInc), backgroundColor:tone('isa'),stack:'s'},
+        {label:ACCT_NAME.gen,       data:rows.map(r=>isAcc(r)?0:r.genInc),        backgroundColor:tone('gen'),stack:'s'},
         {label:'안세공 비과세인출', data:rows.map(r=>isAcc(r)?0:r.prinInc),        backgroundColor:tone('prin'),stack:'s'},
         {label:'근로·기타 소득',   data:rows.map(r=>isAcc(r)?0:r.othInc),         backgroundColor:tone('oth'), stack:'s'},
         {label:'주택연금',        data:rows.map(r=>isAcc(r)?0:r.hpInc),          backgroundColor:tone('hp'),  stack:'s'},
@@ -3034,7 +3153,7 @@ function drawChart(rows, p){
 
   } else {
     document.getElementById('chart-legend').innerHTML=[
-      {c:C.nh.line,l:'연금저축합계'},{c:C.dc.line,l:'퇴직IRP'},{c:C.isa.line,l:'ISA'}
+      {c:C.nh.line,l:'연금저축합계'},{c:C.dc.line,l:'퇴직IRP'},{c:C.isa.line,l:'ISA'},{c:C.gen.line,l:ACCT_SHORT.gen}
     ].map(x=>`<span class="leg-item"><span class="leg-swatch" style="background:${x.c}"></span>${x.l}</span>`).join('');
 
     mainChart=new Chart(ctx,{type:'line',
@@ -3047,6 +3166,10 @@ function drawChart(rows, p){
           pointRadius:2,pointHoverRadius:5,
           pointBackgroundColor:C.dc.line,pointBorderColor:'#fff',pointBorderWidth:1,
           pointHoverBackgroundColor:C.dc.line,pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2},
+        {label:ACCT_NAME.gen,  data:rows.map(r=>r.genB||0),  borderColor:C.gen.line,backgroundColor:C.gen.line+'22',fill:true,tension:0.3,
+          pointRadius:2,pointHoverRadius:5,
+          pointBackgroundColor:C.gen.line,pointBorderColor:'#fff',pointBorderWidth:1,
+          pointHoverBackgroundColor:C.gen.line,pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,borderWidth:2},
         {label:'ISA',        data:rows.map(r=>r.isaB),  borderColor:C.isa.line,backgroundColor:C.isa.line+'22',fill:true,tension:0.3,
           pointRadius:2,pointHoverRadius:5,
           pointBackgroundColor:C.isa.line,pointBorderColor:'#fff',pointBorderWidth:1,
@@ -3098,6 +3221,11 @@ function upd(){
     if(t) t.placeholder = String(p.life);
   });
 
+  // 일반계좌 현재 잔액(세 칸 합계)
+  (function(){
+    const t = document.getElementById('gen_total'); if(t) t.value = Math.round(genSum(genInit(p))).toLocaleString();
+  })();
+
   // 일시 지출 나이가 은퇴 전이면 계산에 안 들어간다고 알림
   (function(){
     const h = document.getElementById('lumpHint'); if(!h) return;
@@ -3135,6 +3263,7 @@ function upd(){
   const scenarioResults = {opt:simulate(p,SA.opt), base:simulate(p,SA.base), pes:simulate(p,SA.pes)};
   const res = scenarioResults.base; // 메인 대시보드는 항상 기본 시나리오 기준 (낙관/비관은 아래 접이식 비교표에서만 확인)
   const s = planSummary(p, res);
+  { const gx = document.getElementById('gen_tax'); if(gx) gx.value = (p.genpay > 0 && p.genage > 0) ? res.lifetimeGenTax.toLocaleString() : '—'; }
 
   // 한도 게이지 — 시뮬레이션의 해마다 "사적연금 과세분"(연금저축·IRP 세액공제분·운용수익 + 퇴직IRP 운용수익,
   // 비과세 원금·이연퇴직소득 제외) 중 최대치를 설정 한도와 비교. 한도는 인출 상한이 아니라 세율 경계라
@@ -3204,6 +3333,7 @@ function upd(){
     npEff > p.ret && {key:'gap', ph:'공백기',range:p.ret+'~'+p.npage+'세 · '+(p.npage-p.ret)+'년',bg:'rgba(255,149,0,.12)',items:[
       overlap(sp.prin, gA, gB) && {dot:C.prin.line, t:'안세공 비과세 원금 — 먼저 빠짐(~'+(res.prinExhaustAge || sp.prin[1])+'세)'},
       overlap(sp.isa, gA, gB)  && {dot:C.isa.line,  t:'ISA ('+spanTxt(sp.isa)+') 비과세'},
+      overlap(sp.gen, gA, gB)  && {dot:C.gen.line,  t:ACCT_NAME.gen+' ('+spanTxt(sp.gen)+')'},
       overlap(sp.mf, gA, gB)   && {dot:C.mf.line,   t:ACCT_NAME.mf+' ('+spanTxt(sp.mf)+')'},
       overlap(sp.nh, gA, gB)   && {dot:C.nh.line,   t:ACCT_NAME.nh+' ('+sp.nh[0]+'세~)'},
       overlap(sp.irp, gA, gB)  && {dot:C.irp.line,  t:ACCT_NAME.irp+' ('+sp.irp[0]+'세~)'},
@@ -3217,6 +3347,7 @@ function upd(){
       overlap(sp.tirp, fA, fB) && {dot:C.dc.line,  t:'퇴직IRP (~'+sp.tirp[1]+'세)'},
       overlap(sp.irp, fA, fB)  && {dot:C.irp.line, t:ACCT_NAME.irp+' ('+spanTxt(sp.irp)+')'},
       overlap(sp.isa, fA, fB)  && {dot:C.isa.line, t:'ISA (~'+sp.isa[1]+'세)'},
+      overlap(sp.gen, fA, fB)  && {dot:C.gen.line, t:ACCT_NAME.gen+' (~'+sp.gen[1]+'세)'},
       overlap(sp.mf, fA, fB)   && {dot:C.mf.line,  t:ACCT_NAME.mf+' (~'+sp.mf[1]+'세)'},
       overlap(sp.oth, fA, fB)  && {dot:C.oth.line, t:'근로·기타 소득 ('+spanTxt(sp.oth)+')'},
       overlap(sp.hp, fA, fB)   && {dot:C.hp.line,  t:'주택연금 ('+sp.hp[0]+'세~, 정액)'},
@@ -3263,7 +3394,7 @@ const AMT_SKIP = 'input,textarea,select,script,style,#taxGuidePanel,.hir-hint,.u
 const maskedOriginals = new Map();
 // 금융회사 이름은 개인정보 — 포트폴리오 앱의 별칭(농협→계좌 1, 미래에셋→계좌 2)과 같게 바꾼다.
 // 연금저축·IRP·퇴직연금·국민연금·ISA 같은 상품/제도 이름은 개인정보가 아니라 그대로 둔다.
-const CO_RE = /농협|미래에셋|(?:개인연금|IRP 개인|일반계좌|연금|IRP) 미래/g;
+const CO_RE = /농협|미래에셋|(?:개인연금|IRP 개인|일반계좌|연금|IRP|일반) 미래/g;
 const CO_MAP = {'농협':'계좌 1', '미래에셋':'계좌 2'};
 function maskTextNode(n){
   if(!hideAmounts || n.nodeType!==3) return;

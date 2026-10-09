@@ -132,3 +132,22 @@ test('whatIf: 생활비 단계를 쓰면 최저 세후를 그해 생활비 비�
   assert.equal(w.stats(q).minNet, Math.round(s.minNetEq * 10) / 10);
   assert.ok(w.stats(q).minNet >= Math.round(s.minNetReal * 10) / 10);
 });
+
+
+test('몬테카를로: 시드 고정(같은 입력 = 같은 결과), 변동성이 클수록 성공 확률이 낮아지고, 변동성 0에 가까우면 결정적 결과와 같다', () => {
+  const q = w.planned(BASE);
+  const a = w.monteCarlo(q, {n: 200, vol: 12}), b = w.monteCarlo(q, {n: 200, vol: 12});
+  assert.deepEqual(a, b);
+  const hi = w.monteCarlo(q, {n: 200, vol: 25});
+  assert.ok(hi.successPct <= a.successPct, `변동성 25%p ${hi.successPct}% ≤ 12%p ${a.successPct}%`);
+  const calm = w.monteCarlo(q, {n: 20, vol: 0.001});
+  assert.equal(calm.successPct, 100);                                   // 자동설계 직후 계획은 기대수명까지 유지
+  near(calm.minNetP10, w.stats(q).minNet, 0.5, '변동성 0 ≈ 기본 시나리오 최저 세후');
+  assert.ok(a.successPct >= 0 && a.successPct <= 100 && a.n === 200);
+});
+
+test('위기 점검 마지막 행은 몬테카를로(성공 확률)', () => {
+  const rows = w.stressRows(w.planned(BASE));
+  const mc = rows[rows.length - 1];
+  assert.equal(mc.key, 'mc'); assert.ok(mc.successPct >= 0 && mc.successPct <= 100);
+});

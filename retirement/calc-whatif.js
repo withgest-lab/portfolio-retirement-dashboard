@@ -152,6 +152,29 @@
     return tasks;
   }
 
+  /* 몬테카를로: 은퇴 후 해마다 전 계좌 수익률에 N(0, vol%p) 충격을 더해 n번 시뮬레이션한다(시드 고정 → 같은 입력은 같은 결과).
+     성공 = 기대수명까지 자산 유지. 하위 10% 최저 세후·미달 해 중앙값도 함께. 적립기 수익률은 기본값 그대로(은퇴 직후 위험이 핵심). */
+  function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function monteCarlo(p, o){
+    o = o || {};
+    const n = o.n || 500, vol = o.vol > 0 ? o.vol : 12, rnd = mulberry32(o.seed || 20261009);
+    const years = Math.max(1, p.life - p.ret + 1);
+    const minNets = [], shorts = [];
+    let ok = 0;
+    for(let i = 0; i < n; i++){
+      const path = [];
+      for(let y = 0; y < years; y++){
+        const u1 = Math.max(1e-12, rnd()), u2 = rnd();
+        path.push(vol * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2));
+      }
+      const s = simulate(p, SA.base, {path});
+      if(s.runway === p.life) ok++;
+      minNets.push(s.minNetEq); shorts.push(s.shortNetYears);
+    }
+    const q = (arr, f) => { const a = arr.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.max(0, Math.floor(f * a.length)))]; };
+    return {n, vol, successPct: Math.round(ok / n * 100), minNetP10: Math.round(q(minNets, 0.1) * 10) / 10, shortMedian: q(shorts, 0.5)};
+  }
+
   /* 위기 점검 — 지금 입력한 계획(인출액 그대로)에 위기 상황을 하나씩 얹는다. 환경만 바꾸고 계획은 안 바꾼다.
      행: {key,label,note,minNet,shortYears,firstShortAge,ok,runway,life,leftover}. 상황의 경계는 CALC_SOURCES에 적은 가정이다. */
   function stressRows(p){
@@ -167,10 +190,13 @@
     rows.push(row('long', '100세까지 생존', `기대수명 ${p.life}→100세`, Object.assign({}, p, {life: 100}), SA.base));
     rows.push(row('infl', '물가 급등', '물가 +1%p(전 기간)', p, {r: 0, inf: 1}));
     rows.push(row('hi', '건보료율 인상', '소득 보험료율 8%(법정 상한)', p, SA.base, {hiRate: 0.08}));
+    const mc = monteCarlo(p, {n: 500, vol: p.rvol > 0 ? p.rvol : 12});
+    rows.push({key: 'mc', label: '시장 변동(무작위 500회)', note: `해마다 수익률 ±${mc.vol}%p`, life: p.life, minNet: mc.minNetP10, shortYears: mc.shortMedian,
+               firstShortAge: null, ok: mc.successPct >= 90, successPct: mc.successPct, runway: p.life, leftover: 0, mc: true});
     return rows;
   }
 
-  const api = {planned, stats, withRet, withNpage, withSave, saveRoom, whatIfTasks, stressRows, ISA_YEAR_CAP};
+  const api = {planned, stats, withRet, withNpage, withSave, saveRoom, whatIfTasks, stressRows, monteCarlo, ISA_YEAR_CAP};
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis,
