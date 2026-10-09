@@ -5,7 +5,7 @@
    브라우저에서는 calc.js 뒤에 <script src>로 불러 전역 함수를 쓰고, Node(테스트)에서는 require('./calc.js')로 같은 함수를 쓴다. */
 (function(root, K){
   'use strict';
-  const {simulate, computeAutoPlan, SA, npsAdjustFactor, npsMembershipFactor, PENSION_ANNUAL_PAY_CAP} = K;
+  const {simulate, computeAutoPlan, SA, npsAdjustFactor, npsMembershipFactor, PENSION_ANNUAL_PAY_CAP, housingPensionOf} = K;
 
   const ISA_YEAR_CAP = 2000;   // ISA 연 납입한도(만원)
   const END_KEYS = ['isaend', 'nhend', 'mfend', 'irpend', 'tdcend'];
@@ -18,7 +18,7 @@
     const s = simulate(q, adj || SA.base, opts);
     const n = s.rows.length;
     return {
-      minNet: Math.round(s.minNetReal * 10) / 10,
+      minNet: Math.round(s.minNetEq * 10) / 10,   // 생활비 단계를 쓰면 "세후 ÷ 그해 생활비 비율"로 보정한 값(안 쓰면 minNetReal과 같음)
       avgNet: n ? Math.round(s.lifetimeNetReal / 12 / n * 10) / 10 : 0,
       shortYears: s.shortNetYears, firstShortAge: s.firstShortNetAge,
       runway: s.runway, ok: s.runway === q.life, leftover: s.leftover, years: n,
@@ -128,6 +128,19 @@
       return Object.assign(row, {to: p.npage + 1, minNet: s.minNet, delta: fmt1(s.minNet - b.minNet), ok: s.ok});
     }});
 
+    // 주택연금 — 아직 가입 안 했고 집(공시가격 또는 시세)이 있을 때만. 가입 나이는 은퇴 나이와 65세 중 늦은 쪽(55세 이상)
+    tasks.push({key: 'hp', run: () => {
+      const b = ensureBase();
+      const hasHouse = p.hp_price > 0 || p.gongsiga > 0;
+      if(p.hp_age >= 55 || !hasHouse) return {key: 'hp', none: true};
+      const age2 = Math.min(p.life, Math.max(55, p.ret, 65));
+      const q = Object.assign({}, p, {hp_age: age2});
+      const monthly = housingPensionOf(q);
+      if(!(monthly > 0)) return {key: 'hp', none: true};
+      const s = stats(planned(q));
+      return {key: 'hp', age: age2, monthly, minNet: s.minNet, delta: fmt1(s.minNet - b.minNet), ok: s.ok};
+    }});
+
     // 필요분만 인출 — 세후가 생활비를 넘는 해가 있을 때만 의미 있음(현재 입력 기준)
     tasks.push({key: 'need', run: () => {
       const cur = stats(p);
@@ -163,4 +176,4 @@
 })(typeof window !== 'undefined' ? window : globalThis,
    // Node: require. 브라우저: calc.js의 전역 함수·상수를 이름으로 직접 참조(최상위 const는 window 속성이 아님)
    (typeof module !== 'undefined' && module.exports) ? require('./calc.js')
-     : {simulate, computeAutoPlan, SA, npsAdjustFactor, npsMembershipFactor, PENSION_ANNUAL_PAY_CAP});
+     : {simulate, computeAutoPlan, SA, npsAdjustFactor, npsMembershipFactor, PENSION_ANNUAL_PAY_CAP, housingPensionOf});

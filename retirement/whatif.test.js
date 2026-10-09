@@ -115,3 +115,20 @@ test('simulate opts: retShock은 은퇴 시점 잔액만 줄이고(인출 계획
   assert.ok(hi.rows[hi.rows.length - 1].hi > a.rows[a.rows.length - 1].hi, '국민연금 수령 후 보험료율 7.19→8%(공백기는 최저보험료라 같음)');
   near(hi.lifetimeHi / a.lifetimeHi, 0.08 / 0.0719, 0.2, '소득분이 대부분이면 보험료 비율≈요율 비');
 });
+
+test('whatIf 주택연금: 집이 있고 미가입일 때만 행이 생기고, 그 행 값 = 직접 가입 나이를 넣어 돌린 결과', () => {
+  assert.equal(run(BASE).hp.none, true);                                       // 공시가격·시세 없음
+  const p = Object.assign({}, BASE, {gongsiga: 40000, hp_price: 60000});
+  const r = run(p).hp;
+  assert.ok(!r.none && r.age === 65 && r.monthly > 100);
+  const s = w.stats(w.planned(Object.assign({}, p, {hp_age: 65})));
+  near(r.minNet, s.minNet, 1e-9); assert.ok(r.delta > 0, '월 수입이 늘어 최저 세후가 오른다');
+  assert.equal(run(Object.assign({}, p, {hp_age: 70})).hp.none, true, '이미 가입이면 행 없음');
+});
+
+test('whatIf: 생활비 단계를 쓰면 최저 세후를 그해 생활비 비율로 보정한 값으로 비교한다', () => {
+  const p = Object.assign({}, BASE, {exp_s1_age: 75, exp_s1_pct: 70});
+  const q = w.planned(p), s = simulate(q);
+  assert.equal(w.stats(q).minNet, Math.round(s.minNetEq * 10) / 10);
+  assert.ok(w.stats(q).minNet >= Math.round(s.minNetReal * 10) / 10);
+});

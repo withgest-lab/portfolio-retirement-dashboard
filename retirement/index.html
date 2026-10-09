@@ -539,6 +539,10 @@ button{font-family:inherit;cursor:pointer;}
   text-align:right;border:none;background:rgba(118,118,128,.12);outline:none;-moz-appearance:textfield;}
 .hir-input::-webkit-inner-spin-button,.hir-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 .hir-age{width:44px;}
+.inc-grid{display:block;}
+@media (min-width:700px){ .inc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start;} .inc-grid .hir-label{width:92px;} }
+.inc-sec{font-size:10.5px;font-weight:700;color:#1c1c1e;margin:8px 0 0;padding:0 0 2px;}
+.inc-sec:first-child{margin-top:0;}
 .hir-hint{font-size:9.5px;color:#8e8e93;flex:1;min-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .health-badge-ok{background:rgba(52,199,89,.14);color:#248a3d;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;display:inline-block;}
 .health-badge-warn{background:rgba(255,149,0,.14);color:#c93400;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;display:inline-block;}
@@ -735,7 +739,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       · <b>1세대 1주택 특례</b>: 공시가격 3억원 이하 43% / 3억~6억원 44% / 6억원 초과 45%<br>
       · <b>다주택자(2주택 이상)·법인</b>: 특례 없이 <b>60%</b>
     </p>
-    <p>예: 1세대 1주택, 공시가격 5억원이면 과세표준 = 5억 × 44% = <b>2.2억원</b>. "건보료 설계" 탭에 <b>공시가격</b>과 주택 유형만 넣으면 자동 계산합니다(공시가격은 realtyprice.kr에서 확인).</p>
+    <p>예: 1세대 1주택, 공시가격 5억원이면 과세표준 = 5억 × 44% = <b>2.2억원</b>. "소득·지출" 탭에 <b>공시가격</b>과 주택 유형만 넣으면 자동 계산합니다(공시가격은 realtyprice.kr에서 확인).</p>
     <p style="margin-bottom:2px;"><b>판정 예시</b></p>
     <table>
       <tr><th>재산세 과세표준</th><th>소득(연)</th><th>결과</th></tr>
@@ -760,40 +764,104 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <!-- 소득·지출 인라인 패널 (탭 전환, 모달 아님) — 은퇴 후에도 받는 소득. 건보료 패널의 같은 칸을 옮겨 왔다(id·저장값 그대로) -->
 <div class="inline-panel" id="incomePanel">
   <div class="note" style="margin-top:0;">은퇴 후 현금흐름 수입에 더하고, 세금(국민연금·사적연금과 합산 종합과세)과 건보료에 반영합니다. 금액은 <b>오늘 돈 가치</b>(매년 물가만큼 오름)·세전, 기간 빈칸은 은퇴~기대수명입니다.</div>
+  <div class="inc-grid">
   <div class="health-input-list">
+    <div class="inc-sec">은퇴 후 소득</div>
     <div class="health-input-row">
       <span class="hir-label">근로소득(연)</span>
       <input class="hir-input" type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
       <input class="hir-input hir-age" type="number" id="hi_labor_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_labor_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
-      <span class="hir-hint">세전 총급여 · 근로소득공제·근로세액공제 반영 · 예: 3,600만이면 3600</span>
+      <span class="hir-hint" title="세전 총급여 · 근로소득공제·근로세액공제 반영 · 예: 3,600만이면 3600">세전 총급여 · 근로소득공제·세액공제 반영</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">사업소득(연)</span>
       <input class="hir-input" type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
       <input class="hir-input hir-age" type="number" id="hi_business_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_business_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
-      <span class="hir-hint">매출−필요경비(세전) · 피부양자는 사업자등록 시 소득 1원부터, 미등록은 연 500만원 초과 시 탈락</span>
+      <span class="hir-hint" title="매출−필요경비(세전) · 피부양자는 사업자등록 시 소득 1원부터, 미등록은 연 500만원 초과 시 탈락">매출−필요경비(세전) · 피부양자: 사업소득 500만 초과 탈락</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">기타소득(연)</span>
       <input class="hir-input" type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
       <input class="hir-input hir-age" type="number" id="hi_other_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_other_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
-      <span class="hir-hint">강연료·원고료 등(필요경비 차감 후) · 종합과세로 계산</span>
+      <span class="hir-hint" title="강연료·원고료 등(필요경비 차감 후) · 종합과세로 계산">필요경비 차감 후 · 종합과세로 계산</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">이자소득(연)</span>
       <input class="hir-input" type="number" id="hi_interest" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">세전 · 은퇴 후 계속 · 이자+배당 2,000만 이하 15.4% 분리과세, 초과분은 종합과세 · 건보료는 합산 1,000만 초과 시 반영</span>
+      <span class="hir-hint" title="세전 · 은퇴 후 계속 · 이자+배당 2,000만 이하 15.4% 분리과세, 초과분은 종합과세 · 건보료는 합산 1,000만 초과 시 반영">은퇴 후 계속 · 이자+배당 2,000만 이하 15.4% 분리</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">배당소득(연)</span>
       <input class="hir-input" type="number" id="hi_dividend" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">세전 · 이자와 같은 기준</span>
+      <span class="hir-hint" title="세전 · 이자와 같은 기준">이자와 같은 기준</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">국민연금 임의가입</span>
       <input class="hir-input" type="number" id="np_volprem" value="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
-      <span class="hir-hint">60세 전 은퇴 + 국민연금 "계속 납부"일 때 만 60세 전까지 내는 월 보험료(오늘 가치, 기준소득월액×9.5%) · 0이면 비용 없이 예상액 그대로</span>
+      <span class="hir-hint" title="60세 전 은퇴 + 국민연금 계속 납부일 때 만 60세 전까지 내는 월 보험료(오늘 가치, 기준소득월액×9.5%) · 0이면 비용 없이 예상액 그대로">60세 전 은퇴·계속 납부 시 월 보험료(×9.5%)</span>
     </div>
+    <div class="inc-sec">집</div>
+    <div class="health-input-row">
+      <span class="hir-label">공시가격</span>
+      <input class="hir-input" type="number" id="gongsiga" value="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint" title="공시가격 알리미(realtyprice.kr)에서 확인 · 예: 5억이면 50000 · 건보료 재산 과표 계산에 씀">realtyprice.kr · 예: 5억이면 50000</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">주택 유형</span>
+      <select class="hir-input" id="housetype" style="width:auto;min-width:112px;font-size:12px;" onchange="scheduleUpd()">
+        <option value="single">1세대 1주택</option>
+        <option value="multi">다주택·법인</option>
+      </select>
+      <span class="hir-hint" title="과표 반영 비율: 1세대 1주택 43~45%(공시가격 구간별), 다주택·법인 60%">과표 비율: 1주택 43~45%, 다주택 60%</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">전월세 재산 인정액</span>
+      <input class="hir-input" type="number" id="hi_rentprop" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint" title="무주택자만 · 보증금+월세환산액의 약 30% · 예: 전세 3억 → 9000">무주택자만 · 보증금+월세환산액의 약 30%</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">주택연금</span>
+      <input class="hir-input hir-age" type="number" id="hp_age" value="0" min="0" max="85" step="1" oninput="scheduleUpd()"><span class="unit-tag">세 가입</span>
+      <input class="hir-input" type="number" id="hp_price" value="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원 시세</span>
+      <span class="hir-hint" id="hpHint" title="0 = 가입 안 함 · 시세 빈칸이면 공시가격÷0.69 · 종신 정액형(명목 고정, 비과세·건보료 소득 아님)">0 = 가입 안 함</span>
+    </div>
+  </div>
+  <div class="health-input-list">
+    <div class="inc-sec">생활비·지출</div>
+    <div class="health-input-row">
+      <span class="hir-label">생활비 단계 1</span>
+      <input class="hir-input hir-age" type="number" id="exp_s1_age" value="" placeholder="75" min="0" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세부터</span>
+      <input class="hir-input hir-age" type="number" id="exp_s1_pct" value="" placeholder="100" min="10" max="200" step="5" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+      <span class="hir-hint" title="나이 들며 활동이 줄면 생활비가 줄어듭니다(기본 100% = 변화 없음) · 비율은 기본 월 생활비 기준">100% = 변화 없음</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">생활비 단계 2</span>
+      <input class="hir-input hir-age" type="number" id="exp_s2_age" value="" placeholder="85" min="0" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세부터</span>
+      <input class="hir-input hir-age" type="number" id="exp_s2_pct" value="" placeholder="100" min="10" max="200" step="5" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+      <span class="hir-hint" title="의료·간병비가 늘어 다시 오르면 100% 이상으로">의료·간병비로 다시 늘면 100% 이상</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">일시 지출 1</span>
+      <input class="hir-input hir-age" type="number" id="lump1_age" value="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <input class="hir-input" type="number" id="lump1_amt" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint" title="은퇴 후 그 해에 한 번 쓰는 돈(자녀 결혼·차·집수리 등, 오늘 가치) · 개인연금 농협에서 그 해 추가 인출">그 해 한 번(오늘 가치) · 농협에서 인출</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">일시 지출 2</span>
+      <input class="hir-input hir-age" type="number" id="lump2_age" value="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <input class="hir-input" type="number" id="lump2_amt" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">일시 지출 3</span>
+      <input class="hir-input hir-age" type="number" id="lump3_age" value="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <input class="hir-input" type="number" id="lump3_amt" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">남길 금액</span>
+      <input class="hir-input" type="number" id="bequest" value="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+      <span class="hir-hint" title="기대수명 시점에 남길 돈(비상금·상속, 오늘 가치) · 자동설계가 이만큼을 남기고 나머지로 평탄화">기대수명 시점(오늘 가치) · 자동설계가 먼저 남김</span>
+    </div>
+  </div>
   </div>
 </div>
 
@@ -806,7 +874,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 
   <div class="health-ref-row">
     <span class="health-ref-chip">재산세 과표(자동계산) <b id="hrefRe" data-amt>-</b>만원</span>
-    <span style="font-size:9px;color:#8e8e93;">↑ 아래 공시가격·주택 유형으로 자동 계산</span>
+    <span style="font-size:9px;color:#8e8e93;">소득·지출 탭의 공시가격·주택 유형으로 자동 계산</span>
   </div>
 
   <div class="health-input-list">
@@ -819,32 +887,11 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       <span class="hir-hint">나를 피부양자로 올릴 직장가입자 가족(배우자·자녀 등)이 있으면 "있음" · 소득·재산 기준을 넘는 해만 지역가입자로 계산</span>
     </div>
     <div class="health-input-row">
-      <span class="hir-label">공시가격</span>
-      <input class="hir-input" type="number" id="gongsiga" value="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">공시가격 알리미(realtyprice.kr)에서 확인 · 예: 5억이면 50000</span>
-    </div>
-    <div class="health-input-row">
-      <span class="hir-label">주택 유형</span>
-      <select class="hir-input" id="housetype" style="width:auto;min-width:112px;font-size:12px;" onchange="scheduleUpd()">
-        <option value="single">1세대 1주택</option>
-        <option value="multi">다주택·법인</option>
-      </select>
-      <span class="hir-hint">과표 반영 비율: 1세대 1주택 43~45%(공시가격 구간별), 다주택·법인 60%</span>
-    </div>
-    <div class="health-input-row">
       <span class="hir-label">국민연금(공적연금)</span>
       <input class="hir-input" type="text" id="hi_np_display" value="0" disabled
         style="background:rgba(118,118,128,.06);color:#8e8e93;cursor:not-allowed;"><span class="unit-tag">만원/월</span>
       <span class="hir-hint">국민연금 카드의 월 수령액을 자동 반영(수정은 해당 카드에서) · 보험료는 50%만 반영 · 피부양자 판정은 수령 개시 시점의 물가 반영 금액 기준</span>
     </div>
-    <div class="health-input-row">
-      <span class="hir-label">전월세 재산 인정액</span>
-      <input class="hir-input" type="number" id="hi_rentprop" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint">무주택자만 · 보증금+월세환산액의 약 30% · 예: 전세 3억 → 9000</span>
-    </div>
-  </div>
-
-  <div class="health-input-list">
     <div class="health-input-row">
       <span class="hir-label">임의계속가입</span>
       <select class="hir-input" id="hi_vol" style="width:auto;min-width:112px;font-size:12px;" onchange="scheduleUpd()">
@@ -1519,6 +1566,7 @@ const C={
   isa: {fill:'rgba(255,100,130,0.78)', line:'#FF6482'},  // ISA: Pink(세후 부족 빨강 선과 구분되게 밝은 핑크)
   prin:{fill:'rgba(212,172,43,0.85)',  line:'#D4AC2B'},  // 안세공: 옐로우(국민연금 오렌지와 분리)
   oth: {fill:'rgba(162,132,94,0.85)',  line:'#A2845E'},  // 은퇴 후 근로·기타 소득: Brown
+  hp:  {fill:'rgba(110,123,139,0.85)', line:'#6E7B8B'},  // 주택연금: Slate
   exp: {line:'#1C1C1E'},  // 생활비 기준선: 검정 점선(중립 — 빨강은 "세후 부족" 전용)
 };
 
@@ -1944,7 +1992,7 @@ function acctSpans(res){
     return a.length ? [a[0].age, a[a.length-1].age] : null;
   };
   return {prin: span(x => x.prinInc), isa: span(x => x.gross.isa), mf: span(x => x.gross.mf), nh: span(x => x.gross.nh),
-          irp: span(x => x.gross.irp), tirp: span(x => x.gross.tirp), np: span(x => x.npInc), oth: span(x => x.othInc)};
+          irp: span(x => x.gross.irp), tirp: span(x => x.gross.tirp), np: span(x => x.npInc), oth: span(x => x.othInc), hp: span(x => x.hpInc)};
 }
 const spanTxt = s => s ? (s[0] === s[1] ? s[0]+'세' : s[0]+'~'+s[1]+'세') : '';
 
@@ -2200,7 +2248,9 @@ const ALL_FIELDS = [
   'rnh','rmf','rirp','rtirp','risa','inf',
   'hi_business','hi_labor','hi_interest','hi_dividend','hi_other','hi_rentprop','hi_dep',
   'hi_labor_from','hi_labor_to','hi_business_from','hi_business_to','hi_other_from','hi_other_to',
-  'hi_vol','hi_volprem','np_volprem','npyears','npcont'
+  'hi_vol','hi_volprem','np_volprem','npyears','npcont',
+  'hp_age','hp_price','exp_s1_age','exp_s1_pct','exp_s2_age','exp_s2_pct',
+  'lump1_age','lump1_amt','lump2_age','lump2_amt','lump3_age','lump3_amt','bequest'
 ];
 
 // 초기화 버튼이 location.reload()에만 의존하면, 일부 모바일 브라우저가 새로고침 시
@@ -2333,6 +2383,8 @@ function getP(){
     hi_labor_from:gv('hi_labor_from'),hi_labor_to:gv('hi_labor_to'),hi_business_from:gv('hi_business_from'),hi_business_to:gv('hi_business_to'),
     hi_other_from:gv('hi_other_from'),hi_other_to:gv('hi_other_to'),
     hi_vol:document.getElementById('hi_vol')?.value === 'yes' ? 'yes' : 'no', hi_volprem:gv('hi_volprem'),
+    hp_age:gv('hp_age'), hp_price:gv('hp_price'), exp_s1_age:gv('exp_s1_age'), exp_s1_pct:gv('exp_s1_pct'), exp_s2_age:gv('exp_s2_age'), exp_s2_pct:gv('exp_s2_pct'),
+    lump1_age:gv('lump1_age'), lump1_amt:gv('lump1_amt'), lump2_age:gv('lump2_age'), lump2_amt:gv('lump2_amt'), lump3_age:gv('lump3_age'), lump3_amt:gv('lump3_amt'), bequest:gv('bequest'),
     np_volprem:gv('np_volprem'), npyears:gv('npyears'), npcont:document.getElementById('npcont')?.value === 'stop' ? 'stop' : 'cont',
     curYear:new Date().getFullYear(), // 미래 안세공 자동 합산(2027년~)의 연도 기준
     tirptaxManual:_tirptaxManual      // 퇴직소득세를 직접 입력했으면 자동설계도 그 값 사용
@@ -2389,6 +2441,7 @@ function renderNeedView(){
       else row('연금저축 월 납입', `+${sv.extra}만/월`, sv.minNet, sv.delta, sv.reach ? `+${sv.reach}만이면 충족` : `한도(+${sv.room}만) 안에선 부족`);
     }
     if(short && n && !n.none) row('국민연금 수령', `${p.npage} → ${n.to}세`, n.minNet, n.delta, n.ok ? '—' : '자산 유지 못함');
+    if(short && got.hp && !got.hp.none) row('주택연금 가입', `${got.hp.age}세 · 월 ${got.hp.monthly}만`, got.hp.minNet, got.hp.delta, got.hp.ok ? '정액(물가연동 아님)' : '자산 유지 못함');
     if(d && !d.none) row('필요분만 인출', `여유 ${d.surplusYears}년`, null, 0, `${p.life}세 잔여 ${(Math.round(d.leftoverFull/1000)/10)}억 → ${(Math.round(d.leftoverNeed/1000)/10)}억`);
     body.innerHTML = rows.join('') || '<tr><td colspan="4" style="color:#8e8e93;">계산 중…</td></tr>';
     if(note) note.textContent = short
@@ -2823,6 +2876,7 @@ function showCustomTooltip(evt, activeEls, chart){
     {label:'ISA인출', val:row.isaInc, dot:C.isa.line},
     {label:'안세공 비과세인출', val:row.prinInc, dot:C.prin.line},
     {label:'근로·기타 소득', val:row.othInc, dot:C.oth.line},
+    {label:'주택연금', val:row.hpInc, dot:C.hp.line},
   ];
   items.forEach(it=>{
     if((it.val||0)>0){
@@ -2834,7 +2888,7 @@ function showCustomTooltip(evt, activeEls, chart){
   tip.innerHTML = `
     <div class="tt-total">📅 ${row.label} &nbsp;|&nbsp; 월 수령 합계 <b style="color:#248a3d">${totalInc}만원</b> <span style="color:#8e8e93;font-weight:500;">(오늘 기준 ${realTotal}만)</span></div>
     <div class="tt-exp" style="color:#8944ab;">💸 세후 약 <b>${row.netInc}만원</b> <span style="color:#8e8e93;">(세금 ${row.taxTotal}만 · 건보료 ${row.hi}만${row.hiVol ? '·임의계속' : ''}${row.npPrem > 0 ? ' · 국민연금 보험료 '+row.npPrem+'만' : ''})</span></div>
-    <div class="tt-exp">📉 월 생활비 예측: <b style="color:#1c1c1e">${curExp}만원</b></div>
+    <div class="tt-exp">📉 월 생활비 예측: <b style="color:#1c1c1e">${curExp}만원</b>${row.lumpM > 0 ? ` <span style="color:#8e8e93;">(일시 지출 월 환산 ${row.lumpM}만 포함)</span>` : ''}</div>
     <div class="tt-net" style="color:${netColor};">${net>=0?'✅':'⚠️'} ${netLabel}</div>
     ${row.taxedOverAnnual > 0.5 ? `<div class="tt-exp" style="color:#c93400;">연금수령한도 초과 연 ${Math.round(row.taxedOverAnnual).toLocaleString()}만 → 16.5%(퇴직IRP는 감면 없음) 과세</div>` : ''}
     <div class="tt-grid">${rows_html}</div>
@@ -2921,6 +2975,7 @@ function drawChart(rows, p){
       {c:C.isa.fill,l:'ISA'},
       {c:C.prin.fill,l:'안세공'},
       {c:C.oth.fill,l:'근로·기타'},
+      {c:C.hp.fill,l:'주택연금'},
       {c:C.exp.line,l:'생활비',dashed:true},
       {c:NET_OK,l:'세후 여유',line:true},
       {c:NET_SHORT,l:'세후 부족',line:true},
@@ -2937,6 +2992,7 @@ function drawChart(rows, p){
         {label:'ISA인출',          data:rows.map(r=>isAcc(r)?r.isaDep:r.isaInc), backgroundColor:tone('isa'),stack:'s'},
         {label:'안세공 비과세인출', data:rows.map(r=>isAcc(r)?0:r.prinInc),        backgroundColor:tone('prin'),stack:'s'},
         {label:'근로·기타 소득',   data:rows.map(r=>isAcc(r)?0:r.othInc),         backgroundColor:tone('oth'), stack:'s'},
+        {label:'주택연금',        data:rows.map(r=>isAcc(r)?0:r.hpInc),          backgroundColor:tone('hp'),  stack:'s'},
         // 세후 합계 선 — 그해 세후가 생활비 이상이면 파랑, 미만이면 빨강. 두 해 사이에서 넘나들면
         // 차이(세후−생활비)가 0이 되는 지점(t = d0/(d0−d1))에서 색이 바뀌도록 구간을 그라디언트로 칠한다.
         {label:'세후 합계(선)', data:rows.map(r=>isAcc(r)?null:r.netInc),
@@ -3041,6 +3097,14 @@ function upd(){
     if(t) t.placeholder = String(p.life);
   });
 
+  // 주택연금 월 수령액 안내(입력이 바뀔 때마다)
+  (function(){
+    const h = document.getElementById('hpHint'); if(!h) return;
+    const m = housingPensionOf(p);
+    h.textContent = m > 0 ? '월 '+m+'만 · 종신 정액(명목 고정)'
+                          : (p.hp_age > 0 && p.hp_age < 55 ? '55세부터 가입할 수 있어요' : '0 = 가입 안 함');
+  })();
+
   // 국민연금 "실제 월 수령액"(np)은 "65세 기준 예상액"(npbase)에 조기·연기수령
   // 가산율을 자동 반영해 매번 다시 계산 — 수령 시작 나이만 바꾸면 자동으로 맞춰짐
   (function(){
@@ -3136,6 +3200,7 @@ function upd(){
       overlap(sp.irp, gA, gB)  && {dot:C.irp.line,  t:ACCT_NAME.irp+' ('+sp.irp[0]+'세~)'},
       overlap(sp.tirp, gA, gB) && {dot:C.dc.line,   t:'퇴직IRP ('+sp.tirp[0]+'세~, 감면 과세)'},
       overlap(sp.oth, gA, gB)  && {dot:C.oth.line,  t:'근로·기타 소득 ('+spanTxt(sp.oth)+')'},
+      overlap(sp.hp, gA, gB)   && {dot:C.hp.line,   t:'주택연금 ('+sp.hp[0]+'세~, 정액)'},
     ].filter(Boolean)},
     {key:'full', ph:'완성기',range:npEff+'~'+p.life+'세 · '+(p.life-npEff)+'년',bg:'rgba(52,199,89,.12)',items:[
       overlap(sp.np, fA, fB)   && {dot:C.np.line,  t:'국민연금 ('+sp.np[0]+'세~, 물가연동)'},
@@ -3145,6 +3210,7 @@ function upd(){
       overlap(sp.isa, fA, fB)  && {dot:C.isa.line, t:'ISA (~'+sp.isa[1]+'세)'},
       overlap(sp.mf, fA, fB)   && {dot:C.mf.line,  t:ACCT_NAME.mf+' (~'+sp.mf[1]+'세)'},
       overlap(sp.oth, fA, fB)  && {dot:C.oth.line, t:'근로·기타 소득 ('+spanTxt(sp.oth)+')'},
+      overlap(sp.hp, fA, fB)   && {dot:C.hp.line,  t:'주택연금 ('+sp.hp[0]+'세~, 정액)'},
     ].filter(Boolean)},
   ].filter(Boolean).map(ph=>'<div class="phase-card'+(_selectedPhase===ph.key?' sel':'')+'" data-ph="'+ph.key+'" onclick="selectPhase(\''+ph.key+'\')" style="background:'+ph.bg+';--ph-c:'+PHASE_COLOR[ph.key]+';" title="누르면 차트에 이 기간을 점선으로 표시">'
     +'<div class="phase-card-title" style="color:'+PHASE_COLOR[ph.key]+';">'+ph.ph+'<span class="phase-card-range">'+ph.range+'</span></div>'

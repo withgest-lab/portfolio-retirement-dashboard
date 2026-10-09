@@ -9,7 +9,8 @@ const {
   calcMonthlyDepositFV, growYears, stepBalance, stepBalanceDetail, pvOfMonthlyStream,
   futurePrinAdd, taxFreeBases, simulate, computeAutoPlan, buildAccRows, accumulate, npNominalAtStart,
   pensionLimitAnnual, bridgeExtraMonthly, healthPremiumYear, regionalIncomeMonthly,
-  wageIncomeDeduction, wageTaxCredit, comprehensiveTotal, otherIncomeReal, npsMembershipFactor
+  wageIncomeDeduction, wageTaxCredit, comprehensiveTotal, otherIncomeReal, npsMembershipFactor,
+  housingPensionMonthly, housingPensionOf, expPct, lumpsAt
 } = c;
 
 // 화면 기본값과 같은 입력(납입 종료는 getP()처럼 은퇴나이-1로 정규화된 상태)
@@ -200,7 +201,7 @@ test('futurePrinAdd: 연금저축 600·IRP 합산 900 배분, 연 1,800 초과 �
 test('simulate: 매년 월 합계 = 구성요소 합(중복·누락 없음), 세후 = 합계 − 세금 − 건보료', () => {
   const r = simulate(withPlan(BASE));
   for(const x of r.rows){
-    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc, `${x.age}세 합계`);
+    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc, `${x.age}세 합계`);
     assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi - x.npPrem), `${x.age}세 세후`);
   }
 });
@@ -442,7 +443,13 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
       irp: ri(0, 20000), irpy: ri(0, 1200), irpstart: ri(40, 65), tirp: ri(0, 100000), tdc: ri(0, 3000), tdcstart: ri(40, 65), tservice: ri(1, 45),
       isa: ri(0, 20000), isay: ri(0, 2000), isastart: ri(40, 65), rnh: ri(0, 15), rmf: ri(0, 15), rirp: ri(0, 15), rtirp: ri(0, 15), risa: ri(0, 20),
       inf: ri(0, 10) / 2, np: ri(0, 500), curYear: ri(2026, 2035),
-      realestate: ri(0, 120000), hi_interest: ri(0, 1500), hi_labor: ri(0, 3000), hi_dep: rnd() < 0.3 ? 'yes' : 'no'});
+      realestate: ri(0, 120000), hi_interest: ri(0, 1500), hi_labor: ri(0, 3000), hi_dep: rnd() < 0.3 ? 'yes' : 'no',
+      // 2026-10-09 새 기능도 무작위로 섞는다(대부분 꺼진 채, 켜지면 불변식이 그대로 지켜져야 함)
+      hi_labor_from: rnd() < 0.5 ? ri(ret, ret + 10) : 0, hi_labor_to: rnd() < 0.5 ? ri(ret + 2, ret + 15) : 0,
+      hi_vol: rnd() < 0.3 ? 'yes' : 'no', hi_volprem: ri(0, 30), npyears: ri(5, 35), npcont: rnd() < 0.5 ? 'stop' : 'cont', np_volprem: ri(0, 40),
+      exp_s1_age: rnd() < 0.4 ? ri(ret + 5, ret + 20) : 0, exp_s1_pct: ri(60, 110), exp_s2_age: rnd() < 0.3 ? ri(ret + 15, ret + 25) : 0, exp_s2_pct: ri(50, 100),
+      hp_age: rnd() < 0.3 ? ri(60, 85) : 0, hp_price: ri(0, 80000), bequest: rnd() < 0.3 ? ri(0, 5000) : 0,
+      lump1_age: rnd() < 0.3 ? ri(ret, life) : 0, lump1_amt: ri(0, 3000)});
     for(const k of ['nhend','mfend','irpend','isaend','tdcend']) p[k] = ret - 1;
     const q = Object.assign({}, p, computeAutoPlan(p));
     const r = simulate(q), T = taxFreeBases(q);
@@ -450,7 +457,7 @@ test('무작위 입력 200건: 합계·NaN·음수·비과세≤T·이연≤DC �
       const v = [x.totalInc, x.netInc, x.taxTotal, ...Object.values(x.bal)];
       assert.ok(v.every(Number.isFinite), `#${i} ${x.age}세 NaN`);
       assert.ok(Object.values(x.bal).every(b => b >= -1e-6), `#${i} 음수 잔액`);
-      assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc, `#${i} 합계`);
+      assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc, `#${i} 합계`);
       assert.equal(x.netInc, Math.max(0, x.totalInc - x.taxTotal - x.hi - x.npPrem), `#${i} 세후 = 합계 − 세금 − 건보료`);
       assert.ok(x.hi >= 0 && x.netInc <= x.totalInc && x.nhInc >= 0 && x.mfInc >= 0 && x.irpInc >= 0, `#${i} 세후/음수`);
     }
@@ -524,7 +531,7 @@ test('simulate: 은퇴 후 근로소득은 기간 안 해에만 수입·세금·
   for(const x of r.rows){
     const inWin = x.age >= 57 && x.age <= 61;
     assert.equal(x.othInc > 0, inWin, `${x.age}세 근로소득 기간`);
-    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc, `${x.age}세 합계`);
+    assert.equal(x.totalInc, x.nhInc + x.mfInc + x.irpInc + x.prinInc + x.npInc + x.tirpInc + x.isaInc + x.othInc + x.hpInc, `${x.age}세 합계`);
   }
   assert.ok(r.rows[0].othInc > 0 && r.rows[0].taxOth > 0, '근로소득 세금(oth)');
   const gap = r.rows.find(x => x.age === 57), gap0 = r0.rows.find(x => x.age === 57);
@@ -606,4 +613,65 @@ test('임의계속가입: 단위가 실질값끼리 비교된다(물가가 있�
 test('npsMembershipFactor: 가입기간 10년 미만이면 노령연금 0', () => {
   assert.equal(npsMembershipFactor(Object.assign({}, BASE, {npyears: 3, ret: 55, npcont: 'stop'})), 0);
   assert.ok(npsMembershipFactor(Object.assign({}, BASE, {npyears: 8, ret: 57, npcont: 'stop'})) > 0);   // 8+6=14년
+});
+
+
+/* ── 2026-10-09 단계 ③: 주택연금·생활비 단계·일시 지출·남길 금액 ── */
+test('주택연금 월지급금: 한국주택금융공사 2026.3 예시표(70세 3억 = 92.3만), 나이 보간·가격 비례·12억 한도', () => {
+  near(housingPensionMonthly(70, 30000), 92.3, 0.05, '70세 3억');
+  near(housingPensionMonthly(60, 10000), 21.1, 0.06, '60세 1억');
+  near(housingPensionMonthly(80, 50000), 241.6, 0.06, '80세 5억');
+  near(housingPensionMonthly(62, 10000), 21.06 + (25.28 - 21.06) * 2 / 5, 0.06, '62세 보간');
+  assert.equal(housingPensionMonthly(54, 30000), 0, '55세 미만 가입 불가');
+  assert.equal(housingPensionMonthly(90, 30000), housingPensionMonthly(80, 30000), '80세 초과는 80세 값');
+  assert.equal(housingPensionMonthly(70, 200000), housingPensionMonthly(70, 120000), '12억 한도');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga: 20700}), housingPensionMonthly(70, 30000), '시세 없으면 공시가격÷0.69');
+  assert.equal(housingPensionOf({hp_age: 0, gongsiga: 20700}), 0);
+});
+
+test('주택연금: 가입 나이부터 명목 고정 월 수입, 세금·건보료는 그대로(비과세·소득 아님)', () => {
+  const base = withPlan(BASE);
+  const p = Object.assign({}, base, {hp_age: 70, hp_price: 30000});
+  const a = simulate(base), b = simulate(p);
+  const x = b.rows.find(r => r.age === 75), x0 = a.rows.find(r => r.age === 75);
+  assert.equal(b.rows.find(r => r.age === 69).hpInc, 0);
+  assert.equal(b.rows.find(r => r.age === 70).hpInc, Math.round(housingPensionMonthly(70, 30000)));
+  assert.equal(b.rows.find(r => r.age === 80).hpInc, b.rows.find(r => r.age === 70).hpInc, '명목 고정');
+  assert.equal(x.totalInc - x0.totalInc, x.hpInc, '합계 = 기존 + 주택연금');
+  assert.equal(x.taxTotal, x0.taxTotal); assert.equal(x.hi, x0.hi);
+});
+
+test('생활비 단계: 그 나이부터 비율이 적용되고, 단계를 안 쓰면 minNetEq = minNetReal', () => {
+  const p = withPlan(Object.assign({}, BASE, {exp_s1_age: 75, exp_s1_pct: 80, exp_s2_age: 85, exp_s2_pct: 70}));
+  const r = simulate(p);
+  const e = a => r.rows.find(x => x.age === a).curExp;
+  near(e(75) / e(74), 1.025 * 0.8, 0.01, '75세 80%');
+  near(e(85) / e(84), 1.025 * 70 / 80, 0.01, '85세 70%(기본 대비)');
+  assert.equal(expPct(p, 74), 1); assert.equal(expPct(p, 75), 0.8); assert.equal(expPct(p, 90), 0.7);
+  const plain = simulate(withPlan(BASE));
+  near(plain.minNetEq, plain.minNetReal, 1e-9); near(plain.maxNetEq, plain.maxNetReal, 1e-9);
+  assert.ok(r.minNetEq >= r.minNetReal, '단계로 생활비가 줄면 보정 값이 더 크다');
+  assert.equal(r.runway, p.life);
+});
+
+test('일시 지출: 그 해 생활비에 월 환산으로 더해지고 농협에서 추가 인출, 자동설계는 미리 떼어 기대수명까지 유지', () => {
+  const p = withPlan(Object.assign({}, BASE, {lump1_age: 70, lump1_amt: 3000}));
+  const r = simulate(p), plain = simulate(withPlan(BASE));
+  const x70 = r.rows.find(x => x.age === 70), x69 = r.rows.find(x => x.age === 69);
+  const nominal = 3000 * Math.pow(1.025, 70 - 51);
+  assert.equal(x70.lumpM, Math.round(nominal / 12));
+  assert.ok(x70.curExp > x69.curExp * 1.4, '일시 지출 해 생활비');
+  const extraNh = r.rows.find(x => x.age === 70).gross.nh - plain.rows.find(x => x.age === 70).gross.nh;
+  near(extraNh, nominal, nominal * 0.06, '그 해 농협 인출이 일시 지출만큼 늘어남');
+  assert.equal(r.runway, p.life);
+  assert.equal(lumpsAt(p, 70, 2), 6000); assert.equal(lumpsAt(p, 69, 2), 0);
+});
+
+test('남길 금액: 자동설계가 기대수명 시점에 그만큼(명목 환산)을 남긴다', () => {
+  const p = withPlan(Object.assign({}, BASE, {bequest: 5000}));
+  const r = simulate(p);
+  const target = 5000 * Math.pow(1.025, 90 - 51);
+  near(r.leftover, target, target * 0.1, '남는 돈');
+  assert.equal(r.runway, p.life);
+  assert.ok(simulate(withPlan(BASE)).leftover < r.leftover / 10, '입력 전엔 거의 남기지 않음');
 });

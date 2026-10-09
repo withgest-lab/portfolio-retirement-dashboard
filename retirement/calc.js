@@ -468,6 +468,39 @@ function npsMembershipFactor(p){
   return Math.min(1, have / full);
 }
 
+/* ── 주택연금(종신지급·정액형·일반주택) 월지급금 — 한국주택금융공사 2026.3.1 기준 예시표(주택가격 1억원당, 천원 — 5억원 칸 ÷ 5) ──
+   가입 나이 55~80세 구간 직선 보간(80세 초과는 80세 값 — 실제는 더 많아 보수적), 주택가격에 비례(예: 70세 3억원 = 92.3만원).
+   가입 요건: 부부 중 1명 55세 이상, 공시가격 12억원 이하(월지급금은 시세·감정가 기준). 명목 고정 지급(물가연동 아님), 소득세·건보료 소득 아님. */
+const HOUSING_PENSION_PER_1EOK = [[55,156],[60,210.6],[65,252.8],[70,307.8],[75,381.2],[80,483.2]];   // 5억원 예시 ÷ 5(소수 보존 — 3억 70세 = 92.3만)
+function housingPensionMonthly(age, priceMan){
+  if(!(age >= 55) || !(priceMan > 0)) return 0;
+  const t = HOUSING_PENSION_PER_1EOK;
+  let v;
+  if(age >= t[t.length-1][0]) v = t[t.length-1][1];
+  else { let i = 0; while(age >= t[i+1][0]) i++; v = t[i][1] + (t[i+1][1] - t[i][1]) * (age - t[i][0]) / (t[i+1][0] - t[i][0]); }
+  return Math.round(v * (Math.min(priceMan, 120000) / 10000) / 10 * 10) / 10;   // 천원/억 → 만원
+}
+// 주택연금 가입 시 월 수령액(명목 고정, 만원) — 주택 시세 입력이 없으면 공시가격÷0.69(공시가격 현실화율)로 추정
+function housingPensionOf(p){
+  if(!(p.hp_age >= 55)) return 0;
+  const price = p.hp_price > 0 ? p.hp_price : (p.gongsiga > 0 ? p.gongsiga / 0.69 : 0);
+  return housingPensionMonthly(p.hp_age, price);
+}
+
+// 나이별 생활비 단계: 그 나이부터 기본 생활비의 pct%. 칸을 안 쓰면(나이 0·pct 100) 전 기간 100%
+function expPct(p, age){
+  let pct = 100;
+  if(p.exp_s1_age > 0 && age >= p.exp_s1_age && p.exp_s1_pct > 0) pct = p.exp_s1_pct;
+  if(p.exp_s2_age > 0 && age >= p.exp_s2_age && p.exp_s2_pct > 0) pct = p.exp_s2_pct;
+  return pct / 100;
+}
+// 일시 지출(오늘 가치 만원, 나이별 최대 3건) — 은퇴 후 그 나이의 한 해에 쓰는 총액(명목)
+function lumpsAt(p, age, infMul){
+  let t = 0;
+  for(const i of [1,2,3]) if(p['lump'+i+'_age'] === age && p['lump'+i+'_amt'] > 0) t += p['lump'+i+'_amt'] * infMul;
+  return t;
+}
+
 /* ── 은퇴 후 그해 건보료(명목, 만원/연) — 현금흐름 세후에서 세금과 함께 차감 ──
    은퇴 전은 직장가입자(급여에서 공제)라 0. 은퇴 후는 지역가입자로 보고 2026 요율·등급표를 "오늘 가치"에 적용한 뒤
    그해 물가(infMul)를 곱한다 — 국민연금은 물가연동이라 수령 후 건보료는 오늘 가치로 일정하다.
@@ -647,7 +680,8 @@ function evalYear(st, plan, ctx, age){
 
   // 60세 전 은퇴 + "계속 납부"면 국민연금 임의가입 보험료(오늘 가치 월 금액 × 물가)를 만 60세 전까지 낸다
   const npPremA = (p.npcont !== 'stop' && p.np_volprem > 0 && age >= p.ret && age < NPS_FULL_AGE) ? p.np_volprem * 12 * infMulY : 0;
-  const grossA = paid.nh + paid.mf + paid.irp + paid.tirp + paid.isa + npInc*12 + othA;
+  const hpA = age >= p.hp_age ? housingPensionOf(p) * 12 : 0;   // 주택연금(명목 고정·비과세)
+  const grossA = paid.nh + paid.mf + paid.irp + paid.tirp + paid.isa + npInc*12 + othA + hpA;
   const taxA = pt.priv + pt.np + (pt.oth||0) + tirpTaxA + otherTaxA + isaTaxFromIncome;
   // 경고용: 한도를 넘어 실제로 세금이 무거워진 금액(55세 전 비과세 원금 가교 인출처럼 세금 없는 연금외수령은 제외)
   const taxedOverA = otherA + defOver;
@@ -656,7 +690,7 @@ function evalYear(st, plan, ctx, age){
   const hiA = hiR.annual;
   return {
     paid, free, npInc, pt, tirpDef, privTaxableA, otherA, otherTaxA, tirpTaxA, overLimitAnnual, taxedOverA,
-    othA, ex, npPremA, hiVol: hiR.volContinued,
+    othA, ex, npPremA, hpA, hiVol: hiR.volContinued,
     isaTax, isaTaxFromIncome, grossA, taxA, hiA, netA: Math.max(0, grossA - taxA - hiA - npPremA),
     next: {
       bal: {nh:step.nh.bal, mf:step.mf.bal, irp:step.irp.bal, tirp:step.tirp.bal, isa:isaBal},
@@ -705,8 +739,9 @@ function simulate(p, adj, opts){
   const ph = {gap:{n:0, gross:0, net:0, grossNom:0, netNom:0}, full:{n:0, gross:0, net:0, grossNom:0, netNom:0}};
 
   for(let age=p.ret; age<=p.life; age++){
-    const curExp = Math.round(expAtRet * Math.pow(1+infR/100, age - p.ret));
     const infMul = Math.pow(1+infR/100, age - p.age);
+    const lumpM = lumpsAt(p, age, infMul) / 12;   // 일시 지출을 12개월로 나눈 월 환산(명목)
+    const curExp = Math.round(expAtRet * Math.pow(1+infR/100, age - p.ret) * expPct(p, age) + lumpM);
     const inBridge = age < 55;
     // 계좌별 그해 계획 월 인출액(명목) — 계획 수령액(오늘 기준×물가) + 55세 전 비과세 원금 가교 인출
     const plan = {
@@ -716,18 +751,20 @@ function simulate(p, adj, opts){
       tirp:  age>=p.tage   ? Math.round(p.tm*infMul)     : 0,
       isa:   age>=p.isaage ? Math.round(p.isam*infMul)   : 0,
     };
-    let y = evalYear(st, plan, ctx, age);
+    // 일시 지출은 개인연금 농협(없으면 인출 가능한 만큼)에서 그해 월 인출에 얹어 낸다 — 세금은 evalYear가 같은 규칙으로 계산
+    const mk = pl => lumpM > 0 ? Object.assign({}, pl, {nh: pl.nh + lumpM}) : pl;
+    let y = evalYear(st, mk(plan), ctx, age);
     if(opts.needOnly && y.netA/12 > curExp){
       // 세후가 생활비를 넘는 만큼만 사적 인출을 줄임: 세후(s) ≥ 생활비인 가장 작은 비율 s를 이분 탐색
       let lo = 0, hi = 1;
       for(let i=0; i<20; i++){
         const mid = (lo+hi)/2, scaled = {};
         for(const k in plan) scaled[k] = plan[k]*mid;
-        if(evalYear(st, scaled, ctx, age).netA/12 >= curExp) hi = mid; else lo = mid;
+        if(evalYear(st, mk(scaled), ctx, age).netA/12 >= curExp) hi = mid; else lo = mid;
       }
       const scaled = {};
       for(const k in plan) scaled[k] = plan[k]*hi;
-      y = evalYear(st, scaled, ctx, age);
+      y = evalYear(st, mk(scaled), ctx, age);
     }
     st = y.next;
 
@@ -738,8 +775,8 @@ function simulate(p, adj, opts){
     const nhW = Math.round(y.paid.nh/12), mfW = Math.round(y.paid.mf/12), irpW = Math.round(y.paid.irp/12);
     const tirpW = Math.round(y.paid.tirp/12), isaW = Math.round(y.paid.isa/12);
     const prinNh = Math.min(nhW, Math.round(y.free.nh/12)), prinMf = Math.min(mfW, Math.round(y.free.mf/12)), prinIrp = Math.min(irpW, Math.round(y.free.irp/12));
-    const othW = Math.round(y.othA/12), npPremW = Math.round(y.npPremA/12);
-    const totalInc = nhW + mfW + irpW + y.npInc + tirpW + isaW + othW;
+    const othW = Math.round(y.othA/12), npPremW = Math.round(y.npPremA/12), hpW = Math.round(y.hpA/12);
+    const totalInc = nhW + mfW + irpW + y.npInc + tirpW + isaW + othW + hpW;
     const taxTotal = Math.round(y.taxA/12);
     const hiM = Math.round(y.hiA/12);
     const netInc = Math.max(0, totalInc - taxTotal - hiM - npPremW);
@@ -761,7 +798,7 @@ function simulate(p, adj, opts){
     rows.push({
       age, label: age+'세', infMul,
       nhInc: nhW - prinNh, mfInc: mfW - prinMf, irpInc: irpW - prinIrp, privInc: Math.round(y.privTaxableA/12),
-      npInc: y.npInc, tirpInc: tirpW, isaInc: isaW, prinInc: prinNh + prinMf + prinIrp, othInc: othW, npPrem: npPremW, totalInc, curExp,
+      npInc: y.npInc, tirpInc: tirpW, isaInc: isaW, prinInc: prinNh + prinMf + prinIrp, othInc: othW, hpInc: hpW, npPrem: npPremW, lumpM: Math.round(lumpM), pct: expPct(p, age), totalInc, curExp,
       taxPriv: Math.round(y.pt.priv/12), taxNp: Math.round(y.pt.np/12), taxOth: Math.round((y.pt.oth||0)/12), hiVol: y.hiVol, taxTirp: Math.round(y.tirpTaxA/12),
       taxOther: Math.round(y.otherTaxA/12), taxTotal, hi: hiM, taxMethod: y.pt.method, isaTax: Math.round(y.isaTax), netInc,
       realTotal: totalInc/infMul, realNet: netInc/infMul,
@@ -792,6 +829,9 @@ function simulate(p, adj, opts){
             full:{years:ph.full.n, gross:avg(ph.full,'gross'), net:avg(ph.full,'net')}},
     minNetReal: rows.length ? Math.min(...rows.map(x => x.realNet)) : 0,
     maxNetReal: rows.length ? Math.max(...rows.map(x => x.realNet)) : 0,
+    // 생활비 단계(나이별 비율)를 반영한 값 = 세후 ÷ 그해 생활비 비율. 단계를 안 쓰면 minNetReal/maxNetReal과 같다 — 자동설계·부족 대책이 쓴다
+    minNetEq: rows.length ? Math.min(...rows.map(x => x.realNet / x.pct)) : 0,
+    maxNetEq: rows.length ? Math.max(...rows.map(x => x.realNet / x.pct)) : 0,
     shortNetYears: shortRows.length, firstShortNetAge: shortRows.length ? shortRows[0].age : null,
     privAnnual: firstGapRow ? Math.round(firstGapRow.privTaxableAnnual) : 0,
     maxPrivAnnual: Math.round(maxPrivAnnual), maxPrivAge, firstOverPlimitAge, firstOverLawAge, overPlimitYears,
@@ -876,7 +916,14 @@ function computeAutoPlan(p, adj){
   const pStart = Math.max(q.ret, 55);
   const isaage = q.ret;
   const irpage = hasGap ? Math.min(q.npage, q.life - 1) : pStart;
-  const nhBase = Math.max(0, acc.nhFV - pvOfMonthlyStream(extra.nh, extra.years, r.nh)) * growYears(r.nh, pStart - q.ret);
+  // 남길 금액(기대수명 시점 오늘 가치)과 은퇴 후 일시 지출은 개인연금 농협(기대수명까지 이어지는 계좌)에서 미리 떼어 둔다 — 은퇴 시점 현재가치로 환산
+  const infLife = Math.pow(1 + r.inf/100, q.life - q.age);
+  let reserve = (q.bequest > 0 ? q.bequest * infLife / growYears(r.nh, q.life - q.ret + 1) : 0);
+  for(const i of [1,2,3]){
+    const a = q['lump'+i+'_age'], amt = q['lump'+i+'_amt'];
+    if(a >= q.ret && a <= q.life && amt > 0) reserve += amt * Math.pow(1 + r.inf/100, a - q.age) / growYears(r.nh, a - q.ret + 0.5);
+  }
+  const nhBase = Math.max(0, acc.nhFV - pvOfMonthlyStream(extra.nh, extra.years, r.nh) - reserve) * growYears(r.nh, pStart - q.ret);
   const mfBase = Math.max(0, acc.mfFV - pvOfMonthlyStream(extra.mf, extra.years, r.mf)) * growYears(r.mf, pStart - q.ret);
   const nhpay = round1(pmtTodayValue(q, r, nhBase, r.nh, pStart, q.life));
   const irppay = round1(pmtTodayValue(q, r, acc.irpFV * growYears(r.irp, irpage - q.ret), r.irp, irpage, q.life));
@@ -894,7 +941,7 @@ function computeAutoPlan(p, adj){
                        irpage, irppay, tage:k.tage, tm:tmFor(k.tage), tirptax});
   const score = k => {
     const s = simulate(Object.assign({}, q, build(k)), adj);
-    return {k, ok: s.runway === q.life, minNet: s.minNetReal, spread: s.maxNetReal - s.minNetReal, tax: s.lifetimeTax + s.lifetimeHi,
+    return {k, ok: s.runway === q.life, minNet: s.minNetEq, spread: s.maxNetEq - s.minNetEq, tax: s.lifetimeTax + s.lifetimeHi,
             sumNet: s.lifetimeNetReal};
   };
   const better = (a, b) => {
@@ -946,6 +993,6 @@ if(typeof module !== 'undefined'){
     propertyTaxBase, PROPERTY_SCORE_TABLE, propertyInsuranceScore, regionalIncomeMonthly,
     HEALTH_RATE_INCOME, HEALTH_RATE_PROPERTY_WON, HEALTH_RATE_LTC, HEALTH_CAP_MAX, HEALTH_CAP_MIN,
     regionalHealthPremium, healthPremiumYear, npsAdjustFactor, futurePrinAdd, taxFreeBases, bridgeExtraMonthly, pensionLimitAnnual,
-    accWindows, accumulate, evalYear, simulate, buildAccRows, pmtTodayValue, computeAutoPlan
+    HOUSING_PENSION_PER_1EOK, housingPensionMonthly, housingPensionOf, expPct, lumpsAt, accWindows, accumulate, evalYear, simulate, buildAccRows, pmtTodayValue, computeAutoPlan
   };
 }
