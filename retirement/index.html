@@ -863,6 +863,10 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
   .acct-grid .limit-gauge-val{font-size:min(15px, calc(10px + 1.7px*var(--sp,0)));}
   .acct-grid .limit-gauge{height:calc(5px + 3px*var(--sp,0));border-radius:999px;}
 }
+/* 계좌 카드 제목: 가로·세로 가운데 정렬(🔗 버튼은 오른쪽 끝에 띄워 제목이 카드 폭의 정중앙에 오게 한다) */
+.acct-grid .acct-head{position:relative;align-items:center;justify-content:center;text-align:center;}
+.acct-grid .acct-head .name{flex:0 1 auto;text-align:center;padding:0 26px;}
+.acct-grid .acct-head .pf-sync-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0;}
 /* 개인정보 숨기기(html.privacy-on, 포트폴리오 앱 토글을 따름): 설계 화면에 기입한 값과 슬라이더 손잡이를 가린다(입력·수정은 가능) */
 .privacy-on .ival-input,.privacy-on .hir-input,.privacy-on .ymon-select{color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 .privacy-on input[type=range]{visibility:hidden;}
