@@ -149,9 +149,9 @@ h1{font-size:16px;font-weight:700;color:#1c1c1e;}
 .toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translate(-50%,-12px);z-index:2147483200;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:rgba(28,28,30,.92);color:#fff;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .toast.in{opacity:1;transform:translate(-50%,0);}
 .pk-note{margin-top:12px;font-size:10.5px;color:#8e8e93;line-height:1.55;word-break:keep-all;}
-.pb-mode{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:600;color:#007aff;margin:0 0 8px;white-space:nowrap;}
+.pb-mode{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;font-weight:700;color:#007aff;margin:0 0 8px;white-space:nowrap;}
 .pb-mode > span{min-width:0;overflow:hidden;text-overflow:ellipsis;}
-.pb-link{flex:0 0 auto;border:0;border-radius:999px;background:rgba(0,122,255,.12);color:#007aff;font:inherit;font-weight:600;padding:2px 11px;cursor:pointer;}
+.pb-link{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;border-radius:999px;background:rgba(0,122,255,.14);color:#007aff;font-family:inherit;font-size:11.5px;font-weight:700;padding:5px 12px;cursor:pointer;}   /* = .chart-head .tab-btn.on(자동 설계 요약 탭) */
 @media (max-width:640px){ .pk-grid{grid-template-columns:1fr;} .pk-desc{min-height:0;} }
 
 /* ── 메인 레이아웃: 입력(상단, 가로 활용) → 결과(하단, 전체폭) ── */
@@ -465,7 +465,7 @@ button{font-family:inherit;cursor:pointer;}
 .basis-view{padding:2px 4px 6px;}
 .basis-view .suggest-result{margin:0;font-size:11.5px;}
 .basis-view .suggest-result ul{line-height:1.7;}
-.chart-main.basis-mode .phase-cards{display:none;}
+.chart-main.basis-mode .phase-cards{display:none !important;}
 .basis-empty{font-size:12px;color:#8e8e93;text-align:center;padding:40px 16px;}
 /* 자동설계 요약: 팝업과 같은 .pb-* 조각을 차트 자리에 — 넓은 화면은 카드 4열 1행으로 높이를 아낀다 */
 .plan-view{padding:2px 4px 6px;}
@@ -740,7 +740,7 @@ select.hir-input{width:var(--ctl-w-lg)!important;min-width:0!important;}
 .sec-rows .health-input-row{flex:1 1 0;align-items:center;flex-wrap:wrap;column-gap:6px;row-gap:2px;}
 .sec-rows .health-input-row:last-child{border-bottom:0;}
 .sec-card .hir-label{width:76px;display:inline-flex;align-items:center;gap:2px;}
-.hi-top .hir-label{width:92px;}
+.hi-top .hir-label{width:100px;flex:0 0 100px;white-space:nowrap;}   /* 실기기 글꼴이 넓어도 "임의계속가입 ⓘ"가 두 줄로 꺾이지 않게 여유 */
 .hir-range{display:inline-flex;align-items:center;gap:4px;margin-left:auto;}
 .hir-input{color:#1c1c1e;transition:background .12s,color .12s;}
 .hir-input::placeholder{color:#c7c7cc;font-weight:500;opacity:1;}
@@ -763,8 +763,19 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .hi-col .health-input-row{flex:1 1 0;align-items:center;flex-wrap:wrap;column-gap:6px;row-gap:2px;}
 .hi-col .health-input-row:last-child,.hi-col .health-input-row:has(+ .sec-subh){border-bottom:0;}
 .hi-col .sec-subh:first-child{padding-top:max(2px, calc(2px + .6px*var(--ps,0)));}
-.s2-bottom{flex:2.6 1 auto;display:grid;grid-template-columns:minmax(0,.93fr) minmax(0,1.03fr) minmax(0,1.03fr);gap:var(--gap);min-height:0;}
-.s2-bottom .sec-card{min-width:0;}
+.s2-bottom{flex:2.6 1 auto;display:grid;grid-template-columns:minmax(0,.93fr) minmax(0,1.03fr) minmax(0,1.03fr);grid-template-rows:auto repeat(2,minmax(0,1fr));gap:var(--gap);min-height:0;}
+.s2-bottom > .sec-card{min-width:0;}
+/* 세 카드의 머리·1행·2행이 같은 y — 카드가 행 트랙을 공유(subgrid, 카드마다 행이 정확히 2개). 줄바꿈 없음 */
+@media (min-width:800px){
+  .s2-bottom > .sec-card{display:grid;grid-row:span 3;grid-template-rows:subgrid;row-gap:0;}
+  .s2-bottom .sec-rows{display:contents;}
+}
+.s2-bottom .health-input-row{flex-wrap:nowrap;min-width:0;}
+.s2-bottom .health-input-row > .hir-label{flex:0 0 76px;width:76px;}
+.s2-bottom .health-input-row > .unit-tag,.s2-bottom .health-input-row > .req-st{flex:0 0 auto;white-space:nowrap;}
+.s2-bottom .health-input-row > .hir-input{flex:0 1 auto;min-width:30px;}
+/* 입력 폭 토큰(sm/md/lg 3종)을 화면 폭에 비례해 세 카드·건보료 카드 모두 같은 값으로: 904px에서 sm≈41·md≈67, 1003px 이상은 기존 46/76 */
+#step2Panel{--ctl-w-sm:clamp(34px, calc(((100vw - 48px) / 3 - 177px) * .377), 46px);--ctl-w-md:clamp(56px, calc(((100vw - 48px) / 3 - 177px) * .623), 76px);}
 .req-val{flex:1 1 0;min-width:0;font-size:clamp(11px, calc(11.5px + .5px*var(--ps,0)), 14px);color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .req-val .ok{color:#34c759;font-weight:700;margin-right:3px;}
 .req-val .no{color:#aeaeb2;font-weight:700;margin-right:3px;}
@@ -773,32 +784,34 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .req-st{font-size:clamp(10px, calc(10.5px + .4px*var(--ps,0)), 12px);font-weight:700;border-radius:999px;padding:1px 7px;background:rgba(118,118,128,.14);color:#636366;}
 .hc-note{margin-top:6px;font-size:clamp(10px, calc(10.5px + .4px*var(--ps,0)), 12.5px);color:#636366;line-height:1.5;}
 .req-st.ok{background:rgba(52,199,89,.14);color:#248a3d;}
+@media (max-width:799px){
+  .s2-bottom{grid-template-columns:minmax(0,1fr);grid-template-rows:none;}
+}
 @media (max-width:699px){
   .hi-top,.s2-bottom{flex:none;}
   .hi-cols{flex-direction:column;gap:0;}
-  .s2-bottom{grid-template-columns:minmax(0,1fr);}
 }
 
 /* ══ 결과 탭 보기 4종(요약·근거·위기 점검·부족 대책) — 차트 자리를 꽉 채움: fitAltView가 --vs(0~8)를 정하면 글자·행·간격이 같이 커지고 남는 높이는 flex·표 행이 나눠 가진다 ══ */
 .chart-alt{--vs:0;flex-direction:column;}
 .chart-alt.alt-fit{overflow-y:hidden;}   /* 맞춤 성공 시 스크롤 잠금(맞춤 실패·접힘만 auto) */
 #scWrap,#needWrap{flex:1 1 auto;min-height:0;flex-direction:column;gap:calc(6px + .6px*var(--vs));}
-.chart-alt .mini-note{font-size:clamp(10.5px, calc(10.5px + .3px*var(--vs)), 12.5px);margin:0;flex:0 0 auto;}
+.chart-alt .mini-note{font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);margin:0;flex:0 0 auto;}
 /* 위기 점검·부족 대책: iOS 목록형 — 표 격자·진한 헤더 없이 회색 카드 + 헤어라인 행, 값은 오른쪽 정렬 숫자, 상태는 색 점 */
 .al-card{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:rgba(118,118,128,.06);border-radius:12px;padding:calc(6px + .5px*var(--vs)) 0 calc(2px + .3px*var(--vs));}
 .al-head,.al-row{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(3,minmax(0,1fr));column-gap:12px;align-items:center;padding:0 calc(14px + .5px*var(--vs));}
-.al-head{flex:0 0 auto;font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);font-weight:600;color:#8e8e93;padding-bottom:calc(4px + .3px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
+.al-head{flex:0 0 auto;font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);font-weight:600;color:#8e8e93;padding-bottom:calc(4px + .3px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
 .al-head > span:not(:first-child){text-align:right;}
 .al-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
 .al-row{flex:1 1 0;min-height:calc(30px + 1.2px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.1);}
 .al-row:last-child{border-bottom:0;}
 .al-row.cur{background:rgba(0,122,255,.09);border-radius:10px;border-bottom-color:transparent;}
 .al-name{display:flex;flex-direction:column;justify-content:center;min-width:0;}
-.al-name b{font-size:clamp(12.5px, calc(12.5px + .45px*var(--vs)), 16px);font-weight:600;color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-name b{font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14px);font-weight:600;color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-row.cur .al-name b{color:#007aff;font-weight:700;}
-.al-sub{font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-sub{font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-v .al-sub{display:block;font-weight:600;}
-.al-v{text-align:right;font-size:clamp(12.5px, calc(12.5px + .5px*var(--vs)), 16.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-v{text-align:right;font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-res{font-weight:600;white-space:normal;line-height:1.25;overflow:visible;}
 #needWrap .al-head,#needWrap .al-row{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,1.55fr);}
 .al-dim{color:#c7c7cc;font-weight:500;}
@@ -807,28 +820,28 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .al-dot.ok{background:#34c759;} .al-dot.bad{background:#ff3b30;}
 .al-hero{flex:0 0 auto;display:flex;gap:calc(8px + .8px*var(--vs));}
 .al-tile{flex:1 1 0;min-width:0;display:flex;flex-direction:column;background:rgba(118,118,128,.08);border-radius:12px;padding:calc(7px + .9px*var(--vs)) 14px;}
-.al-cap,.al-s{font-size:clamp(10.5px, calc(10.5px + .3px*var(--vs)), 13px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-cap,.al-s{font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-tile b small{font-size:.42em;font-weight:500;color:#636366;margin-left:3px;letter-spacing:0;}
 .hi-view{gap:calc(8px + .8px*var(--vs));}
 .hi-body{flex:1 1 auto;min-height:0;display:flex;gap:calc(8px + .8px*var(--vs));}
 .hi-card{padding:calc(8px + .8px*var(--vs)) calc(12px + .6px*var(--vs)) calc(6px + .6px*var(--vs));min-width:0;}
 .hi-chart{flex:1.45 1 0;} .hi-calc{flex:1 1 0;}
-.al-ch{display:flex;align-items:baseline;gap:8px;flex:0 0 auto;font-size:clamp(12px, calc(12px + .4px*var(--vs)), 15px);font-weight:700;color:#1c1c1e;padding-bottom:calc(4px + .4px*var(--vs));margin-bottom:calc(4px + .4px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
+.al-ch{display:flex;align-items:baseline;gap:8px;flex:0 0 auto;font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14px);font-weight:700;color:#1c1c1e;padding-bottom:calc(4px + .4px*var(--vs));margin-bottom:calc(4px + .4px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
 .al-ch span{font-size:clamp(10px, calc(10px + .25px*var(--vs)), 12px);font-weight:500;color:#8e8e93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hi-view #healthStrip{flex:1 1 0;min-height:60px;display:flex;flex-direction:column;}
 .hi-view .health-strip{flex:1 1 auto;height:auto;min-height:50px;margin:0 0 2px;background:#fff;gap:calc(1px + .15px*var(--vs));}
 .hi-view .health-strip-cap{margin:2px 6px 0;font-size:clamp(10px, calc(10px + .25px*var(--vs)), 12.5px);}
 .hi-view #healthDetail{flex:1 1 0;min-height:0;display:flex;flex-direction:column;}
-.hi-view .health-calc-table{flex:1 1 auto;font-size:clamp(11.5px, calc(11.5px + .5px*var(--vs)), 15px);}
+.hi-view .health-calc-table{flex:1 1 auto;font-size:clamp(11.5px, calc(11.5px + .3px*var(--vs)), 14px);}
 .hi-view .health-calc-table td{padding-top:calc(3px + .8px*var(--vs));padding-bottom:calc(3px + .8px*var(--vs));}
 .hi-view .health-calc-table td:nth-child(2){font-size:clamp(10px, calc(10px + .3px*var(--vs)), 12.5px);}
-.hi-view .health-calc-table tr.hc-total td{font-size:clamp(13px, calc(13px + .5px*var(--vs)), 17px);}
+.hi-view .health-calc-table tr.hc-total td{font-size:clamp(13px, calc(13px + .3px*var(--vs)), 15.5px);}
 .hi-view .hc-note{flex:0 0 auto;margin-top:calc(4px + .5px*var(--vs));font-size:clamp(10px, calc(10px + .3px*var(--vs)), 12.5px);color:#636366;line-height:1.45;}
 @media (max-width:699px){ .hi-body{flex-direction:column;} .al-hero{flex-wrap:wrap;} .al-hero .al-tile{flex:1 1 140px;} }
-.al-tile b{font-size:clamp(18px, calc(18px + 1px*var(--vs)), 28px);font-weight:800;letter-spacing:-.02em;line-height:1.2;color:#1c1c1e;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.al-tile b{font-size:clamp(17px, calc(17px + .6px*var(--vs)), 22px);font-weight:800;letter-spacing:-.02em;line-height:1.2;color:#1c1c1e;font-variant-numeric:tabular-nums;white-space:nowrap;}
 /* 요약 */
 .plan-view #planBody{display:flex;flex-direction:column;justify-content:flex-start;flex:1 1 auto;min-height:0;gap:calc(4px + .8px*var(--vs));}
-.plan-view .pb-mode{margin:0;font-size:clamp(11.5px, calc(11.5px + .4px*var(--vs)), 14px);}
+.plan-view .pb-mode{margin:0;font-size:11.5px;}   /* 탭 글자와 같은 크기로 고정 */
 .plan-view .pb-grid{margin:0;gap:calc(8px + .8px*var(--vs));}
 .plan-view .pb-card{padding:calc(10px + 1.2px*var(--vs)) calc(12px + .8px*var(--vs));}
 .plan-view .pb-label{font-size:clamp(11px, calc(11px + .35px*var(--vs)), 13.5px);}
@@ -2956,9 +2969,17 @@ function applyViewState(){
   }
   const cm = document.querySelector('.chart-main');
   if(cm) cm.classList.toggle('plan-mode', !!_altView);   // 접힘에서만 쓰는 높이 확보용(보기 4종 모두 단계 카드를 숨기므로 차트 자리를 키움)
-  if(cm && cm.classList.contains('basis-mode') !== basis){
+  // 보기 4종(+건보료 예상)에서는 단계 카드(적립기·공백기·완성기)를 항상 숨긴다 — basis-mode 클래스 토글 타이밍에 의존하지 않고 상태로 직접 적용(차트 자리와 겹침 방지)
+  const pcs = document.getElementById('phase-cards');
+  if(pcs) pcs.style.display = basis ? 'none' : '';
+  if(cm){
+    const changed = cm.classList.contains('basis-mode') !== basis;
     cm.classList.toggle('basis-mode', basis);
-    requestAnimationFrame(()=>{ if(mainTab==='result') fitChartHeight(); requestAnimationFrame(()=>{ if(!basis) alignPhaseCards(); }); });
+    if(changed || basis){
+      if(mainTab==='result') fitChartHeight();   // 동기 1회(카드·범례가 사라진 직후 높이)
+      requestAnimationFrame(()=>{ if(mainTab==='result') fitChartHeight(); requestAnimationFrame(()=>{ if(!basis) alignPhaseCards(); }); });
+      setTimeout(()=>{ if(mainTab==='result' && _altView) fitChartHeight(); }, 150);   // 글꼴 로드 등으로 늦게 바뀌는 높이 흡수
+    }
   }
   const lg = document.getElementById('chart-legend');
   if(lg) lg.style.display = _altView ? 'none' : '';   // 숨긴 범례가 자리를 차지하지 않게(보기 4종은 탭 줄 바로 아래부터 시작)
