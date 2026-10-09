@@ -130,7 +130,7 @@ const seedSnaps = () => {
 const seedAll = () => ({ pf_assets_v1: seedAssets(), pf_tradelog_v1: seedTradeLog(), pf_snaps_v5: seedSnaps() });
 
 // 현금흐름 결과 탭 보기 6종 — 요약·근거·위기 점검·부족 대책은 자동 설계 결과가 있어야 의미가 있어 순회 전에 한 번 확정한다(confirmPlan 경로 검증 겸).
-const RESULT_VIEWS = ['flow', 'asset', 'plan', 'basis', 'sc', 'need'];
+const RESULT_VIEWS = ['flow', 'asset', 'plan', 'hi', 'basis', 'sc', 'need'];
 const seedPlan = async page => {
   await page.evaluate(() => autoSuggest());
   await page.waitForFunction(() => typeof _planPickOpts !== 'undefined' && _planPickOpts && _planPickOpts.length, null, { timeout: 30000 });
