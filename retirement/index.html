@@ -827,16 +827,19 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 @media (max-width:699px){ .hi-body{flex-direction:column;} .al-hero{flex-wrap:wrap;} .al-hero .al-tile{flex:1 1 140px;} }
 .al-tile b{font-size:clamp(18px, calc(18px + 1px*var(--vs)), 28px);font-weight:800;letter-spacing:-.02em;line-height:1.2;color:#1c1c1e;font-variant-numeric:tabular-nums;white-space:nowrap;}
 /* 요약 */
-.plan-view #planBody{display:flex;flex-direction:column;justify-content:space-between;flex:1 1 auto;min-height:0;gap:calc(4px + .8px*var(--vs));}
+.plan-view #planBody{display:flex;flex-direction:column;justify-content:flex-start;flex:1 1 auto;min-height:0;gap:calc(4px + .8px*var(--vs));}
 .plan-view .pb-mode{margin:0;font-size:clamp(11.5px, calc(11.5px + .4px*var(--vs)), 14px);}
 .plan-view .pb-grid{margin:0;gap:calc(8px + .8px*var(--vs));}
 .plan-view .pb-card{padding:calc(10px + 1.2px*var(--vs)) calc(12px + .8px*var(--vs));}
 .plan-view .pb-label{font-size:clamp(11px, calc(11px + .35px*var(--vs)), 13.5px);}
 .plan-view .pb-val{font-size:clamp(19px, calc(19px + 1.1px*var(--vs)), 30px);}
 .plan-view .pb-sub{font-size:clamp(11px, calc(11px + .35px*var(--vs)), 14px);margin-top:calc(5px + .6px*var(--vs));}
-.plan-view .pb-phases{margin:0;}
+.plan-view .pb-phases{margin:0;flex:1 1 auto;min-height:0;}   /* 남는 높이는 수입원 행이 나눠 채움(배너 행 아래·섹션 사이에 빈 띠가 생기지 않게) */
+.plan-view .pb-phase{display:flex;flex-direction:column;}
+.plan-view .pb-phase > div:last-child{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
+@media (min-width:700px){ .plan-view .pb-phase > div:last-child{display:grid;grid-template-rows:repeat(var(--n,5), minmax(0,1fr));} }   /* 두 열이 같은 행 격자(--n=더 긴 열의 행 수)라 좌우 행이 수평으로 맞는다(접힘은 세로로 쌓이므로 제외) */
 .plan-view .pb-phase-title{font-size:clamp(12px, calc(12px + .4px*var(--vs)), 15px);}
-.plan-view .pb-phase-row{height:clamp(26px, calc(27px + 1.7px*var(--vs)), 46px);font-size:clamp(12px, calc(12.5px + .35px*var(--vs)), 15px);}
+.plan-view .pb-phase-row{height:auto;min-height:clamp(26px, calc(27px + 1.7px*var(--vs)), 46px);font-size:clamp(12px, calc(12.5px + .35px*var(--vs)), 15px);}
 .plan-view .pb-tips{margin:0;padding:calc(8px + .8px*var(--vs)) 14px;gap:calc(5px + .7px*var(--vs));}
 .plan-view .pb-tip{font-size:clamp(11.5px, calc(12px + .35px*var(--vs)), 14.5px);}
 /* 근거: 공백기 | 완성기 두 칸 + 아래 평탄화·세금 한 칸, 한 항목 한 줄 */
@@ -2597,7 +2600,7 @@ function planBannerHtml(p, plan, res){
     + card('완성기 세후 월평균','pb-full-total','pb-full-vs','#007aff')
     + card('사적연금 연 수령','pb-priv-annual','pb-priv-tax','#c77700')
     + card('은퇴 시점 총 자산','pb-total-fv','pb-runway','#8944ab')
-    + `</div><div class="pb-phases">`
+    + `</div><div class="pb-phases" style="--n:${Math.max(1, (V['pb-gap-rows']||'').split('pb-phase-row').length-1, (V['pb-full-rows']||'').split('pb-phase-row').length-1)}">`
     + `<div class="pb-phase"><div class="pb-phase-title" style="color:#c77700;">${V['pb-gap-title']}</div><div>${V['pb-gap-rows']}</div></div>`
     + `<div class="pb-phase"><div class="pb-phase-title" style="color:#007aff;">${V['pb-full-title']}</div><div>${V['pb-full-rows']}</div></div>`
     + `</div><div class="pb-tips">${V['pb-insight']}</div>`;
