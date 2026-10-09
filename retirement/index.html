@@ -80,8 +80,8 @@ h1{font-size:16px;font-weight:700;color:#1c1c1e;}
 .badge-ok{background:rgba(52,199,89,.14);color:#248a3d;}
 .badge-warn{background:rgba(255,149,0,.14);color:#c93400;}
 
-/* ── 플랜 배너: 자동설계 결과 팝업 — 예상결과 화면 위에 떠서 오버랩되고,
-   닫으면 그 아래에 이미 전환되어 있던 예상결과 화면이 바로 보인다 ── */
+/* ── 플랜 배너: 자동설계 결과 팝업 — 시뮬레이션 결과 화면 위에 떠서 오버랩되고,
+   닫으면 그 아래에 이미 전환되어 있던 시뮬레이션 결과 화면이 바로 보인다 ── */
 .plan-banner{display:none;position:fixed;left:10px;right:10px;
   top:calc(var(--topbar-h) + 8px);max-width:640px;margin:0 auto;z-index:250;
   border-radius:16px;max-height:calc(100vh - var(--topbar-h) - 24px);overflow-y:auto;
@@ -127,6 +127,27 @@ h1{font-size:16px;font-weight:700;color:#1c1c1e;}
   .pb-tip{white-space:normal;align-items:flex-start;}
   .pb-tip::before{margin-top:5px;}
 }
+
+/* ── 플랜 고르기 팝업(3장 비교) ── */
+.plan-pick{max-width:800px;}
+.pk-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.pk-card{display:flex;flex-direction:column;gap:7px;min-width:0;padding:12px 13px 13px;border-radius:14px;
+  background:rgba(118,118,128,.08);border:1.5px solid transparent;}
+.pk-card.rec{border-color:#007aff;background:rgba(0,122,255,.06);}
+.pk-card.off{opacity:.55;}
+.pk-name{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.pk-badge{font-size:9.5px;font-weight:700;color:#007aff;background:rgba(0,122,255,.14);border-radius:999px;padding:1px 7px;}
+.pk-desc{font-size:11px;color:#636366;line-height:1.5;word-break:keep-all;text-wrap:pretty;min-height:33px;}
+.pk-row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11.5px;color:#636366;white-space:nowrap;}
+.pk-row b{font-size:13px;color:#1c1c1e;font-variant-numeric:tabular-nums;}
+.pk-row b.good{color:#248a3d;} .pk-row b.warn{color:#c77700;} .pk-row b.bad{color:#ff3b30;}
+.pk-btn{margin-top:auto;border:none;border-radius:999px;padding:7px 0;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer;
+  background:rgba(0,122,255,.14);color:#007aff;}
+.pk-btn:active{transform:scale(.97);}
+.pk-btn:disabled{background:rgba(118,118,128,.12);color:#8e8e93;cursor:default;transform:none;}
+.pk-note{margin-top:12px;font-size:10.5px;color:#8e8e93;line-height:1.55;word-break:keep-all;}
+.pb-mode{font-size:11.5px;font-weight:600;color:#007aff;margin:-6px 0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media (max-width:640px){ .pk-grid{grid-template-columns:1fr;} .pk-desc{min-height:0;} }
 
 /* ── 메인 레이아웃: 입력(상단, 가로 활용) → 결과(하단, 전체폭) ── */
 .main-layout{display:flex;flex-direction:column;}
@@ -314,7 +335,7 @@ hr.div{border:none;border-top:.5px solid rgba(60,60,67,.12);margin:6px 0;}
   border:none;background:rgba(118,118,128,.12);color:#636366;font-family:inherit;}
 .tab-btn.on{background:rgba(0,122,255,.14);color:#007aff;font-weight:700;}
 
-/* ── 최상위 탭: 설계 / 예상결과 ── */
+/* ── 최상위 탭: 설계 / 시뮬레이션 결과 ── */
 /* 좌우 여백을 .left-panel의 좌우 padding(10px)과 맞춰, 아래 "기본 정보" 패널 카드의
    가로 폭·좌우 가장자리와 탭 버튼 줄이 수직으로 나란히 정렬되게 한다. */
 .main-tabs{display:flex;gap:6px;margin:0;padding:var(--gap) 10px 0;position:sticky;top:var(--topbar-h);z-index:20;background:#F2F2F7;}
@@ -358,8 +379,15 @@ hr.div{border:none;border-top:.5px solid rgba(60,60,67,.12);margin:6px 0;}
    여백만 추가로 줄여 그만큼 그래프에 준다(fitChartHeight가 자동 반영). */
 @media (min-width:961px){
   .chart-wrap.chart-main{padding:8px 12px;}
-  .chart-head{margin-bottom:3px;}
   .phase-card{padding:4px 7px;}
+}
+/* 보기 탭 줄 → 범례 → 차트 → 단계 카드 사이 숨 쉴 틈(펼침·펼침+90도). 차트 높이는 fitChartHeight()가 남는 높이를 채우므로
+   간격을 늘린 만큼 차트가 줄 뿐 한 화면은 그대로다 */
+@media (min-width:481px){
+  .chart-head{gap:10px 8px;margin-bottom:12px;}
+  .chart-head .tab-btn{padding:5px 12px;font-size:11.5px;}
+  .chart-head .legend{gap:6px 9px;}
+  .phase-cards{margin-top:10px;}
 }
 table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed;}
 th{padding:5px 4px;text-align:right;font-weight:600;color:#8e8e93;
@@ -546,6 +574,28 @@ button{font-family:inherit;cursor:pointer;}
   text-align:right;border:none;background:rgba(118,118,128,.12);outline:none;-moz-appearance:textfield;}
 .hir-input::-webkit-inner-spin-button,.hir-input::-webkit-outer-spin-button{-webkit-appearance:none;}
 .hir-age{width:44px;}
+.hp-grid{display:block;}
+@media (min-width:700px){ .hp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 18px;align-items:start;} .hp-left .hir-hint{flex-basis:100%;min-width:0;} }
+.hp-right .health-detail{margin-top:6px;}
+/* 터치 유격 제거: 내용이 화면에 다 들어가면 스크롤을 잠근다(syncBodyScroll) + 바운스·당겨서 새로고침 차단 */
+html,body{overscroll-behavior-y:none;}
+body.fit-noscroll{overflow-y:hidden;}
+/* 소득·지출·건보료 패널 크기 조절(--ps: −1 압축 ~ +3 확장) — fitPanel()이 화면 높이에 맞춰 정한다. hp1·hp2는 그래도 안 맞을 때 안내 줄이기 */
+.fit-scale{padding:max(6px, calc(10px + 2px*var(--ps,0))) 14px max(8px, calc(12px + 2px*var(--ps,0)));}
+.fit-scale .health-input-row{padding:max(1px, min(16px, calc(4px + 3px*var(--ps,0)))) 0;}
+.fit-scale .hir-label{font-size:clamp(10px, calc(10.5px + .5px*var(--ps,0)), 12.5px);}
+.fit-scale .hir-input{font-size:clamp(11.5px, calc(13px + .8px*var(--ps,0)), 16px);padding:clamp(2px, calc(3px + 1px*var(--ps,0)), 7px) 5px;}
+.fit-scale .hir-hint{font-size:clamp(9px, calc(9.5px + .4px*var(--ps,0)), 11px);}
+.fit-scale .inc-sec{margin-top:max(2px, calc(8px + 3px*var(--ps,0)));font-size:clamp(10px, calc(10.5px + .5px*var(--ps,0)), 12.5px);}
+.fit-scale .health-detail{line-height:calc(1.8 + .08*var(--ps,0));font-size:clamp(10.5px, calc(11px + .5px*var(--ps,0)), 13.5px);padding:clamp(6px, calc(8px + 2px*var(--ps,0)), 18px) 10px;}
+.fit-scale .health-strip{height:clamp(34px, calc(46px + 12px*var(--ps,0)), 150px);}
+.fit-scale .health-calc-table{font-size:clamp(10.5px, calc(11px + .5px*var(--ps,0)), 13.5px);}
+.fit-scale .health-calc-table td{padding:clamp(2px, calc(4px + 1.6px*var(--ps,0)), 16px) 4px;}
+.fit-scale .health-calc-btn{padding-top:clamp(6px, calc(8px + 1.5px*var(--ps,0)), 16px);padding-bottom:clamp(6px, calc(8px + 1.5px*var(--ps,0)), 16px);}
+.hp-left .hir-hint{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4;}
+.fit-scale .unit-tag{width:auto;min-width:0;white-space:nowrap;}   /* 칸 옆 단위(세 가입·만원 시세 등)가 힌트와 겹치지 않게 글자 폭만큼 */
+.fit-scale.hp1 .hir-hint,.fit-scale.hp1 .health-strip-cap{display:none;}
+.fit-scale.hp2 .note{display:none;}
 .inc-grid{display:block;}
 @media (min-width:700px){ .inc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start;} .inc-grid .hir-label{width:92px;} }
 .inc-sec{font-size:10.5px;font-weight:700;color:#1c1c1e;margin:8px 0 0;padding:0 0 2px;}
@@ -670,13 +720,13 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
    입력칸·월 선택의 높이를 명시값으로 같이 키운다(일반 입력 = 월 선택 = 20+4sp, 짝 입력 = 18+4sp →
    연납입+월 선택 행과 일반 행 높이가 항상 같다). sp=0이면 기존 값과 완전히 같다. */
 @media (min-width:421px){
-  html:not(.dense) .acct-head{padding:calc(4px + 3px*var(--sp,0)) 6px;font-size:calc(11px + 1px*var(--sp,0));}
+  html:not(.dense) .acct-head{padding:calc(4px + 3px*var(--sp,0)) 6px;font-size:min(13px, calc(11px + 1px*var(--sp,0)));}
   html:not(.dense) .acct-body{padding:calc(4px + 3px*var(--sp,0)) calc(5px + 2px*var(--sp,0));gap:calc(2px + 3px*var(--sp,0));}
   html:not(.dense) .acct-body .irow-top{gap:calc(2px + 1px*var(--sp,0));}
-  html:not(.dense) .acct-body .ilabel{font-size:calc(9.5px + 1px*var(--sp,0));letter-spacing:calc(.01em + .015em*var(--sp,0));}
-  html:not(.dense) .acct-body .ival-input{height:calc(20px + 4px*var(--sp,0));font-size:calc(12.5px + 1px*var(--sp,0));width:calc(64px + 4px*var(--sp,0));letter-spacing:calc(.015em + .01em*var(--sp,0));}
+  html:not(.dense) .acct-body .ilabel{font-size:min(11.5px, calc(9.5px + 1px*var(--sp,0)));letter-spacing:min(.04em, calc(.01em + .015em*var(--sp,0)));}
+  html:not(.dense) .acct-body .ival-input{height:calc(20px + 4px*var(--sp,0));font-size:min(15px, calc(12.5px + 1px*var(--sp,0)));width:min(76px, calc(64px + 4px*var(--sp,0)));letter-spacing:min(.03em, calc(.015em + .01em*var(--sp,0)));}
   html:not(.dense) .acct-body .fv-row .ival-input,
-  html:not(.dense) .acct-body .irow-ymon .ival-input{height:calc(18px + 4px*var(--sp,0));font-size:calc(11.5px + .8px*var(--sp,0));width:calc(44px + 3px*var(--sp,0));}
+  html:not(.dense) .acct-body .irow-ymon .ival-input{height:calc(18px + 4px*var(--sp,0));font-size:min(13.5px, calc(11.5px + .8px*var(--sp,0)));width:min(52px, calc(44px + 3px*var(--sp,0)));}
   html:not(.dense) .acct-body .irow-ymon .ymon-select{height:calc(20px + 4px*var(--sp,0));}
   /* 퇴직연금의 근속연수/퇴직소득세 줄은 이웃 카드의 "일반 행"(안세공 원금·IRP/ISA 스페이서) 자리 —
      짝 입력칸 높이(18+4sp)를 쓰면 아래 납입·수령 행이 2px씩 어긋나므로 일반 입력 높이로 */
@@ -706,7 +756,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   </div>
 </div>
 
-<!-- 플랜 요약 배너: 자동설계 결과 팝업 (예상결과 화면 위에 오버랩) -->
+<!-- 플랜 요약 배너: 자동설계 결과 팝업 (시뮬레이션 결과 화면 위에 오버랩) -->
 <div class="plan-banner-backdrop" id="planBannerBackdrop" onclick="closePlanBanner()"></div>
 <div class="plan-banner" id="planBanner">
   <div class="pb-title">
@@ -716,11 +766,22 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   <div id="pbBody"></div>
 </div>
 
-<!-- 최상위 탭: 설계(입력) / 예상결과(차트) -->
+<!-- 자동설계 플랜 고르기: 최대로 쓰기 / 100세까지 나눠 쓰기 / 필요한 만큼만 — 고르면 값이 적용되고 인출 플랜 요약으로 넘어간다 -->
+<div class="plan-banner-backdrop" id="planPickBackdrop" onclick="closePlanPick()"></div>
+<div class="plan-banner plan-pick" id="planPick">
+  <div class="pb-title">
+    <span>인출 플랜 고르기</span>
+    <button class="pb-close" onclick="closePlanPick()" aria-label="닫기">✕</button>
+  </div>
+  <div class="pk-grid" id="pkBody"></div>
+  <div class="pk-note" id="pkNote"></div>
+</div>
+
+<!-- 최상위 탭: 설계(입력) / 시뮬레이션 결과(차트) -->
 <div class="main-tabs">
   <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')"><span class="t-e">📝 </span>설계</button>
   <button class="tab-btn" id="mtb-income" onclick="setMainTab('income')"><span class="t-e">💸 </span>소득·지출</button>
-  <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')"><span class="t-e">📊 </span>예상결과</button>
+  <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')"><span class="t-e">📊 </span>시뮬레이션<span class="t-x"> 결과</span></button>
   <button class="tab-btn" id="mtb-health" onclick="setMainTab('health')"><span class="t-e">🏥 </span>건보료<span class="t-x"> 설계</span></button>
   <button class="tab-btn" id="mtb-tax" onclick="setMainTab('tax')"><span class="t-e">📖 </span>세금<span class="t-x"> 상식</span></button>
 </div>
@@ -733,7 +794,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
     <p><b>연금 수령은 만 55세부터</b> — 연금저축·IRP(퇴직IRP 포함)는 만 55세부터만 "연금"으로 받을 수 있습니다. 은퇴 나이를 55세 미만으로 두면 수령은 자동으로 55세에 시작하고, 은퇴~54세는 ISA와 안세공(세액공제 안 받은 원금)만으로 버티는 것으로 계산합니다.</p>
     <p><b>사적연금(연금저축+IRP) 저율분리과세</b> — 연 1,500만원까지는 나이에 따라 5.5%(70세 미만) → 4.4%(70~80세) → 3.3%(80세 이상)의 낮은 세율만 적용됩니다(소득세+지방소득세 포함 실제 원천징수율 기준). 1,500만원은 인출 한도가 아니라 세율이 바뀌는 기준선이라, 넘는 해에는 16.5% 분리과세와 종합과세 중 적은 쪽을 해마다 골라 계산합니다. 세액공제를 받지 않은 원금(안세공)은 법정 인출순서상 가장 먼저 빠지고 세금이 없으며 1,500만원 판정에서도 빠집니다 — 단 그 원금에서 생긴 운용수익은 과세 대상입니다.<br><span style="color:#636366;">예: 65세 미만이 사적연금을 연 1,200만원(1,500만원 이하) 받으면 세율 5.5% → 세금 약 66만원.</span></p>
     <p><b>연금수령한도</b> — 연금계좌는 연금수령연차 1~10년차에 "연초 평가액 ÷ (11 − 연차) × 120%"까지만 연금으로 인정됩니다. 넘게 빼면 넘는 금액은 연금외수령이 되어 세액공제분·운용수익은 16.5%(기타소득), 퇴직IRP의 이연퇴직소득은 감면 없는 퇴직소득세가 붙습니다. 연차는 연금을 받을 수 있게 된 해(연금저축·IRP는 55세, 퇴직IRP는 퇴직한 해)부터 셉니다. 이 앱은 한도 초과분을 이 기준으로 계산하고 경고합니다.</p>
-    <p><b>생활비 비교는 세후</b> — 예상결과의 여유/부족, 지표 카드의 공백기·완성기 월평균은 모두 세금과 건보료(은퇴 후 지역가입자, 피부양자 가족 설정에 따름)를 뺀 금액을 오늘 돈 가치로 환산해 월 생활비와 비교합니다. 차트 막대는 그해 실제로 받는 세전 금액이고, 생활비는 검정 점선, 세후 합계는 생활비보다 많으면 파랑·적으면 빨강 선으로 표시합니다.</p>
+    <p><b>생활비 비교는 세후</b> — 시뮬레이션 결과의 여유/부족, 지표 카드의 공백기·완성기 월평균은 모두 세금과 건보료(은퇴 후 지역가입자, 피부양자 가족 설정에 따름)를 뺀 금액을 오늘 돈 가치로 환산해 월 생활비와 비교합니다. 차트 막대는 그해 실제로 받는 세전 금액이고, 생활비는 검정 점선, 세후 합계는 생활비보다 많으면 파랑·적으면 빨강 선으로 표시합니다.</p>
     <p><b>ISA 비과세</b> — 만기 수익 200만원(서민형 400만원)까지 세금이 없고, 초과분만 9.9%로 낮게 과세됩니다. 2026.9.1 세제개편 최종안 기준 일반 ISA는 만기 연장 횟수 제한이 없어 계속 보유할 수 있고, 계속 보유하면 <b>총 납입한도 1억원</b>(연 2,000만원)이 적용됩니다. 이 앱는 해지·재개설 없이 유지하다가 은퇴 후 원금을 다 인출하는 해에 전 기간 순이익 기준으로 한 번 과세하고, 1억원을 넘는 납입은 계산에서 제외합니다.<br><span style="color:#636366;">예: 보유기간 전체 수익이 500만원(일반형)이면 200만원까지 비과세, 나머지 300만원에만 9.9% 과세 → 세금 약 30만원.</span></p>
     <p><b>퇴직소득세 감면</b> — 퇴직금을 일시금 대신 연금으로 나눠 받으면, 실제로 받은 햇수(수령연차)가 쌓일수록 세금이 더 깎입니다(1~10년차 30%, 11~20년차 40%, <b>21년차 이상 50%</b> 감면 — 21년차 구간은 2026.1.1 시행 개정으로 신설됨). DC형은 회사 적립금에 운용수익까지 합친 퇴직 시 평가액 전체가 퇴직소득(이연퇴직소득)이고, 이를 다 받은 뒤 인출되는 운용수익은 연금소득세(1,500만원 판정 포함)가 붙습니다. 자동설계는 퇴직IRP 개시 나이를 ISA·개인연금 미래 소진 나이와 함께 골라, 해마다 세후 소득(오늘 돈 가치) 중 가장 적은 해가 가장 크게 되도록(비슷하면 생애 세금이 적은 쪽) 정합니다(55세 이상부터).<br><span style="color:#636366;">예: 산출세액이 같아도 1~10년차엔 30%만 깎이지만 21년차 이후엔 50%가 깎입니다 — 오래 나눠 받을수록 유리.</span></p>
     <p><b>퇴직연금 카드의 "근속연수"·"퇴직소득세"는 왜 있나요</b> — 참고용이 아니라 <b>월 현금흐름에 실제로 반영되는 입력값</b>입니다. 연금으로 받아도 세금은 "일시금으로 받았다면 낼 세액"에 위 감면율을 곱해 정하기 때문입니다. 근속연수를 넣으면 국세청 공식(근속연수공제→환산급여→환산급여공제→누진세율)으로 퇴직소득세를 자동 계산해 채우며, 회사 안내 금액이 있으면 직접 덮어써도 됩니다(칸을 비우면 다시 자동). 지방소득세 10%는 세후 계산 때 더합니다.<br><span style="color:#636366;">예: 근속 20년이면 근속연수공제만 4,000만원 — 근속이 길수록 이 공제가 커져 기준 세액 자체가 줄어들고, 여기에 수령연차별 감면율까지 추가로 적용됩니다.</span></p>
@@ -777,7 +838,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 
 <!-- 소득·지출 인라인 패널 (탭 전환, 모달 아님) — 은퇴 후에도 받는 소득. 건보료 패널의 같은 칸을 옮겨 왔다(id·저장값 그대로) -->
-<div class="inline-panel" id="incomePanel">
+<div class="inline-panel fit-scale" id="incomePanel">
   <div class="note" style="margin-top:0;">은퇴 후 현금흐름 수입에 더하고, 세금(국민연금·사적연금과 합산 종합과세)과 건보료에 반영합니다. 금액은 <b>오늘 돈 가치</b>(매년 물가만큼 오름)·세전, 기간 빈칸은 은퇴~기대수명입니다.</div>
   <div class="inc-grid">
   <div class="health-input-list">
@@ -785,19 +846,19 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
     <div class="health-input-row">
       <span class="hir-label">근로소득(연)</span>
       <input class="hir-input" type="number" id="hi_labor" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <input class="hir-input hir-age" type="number" id="hi_labor_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_labor_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <input class="hir-input hir-age" type="number" id="hi_labor_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세 ~</span><input class="hir-input hir-age" type="number" id="hi_labor_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
       <span class="hir-hint" title="세전 총급여 · 근로소득공제·근로세액공제 반영 · 예: 3,600만이면 3600">세전 총급여 · 근로소득공제·세액공제 반영</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">사업소득(연)</span>
       <input class="hir-input" type="number" id="hi_business" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <input class="hir-input hir-age" type="number" id="hi_business_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_business_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <input class="hir-input hir-age" type="number" id="hi_business_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세 ~</span><input class="hir-input hir-age" type="number" id="hi_business_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
       <span class="hir-hint" title="매출−필요경비(세전) · 피부양자는 사업자등록 시 소득 1원부터, 미등록은 연 500만원 초과 시 탈락">매출−필요경비(세전) · 피부양자: 사업소득 500만 초과 탈락</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">기타소득(연)</span>
       <input class="hir-input" type="number" id="hi_other" value="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <input class="hir-input hir-age" type="number" id="hi_other_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_other_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+      <input class="hir-input hir-age" type="number" id="hi_other_from" min="40" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세 ~</span><input class="hir-input hir-age" type="number" id="hi_other_to" min="40" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
       <span class="hir-hint" title="강연료·원고료 등(필요경비 차감 후) · 종합과세로 계산">필요경비 차감 후 · 종합과세로 계산</span>
     </div>
     <div class="health-input-row">
@@ -817,9 +878,16 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
     </div>
     <div class="inc-sec">집</div>
     <div class="health-input-row">
-      <span class="hir-label">공시가격</span>
-      <input class="hir-input" type="number" id="gongsiga" value="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint" title="공시가격 알리미(realtyprice.kr)에서 확인 · 예: 5억이면 50000 · 건보료 재산 과표 계산에 씀">realtyprice.kr · 예: 5억이면 50000</span>
+      <span class="hir-label">공시가격 합계</span>
+      <input class="hir-input gen-auto" type="text" id="gongsiga" value="0" readonly tabindex="-1"><span class="unit-tag">만원</span>
+      <span class="hir-hint" title="집 1·2·3 공시가격의 합계(자동) — 건보료 재산 과표 계산에 씁니다. 공시가격 알리미(realtyprice.kr)에서 확인 · 예: 5억이면 50000">집별 입력의 합계(자동)</span>
+    </div>
+    <div class="health-input-row">
+      <span class="hir-label">집별 공시가격</span>
+      <span class="unit-tag">집1</span><input class="hir-input" type="number" id="gongsiga1" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()">
+      <span class="unit-tag">집2</span><input class="hir-input" type="number" id="gongsiga2" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()">
+      <span class="unit-tag">집3</span><input class="hir-input" type="number" id="gongsiga3" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()">
+      <span class="hir-hint" title="공시가격 알리미(realtyprice.kr)에서 확인 · 예: 5억이면 50000 · 주택연금은 집1 기준">만원 · realtyprice.kr</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">주택 유형</span>
@@ -827,7 +895,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
         <option value="single">1세대 1주택</option>
         <option value="multi">다주택·법인</option>
       </select>
-      <span class="hir-hint" title="과표 반영 비율: 1세대 1주택 43~45%(공시가격 구간별), 다주택·법인 60%">과표 비율: 1주택 43~45%, 다주택 60%</span>
+      <span class="hir-hint" title="집이 2채 이상이면 자동으로 다주택. 과표 반영 비율: 1세대 1주택 43~45%(공시가격 구간별), 다주택·법인 60%">집 수에 따라 자동 · 다주택 60%</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">전월세 재산 인정액</span>
@@ -881,12 +949,14 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 </div>
 
 <!-- 건보료 설계 인라인 패널 (버튼 클릭 시 펼침/접힘, 모달 아님) -->
-<div class="inline-panel" id="healthPanel">
+<div class="inline-panel fit-scale" id="healthPanel">
   <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
     <span style="font-size:12px;font-weight:700;color:#1c1c1e;">은퇴 후 지역가입자 보험료</span>
   </div>
   <div class="note" style="margin-top:0;">피부양자가 될 수 없으면 은퇴 후 지역가입자로 바뀌어 소득+재산에 보험료가 붙습니다. 이 보험료는 <b>은퇴한 해부터 매년 세후 현금흐름에서 뺍니다</b>(2026년 요율, 오늘 돈 가치). 사적연금·ISA 인출은 부과 대상이 아닙니다. 근로·사업·이자 같은 소득은 소득·지출 탭 값을 그대로 씁니다. 개념은 "세금 상식" 탭 참고.</div>
 
+  <div class="hp-grid">
+  <div class="hp-left">
   <div class="health-ref-row">
     <span class="health-ref-chip">재산세 과표(자동계산) <b id="hrefRe" data-amt>-</b>만원</span>
     <span style="font-size:9px;color:#8e8e93;">소득·지출 탭의 공시가격·주택 유형으로 자동 계산</span>
@@ -918,10 +988,13 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
     </div>
   </div>
   <button type="button" class="suggest-btn health-calc-btn" id="healthCalcBtn" style="margin:2px 0 8px;" onclick="calcHealthPremiumClick(this)">📊 예상 건보료 계산하기</button>
-
+  </div>
+  <div class="hp-right">
   <div id="healthStrip"></div>
   <div id="healthStatusBadge"></div>
   <div class="health-detail" id="healthDetail"></div>
+  </div>
+  </div>
 </div>
 
 
@@ -976,7 +1049,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="basic-row-action">
 <button class="suggest-btn" onclick="autoSuggest()">
   <span style="font-size:11.5px;">🎯 자동설계</span>
-  <span style="font-size:8px;font-weight:600;opacity:.9;">세금·건보료 최소화</span>
+  <span style="font-size:8px;font-weight:600;opacity:.9;">세후 소득 평탄화</span>
 </button>
 </div>
 </div>
@@ -991,7 +1064,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="acct-card c-gen" style="--ac:#5856D6;--ac-ink:#3634A3;">
 <div class="acct-head"><span class="name">일반계좌 미래</span><button type="button" class="pf-sync-btn" onclick="fillFromPortfolio('gen')" title="포트폴리오 값으로 채우기">🔗</button></div>
 <div class="acct-body">
-<input type="hidden" id="genage" value="0"><input type="hidden" id="genpay" value="0"><input type="hidden" id="genpayend" value="0"><input type="hidden" id="mfpayend" value="0">
+<input type="hidden" id="plan_mode" value=""><input type="hidden" id="genage" value="0"><input type="hidden" id="genpay" value="0"><input type="hidden" id="genpayend" value="0"><input type="hidden" id="mfpayend" value="0">
 <div class="irow gen">
   <div class="irow-top">
     <span class="ilabel" title="세 칸(해외주식·해외ETF·국내·현금)의 합계 — 자동">현재 잔액</span>
@@ -1037,7 +1110,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="fv-row">
 <div class="irow gen">
   <div class="irow-top">
-    <span class="ilabel" title="국내 주식·국내 ETF·현금 — 매매차익 비과세로 봅니다">국내·현금</span>
+    <span class="ilabel" title="국내 주식·국내 ETF(와 포트폴리오의 일반계좌 현금) — 매매차익 비과세로 봅니다">국내</span>
     <div class="irow-ctrl">
       <input class="ival-input" type="number" id="gen_kr" value="0" min="0" step="100" onblur="onBlurFix('gen_kr')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
     </div>
@@ -1470,9 +1543,9 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 <div class="fv-row">
 <div class="irow np">
   <div class="irow-top">
-    <span class="ilabel" title="지금까지 낸 가입기간(년). 60세 전에 은퇴하고 중단을 고르면 60세까지 냈을 때보다 가입기간이 줄어 연금이 비례해 줄어듭니다">가입기간</span>
+    <span class="ilabel" title="국민연금공단 '내 연금 알아보기'의 가입기간(년). 60세 전에 은퇴하고 중단을 고르면 60세까지 냈을 때보다 가입기간이 줄어 연금이 비례해 줄어듭니다. 비워 두면 감액하지 않습니다">가입기간</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npyears" value="20" min="1" max="45" step="1" onblur="onBlurFix('npyears')" oninput="syncSlider('npyears');scheduleUpd()"><span class="unit-tag">년</span>
+      <input class="ival-input" type="number" id="npyears" value="" placeholder="조회" min="1" max="45" step="1" onblur="onBlurFix('npyears')" oninput="syncSlider('npyears');scheduleUpd()"><span class="unit-tag">년</span>
       </div>
   </div>
   <input type="range" id="npyears-r" min="1" max="45" step="1" value="20"  oninput="syncInput('npyears');scheduleUpd()">
@@ -1864,6 +1937,17 @@ let chartTab='flow', mainChart=null;
 // 저사양 기기에서 렌더링이 밀려 입력이 씹히거나 오타처럼 느껴질 수 있어 살짝 지연시킴.
 // (blur 시 onBlurFix()가 즉시 upd()를 한번 더 호출하므로 최종값 반영은 항상 보장됨)
 let _updTimer = null;
+// 집 1·2·3 입력이 바뀌면 합계(읽기 전용)와 주택 유형을 자동으로 맞춘다(2채 이상 = 다주택). 유형은 이후 직접 바꿔도 되고, 집 입력이 또 바뀌면 다시 자동.
+function syncHouses(){
+  const h = houseSummary({gongsiga1:gv('gongsiga1'), gongsiga2:gv('gongsiga2'), gongsiga3:gv('gongsiga3')});
+  const g = document.getElementById('gongsiga'); if(g) g.value = h.sum.toLocaleString();
+  return h;
+}
+function onHouseInput(){
+  const h = syncHouses();
+  const t = document.getElementById('housetype'); if(t) t.value = h.type;
+  scheduleUpd();
+}
 function scheduleUpd(delay){
   clearTimeout(_updTimer);
   _updTimer = setTimeout(upd, delay || 180);
@@ -2103,7 +2187,7 @@ function acctSpans(res){
 }
 const spanTxt = s => s ? (s[0] === s[1] ? s[0]+'세' : s[0]+'~'+s[1]+'세') : '';
 
-/* ── 자동 최적 플랜 (세금·건보료 최소화 + 기대수명까지 + 생활비 평탄화) ──
+/* ── 자동 최적 플랜 (기대수명까지 유지 + 세후 소득 평탄화, 동점이면 세금·건보료 적게) ──
    계산은 calc.js computeAutoPlan(순수 함수). 결과를 칸에 넣은 뒤 화면 문구·숫자는 전부 simulate() 결과에서 읽는다
    → 자동설계 설명과 실제 시뮬레이션이 어긋날 수 없다. */
 function autoSuggest(){
@@ -2121,7 +2205,84 @@ function autoSuggest(){
     else delete _endAuto[fid];   // 사용자가 직접 바꾼 값 → 이후에도 유지
   });
 
-  const plan = computeAutoPlan(getP(), SA.base);   // 퇴직소득세를 직접 넣었으면 그 값으로 계산(getP().tirptaxManual)
+  openPlanPick();
+}
+
+/* ── 인출 플랜 3가지 비교·선택 ──
+   ① 최대로 쓰기: 기대수명에 0원 / ② 100세까지 나눠 쓰기: 같은 규칙으로 100세 소진을 목표(기대수명엔 자산이 남음) /
+   ③ 필요한 만큼만: ①과 같은 인출 계획을 쓰되 세후가 생활비를 넘는 해엔 사적 인출을 줄임(여유가 있을 때만).
+   수치는 모두 이 입력으로 자동설계+simulate+몬테카를로(300회)를 실제로 돌린 값이다. */
+const PLAN_MODES = {
+  max:  {name:'최대로 쓰기',         desc:'기대수명에 0원이 되도록 매달 최대한 씁니다.'},
+  long: {name:'100세까지 나눠 쓰기', desc:'100세까지 나눠 써서 장수·간병·시장 부진에 대비합니다. 기대수명엔 자산이 남습니다.'},
+  need: {name:'필요한 만큼만',       desc:'생활비만큼만 꺼내고 나머지는 계속 굴립니다. 소득이 생활비보다 많은 해가 있을 때만 해당돼요.'},
+};
+let _planPickOpts = null;
+const planEndAge = p => p.plan_mode === 'long' ? Math.max(p.life, PLAN_LONG_AGE) : p.life;
+function planOptions(p){
+  const base = Object.assign({}, p, {plan_mode: 'max'});
+  const mk = (mode, horizon) => {
+    const plan = computeAutoPlan(base, SA.base, {horizon});
+    return {mode, plan, q: Object.assign({}, p, plan, {plan_mode: mode})};
+  };
+  const A = mk('max', 0);
+  const opts = [A];
+  if(p.life < PLAN_LONG_AGE) opts.push(mk('long', PLAN_LONG_AGE));
+  const surplus = simulate(A.q, SA.base).rows.some(x => x.netInc > x.curExp);
+  opts.push({mode: 'need', plan: A.plan, q: Object.assign({}, A.q, {plan_mode: 'need'}), disabled: !surplus});
+  const infLife = Math.pow(1 + p.inf / 100, p.life - p.age);
+  opts.forEach(o => {
+    const r = simulate(o.q, SA.base), n = r.rows.length;
+    o.minNet = r.minNetEq; o.avgNet = n ? r.lifetimeNetReal / 12 / n : 0; o.leftoverReal = r.leftover / infLife;
+    o.ok = r.runway === p.life;
+    o.mc = o.disabled ? null : monteCarlo(o.q, {n: 200, vol: p.rvol > 0 ? p.rvol : 12}).successPct;
+    o.age100 = p.life >= PLAN_LONG_AGE ? null : simulate(Object.assign({}, o.q, {life: PLAN_LONG_AGE, lifeInc: p.life}), SA.base).runway;
+  });
+  return opts;
+}
+function openPlanPick(){
+  const body = document.getElementById('pkBody'), box = document.getElementById('planPick');
+  if(!body || !box) return;
+  const p = getP();
+  body.innerHTML = '<div class="pk-note" style="grid-column:1/-1;text-align:center;">플랜을 계산하는 중…</div>';
+  box.classList.add('show'); document.getElementById('planPickBackdrop').classList.add('show');
+  setTimeout(()=>{   // 계산(약 0.5초) 동안 팝업을 먼저 보여 준다
+    const opts = planOptions(p);
+    _planPickOpts = opts;
+    const saved = ['max','long','need'].includes(document.getElementById('plan_mode').value) ? document.getElementById('plan_mode').value : '';   // 아직 고른 적 없으면 빈값 → 추천(100세까지)
+    const rec = (opts.find(o => o.mode === saved && !o.disabled) || opts.find(o => o.mode === 'long') || opts[0]).mode;
+    const M = v => Math.round(v).toLocaleString() + '만';
+    const left = v => v < 100 ? '거의 0' : v >= 10000 ? (Math.round(v / 1000) / 10) + '억' : M(v);
+    body.innerHTML = opts.map(o => {
+      const m = PLAN_MODES[o.mode];
+      const mcCls = o.mc == null ? '' : o.mc >= 80 ? 'good' : o.mc >= 50 ? 'warn' : 'bad';
+      return `<div class="pk-card${o.mode === rec ? ' rec' : ''}${o.disabled ? ' off' : ''}">
+        <div class="pk-name">${m.name}${o.mode === rec ? '<span class="pk-badge">'+(saved === rec ? '지난 선택' : '추천')+'</span>' : ''}</div>
+        <div class="pk-desc">${o.disabled ? '세후가 생활비를 넘는 해가 없어 “최대로 쓰기”와 같아요.' : m.desc}</div>
+        ${o.disabled ? '' : `<div class="pk-row"><span>매달 최저</span><b>${M(o.minNet)}</b></div>
+        <div class="pk-row"><span>매달 평균</span><b>${M(o.avgNet)}</b></div>
+        <div class="pk-row"><span>${p.life}세 잔여(세전)</span><b>${left(o.leftoverReal)}</b></div>
+        <div class="pk-row"><span>시장 변동 시</span><b class="${mcCls}">${o.mc}% 유지</b></div>
+        ${o.age100 == null ? '' : `<div class="pk-row"><span>${PLAN_LONG_AGE}세까지</span><b class="${o.age100 >= PLAN_LONG_AGE ? 'good' : 'bad'}">${o.age100 >= PLAN_LONG_AGE ? '유지' : o.age100 + '세 소진'}</b></div>`}`}
+        <button class="pk-btn" ${o.disabled ? 'disabled' : ''} onclick="choosePlan('${o.mode}')">선택</button>
+      </div>`;
+    }).join('');
+    const note = document.getElementById('pkNote');
+    if(note) note.textContent = `매달 금액은 세후·오늘 돈 가치(잔여는 세전 계좌 잔액)입니다. “시장 변동 시”는 은퇴 후 해마다 수익률이 ±${p.rvol > 0 ? p.rvol : 12}%p 흔들리는 시뮬레이션 200회 중 ${p.life}세까지 자산이 남는 비율입니다.`;
+  }, 30);
+}
+function closePlanPick(){
+  const box = document.getElementById('planPick'); if(box) box.classList.remove('show');
+  const bd = document.getElementById('planPickBackdrop'); if(bd) bd.classList.remove('show');
+}
+function choosePlan(mode){
+  const o = (_planPickOpts || []).find(x => x.mode === mode);
+  if(!o || o.disabled) return;
+  closePlanPick();
+  sv('plan_mode', mode);
+  applyPlan(o.plan);
+}
+function applyPlan(plan){
   if(!_tirptaxManual) sv('tirptax', plan.tirptax);
   sv('isaage', plan.isaage); sv('isam',   plan.isam);
   sv('mfage',  plan.mfage);  sv('mfpay',  plan.mfpay);
@@ -2137,7 +2298,7 @@ function autoSuggest(){
   upd();
 }
 
-/* 자동설계 근거(예상결과 탭 "근거" 보기) — 숫자는 모두 simulate() 결과 */
+/* 자동설계 근거(시뮬레이션 결과 탭 "근거" 보기) — 숫자는 모두 simulate() 결과 */
 function renderSuggestBox(p, plan, res){
   const s = planSummary(p, res);
   const sp = acctSpans(res);
@@ -2166,7 +2327,7 @@ ${s.hasGap ? `<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 
   <li>ISA <b>${spanTxt(sp.isa) || plan.isaage+'세~'} 월 ${m(plan.isam)}만</b> → ${plan.info.isaEnd}세까지 소진${sub(isaTxt)}</li>
   ${sp.gen ? `<li>${ACCT_NAME.gen} <b>${spanTxt(sp.gen)} 월 ${m(plan.genpay)}만</b> → ${plan.info.genEnd}세까지 소진${sub(`해외주식 이익은 연 250만 공제 이내부터 → 국내·현금 → 해외ETF → 해외주식(22%) 순으로 인출 · 평생 세금 약 ${res.lifetimeGenTax.toLocaleString()}만`)}</li>` : ''}
   <li>${ACCT_NAME.mf} <b>${spanTxt(sp.mf) || plan.mfage+'세~'} 월 ${m(plan.mfpay)}만</b> → ${plan.info.mfEnd}세까지 소진</li>
-  <li>${ACCT_NAME.nh} <b>${plan.nhage}세~ 월 ${m(plan.nhpay)}만</b> → ${p.life}세까지 나눠 받음</li>
+  <li>${ACCT_NAME.nh} <b>${plan.nhage}세~ 월 ${m(plan.nhpay)}만</b> → ${plan.info.horizon || p.life}세까지 나눠 받음</li>
   ${plan.mfage > p.ret ? `<li>연금저축·IRP는 만 55세부터 연금 수령 가능 — <b>${p.ret}~54세는 ISA·비과세 원금</b>으로 충당</li>` : ''}
   ${tirpInGap ? `<li>${tirpLi}</li>` : ''}
   <li>공백기 세후 월평균 <b>${s.gapNet}만원</b>${sub(`생활비 ${p.exp}만 대비 ${vs(s.gapVs)} · 세전 ${s.gapGross}만`)}</li>
@@ -2175,8 +2336,8 @@ ${s.hasGap ? `<div style="margin:5px 0 3px;font-size:10px;font-weight:700;">▸ 
 <ul>
   <li>국민연금 <b>${p.npage}세~ 월 ${p.np}만</b> → 첫해 명목 약 ${dep.npNom}만, 이후 매년 물가연동</li>
   ${tirpInGap ? `<li>퇴직IRP 월 ${m(plan.tm)}만 — ${sp.tirp[0]}세부터 계속(위 참고)</li>` : `<li>${tirpLi}</li>`}
-  <li>${ACCT_NAME.irp} <b>${plan.irpage}세~ 월 ${m(plan.irppay)}만</b> → ${p.life}세 소진</li>
-  <li>${ACCT_NAME.nh} <b>월 ${m(plan.nhpay)}만</b> 계속 → ${p.life}세 소진</li>
+  <li>${ACCT_NAME.irp} <b>${plan.irpage}세~ 월 ${m(plan.irppay)}만</b> → ${plan.info.horizon || p.life}세 소진</li>
+  <li>${ACCT_NAME.nh} <b>월 ${m(plan.nhpay)}만</b> 계속 → ${plan.info.horizon || p.life}세 소진</li>
   ${sp.isa && sp.isa[1] >= fullStart ? `<li>ISA ${spanTxt(sp.isa)} — 완성기에도 계속</li>` : ''}
   ${sp.mf && sp.mf[1] >= fullStart ? `<li>${ACCT_NAME.mf} ${spanTxt(sp.mf)} — 완성기에도 계속</li>` : ''}
   <li>완성기 세후 월평균 <b>${s.fullNet}만원</b>${sub(`생활비 ${p.exp}만 대비 ${vs(s.fullVs)} · 세전 ${s.fullGross}만`)}</li>
@@ -2200,8 +2361,8 @@ ${p.hi_dep === 'yes' && dep.check.fail ? `<div style="background:rgba(255,149,0,
 }
 
 /* ── 플랜 요약 배너 ──
-   자동설계 결과는 예상결과 화면 위에 오버랩되는 팝업으로 뜨고, 닫으면 그 아래에
-   이미 전환되어 있던 예상결과 화면이 바로 보이도록 먼저 탭을 전환해둔다. */
+   자동설계 결과는 시뮬레이션 결과 화면 위에 오버랩되는 팝업으로 뜨고, 닫으면 그 아래에
+   이미 전환되어 있던 시뮬레이션 결과 화면이 바로 보이도록 먼저 탭을 전환해둔다. */
 /* 팝업(#pbBody)과 "자동설계 요약" 탭(#planBody)이 같은 HTML을 쓴다 — 계산은 simulate() 결과 하나만 읽고,
    마지막 결과는 _planHtml에 보관(다음 자동설계 실행 전까지 유지, 새로고침하면 비어 있음). */
 function planBannerHtml(p, plan, res){
@@ -2294,7 +2455,7 @@ function planBannerHtml(p, plan, res){
   pbSet('pb-insight', tips.map(x=>`<div class="pb-tip${x.warn?' warn':''}">${x.t}</div>`).join(''));
 
   const card = (label, valId, subId, color)=>`<div class="pb-card"><div class="pb-label">${label}</div><div class="pb-val" style="color:${VC[valId]||color}">${V[valId]}</div><div class="pb-sub">${V[subId]}</div></div>`;
-  return `<div class="pb-grid">`
+  return `<div class="pb-mode">${PLAN_MODES[p.plan_mode] ? PLAN_MODES[p.plan_mode].name : ''}</div><div class="pb-grid">`
     + card('공백기 세후 월평균','pb-gap-total','pb-gap-vs','#248a3d')
     + card('완성기 세후 월평균','pb-full-total','pb-full-vs','#007aff')
     + card('사적연금 연 수령','pb-priv-annual','pb-priv-tax','#c77700')
@@ -2350,7 +2511,7 @@ const STORAGE_KEY = 'retirement_dashboard_v1';
 
 // 저장할 모든 필드 ID 목록
 const ALL_FIELDS = [
-  'age','ret','life','exp','plimit','gongsiga','housetype',
+  'age','ret','life','exp','plimit','gongsiga','gongsiga1','gongsiga2','gongsiga3','housetype',
   'nh','nhm','nhstart','nhend','nhage','nhpay','nhprin',
   'mf','mfm','mfstart','mfend','mfage','mfpay','mfprin',
   'irp','irpy','irpymon','irpstart','irpend','irpage','irppay',
@@ -2363,7 +2524,7 @@ const ALL_FIELDS = [
   'hi_vol','hi_volprem','np_volprem','npyears','npcont',
   'hp_age','hp_price','exp_s1_age','exp_s1_pct','exp_s2_age','exp_s2_pct',
   'lump1_age','lump1_amt','lump2_age','lump2_amt','lump3_age','lump3_amt','bequest',
-  'gen_ov','gen_ovr','gen_etf','gen_etfr','gen_kr','gen_harvest','rgen','rvol','genage','genpay','genpayend','mfpayend'
+  'gen_ov','gen_ovr','gen_etf','gen_etfr','gen_kr','gen_harvest','rgen','rvol','genage','genpay','genpayend','mfpayend','plan_mode'
 ];
 
 // 초기화 버튼이 location.reload()에만 의존하면, 일부 모바일 브라우저가 새로고침 시
@@ -2412,6 +2573,14 @@ function loadState(){
       if(inp) inp.value = state[id];
       if(rng) rng.value = state[id];
     });
+
+    // ── 마이그레이션: 집별 공시가격(gongsiga1~3)은 신설 — 예전엔 공시가격 한 칸(gongsiga)뿐이었으므로 값이 있으면 집1로 옮긴다
+    if(state.gongsiga1 === undefined && state.gongsiga !== undefined){
+      const old = parseFloat(String(state.gongsiga).replace(/,/g, ''));
+      const g1 = document.getElementById('gongsiga1');
+      if(g1 && old > 0) g1.value = old;
+    }
+    syncHouses();
 
     // ── 마이그레이션: tdcstart/tdcend는 이번 업데이트로 신설된 필드라 예전 저장
     //    데이터엔 없음 — 없으면 저장돼 있던 age/ret 값으로 채워, 예전 하드코딩 동작
@@ -2480,8 +2649,9 @@ function resetState(){
 function getP(){
   const p = {
     age:gv('age'),ret:gv('ret'),life:gv('life'),exp:gv('exp'),
-    gongsiga:gv('gongsiga'),housetype:document.getElementById('housetype')?.value||'single',
-    realestate:propertyTaxBase(gv('gongsiga'), document.getElementById('housetype')?.value),
+    gongsiga1:gv('gongsiga1'),gongsiga2:gv('gongsiga2'),gongsiga3:gv('gongsiga3'),
+    gongsiga:houseSummary({gongsiga1:gv('gongsiga1'),gongsiga2:gv('gongsiga2'),gongsiga3:gv('gongsiga3')}).sum,housetype:document.getElementById('housetype')?.value||'single',
+    realestate:propertyTaxBase(houseSummary({gongsiga1:gv('gongsiga1'),gongsiga2:gv('gongsiga2'),gongsiga3:gv('gongsiga3')}).sum, document.getElementById('housetype')?.value),
     nh:gv('nh'),nhm:gv('nhm'),nhstart:gv('nhstart'),nhend:gv('nhend'),nhage:gv('nhage'),nhpay:gv('nhpay'),nhprin:gv('nhprin'),
     mf:gv('mf'),mfm:gv('mfm'),mfstart:gv('mfstart'),mfend:gv('mfend'),mfage:gv('mfage'),mfpay:gv('mfpay'),mfprin:gv('mfprin'),
     irp:gv('irp'),irpy:gv('irpy'),irpymon:gv('irpymon'),irpstart:gv('irpstart'),irpend:gv('irpend'),irpage:gv('irpage'),irppay:gv('irppay'),
@@ -2499,7 +2669,7 @@ function getP(){
     hp_age:gv('hp_age'), hp_price:gv('hp_price'), exp_s1_age:gv('exp_s1_age'), exp_s1_pct:gv('exp_s1_pct'), exp_s2_age:gv('exp_s2_age'), exp_s2_pct:gv('exp_s2_pct'),
     lump1_age:gv('lump1_age'), lump1_amt:gv('lump1_amt'), lump2_age:gv('lump2_age'), lump2_amt:gv('lump2_amt'), lump3_age:gv('lump3_age'), lump3_amt:gv('lump3_amt'), bequest:gv('bequest'),
     gen_ov:gv('gen_ov'), gen_ovr:gv('gen_ovr'), gen_etf:gv('gen_etf'), gen_etfr:gv('gen_etfr'), gen_kr:gv('gen_kr'),
-    gen_harvest:document.getElementById('gen_harvest')?.value === 'yes' ? 'yes' : 'no', rgen:gv('rgen'), rvol:gv('rvol'), genage:gv('genage'), genpay:gv('genpay'), genpayend:gv('genpayend'), mfpayend:gv('mfpayend'),
+    gen_harvest:document.getElementById('gen_harvest')?.value === 'yes' ? 'yes' : 'no', rgen:gv('rgen'), rvol:gv('rvol'), genage:gv('genage'), genpay:gv('genpay'), genpayend:gv('genpayend'), mfpayend:gv('mfpayend'), plan_mode:(['max','long','need'].includes(document.getElementById('plan_mode')?.value) ? document.getElementById('plan_mode').value : 'max'),
     np_volprem:gv('np_volprem'), npyears:gv('npyears'), npcont:document.getElementById('npcont')?.value === 'stop' ? 'stop' : 'cont',
     curYear:new Date().getFullYear(), // 미래 안세공 자동 합산(2027년~)의 연도 기준
     tirptaxManual:_tirptaxManual      // 퇴직소득세를 직접 입력했으면 자동설계도 그 값 사용
@@ -2580,6 +2750,7 @@ function renderNeedView(){
 
 /* ── 위기 점검 보기 — 지금 입력한 계획(인출액 그대로)에 위기 상황을 하나씩 얹어 본다.
    계산은 calc-whatif.js stressRows(순수 함수). 한 번에 7~8번의 시뮬레이션이라 즉시 계산한다. */
+const p0Mode = () => (document.getElementById('plan_mode') || {}).value;
 function renderStressView(){
   const body = document.getElementById('sc-body');
   if(!body || _altView !== 'sc') return;
@@ -2596,7 +2767,7 @@ function renderStressView(){
       + '</tr>';
   }).join('');
   const note = document.getElementById('sc-note');
-  if(note) note.textContent = '지금 입력한 인출 계획을 그대로 두고 상황만 바꾼 결과입니다. 최저 세후는 매년 중 가장 적은 해(오늘 돈 가치), 시장 변동 행은 하위 10% 경우 — 자동설계는 기대수명에 0원이 되도록 맞추므로 성공 확률이 50% 안팎인 게 정상입니다(여유를 두려면 남길 금액을 입력).';
+  if(note) note.textContent = '지금 입력한 인출 계획을 그대로 두고 상황만 바꾼 결과입니다. 최저 세후는 매년 중 가장 적은 해(오늘 돈 가치), 시장 변동 행은 하위 10% 경우 — ' + (p0Mode() === 'long' ? '100세까지 나눠 쓰는 플랜이라 기대수명 시점 성공 확률이 최대로 쓰기보다 높습니다.' : '최대로 쓰기는 기대수명에 0원이 되도록 맞추므로 성공 확률이 50% 안팎인 게 정상입니다(여유는 플랜 선택·남길 금액으로).');
 }
 
 let _altView = null;   // null | 'sc' | 'need' | 'basis' | 'plan'
@@ -2648,6 +2819,7 @@ function applyViewState(){
    body.clientHeight(보이는 높이)보다 크면 그때그때 dense를 붙인다. 420px 이하(접힘)는
    이미 다른 방식(가로 1열)으로 압축하므로 대상 아님. 420~520px는 폰트가 더 커도 항상
    빠듯하므로 기존처럼 무조건 켠다(넘침 측정 전에 먼저 눌러 깜빡임 방지). */
+const SP_MAX = 3;   // 설계 탭 여유 스케일 상한(펼침+90도에서 아래 빈 공간을 쓰기 위해 1 → 3)
 function fitDensity(){
   const html = document.documentElement;
   html.style.setProperty('--sp', '0');
@@ -2655,11 +2827,11 @@ function fitDensity(){
   if(window.innerHeight <= 520){ html.classList.add('dense'); return; }
   html.classList.remove('dense');
   if(!designFits()){ html.classList.add('dense'); return; }
-  // 남는 세로 공간이 있으면 카드 글자·간격을 "적당히"(상한 1) 넉넉하게 — 넘치지 않는 최대값을 이분 탐색
-  let lo = 0, hi = 1;
-  html.style.setProperty('--sp', '1');
-  if(designFits()) lo = 1;
-  else for(let i=0;i<7;i++){
+  // 남는 세로 공간이 있으면 카드 글자·간격을 넉넉하게(상한 SP_MAX — 글자 크기는 CSS min()으로 따로 상한) — 넘치지 않는 최대값을 이분 탐색
+  let lo = 0, hi = SP_MAX;
+  html.style.setProperty('--sp', String(SP_MAX));
+  if(designFits()) lo = SP_MAX;
+  else for(let i=0;i<8;i++){
     const mid = (lo+hi)/2;
     html.style.setProperty('--sp', mid.toFixed(3));
     if(designFits()) lo = mid; else hi = mid;
@@ -2685,6 +2857,37 @@ function designFits(){
   }
   return true;
 }
+/* 터치 유격 제거 — 내용이 화면에 다 들어가면(넘침 ≤ 2px) 스크롤을 잠가 위아래로 끌려 움직이지 않게 한다. 실제로 넘치면(접힘 등) 푼다. */
+function syncBodyScroll(){
+  const b = document.body;
+  b.classList.remove('fit-noscroll');
+  if(b.scrollHeight - b.clientHeight <= 2){ b.classList.add('fit-noscroll'); b.scrollTop = 0; }
+}
+/* 소득·지출 / 건보료 패널: 화면 높이에 맞춰 패널 크기(--ps: −1 압축 ~ +3 확장)를 정한다.
+   남으면 키우고(이분 탐색), 넘치면 줄이고, 그래도 안 맞으면 안내 줄이기(hp1·hp2). 한 열(<700px)은 스크롤 허용. */
+function fitPanel(){
+  document.querySelectorAll('.fit-scale').forEach(p=>{ p.style.setProperty('--ps','0'); p.classList.remove('hp1','hp2'); });
+  const panel = mainTab === 'income' ? document.getElementById('incomePanel') : mainTab === 'health' ? document.getElementById('healthPanel') : null;
+  if(!panel || window.innerWidth < 700) return;
+  const b = document.body, de = document.documentElement;
+  const fits = () => b.scrollHeight - b.clientHeight <= 0 && de.scrollWidth <= de.clientWidth;
+  const set = v => panel.style.setProperty('--ps', v.toFixed(2));
+  if(!fits()){
+    set(-1);
+    for(const c of ['hp1','hp2']){ if(fits()) break; panel.classList.add(c); }
+    return;
+  }
+  let lo = 0, hi = 8;
+  set(hi);
+  if(fits()) return;
+  for(let i=0;i<8;i++){ const mid = (lo+hi)/2; set(mid); if(fits()) lo = mid; else hi = mid; }
+  set(lo);
+}
+function fitAll(){
+  fitDensity(); fitPanel();
+  if(mainTab === 'result'){ fitMetricCards(); fitChartHeight(); fitPlanView(); }
+  syncBodyScroll();
+}
 // 수익률·물가 설정 팝오버: 바깥을 누르거나 ESC면 닫는다(스위치 상태도 함께)
 function closeRatesPop(){
   const btn = document.getElementById('ratesToggleBtn');
@@ -2707,7 +2910,7 @@ function basicRowWraps(){
 }
 
 /* ── 그래프 세로 크기를 화면에 맞춤 ──
-   예상결과 탭 맨 아래와 화면 아래 사이에 남는 높이만큼 차트를 늘리거나 줄여, 펼침·펼침+90도
+   시뮬레이션 결과 탭 맨 아래와 화면 아래 사이에 남는 높이만큼 차트를 늘리거나 줄여, 펼침·펼침+90도
    어느 쪽이든 스크롤 없이 화면을 꽉 채움. 접힌 화면(≤480)은 CSS 기본 높이(스크롤 허용). */
 function fitChartHeight(){
   const wrap = document.querySelector('.chart-canvas-wrap'), rt = document.getElementById('resultTab');
@@ -2727,7 +2930,7 @@ function fitChartHeight(){
 // 렌더링 뒤 아이콘 변환(shared/icons.js MutationObserver)·글꼴 로드·회전 등으로 카드 높이가
 // 나중에 바뀌어도 다시 맞춘다. 2px 미만 변화는 무시(반복 트리거 방지).
 let _fitTimer = null;
-function scheduleFit(){ clearTimeout(_fitTimer); _fitTimer = setTimeout(()=>{ fitDensity(); if(mainTab==='result'){ fitMetricCards(); fitChartHeight(); fitPlanView(); } }, 150); }
+function scheduleFit(){ clearTimeout(_fitTimer); _fitTimer = setTimeout(fitAll, 150); }
 window.addEventListener('resize', scheduleFit);
 (function(){
   if(typeof ResizeObserver !== 'function') return;
@@ -2741,22 +2944,22 @@ window.addEventListener('resize', scheduleFit);
     if(changed) scheduleFit();
   });
   window.addEventListener('DOMContentLoaded', ()=>{
-    ['.metrics-bar','#phase-cards','.chart-head','#designTab'].forEach(sel=>{
+    ['.metrics-bar','#phase-cards','.chart-head','#designTab','#incomePanel','#healthPanel'].forEach(sel=>{
       const el = document.querySelector(sel); if(el) ro.observe(el);
     });
   });
   if(document.readyState !== 'loading'){
-    ['.metrics-bar','#phase-cards','.chart-head','#designTab'].forEach(sel=>{
+    ['.metrics-bar','#phase-cards','.chart-head','#designTab','#incomePanel','#healthPanel'].forEach(sel=>{
       const el = document.querySelector(sel); if(el) ro.observe(el);
     });
   }
 })();
 
-// 최상위 탭: 설계(입력 폼) / 예상결과(차트·시나리오) — 캔버스 차트는 display:none인 상태에서
+// 최상위 탭: 설계(입력 폼) / 시뮬레이션 결과(차트·시나리오) — 캔버스 차트는 display:none인 상태에서
 // 그려지면 크기가 0으로 굳어버리므로, 결과 탭으로 전환할 때는 항상 upd()를 다시 호출해
 // 실제로 보이는 크기로 다시 그린다.
 let mainTab='design';
-// 5개 탭(설계/소득·지출/예상결과/건보료 설계/세금 상식) 중 하나만 아래 화면으로 보인다.
+// 5개 탭(설계/소득·지출/시뮬레이션 결과/건보료 설계/세금 상식) 중 하나만 아래 화면으로 보인다.
 function setMainTab(t){
   mainTab=t;
   const on = {design:'mtb-design', income:'mtb-income', result:'mtb-result', health:'mtb-health', tax:'mtb-tax'};
@@ -2768,7 +2971,7 @@ function setMainTab(t){
   document.getElementById('taxGuidePanel').classList.toggle('show', t==='tax');
   if(t==='result') upd();
   if(t==='health') renderHealthPanel();
-  requestAnimationFrame(()=>{ fitDensity(); if(t==='result'){ fitMetricCards(); fitChartHeight(); } });
+  requestAnimationFrame(()=>{ fitAll(); });
 }
 
 // "예상 건보료 계산하기" 버튼 클릭 시 — 이미 실시간으로도 갱신되지만, 버튼을 눌렀을 때
@@ -2896,8 +3099,8 @@ function renderAssetTooltip(idx){
   // 맨 아래 한 줄 설명: 은퇴 전은 "얼마나 남았고 얼마씩 넣는 중", 은퇴 후는 소진 패턴.
   const notes = row.phase === 'acc'
     ? `<div class="tt-exp">💡 연 ${row.depYearTotal.toLocaleString()}만 납입 중</div>`
-    : `<div class="tt-exp">💡 연금저축: 순서대로 인출, ${p.life}세 0원</div>
-       <div class="tt-exp">💡 퇴직연금: ${p.tage}세부터 인출, ${p.life}세 소진</div>
+    : `<div class="tt-exp">💡 연금저축: 순서대로 인출, ${planEndAge(p)}세 0원</div>
+       <div class="tt-exp">💡 퇴직연금: ${p.tage}세부터 인출, ${planEndAge(p)}세 소진</div>
        <div class="tt-exp">💡 ISA: 공백기(${p.ret}~${p.npage}세) 집중 인출</div>`;
   tip.innerHTML = `
     <div class="tt-total">📅 ${row.label}${row.phase==='acc'?' (은퇴 전)':''} &nbsp;|&nbsp; 총 자산 <b style="color:#8944ab">${total}억원</b></div>
@@ -3199,6 +3402,7 @@ function drawChart(rows, p){
 }
 
 function upd(){
+  syncHouses();
   const p=getP();
 
   // 납입종료 필드가 빈 칸일 때 "자동설계를 누르면 적용될 값"을 placeholder로 미리 보여줌

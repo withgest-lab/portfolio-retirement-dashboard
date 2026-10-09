@@ -49,6 +49,7 @@ description: 이 저장소(포트폴리오·현금흐름·홈)의 UI를 만들�
 - **빈 여백 때문에 생기는 스크롤 금지**: 스크롤 컨테이너(`getScroller()`)는 넘친 양이 자기 `padding-bottom` 이하이면 `syncFitScroll()`이 스크롤을 끈다(ResizeObserver로 자동). 새 화면은 이 구조(`.page`/`.subpage`) 안에 두면 자동 적용된다 — 따로 `overflow`를 걸어 우회하지 말 것.
 - 남는 높이 계산은 `getScroller()` 기준 콘텐츠 좌표(`rect.top - scroller.top + scrollTop`)로. 뷰포트 좌표만 쓰면 스크롤된 채 다시 그릴 때 커진다.
 - 한 줄 배너는 `nowrap` + 실측 압축(`fitChartTopRow()` 방식: 넘치면 여백→글자 순으로 줄이고, 최후에만 줄바꿈).
+- **터치 유격 금지(현금흐름 방식)**: 한 화면에 들어가는 화면은 `syncBodyScroll()`로 스크롤을 잠그고 `overscroll-behavior-y:none`을 둔다. 남는 높이는 `--sp`/`--ps` 스케일(실측 이분 탐색)로 쓴다(DESIGN_GUIDELINES 20절).
 
 ## 6. 차트·캔버스
 - DPR 대응, 박스는 둥근 헤어라인 + `#FAFAFC` 바탕, 격자는 아주 옅게, 축 글자 `#8e8e93` 10px.

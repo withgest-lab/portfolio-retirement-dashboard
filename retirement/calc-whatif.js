@@ -6,12 +6,13 @@
 (function(root, K){
   'use strict';
   const {simulate, computeAutoPlan, SA, npsAdjustFactor, npsMembershipFactor, PENSION_ANNUAL_PAY_CAP, housingPensionOf} = K;
+  const PLAN_LONG_AGE = 100;   // '100세까지 나눠 쓰기' 플랜의 소진 목표 나이
 
   const ISA_YEAR_CAP = 2000;   // ISA 연 납입한도(만원)
   const END_KEYS = ['isaend', 'nhend', 'mfend', 'irpend', 'tdcend'];
 
   // 자동설계를 적용한 입력 — 한 행의 "바꾼 뒤" 값은 모두 평탄화 최적 플랜 기준이라 서로 같은 잣대로 비교된다
-  function planned(p, adj){ return Object.assign({}, p, computeAutoPlan(p, adj || SA.base)); }
+  function planned(p, adj){ return Object.assign({}, p, computeAutoPlan(p, adj || SA.base, {horizon: p.plan_mode === 'long' ? PLAN_LONG_AGE : 0})); }
 
   // 한 번의 시뮬레이션 요약 — 생활비 판정은 세후·오늘 돈 가치(simulate의 minNetReal)
   function stats(q, adj, opts){
@@ -49,7 +50,9 @@
 
   /* 부족 대책 작업 목록 — 각 task: {key, label, run()} → run()이 행 하나 {key,label,change,minNet,delta,reach,note}를 돌려준다.
      base(자동설계 기준 최저 세후)가 생활비(p.exp)보다 작으면 "부족", 같거나 크면 "여유" 방향으로 문구가 바뀐다. */
-  function whatIfTasks(p){
+  function whatIfTasks(p0){
+    // 부족 대책은 "이 입력으로 낼 수 있는 능력"을 비교 — 필요분 모드(세후를 생활비로 자름)여도 최대로 쓰는 기준으로 계산한다
+    const p = p0.plan_mode === 'need' ? Object.assign({}, p0, {plan_mode: 'max'}) : p0;
     const exp = p.exp;
     let baseQ = null, base = null;
     const ensureBase = () => {
@@ -143,6 +146,7 @@
 
     // 필요분만 인출 — 세후가 생활비를 넘는 해가 있을 때만 의미 있음(현재 입력 기준)
     tasks.push({key: 'need', run: () => {
+      if(p0.plan_mode === 'need') return {key: 'need', none: true};   // 이미 필요분만 인출 플랜
       const cur = stats(p);
       if(!cur.surplusYears) return {key: 'need', none: true};
       const full = simulate(p, SA.base), need = simulate(p, SA.base, {needOnly: true});
@@ -187,7 +191,7 @@
     rows.push(row('opt', '낙관', `수익률 ${sg(SA.opt.r)}%p · 물가 ${sg(SA.opt.inf)}%p`, p, SA.opt));
     rows.push(row('pes', '비관', `수익률 ${sg(SA.pes.r)}%p · 물가 ${sg(SA.pes.inf)}%p`, p, SA.pes));
     rows.push(row('crash', '은퇴 직후 폭락', '은퇴 시점 자산 −30%', p, SA.base, {retShock: 0.7}));
-    rows.push(row('long', '100세까지 생존', `기대수명 ${p.life}→100세`, Object.assign({}, p, {life: 100}), SA.base));
+    rows.push(row('long', '100세까지 생존', `기대수명 ${p.life}→100세`, Object.assign({}, p, {life: 100, lifeInc: p.life}), SA.base));
     rows.push(row('infl', '물가 급등', '물가 +1%p(전 기간)', p, {r: 0, inf: 1}));
     rows.push(row('hi', '건보료율 인상', '소득 보험료율 8%(법정 상한)', p, SA.base, {hiRate: 0.08}));
     const mc = monteCarlo(p, {n: 500, vol: p.rvol > 0 ? p.rvol : 12});
@@ -196,7 +200,7 @@
     return rows;
   }
 
-  const api = {planned, stats, withRet, withNpage, withSave, saveRoom, whatIfTasks, stressRows, monteCarlo, ISA_YEAR_CAP};
+  const api = {PLAN_LONG_AGE, planned, stats, withRet, withNpage, withSave, saveRoom, whatIfTasks, stressRows, monteCarlo, ISA_YEAR_CAP};
   if(typeof module !== 'undefined' && module.exports) module.exports = api;
   else Object.assign(root, api);
 })(typeof window !== 'undefined' ? window : globalThis,

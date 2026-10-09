@@ -151,3 +151,11 @@ test('위기 점검 마지막 행은 몬테카를로(성공 확률)', () => {
   const mc = rows[rows.length - 1];
   assert.equal(mc.key, 'mc'); assert.ok(mc.successPct >= 0 && mc.successPct <= 100);
 });
+
+test('whatIf planned(): 저장된 플랜 모드를 따른다(long = 100세 소진 목표, need는 필요분 행 숨김)', () => {
+  const lp = w.planned(Object.assign({}, BASE, {plan_mode: 'long'}));
+  assert.equal(computeAutoPlan(Object.assign({}, BASE), undefined, {horizon: 100}).nhpay, lp.nhpay);
+  assert.notEqual(w.planned(BASE).nhpay, lp.nhpay);
+  const needRow = w.whatIfTasks(Object.assign({}, BASE, {exp: 250, plan_mode: 'need'})).find(t => t.key === 'need').run();
+  assert.equal(needRow.none, true);
+});

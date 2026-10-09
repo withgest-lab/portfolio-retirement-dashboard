@@ -833,3 +833,86 @@ test('남길 금액·일시 지출을 일반계좌에서 떼어 두면 끝 나�
   const mf = withPlan(Object.assign({}, BASE, {nh: 1000, nhm: 0, bequest: 10000}));
   assert.ok(simulate(mf).leftover >= 10000 * Math.pow(1.025, 39) * 0.7 || computeAutoPlan(Object.assign({}, BASE, {nh: 1000, nhm: 0, bequest: 10000})).info.reserveUnmet > 0);
 });
+
+/* ── 2026-10-09: 집 1·2·3 공시가격 ── */
+test('houseSummary: 집별 공시가격 합계·채수·주택 유형(2채 이상 = 다주택), 입력이 없으면 옛 단일 값 1채', () => {
+  const { houseSummary } = c;
+  assert.deepEqual(houseSummary({gongsiga1: 50000}), {sum: 50000, count: 1, type: 'single'});
+  assert.deepEqual(houseSummary({gongsiga1: 50000, gongsiga3: 20000}), {sum: 70000, count: 2, type: 'multi'});
+  assert.deepEqual(houseSummary({gongsiga1: 10000, gongsiga2: 20000, gongsiga3: 30000}), {sum: 60000, count: 3, type: 'multi'});
+  assert.deepEqual(houseSummary({}), {sum: 0, count: 0, type: 'single'});
+  assert.deepEqual(houseSummary({gongsiga: 40000}), {sum: 40000, count: 1, type: 'single'});          // 옛 저장값 호환
+  assert.deepEqual(houseSummary({gongsiga1: 0, gongsiga2: -5, gongsiga: 40000}), {sum: 40000, count: 1, type: 'single'});
+});
+
+test('주택연금은 집1 기준 월지급금(시세 = 집1÷0.69), 요건은 합산 12억 이하, 옛 단일 값 호환', () => {
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 20700, gongsiga2: 90000}), housingPensionMonthly(70, 30000), '집1÷0.69 = 3억(합산 11.07억 이하)');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 150000, gongsiga2: 1000}), 0, '합산 12억 초과 → 불가');
+  assert.ok(housingPensionOf({hp_age: 70, gongsiga1: 50000, gongsiga2: 60000}) > 0, '합산 11억 이하면 다주택도 가입');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga: 20700}), housingPensionMonthly(70, 30000), '옛 단일 값 호환');
+});
+
+test('재산 과표: 합계에 다주택은 60%, 1주택은 구간별 43~45%', () => {
+  const { houseSummary, propertyTaxBase } = c;
+  const one = houseSummary({gongsiga1: 50000}), two = houseSummary({gongsiga1: 30000, gongsiga2: 20000});
+  assert.equal(propertyTaxBase(one.sum, one.type), Math.round(50000 * 0.44));
+  assert.equal(propertyTaxBase(two.sum, two.type), Math.round(50000 * 0.60));
+});
+
+/* ── 2026-10-09: 자동설계 플랜(최대로 쓰기 / 100세까지 나눠 쓰기 / 필요한 만큼만) ── */
+test('computeAutoPlan horizon: 기본은 기존과 같고, horizon 100은 기대수명 90에서 자산이 남고 100세까지 버틴다', () => {
+  assert.deepEqual(computeAutoPlan(BASE), computeAutoPlan(BASE, undefined, {}));
+  assert.deepEqual(computeAutoPlan(BASE), computeAutoPlan(BASE, undefined, {horizon: 90}), 'horizon ≤ 기대수명이면 기대수명');
+  const max = Object.assign({}, BASE, computeAutoPlan(BASE));
+  const longPlan = computeAutoPlan(BASE, undefined, {horizon: 100});
+  assert.equal(longPlan.info.horizon, 100);
+  const long = Object.assign({}, BASE, longPlan);
+  const rMax = simulate(max), rLong = simulate(long);
+  assert.equal(rLong.runway, 90, '기대수명까지는 유지');
+  const real = r => r.leftover / Math.pow(1.025, 90 - 51);
+  assert.ok(real(rLong) > 5000, `90세 잔여(오늘 가치) ${Math.round(real(rLong))}만 > 5,000만`);
+  assert.ok(real(rMax) < 500, '최대로 쓰기는 거의 0');
+  assert.ok(rLong.minNetEq < rMax.minNetEq && rLong.minNetEq > rMax.minNetEq * 0.8, '매달은 조금만 줄어듦(−20% 이내)');
+  assert.equal(simulate(Object.assign({}, long, {life: 100})).runway, 100, '100세까지 버팀');
+  assert.ok(simulate(Object.assign({}, max, {life: 100})).runway < 100, '최대로 쓰기는 100세 못 버팀');
+});
+
+test('plan_mode need: 자동설계 탐색엔 영향 없고, simulate가 필요분만 인출(생활비 넘는 해만 줄임)', () => {
+  const p = Object.assign({}, BASE, {exp: 250});
+  assert.deepEqual(computeAutoPlan(Object.assign({}, p, {plan_mode: 'need'})), computeAutoPlan(p), 'plan_mode는 탐색 기준을 바꾸지 않음');
+  const q = Object.assign({}, p, computeAutoPlan(p));
+  const full = simulate(q), need = simulate(Object.assign({}, q, {plan_mode: 'need'}));
+  assert.deepEqual(need.rows.map(x => x.netInc), simulate(q, undefined, {needOnly: true}).rows.map(x => x.netInc), '모드 = needOnly 옵션');
+  assert.ok(need.leftover > full.leftover, '필요분만 인출하면 더 남는다');
+  const surplus = full.rows.filter(x => x.netInc > x.curExp);
+  assert.ok(surplus.length > 0);
+  for(const x of need.rows.filter(v => full.rows.find(f => f.age === v.age).netInc > v.curExp)) assert.ok(Math.abs(x.netInc - x.curExp) <= 3, `${x.age}세 세후 ≈ 생활비`);
+  assert.deepEqual(simulate(q, undefined, {needOnly: false}).rows.map(x => x.netInc), full.rows.map(x => x.netInc), '옵션이 있으면 모드보다 우선');
+});
+
+/* ── 2026-10-09 Opus 검토 반영: 필요분 모드 반올림 미달·horizon 평탄화·주택연금 가입 주택 ── */
+test('필요한 만큼만 모드: 생활비를 채우고 "미달" 0년, 최저 세후 ≥ 생활비−0.5', () => {
+  const p = Object.assign({}, BASE, {exp: 250});
+  const q = Object.assign({}, p, computeAutoPlan(p), {plan_mode: 'need'});
+  const r = simulate(q);
+  assert.equal(r.shortNetYears, 0, `미달 ${r.shortNetYears}년(${r.firstShortNetAge}세~)`);
+  assert.ok(r.minNetEq >= 250 - 0.5, `최저 ${r.minNetEq}`);
+  for(const x of r.rows) assert.ok(x.netInc >= x.curExp, `${x.age}세 세후 ${x.netInc} < ${x.curExp}`);
+});
+
+test('horizon 100: 일반계좌·ISA가 있어도 기대수명 직후 세후가 계단처럼 떨어지지 않는다(평탄화를 H까지 평가)', () => {
+  const p = Object.assign({}, BASE, {gen_ov: 10000, gen_ovr: 30, gen_etf: 5000, gen_etfr: 20, gen_kr: 3000, rgen: 5});
+  const q = Object.assign({}, p, computeAutoPlan(p, undefined, {horizon: 100}));
+  const r = simulate(Object.assign({}, q, {life: 100, lifeInc: 90}));
+  const at = a => r.rows.find(x => x.age === a).realNet;
+  assert.ok(at(91) >= at(90) * 0.95, `90세 ${Math.round(at(90))} → 91세 ${Math.round(at(91))}`);
+  assert.equal(r.runway, 100);
+  assert.deepEqual(computeAutoPlan(p), computeAutoPlan(p, undefined, {horizon: 90}), 'horizon ≤ 기대수명이면 기존과 같음');
+});
+
+test('주택연금: 가입 주택은 집1(없으면 첫 집), 요건은 보유 주택 합산 공시가격 12억 이하', () => {
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga2: 20700, gongsiga3: 20700}), housingPensionMonthly(70, 30000), '집1이 비면 첫 집(집2) 한 채 가격');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 50000, gongsiga2: 50000, gongsiga3: 50000}) > 0, false, '합산 15억 초과 → 불가');
+  assert.ok(housingPensionOf({hp_age: 70, gongsiga1: 50000, gongsiga2: 50000}) > 0, '합산 10억 이하 다주택은 가입(집1 기준)');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 150000}), 0);
+});
