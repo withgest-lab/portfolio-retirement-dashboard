@@ -18,7 +18,9 @@ const MAX_BLANK = 20;
 const VIEWPORTS = [[904, 900], [904, 780], [1003, 810], [1003, 700]];
 const EXTRA = [[904, 850], [1003, 760], [1003, 620]];
 const FOLDED = [390, 800];
-const LONG = new Set(['retirement/tax', 'signals', 'folded']);   // 긴 화면(세로 스크롤 허용)
+// 긴 화면(세로 스크롤 허용) — 내용이 본질적으로 길거나 사용자 데이터 행 수에 따라 늘어나는 목록. 짧을 때는 마지막 카드가 화면 끝까지 늘어나 빈 공간이 없어야 한다(fillScrollerCard).
+const LONG = new Set(['retirement/tax', 'signals', 'folded',
+  'portfolio/portfolio', 'portfolio/tradelog', 'portfolio/dashboard/alloc', 'portfolio/returns/monthly_table', 'portfolio/dividend/monthly']);
 
 // 화면 안에서 실제로 보이는 내용의 가장 아래(뷰포트 기준)와 넘침을 잰다
 const IN_PAGE_FIT = () => {

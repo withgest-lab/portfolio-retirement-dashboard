@@ -479,7 +479,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .sum-chip-l{font-size:11px;font-weight:600;color:var(--color-tertiary);}
 .sum-chip-v{font-size:13.5px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
 /* 펼침·펼침+90도는 반드시 한 줄 — 검색창만 줄어든다. 접힘(≤599)만 줄바꿈 허용 */
-.filter-bar input,.filter-bar select{border:1px solid var(--color-border);border-radius:7px;padding:5px 8px;
+.filter-bar input,.filter-bar select{box-sizing:border-box;height:28px;border:1px solid var(--color-border);border-radius:7px;padding:0 8px;
   font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);}
 .filter-bar input{flex:1;min-width:120px;}
 @media(min-width:600px){ .filter-bar{flex-wrap:nowrap;} .filter-bar input{min-width:90px;} .filter-bar select{flex-shrink:0;} }
@@ -607,6 +607,13 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .index-tile .index-chg{font-size:17px;font-weight:500;margin-top:2px;white-space:nowrap;}
 .notice.index-note{font-size:10.5px;margin-top:8px;padding:0;}
 /* 시장지표 한 화면 맞춤: 넘칠 때만 fitIndicesLayout()이 단계적으로 줄인다 */
+/* 남는 높이가 있으면 --ig(0~8)로 타일·그래프·글자를 키운다(fitIndicesLayout 이분 탐색) */
+#indexCard .index-spark,#indexCard .index-spark-empty{height:calc(40px + 7px*var(--ig,0));}
+#indexCard .index-tile{padding:calc(12px + 2px*var(--ig,0)) calc(14px + 1px*var(--ig,0));}
+#indexCard .index-group-title{margin-top:calc(14px + 4px*var(--ig,0));}
+#indexCard .index-group-title:first-child{margin-top:2px;}
+#indexCard .index-tile .index-val{font-size:min(28px, calc(20px + 1px*var(--ig,0)));}
+#indexCard .index-tile-name{font-size:min(18px, calc(15px + .4px*var(--ig,0)));}
 #indexCard.idx-cmp1 .index-spark,#indexCard.idx-cmp1 .index-spark-empty{height:28px;margin:4px 0 5px;}
 #indexCard.idx-cmp1 .index-tile{padding:7px 8px;}
 #indexCard.idx-cmp1 .index-group-title{margin:8px 2px 4px;}
@@ -2766,8 +2773,39 @@ function refitScrollerContent(el){
   else if(sub==='summary') drawQuickViewTreemap();
   else if(sub==='alloc') renderDonuts();
   else if(sub==='indices') fitIndicesLayout();
+  else if(sub==='monthly_chart') drawPrincipalVsValueChart();
+}
+/* 짧은 목록 화면은 마지막 카드를 화면 끝까지 늘려 아래 빈 공간을 없앤다(꽉 채움 기본 규칙). 값은 항상 "스크롤 영역 아래 끝 − 12px"로 정해
+   다시 계산해도 같은 값이라 ResizeObserver와 되먹임이 없다. 내용이 더 길면 min-height는 의미 없고 그대로 스크롤. 접힘(≤480px)·차트가 직접 높이를 맞추는 서브페이지는 제외. */
+/* 카드 안 캔버스 차트 높이: 카드 아래 끝(−12px)까지 남는 높이에서 차트 뒤에 오는 요소(범례·안내)를 뺀 값. 접힘(≤480px)은 기본값. */
+function fitCanvasH(wrap, dflt, min, max){
+  const sc = getScroller(), card = wrap && wrap.closest('.card');
+  if(!sc || !card || window.innerWidth <= 480 || !wrap.offsetParent) return dflt;
+  const top = wrap.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+  let after = 0, el = wrap;
+  const wb = wrap.getBoundingClientRect().bottom;   // 화면에서 차트 아래에 놓인 요소만(flex order로 위로 올라간 요소는 제외)
+  while(el && el !== card){ for(let sib = el.nextElementSibling; sib; sib = sib.nextElementSibling) if(sib.getBoundingClientRect().top >= wb - 1) after += sib.offsetHeight + 10; el = el.parentElement; }
+  const padB = parseFloat(getComputedStyle(card).paddingBottom) || 16;
+  return Math.max(min, Math.min(max, Math.floor(sc.clientHeight - 12 - top - after - padB)));
+}
+function fillScrollerCard(){
+  const sc = getScroller();
+  if(!sc) return;
+  const own = ['chart','summary','alloc'];
+  const card = [...sc.children].filter(el=>el.classList.contains('card') && el.offsetParent).pop();
+  document.querySelectorAll('.card[data-fill]').forEach(el=>{ if(el!==card){ el.style.minHeight=''; delete el.dataset.fill; } });
+  if(!card || window.innerWidth<=480 || own.includes(sc.dataset.sub)) return;
+  const top = card.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;   // 스크롤과 무관한 카드 위치
+  const need = Math.floor(sc.clientHeight - 12 - top);
+  if(need > 0 && card.dataset.fill !== String(need)){ card.style.minHeight = need + 'px'; card.dataset.fill = String(need); }
 }
 function syncFitScroll(){
+  fillScrollerCard();
+  { const cv = document.getElementById('pvChart');   // 안내 줄 높이 등이 늦게 정해져도 원금 vs 자산가치 차트가 남는 높이를 채우게 다시 그린다
+    if(cv && cv.offsetParent && getScroller() && getScroller().dataset.sub === 'monthly_chart'){
+      const h = fitCanvasH(cv.parentElement, 300, 240, 760);
+      if(Math.abs(h - (parseInt(cv.style.height, 10) || 0)) > 2) drawPrincipalVsValueChart();
+    } }
   const sc = getScroller();
   document.querySelectorAll('.fit-noscroll').forEach(el=>{ if(el!==sc) el.classList.remove('fit-noscroll'); });
   if(!sc) return;
@@ -5889,7 +5927,7 @@ function drawPrincipalVsValueChart(){
   if(!canvas) return;
   const wrap = canvas.parentElement;
   const cssW = wrap.clientWidth || 300;
-  const cssH = 300;
+  const cssH = fitCanvasH(wrap, 300, 240, 760);
   const dpr = window.devicePixelRatio || 1;
   canvas.width = cssW*dpr; canvas.height = cssH*dpr;
   canvas.style.width = cssW+'px'; canvas.style.height = cssH+'px';
@@ -8199,12 +8237,17 @@ function fitIndicesLayout(){
   const card = document.getElementById('indexCard');
   if(!card || !card.offsetParent) return;
   card.classList.remove('idx-cmp1','idx-cmp2');
+  card.style.setProperty('--ig', '0'); card.style.minHeight = ''; delete card.dataset.fill;
   if(window.innerWidth < 600) return;
   const sc = getScroller(); if(!sc) return;
   const pb = parseFloat(getComputedStyle(sc).paddingBottom) || 0;
   const over = ()=> sc.scrollHeight - sc.clientHeight > pb + 1;
   if(over()) card.classList.add('idx-cmp1');
   if(over()) card.classList.add('idx-cmp2');
+  else {   // 남으면 키운다(가장 큰 --ig), 남는 높이는 카드가 끝까지 늘어나 채운다(fillScrollerCard)
+    let lo = 0, hi = 8; card.style.setProperty('--ig', hi);
+    if(over()){ for(let i=0;i<7;i++){ const mid = (lo+hi)/2; card.style.setProperty('--ig', mid.toFixed(2)); if(over()) hi = mid; else lo = mid; } card.style.setProperty('--ig', lo.toFixed(2)); }
+  }
   scheduleFitScroll();
 }
 

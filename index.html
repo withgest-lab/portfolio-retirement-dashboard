@@ -42,6 +42,20 @@
   html[data-theme="dark"] .card .desc{color:#9a9aa0;}
   html[data-theme="dark"] footer{color:#6b6b70;}
   #themeSlot{position:absolute;top:14px;right:14px;}
+  /* 펼침·펼침+90도(폭 600px 이상): 화면 끝까지 꽉 채움 — 카드가 남는 높이를 채우고 아이콘·글자는 화면 높이에 비례해 커진다(스크롤·아래 빈 공간 0) */
+  @media (min-width:600px){
+    body{height:100vh;height:100dvh;min-height:0;overflow:hidden;justify-content:flex-start;padding:clamp(18px,4vh,40px) 24px clamp(8px,1.4vh,14px);gap:clamp(12px,2.6vh,28px);}
+    h1{font-size:clamp(20px,3.6vh,32px);}
+    p.sub{font-size:clamp(13px,1.9vh,17px);}
+    .cards{flex:1 1 auto;min-height:0;width:100%;max-width:1100px;flex-wrap:nowrap;align-items:stretch;gap:clamp(12px,2.2vh,22px);}
+    .card{flex:1 1 0;max-width:none;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;padding:clamp(18px,3vh,36px) clamp(18px,2.4vw,32px);}
+    .card .emoji{width:clamp(48px,15vh,128px);height:clamp(48px,15vh,128px);border-radius:clamp(12px,3.6vh,30px);margin-bottom:clamp(14px,4vh,40px);font-size:clamp(26px,7.5vh,64px);}
+    .card .emoji .ic{width:clamp(26px,7.8vh,66px);height:clamp(26px,7.8vh,66px);}
+    .card .title{font-size:clamp(15px,3.2vh,28px);margin-bottom:clamp(6px,1.6vh,14px);}
+    .card .desc{font-size:clamp(12px,2.2vh,18px);}
+    .card::after{content:"›";margin-top:auto;align-self:flex-end;width:clamp(30px,4.6vh,44px);height:clamp(30px,4.6vh,44px);border-radius:50%;display:grid;place-items:center;font-size:clamp(20px,3.2vh,30px);line-height:1;color:#007aff;background:rgba(0,122,255,.1);}
+    footer{font-size:clamp(11px,1.5vh,14px);}
+  }
 </style>
 </head>
 <body>
