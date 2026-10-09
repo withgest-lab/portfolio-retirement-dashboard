@@ -1,7 +1,7 @@
 // 화면 꽉 채움·입력 박스 통일 검사 — ios-design 스킬 8절. 보고 전 "모든 화면 × 펼침·펼침+90도"에서 돌린다.
 //
 // 사용(CLI, playwright가 NODE_PATH에 있어야 함):
-//   node .claude/skills/ios-design/fit-audit.js retirement            # 현금흐름 4탭(1·2단계 설계/결과/세금 상식) + 결과 보기 6종(연 현금흐름·연 자산 흐름·요약·근거·위기 점검·부족 대책, 자동 설계 확정 경로 포함)
+//   node .claude/skills/ios-design/fit-audit.js retirement            # 현금흐름 4탭(1·2단계 설계/결과/세금 상식) + 결과 보기 6종(연 현금흐름·연 자산 흐름·요약·건보료 예상·근거·위기 점검&부족 대책, 자동 설계 확정 경로 포함)
 //   node .claude/skills/ios-design/fit-audit.js portfolio --seed      # 포트폴리오 전 화면(가상 데이터 25종목·매매 60건·스냅샷 30개를 심어서)
 //   node .claude/skills/ios-design/fit-audit.js home | signals | all
 //   옵션: --boxes(입력 박스 통일 검사 추가) --base http://localhost:4173/ --extra(실기기 근사 높이 3개 추가)
@@ -12,6 +12,7 @@
 //   ② 화면 아래 빈 공간 ≤ MAX_BLANK(20px, 바깥 여백 포함) — 남는 높이는 카드·행·차트가 채운다
 //   ③ 휠로 끌어도 scrollTop 0(터치 유격 없음)
 //   ④ 입력 박스 통일(--boxes): 같은 줄 컨트롤 높이 차 ≤ 1px, 높이 종류 ≤ 2, 폭 종류 ≤ 3, 어긋난 왼쪽 선(2~12px 차) 0
+//   ⑤ 겹침·두 줄(--boxes, DESIGN_GUIDELINES 22절): 같은 행의 입력·선택·단위(세·만·%)·라벨 사각형이 1px 넘게 겹침 0, 라벨·단위가 두 줄로 꺾임 0, 입력 값이 칸 밖으로 잘림 0
 // 예외(내용이 본질적으로 긴 화면): LONG 목록 — 가로 넘침 0만 검사. 접힘(390×800)은 가로 0만.
 
 const MAX_BLANK = 20;
@@ -62,7 +63,34 @@ const IN_PAGE_BOXES = () => {
   const groups = new Map();
   els.forEach((e, i) => { const c = e.closest('.acct-card, .inline-panel, .basic-row, .modal, .fm, .card') || document.body; if (!groups.has(c)) groups.set(c, []); groups.get(c).push(items[i]); });
   groups.forEach(list => { const ls = list.slice().sort((x, y) => x.left - y.left); for (let i = 1; i < ls.length; i++) { const d = ls[i].left - ls[i - 1].left; if (d >= 2 && d <= 12) nearMiss.push(ls[i - 1].id + '↔' + ls[i].id + '(' + Math.round(d) + 'px)'); } });
-  return { count: items.length, hKinds: kinds(items, 'h', 1), wKinds: kinds(items, 'w', 2), sameLine, nearMiss };
+  // ⑤ 겹침·두 줄·잘림 — 같은 행(.health-input-row/.irow/.fm-f 등) 안의 컨트롤·단위·라벨 사각형 교차, 글자 두 줄 꺾임, 입력 값 잘림
+  const rowSel = '.health-input-row, .irow, .fm-f, .ymon-amt, .irow-ctrl, .hir-range';
+  const parts = [...document.querySelectorAll('input, select, .unit-tag, .hir-label, .ilabel, .req-st')].filter(e => {
+    if (e.offsetParent === null || ['hidden', 'range', 'checkbox', 'radio', 'file'].includes(e.type)) return false;
+    if (e.closest('[aria-hidden="true"]') || getComputedStyle(e).visibility === 'hidden') return false;
+    const r = e.getBoundingClientRect(); return r.width > 2 && r.height > 2;
+  });
+  const nm = e => (e.id || e.name || (e.className && e.className.toString().split(' ')[0]) || e.tagName) + (e.matches('.unit-tag, .hir-label, .ilabel, .req-st') ? '「' + e.textContent.trim().slice(0, 8) + '」' : '');
+  const overlaps = [], wraps = [], clipped = [];
+  const byRow = new Map();
+  parts.forEach(e => { for (let r = e.closest(rowSel); r; r = r.parentElement && r.parentElement.closest(rowSel)) { if (!byRow.has(r)) byRow.set(r, []); byRow.get(r).push(e); } });
+  byRow.forEach(list => {
+    for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) {
+      const a = list[i], b = list[j];
+      if (a.contains(b) || b.contains(a)) continue;
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      const ox = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left), oy = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
+      if (ox > 1 && oy > 1) overlaps.push(nm(a) + '×' + nm(b) + '(' + Math.round(ox) + 'px)');
+    }
+  });
+  parts.forEach(e => {
+    if (e.matches('input, select')) { if (e.tagName === 'INPUT' && e.value && e.scrollWidth > e.clientWidth + 1 && e.type !== 'date') clipped.push(nm(e) + '=' + e.value.slice(0, 8)); return; }
+    const tw = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), tops = [];   // 글자 노드만(ⓘ 버튼 같은 인라인 요소는 제외 — 줄 높이 차로 오탐)
+    for (let n = tw.nextNode(); n; n = tw.nextNode()) { if (!n.textContent.trim() || n.parentElement.closest('button')) continue; const rg = document.createRange(); rg.selectNodeContents(n); [...rg.getClientRects()].filter(r => r.width > 1).forEach(r => tops.push(Math.round(r.top))); }
+    if (tops.length && Math.max(...tops) - Math.min(...tops) > 4) wraps.push(nm(e));
+    else if (e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflow !== 'visible') clipped.push(nm(e));
+  });
+  return { count: items.length, hKinds: kinds(items, 'h', 1), wKinds: kinds(items, 'w', 2), sameLine, nearMiss, overlaps, wraps, clipped };
 };
 
 async function measureFit(page) {
@@ -92,6 +120,9 @@ const judgeBoxes = b => {
   if (b.hKinds.length > 2) f.push('높이 종류 ' + b.hKinds.length + '(' + b.hKinds.join('/') + ')');
   if (b.wKinds.length > 3) f.push('폭 종류 ' + b.wKinds.length + '(' + b.wKinds.join('/') + ')');
   if (b.nearMiss.length) f.push('어긋난 왼쪽 선 ' + b.nearMiss.slice(0, 4).join(','));
+  if (b.overlaps && b.overlaps.length) f.push('겹침 ' + b.overlaps.slice(0, 4).join(','));
+  if (b.wraps && b.wraps.length) f.push('두 줄 꺾임 ' + b.wraps.slice(0, 4).join(','));
+  if (b.clipped && b.clipped.length) f.push('잘림 ' + b.clipped.slice(0, 4).join(','));
   return f;
 };
 
@@ -130,7 +161,7 @@ const seedSnaps = () => {
 const seedAll = () => ({ pf_assets_v1: seedAssets(), pf_tradelog_v1: seedTradeLog(), pf_snaps_v5: seedSnaps() });
 
 // 현금흐름 결과 탭 보기 6종 — 요약·근거·위기 점검·부족 대책은 자동 설계 결과가 있어야 의미가 있어 순회 전에 한 번 확정한다(confirmPlan 경로 검증 겸).
-const RESULT_VIEWS = ['flow', 'asset', 'plan', 'hi', 'basis', 'sc', 'need'];
+const RESULT_VIEWS = ['flow', 'asset', 'plan', 'hi', 'basis', 'risk'];
 const seedPlan = async page => {
   await page.evaluate(() => autoSuggest());
   await page.waitForFunction(() => typeof _planPickOpts !== 'undefined' && _planPickOpts && _planPickOpts.length, null, { timeout: 30000 });
@@ -172,7 +203,7 @@ async function sweep(browser, preset, o) {
     for (const [a, b] of targets) {
       if (preset === 'retirement') { if (a === 'result' && !seeded) { await seedPlan(page); seeded = true; } await cfg.go(page, a, b); }
       if (preset === 'portfolio') { await page.evaluate(([p, s]) => { switchPage(p); if (s) switchSubPage(p, s); }, [a, b]); }
-      await page.waitForTimeout(preset === 'portfolio' ? 1000 : b === 'need' ? 3600 : 600);   // 부족 대책은 행마다 자동 설계를 다시 계산해 늦게 채워진다
+      await page.waitForTimeout(preset === 'portfolio' ? 1000 : b === 'risk' ? 3600 : 600);   // 위기 점검&부족 대책은 행마다 자동 설계를 다시 계산해 늦게 채워진다
       const name = preset + (a ? '/' + a : '') + (b ? '/' + b : '');
       const isLong = folded || LONG.has(name) || (cfg.long && cfg.long(a));
       const fit = await measureFit(page), fails = judgeFit(fit, isLong);

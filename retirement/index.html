@@ -447,12 +447,13 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row .ilabel{font-size:9px;white-space:nowrap;width:var(--bi-w);display:flex;justify-content:center;}
 .basic-row .ival-input{width:var(--bi-w);height:var(--bi-h);box-sizing:border-box;font-size:12.5px;padding:3px 4px;}
 .basic-row .unit-tag{width:22px;font-size:9px;}
-.basic-row .suggest-btn{width:auto;min-width:88px;flex-shrink:0;margin:0;padding:6px 12px;
+.basic-row .suggest-btn{width:auto;min-width:88px;min-height:calc(var(--ctl-h) + 14px);flex-shrink:0;margin:0;padding:6px 14px;   /* 세로를 키워 누르기 쉽게 — 행 가운데 정렬이라 위·아래 빈 영역이 같다 */
+
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   line-height:1.25;}
 /* 자동설계 버튼을 basic-row 오른쪽 끝에 붙임 */
 .basic-row-action{display:flex;align-items:center;gap:8px;flex-shrink:0;margin:0 0 0 auto;}
-/* "수익률·물가 설정" 스위치: 카드 박스 좌측 하단 모서리(2행 1열 — 게이지 아래 빈 자리 맨 끝) */
+/* "수익률·물가 설정" 스위치: 중간 회색 박스(.limit-gauge-wrap) 안 우측 하단 */
 .rates-anchor{position:relative;}
 .rates-anchor .tgl-banner{padding:3px 7px 3px 10px;font-size:10.5px;gap:5px;}
 .rates-anchor .tgl-banner .sw{width:22px;height:13px;}
@@ -499,10 +500,12 @@ button{font-family:inherit;cursor:pointer;}
 .acct-grid .c-irp{grid-column:4;grid-row:1;}
 .acct-grid .c-tirp{grid-column:5;grid-row:1;}
 .acct-grid .c-isa{grid-column:1;grid-row:2;align-self:start;}
-.acct-grid .c-np{grid-column:5;grid-row:2;align-self:start;}
+.acct-grid .c-np{grid-column:5;grid-row:2;align-self:stretch;}   /* ISA·게이지 박스와 하단 외곽이 일직선 — 안의 행은 균등 분배 */
+.c-np .acct-body{flex:1 1 auto;justify-content:space-between;}
 .acct-grid .limit-gauge-wrap{grid-column:2 / 5;grid-row:2;align-self:start;margin:0;}
-.acct-grid .rates-anchor{grid-column:5;grid-row:2;align-self:end;justify-self:end;}
-.acct-grid .rates-anchor .rates-pop{left:auto;right:0;}
+.limit-gauge-wrap{position:relative;}
+.limit-gauge-wrap .rates-anchor{display:flex;justify-content:flex-end;flex:0 0 auto;margin-top:auto;padding-top:6px;}   /* 수익률·물가 설정: 회색 박스 우측 하단 */
+.limit-gauge-wrap .rates-pop{left:auto;right:0;bottom:calc(100% - 4px);}
 .ival-input.gen-auto{background:rgba(118,118,128,.06);color:#8e8e93;cursor:default;}
 .acct-card{border:.5px solid rgba(60,60,67,.18);border-radius:12px;overflow:hidden;background:#fff;min-width:0;
   display:flex;flex-direction:column;}
@@ -621,8 +624,6 @@ body.fit-noscroll{overflow-y:hidden;}
   .acct-grid .c-gen{grid-column:1 / -1;grid-row:4;}
   .acct-grid .c-isa{grid-column:1 / -1;grid-row:5;}
   .acct-grid .c-np{grid-column:1 / -1;grid-row:6;}
-  .acct-grid .rates-anchor{grid-column:1 / -1;grid-row:7;justify-self:start;}
-  .acct-grid .rates-anchor .rates-pop{left:0;right:auto;}
   .c-isa .irow[aria-hidden]{display:none;}
   .inline-panel{padding:8px 10px 10px;}
 }
@@ -727,6 +728,7 @@ html.dense{--ctl-h:18px;--ctl-w-sm:40px;--ctl-w-md:58px;--ctl-fs:11px;--bi-w:var
 .basic-row .ival-input{width:var(--ctl-w-sm)!important;}
 select.hir-input{width:var(--ctl-w-lg)!important;min-width:0!important;}
 .acct-body .ymon-select,.acct-body .ival-input{text-align:right;}
+.acct-body .irow-ymon .ymon-amt .ival-input{width:var(--ctl-w-sm)!important;}   /* 연납입 금액 칸은 sm — md(76px)+단위가 2열 격자 한 칸(≈68px)보다 넓어 오른쪽 월 선택과 겹쳤다(22절 겹침 금지) */
 .acct-body .ymon-select{text-align-last:right;}
 
 /* ══ 소득·지출 / 건보료 패널: 섹션 카드가 패널 높이를 채우고, 행은 남는 높이를 균등 분배(fitPanel이 패널 높이를 화면 끝에 맞춤) ══ */
@@ -754,13 +756,15 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .ipop{position:fixed;z-index:300;max-width:min(300px, calc(100vw - 24px));background:rgba(28,28,30,.94);color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:9px 12px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);}
 /* 2단계 설계 오른쪽: 건보료 설계(자동 설계 캡슐 + 건보료 입력 + 주택 입력). 결과는 시뮬레이션 결과의 "건보료 예상" */
 .sec-subh{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-size:clamp(11px, calc(11.5px + .5px*var(--ps,0)), 14px);font-weight:700;color:#1c1c1e;padding:max(3px, calc(6px + 1px*var(--ps,0))) 0 max(2px, calc(2px + .6px*var(--ps,0)));border-bottom:.5px solid rgba(60,60,67,.14);}
-.s2-banner{display:flex;justify-content:flex-end;flex:0 0 auto;margin:0 0 max(7px, calc(11px + 2px*var(--ps,0)));}   /* 배너 위(패널 border 1px 포함해(패널 padding-top)와 아래 여백을 같은 식으로 → 위아래 흰 공간 동일 */
-.s2-auto{width:auto!important;margin:0!important;padding:4px 12px!important;border-radius:999px;font-size:clamp(11px, calc(11.5px + .4px*var(--ps,0)), 13.5px);flex-shrink:0;white-space:nowrap;}
+.s2-auto{width:auto!important;margin:0 0 0 auto!important;height:clamp(30px, calc(30px + 1.2px*var(--ps,0)), 40px);padding:0 clamp(16px, calc(16px + 1px*var(--ps,0)), 24px)!important;border-radius:999px;font-size:clamp(12.5px, calc(12.5px + .35px*var(--ps,0)), 15px);font-weight:800;flex-shrink:0;white-space:nowrap;}   /* 건보료 설계 카드 머리 우측 상단 — 키워서 눈에 띄고 누르기 쉽게 */
+.hi-top > .sec-h{padding-bottom:max(3px, calc(4px + .8px*var(--ps,0)));}
 /* 위: 건보료 설계(내부 2열: 소득 | 재산·자격) / 아래: 건보료와 무관한 입력 3카드 — 카드 높이는 행 수 비율(위 6.6 : 아래 2.6)로 나눠 행 간격이 비슷 */
 .hi-top{flex:6.6 1 auto;}
 .hi-cols{display:flex;gap:16px;flex:1 1 auto;min-height:0;}
 .hi-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;}
-.hi-col .health-input-row{flex:1 1 0;align-items:center;flex-wrap:wrap;column-gap:6px;row-gap:2px;}
+.hi-col .health-input-row{flex:1 1 0;align-items:center;flex-wrap:nowrap;column-gap:6px;row-gap:2px;min-width:0;}   /* 건보료 카드 행은 줄바꿈 금지(22절) — 합계·유형 같은 행이 실기기 글꼴에서 두 줄로 꺾이던 문제 */
+.hi-col .health-input-row > .unit-tag{flex:0 0 auto;}
+select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형은 '1주택/다주택' 짧은 이름 + md 폭 → 합계 칸 오른쪽 한 줄 */
 .hi-col .health-input-row:last-child,.hi-col .health-input-row:has(+ .sec-subh){border-bottom:0;}
 .hi-col .sec-subh:first-child{padding-top:max(2px, calc(2px + .6px*var(--ps,0)));}
 .s2-bottom{flex:2.6 1 auto;display:grid;grid-template-columns:minmax(0,.93fr) minmax(0,1.03fr) minmax(0,1.03fr);grid-template-rows:auto repeat(2,minmax(0,1fr));gap:var(--gap);min-height:0;}
@@ -892,7 +896,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .bal-leg .bl em{font-style:normal;color:#8e8e93;}
 @media (min-width:700px){
   .acct-grid .limit-gauge-wrap{align-self:stretch;display:flex;flex-direction:column;justify-content:center;border-radius:12px;padding:calc(5px + 4px*var(--sp,0)) calc(8px + 5px*var(--sp,0));}
-  .acct-grid .limit-gauge-info{gap:calc(2px + 2px*var(--sp,0));margin-bottom:calc(3px + 3px*var(--sp,0));font-size:min(13px, calc(10px + 1px*var(--sp,0)));}
+  .acct-grid .limit-gauge-info{margin-top:auto;gap:calc(2px + 2px*var(--sp,0));margin-bottom:calc(3px + 3px*var(--sp,0));font-size:min(13px, calc(10px + 1px*var(--sp,0)));}
   .acct-grid .limit-gauge-val{font-size:min(15px, calc(10px + 1.7px*var(--sp,0)));}
   .acct-grid .limit-gauge{height:calc(5px + 3px*var(--sp,0));border-radius:999px;}
 }
@@ -935,8 +939,8 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 
 <!-- 최상위 탭: 설계(입력) / 시뮬레이션 결과(차트) -->
 <div class="main-tabs">
-  <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')"><span class="t-e">📝 </span>1단계<span class="t-x"> 설계</span></button>
-  <button class="tab-btn" id="mtb-step2" onclick="setMainTab('step2')"><span class="t-e">💸 </span>2단계<span class="t-x"> 설계</span></button>
+  <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')"><span class="t-e">📝 </span>1단계<span class="t-x"> 설계 (투자)</span></button>
+  <button class="tab-btn" id="mtb-step2" onclick="setMainTab('step2')"><span class="t-e">💸 </span>2단계<span class="t-x"> 설계 (소득/지출)</span></button>
   <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')"><span class="t-e">📊 </span>시뮬레이션<span class="t-x"> 결과</span></button>
   <button class="tab-btn" id="mtb-tax" onclick="setMainTab('tax')"><span class="t-e">📖 </span>세금<span class="t-x"> 상식</span></button>
 </div>
@@ -994,10 +998,9 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 
 <!-- 2단계 설계 인라인 패널 — 맨 위 우측: 자동 설계(상위 배너) / 위: 건보료 설계(건보료 산정에 쓰이는 입력 전부: 소득·재산·자격) / 아래: 건보료와 무관한 입력(생활비 변화·일시 지출·연금) -->
 <div class="inline-panel fit-scale" id="step2Panel">
-  <div class="s2-banner"><button type="button" class="suggest-btn s2-auto" onclick="autoSuggest()" title="세후 소득 평탄화"><span>🎯 자동 설계</span></button></div>
   <div class="inc-grid">
     <div class="sec-card hi-top">
-      <div class="sec-h">건보료 설계 <button type="button" class="ibtn" data-tip="은퇴한 해부터 매년 세후 현금흐름에서 뺍니다(2026년 요율, 오늘 돈 가치). 아래 소득·재산·자격 값으로 계산하고, 사적연금·ISA 인출은 부과 대상이 아니에요. 예상 금액은 시뮬레이션 결과의 건보료 예상에서 봅니다.">ⓘ</button></div>
+      <div class="sec-h">건보료 설계 <button type="button" class="ibtn" data-tip="은퇴한 해부터 매년 세후 현금흐름에서 뺍니다(2026년 요율, 오늘 돈 가치). 아래 소득·재산·자격 값으로 계산하고, 사적연금·ISA 인출은 부과 대상이 아니에요. 예상 금액은 시뮬레이션 결과의 건보료 예상에서 봅니다.">ⓘ</button><button type="button" class="suggest-btn s2-auto" onclick="autoSuggest()" title="세후 소득 평탄화"><span>🎯 자동 설계</span></button></div>
       <div class="hi-cols">
         <div class="hi-col">
           <div class="sec-subh"><span>소득</span><button type="button" class="ibtn" data-tip="오늘 돈 가치·세전 금액(매년 물가만큼 오름)이에요. 기간을 비우면 은퇴~기대수명 내내 받는 것으로 봅니다. 건보료에는 공적연금·근로 50%, 사업·기타 100%, 이자+배당은 연 1,000만원을 넘으면 전액 반영돼요. 같은 값이 현금흐름 수입과 세금(근로·사업·기타 종합과세, 이자+배당 2,000만원 초과분 종합과세)에도 쓰입니다.">ⓘ</button></div>
@@ -1027,7 +1030,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
         <div class="health-input-row">
           <span class="hir-label">국민연금</span>
           <input class="hir-input gen-auto" type="text" id="hi_np_display" value="0" disabled><span class="unit-tag">만/월</span>
-          <span class="req-st ok">자동</span>
+          <span class="req-st ok" title="1단계 국민연금 카드에 기입한 실제 수령액을 자동으로 가져옵니다">1단계 연동</span>
         </div>
         </div>
         <div class="hi-col">
@@ -1043,9 +1046,9 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
         <div class="health-input-row">
           <span class="hir-label">합계·유형</span>
           <input class="hir-input gen-auto" type="text" id="gongsiga" value="0" readonly tabindex="-1"><span class="unit-tag">만원</span>
-          <select class="hir-input" id="housetype" onchange="scheduleUpd()">
-            <option value="single">1세대 1주택</option>
-            <option value="multi">다주택·법인</option>
+          <select class="hir-input hir-house" id="housetype" onchange="scheduleUpd()" title="1주택 = 1세대 1주택(공정시장가액 43~45%), 다주택 = 다주택자·법인(60%)">
+            <option value="single">1주택</option>
+            <option value="multi">다주택</option>
           </select>
         </div>
         <div class="health-input-row">
@@ -1169,7 +1172,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1450"  oninput="syncInput('plimit');scheduleUpd()">
 </div>
 <div class="basic-row-action">
-<button class="suggest-btn" onclick="setMainTab('step2')"><span style="font-size:11.5px;">2단계 설계로 가기 ›</span></button>
+<button class="suggest-btn" onclick="setMainTab('step2')"><span style="font-size:12.5px;">2단계 설계로 가기 ›</span></button>
 </div>
 </div>
 </div>
@@ -1236,6 +1239,16 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
   </div>
 </div><div class="irow gen">
   <div class="irow-top">
+    <span class="ilabel" title="현재 수익률(평가손익률) — 국내 주식·ETF는 매매차익이 비과세라 세금 계산에는 영향이 없고 기록용입니다">수익률</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="gen_krr" value="0" min="-90" max="1000" step="1" onblur="onBlurFix('gen_krr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+    </div>
+  </div>
+</div>
+</div>
+<div class="fv-row">
+<div class="irow gen">
+  <div class="irow-top">
     <span class="ilabel" title="해외주식 이익을 해마다 연 250만원 공제 한도만큼 실현했다 다시 사는 방법 — 원가가 올라 나중 세금이 줄어듭니다">250만 공제</span>
     <div class="irow-ctrl">
       <select class="ymon-select" id="gen_harvest" onchange="scheduleUpd()" title="해마다 250만원 공제 활용">
@@ -1243,15 +1256,14 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
       </select>
     </div>
   </div>
-</div>
-</div>
-<div class="irow gen">
+</div><div class="irow gen">
   <div class="irow-top">
     <span class="ilabel" title="자동설계 인출 계획 기준 일반계좌에서 평생 내는 양도·매매차익 세금(명목) — 자동설계 전에는 —">예상 세금</span>
     <div class="irow-ctrl">
       <input class="ival-input gen-auto" type="text" id="gen_tax" value="—" readonly tabindex="-1"><span class="unit-tag">만</span>
     </div>
   </div>
+</div>
 </div>
 </div>
 </div>
@@ -1631,64 +1643,6 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
     <div class="bal-bar" id="balBar"></div>
     <div class="bal-leg" id="balLeg"></div>
   </div>
-</div>
-<div class="acct-card c-np" style="--ac:#FF9500;--ac-ink:#C93400;">
-<div class="acct-head"><span class="name">국민연금</span></div>
-<div class="acct-body">
-<div class="irow np">
-  <div class="irow-top">
-    <span class="ilabel">예상액(65세 기준)</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npbase" value="170" min="50" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만</span>
-      </div>
-  </div>
-  <input type="range" id="npbase-r" min="50" max="300" step="5" value="170"  oninput="syncInput('npbase');scheduleUpd()">
-  <div class="note" style="font-size:9px;color:#636366;margin:2px 0 4px;line-height:1.4;" title="국민연금공단 홈페이지·앱의 '내 연금 알아보기'에서 조회한 65세 기준 예상 수령액(현재가치) — 실제로는 매년 물가만큼 오르며, 계산도 매년 물가상승률만큼 늘립니다">💡 공단 '내 연금' 조회값</div>
-</div>
-<div class="fv-row">
-<div class="irow np">
-  <div class="irow-top">
-    <span class="ilabel">수령 시작</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npage" value="65" min="60" max="70" step="1" onblur="onBlurFix('npage')" oninput="syncSlider('npage');scheduleUpd()"><span class="unit-tag">세</span>
-      </div>
-  </div>
-  <input type="range" id="npage-r" min="60" max="70" step="1" value="65"  oninput="syncInput('npage');scheduleUpd()">
-</div><div class="irow np">
-  <div class="irow-top">
-    <span class="ilabel" title="조기수령(65세 미만) 1년당 -6%, 연기수령(65세 초과) 1년당 +7.2% 자동 반영">실제 수령액</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="np" value="170" min="0" max="500" step="1" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만</span>
-      </div>
-  </div>
-  <input type="range" id="np-r" min="0" max="500" step="1" value="170"  oninput="syncInput('np');scheduleUpd()">
-</div>
-</div>
-<div class="fv-row">
-<div class="irow np">
-  <div class="irow-top">
-    <span class="ilabel" title="국민연금공단 '내 연금 알아보기'의 가입기간(년). 60세 전에 은퇴하고 중단을 고르면 60세까지 냈을 때보다 가입기간이 줄어 연금이 비례해 줄어듭니다. 비워 두면 감액하지 않습니다">가입기간</span>
-    <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npyears" value="" placeholder="조회" min="1" max="45" step="1" onblur="onBlurFix('npyears')" oninput="syncSlider('npyears');scheduleUpd()"><span class="unit-tag">년</span>
-      </div>
-  </div>
-  <input type="range" id="npyears-r" min="1" max="45" step="1" value="20"  oninput="syncInput('npyears');scheduleUpd()">
-</div><div class="irow np">
-  <div class="irow-top">
-    <span class="ilabel" title="공단 예상액은 만 60세까지 보험료를 계속 낸다고 가정합니다. 60세 전 은퇴 시 계속 내면(임의가입, 보험료는 2단계 설계 탭) 예상액 그대로, 중단하면 가입기간이 줄어 연금이 줄어듭니다">60세까지</span>
-    <div class="irow-ctrl">
-      <select class="ymon-select" id="npcont" onchange="scheduleUpd()" title="60세 전 은퇴 시 국민연금 납부">
-        <option value="cont" selected>계속 납부</option><option value="stop">중단</option>
-      </select>
-      </div>
-  </div>
-  <input type="range" disabled style="visibility:hidden" aria-hidden="true" tabindex="-1">
-</div>
-</div>
-</div>
-</div>
-
-<!-- 수익률·물가 설정: 카드 박스 좌측 하단 모서리(ISA 열 아래 빈 자리). 설정 창은 위로 뜨는 팝오버라 레이아웃 높이 불변 -->
 <div class="rates-anchor">
 <button type="button" class="tgl-banner" id="ratesToggleBtn" role="switch" aria-checked="false" data-target="ratesWrap" onclick="toggleBanner(this)">수익률·물가 설정<span class="sw"></span></button>
 <div id="ratesWrap" class="rates-pop" style="display:none;">
@@ -1760,6 +1714,61 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
       </div>
   </div>
   <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="acct-card c-np" style="--ac:#FF9500;--ac-ink:#C93400;">
+<div class="acct-head"><span class="name">국민연금</span></div>
+<div class="acct-body">
+<div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel" title="국민연금공단 홈페이지·앱의 '내 연금 알아보기'에서 조회한 65세 기준 예상 수령액(현재가치) — 실제로는 매년 물가만큼 오르며, 계산도 매년 물가상승률만큼 늘립니다">예상액(65세 기준)</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="npbase" value="170" min="50" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="npbase-r" min="50" max="300" step="5" value="170"  oninput="syncInput('npbase');scheduleUpd()">
+</div>
+<div class="fv-row">
+<div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel">수령 시작</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="npage" value="65" min="60" max="70" step="1" onblur="onBlurFix('npage')" oninput="syncSlider('npage');scheduleUpd()"><span class="unit-tag">세</span>
+      </div>
+  </div>
+  <input type="range" id="npage-r" min="60" max="70" step="1" value="65"  oninput="syncInput('npage');scheduleUpd()">
+</div><div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel" title="조기수령(65세 미만) 1년당 -6%, 연기수령(65세 초과) 1년당 +7.2% 자동 반영">실제 수령액</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="np" value="170" min="0" max="500" step="1" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만</span>
+      </div>
+  </div>
+  <input type="range" id="np-r" min="0" max="500" step="1" value="170"  oninput="syncInput('np');scheduleUpd()">
+</div>
+</div>
+<div class="fv-row">
+<div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel" title="국민연금공단 '내 연금 알아보기'의 가입기간(년). 60세 전에 은퇴하고 중단을 고르면 60세까지 냈을 때보다 가입기간이 줄어 연금이 비례해 줄어듭니다. 비워 두면 감액하지 않습니다">가입기간</span>
+    <div class="irow-ctrl">
+      <input class="ival-input" type="number" id="npyears" value="" placeholder="조회" min="1" max="45" step="1" onblur="onBlurFix('npyears')" oninput="syncSlider('npyears');scheduleUpd()"><span class="unit-tag">년</span>
+      </div>
+  </div>
+  <input type="range" id="npyears-r" min="1" max="45" step="1" value="20"  oninput="syncInput('npyears');scheduleUpd()">
+</div><div class="irow np">
+  <div class="irow-top">
+    <span class="ilabel" title="공단 예상액은 만 60세까지 보험료를 계속 낸다고 가정합니다. 60세 전 은퇴 시 계속 내면(임의가입, 보험료는 2단계 설계 탭) 예상액 그대로, 중단하면 가입기간이 줄어 연금이 줄어듭니다">60세까지</span>
+    <div class="irow-ctrl">
+      <select class="ymon-select" id="npcont" onchange="scheduleUpd()" title="60세 전 은퇴 시 국민연금 납부">
+        <option value="cont" selected>계속</option><option value="stop">중단</option>
+      </select>
+      </div>
+  </div>
+  <input type="range" disabled style="visibility:hidden" aria-hidden="true" tabindex="-1">
 </div>
 </div>
 </div>
@@ -2154,7 +2163,7 @@ function fillFromPortfolio(id){
     const g = snap && snap.gen;
     if(!g){ setStatus('⚠️ 포트폴리오에 일반계좌가 없어요'); return; }
     const pct = b => b.cost > 0 ? Math.round((b.ev / b.cost - 1) * 100) : 0;
-    sv('gen_ov', g.ov.ev); sv('gen_ovr', pct(g.ov)); sv('gen_etf', g.etf.ev); sv('gen_etfr', pct(g.etf)); sv('gen_kr', g.kr.ev);
+    sv('gen_ov', g.ov.ev); sv('gen_ovr', pct(g.ov)); sv('gen_etf', g.etf.ev); sv('gen_etfr', pct(g.etf)); sv('gen_kr', g.kr.ev); sv('gen_krr', pct(g.kr));
     upd();
     const tot = g.ov.ev + g.etf.ev + g.kr.ev;
     setStatus(`✅ 일반계좌 ${tot.toLocaleString()}만원 반영 · 수익률은 증권사 값으로 수정 가능`, `포트폴리오 일반계좌 ${tot.toLocaleString()}만원을 해외주식·해외ETF·국내로 나눠 채웠습니다. 수익률은 환율 변동을 포함한 원화 기준이니 증권사 값으로 고쳐도 됩니다.`);
@@ -2680,7 +2689,7 @@ const ALL_FIELDS = [
   'hi_vol','hi_volprem','np_volprem','npyears','npcont',
   'hp_age','hp_price','exp_s1_age','exp_s1_pct','exp_s2_age','exp_s2_pct',
   'lump1_age','lump1_amt','bequest',
-  'gen_ov','gen_ovr','gen_etf','gen_etfr','gen_kr','gen_harvest','rgen','rvol','genage','genpay','genpayend','mfpayend','plan_mode'
+  'gen_ov','gen_ovr','gen_etf','gen_etfr','gen_kr','gen_krr','gen_harvest','rgen','rvol','genage','genpay','genpayend','mfpayend','plan_mode'
 ];
 
 // 초기화 버튼이 location.reload()에만 의존하면, 일부 모바일 브라우저가 새로고침 시
@@ -2831,7 +2840,7 @@ function getP(){
     hi_vol:document.getElementById('hi_vol')?.value === 'yes' ? 'yes' : 'no', hi_volprem:gv('hi_volprem'),
     hp_age:gv('hp_age'), hp_price:gv('hp_price'), exp_s1_age:gv('exp_s1_age'), exp_s1_pct:gv('exp_s1_pct'), exp_s2_age:gv('exp_s2_age'), exp_s2_pct:gv('exp_s2_pct'),
     lump1_age:gv('lump1_age'), lump1_amt:gv('lump1_amt'), bequest:gv('bequest'),
-    gen_ov:gv('gen_ov'), gen_ovr:gv('gen_ovr'), gen_etf:gv('gen_etf'), gen_etfr:gv('gen_etfr'), gen_kr:gv('gen_kr'),
+    gen_ov:gv('gen_ov'), gen_ovr:gv('gen_ovr'), gen_etf:gv('gen_etf'), gen_etfr:gv('gen_etfr'), gen_kr:gv('gen_kr'), gen_krr:gv('gen_krr'),
     gen_harvest:document.getElementById('gen_harvest')?.value === 'yes' ? 'yes' : 'no', rgen:gv('rgen'), rvol:gv('rvol'), genage:gv('genage'), genpay:gv('genpay'), genpayend:gv('genpayend'), mfpayend:gv('mfpayend'), plan_mode:(['max','long','need'].includes(document.getElementById('plan_mode')?.value) ? document.getElementById('plan_mode').value : 'max'),
     np_volprem:gv('np_volprem'), npyears:gv('npyears'), npcont:document.getElementById('npcont')?.value === 'stop' ? 'stop' : 'cont',
     curYear:new Date().getFullYear(), // 미래 안세공 자동 합산(2027년~)의 연도 기준

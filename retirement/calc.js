@@ -639,7 +639,7 @@ function genInit(p){
     const rr = Number.isFinite(rtn) ? Math.max(-90, rtn) : 0;   // 수익률을 안 넣으면 0%(원가 = 평가액)
     return {bal: ev, cost: ev > 0 ? ev / (1 + rr / 100) : 0};
   };
-  return {ov: mk(p.gen_ov, p.gen_ovr), etf: mk(p.gen_etf, p.gen_etfr), kr: {bal: Math.max(0, p.gen_kr || 0), cost: Math.max(0, p.gen_kr || 0)}};
+  return {ov: mk(p.gen_ov, p.gen_ovr), etf: mk(p.gen_etf, p.gen_etfr), kr: mk(p.gen_kr, p.gen_krr)};   // 국내 수익률은 기록용 — kr은 비과세라 cost를 세금에 쓰지 않는다
 }
 const genSum = g => g.ov.bal + g.etf.bal + g.kr.bal;
 const genClone = g => ({ov: Object.assign({}, g.ov), etf: Object.assign({}, g.etf), kr: Object.assign({}, g.kr)});
