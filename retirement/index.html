@@ -185,7 +185,7 @@ h1{font-size:16px;font-weight:700;color:#1c1c1e;}
   font-family:inherit;opacity:0.85;}
 .pf-sync-btn:hover{opacity:1;}
 .pf-sync-btn:active{transform:scale(0.96);}
-#pfSyncStatus{font-size:11px;color:#636366;min-height:14px;padding:0 2px 4px;}
+#pfSyncStatus{font-size:11px;color:#636366;min-height:14px;padding:0 2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 /* 평소엔 비어 있는데(🔗 연동 시에만 문구) 18px을 차지해 자동설계 줄~계좌 카드 사이가 벌어졌음 */
 #pfSyncStatus:empty{display:none;}
 
@@ -735,6 +735,23 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
   html:not(.dense) .panel{padding-top:calc(6px + 3px*var(--sp,0));padding-bottom:calc(6px + 3px*var(--sp,0));}
   html:not(.dense) .panel.acct-panel{padding-top:calc(4px + 3px*var(--sp,0));}
 }
+/* ══ 입력 박스 통일 레이어 (맨 마지막 — 입력·선택·읽기전용 박스의 높이·폭은 여기 토큰만 쓴다) ══
+   높이 --ctl-h 하나(설계는 --sp, 소득·지출·건보료는 --ps로 연속 확대), 폭은 sm(나이·월·짝 칸)/md(금액 칸)/lg(선택 칸) 3단계.
+   같은 줄·같은 화면의 input/select/읽기전용은 항상 같은 높이라 위아래·좌우 행이 수평으로 맞는다(DESIGN_GUIDELINES 20절, fit-audit --boxes). */
+:root{--ctl-h:calc(20px + 4px*var(--sp,0));--ctl-w-sm:min(52px, calc(44px + 3px*var(--sp,0)));--ctl-w-md:min(76px, calc(64px + 4px*var(--sp,0)));--ctl-w-lg:148px;
+  --ctl-fs:min(14px, calc(12px + .8px*var(--sp,0)));--bi-w:var(--ctl-w-sm);--bi-h:var(--ctl-h);}
+html.dense{--ctl-h:18px;--ctl-w-sm:40px;--ctl-w-md:58px;--ctl-fs:11px;--bi-w:var(--ctl-w-sm);--bi-h:var(--ctl-h);}
+@media (max-width:420px){ :root{--ctl-h:24px;--ctl-w-sm:48px;--ctl-w-md:66px;--ctl-fs:12.5px;} }
+.fit-scale{--ctl-h:clamp(22px, calc(26px + 1.6px*var(--ps,0)), 40px);--ctl-w-sm:46px;--ctl-w-md:76px;--ctl-w-lg:148px;--ctl-fs:clamp(11.5px, calc(13px + .6px*var(--ps,0)), 15px);}
+.ival-input,.ymon-select,.hir-input{box-sizing:border-box;height:var(--ctl-h)!important;padding-top:0!important;padding-bottom:0!important;line-height:calc(var(--ctl-h) - 2px);font-size:var(--ctl-fs)!important;letter-spacing:0!important;}
+.acct-body .ival-input,.hir-input{width:var(--ctl-w-md)!important;}
+.acct-body .fv-row .ival-input,.acct-body .ymon-select,.hir-age{width:var(--ctl-w-sm)!important;}   /* 연납입 행: 금액 칸은 md(위 행과 같은 폭), 월 선택은 sm */
+.basic-row .ival-input{width:var(--ctl-w-sm)!important;}
+select.hir-input{width:var(--ctl-w-lg)!important;min-width:0!important;}
+.hir-input#hp_age,.hir-input#exp_s1_age,.hir-input#exp_s1_pct,.hir-input#exp_s2_age,.hir-input#exp_s2_pct,.hir-input#lump1_age,.hir-input#lump2_age,.hir-input#lump3_age{width:var(--ctl-w-sm)!important;}
+.acct-body .ymon-select,.acct-body .ival-input{text-align:right;}
+.acct-body .ymon-select{text-align-last:right;}
+
 /* 개인정보 숨기기(html.privacy-on, 포트폴리오 앱 토글을 따름): 설계 화면에 기입한 값과 슬라이더 손잡이를 가린다(입력·수정은 가능) */
 .privacy-on .ival-input,.privacy-on .hir-input,.privacy-on .ymon-select{color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 .privacy-on input[type=range]{visibility:hidden;}
@@ -2010,29 +2027,29 @@ function sv(id, v){
 const PF_SYNC_LABELS = {gen:ACCT_NAME.gen, nh:ACCT_NAME.nh, mf:ACCT_NAME.mf, irp:ACCT_NAME.irp, tirp:ACCT_NAME.tirp, isa:ACCT_NAME.isa};
 function fillFromPortfolio(id){
   const statusEl = document.getElementById('pfSyncStatus');
-  const setStatus = (msg) => { if(statusEl) statusEl.textContent = msg; };
+  const setStatus = (msg, full) => { if(statusEl){ statusEl.textContent = msg; statusEl.title = full || msg; } };   // 한 줄 표시(길면 말줄임), 전체 문장은 title
   if(!window.PortfolioBridge || typeof window.PortfolioBridge.getPortfolioSnapshot !== 'function'){
-    setStatus('⚠️ 포트폴리오 연동 모듈을 불러오지 못했습니다.');
+    setStatus('⚠️ 포트폴리오 값을 불러오지 못했어요');
     return;
   }
   // 버튼을 누르는 행위 자체가 "지금 값으로 덮어써라"라는 명시적 의사이므로 항상 덮어씀
   const rng = document.getElementById(id+'-r');
   let snap;
   try{ snap = window.PortfolioBridge.getPortfolioSnapshot(); }
-  catch(e){ setStatus('⚠️ 포트폴리오 데이터를 읽는 중 오류가 발생했습니다.'); return; }
+  catch(e){ setStatus('⚠️ 포트폴리오 값을 읽지 못했어요'); return; }
   if(id === 'gen'){
     const g = snap && snap.gen;
-    if(!g){ setStatus('⚠️ 포트폴리오에서 일반계좌 정보를 찾을 수 없습니다.'); return; }
+    if(!g){ setStatus('⚠️ 포트폴리오에 일반계좌가 없어요'); return; }
     const pct = b => b.cost > 0 ? Math.round((b.ev / b.cost - 1) * 100) : 0;
     sv('gen_ov', g.ov.ev); sv('gen_ovr', pct(g.ov)); sv('gen_etf', g.etf.ev); sv('gen_etfr', pct(g.etf)); sv('gen_kr', g.kr.ev);
     upd();
     const tot = g.ov.ev + g.etf.ev + g.kr.ev;
-    setStatus(`✅ 포트폴리오 일반계좌(${tot.toLocaleString()}만원)를 해외주식·해외ETF·국내/현금으로 나눠 채웠습니다. 수익률은 환율 변동을 포함한 원화 기준이니 증권사 값으로 고쳐도 됩니다.`);
+    setStatus(`✅ 일반계좌 ${tot.toLocaleString()}만원 반영 · 수익률은 증권사 값으로 수정 가능`, `포트폴리오 일반계좌 ${tot.toLocaleString()}만원을 해외주식·해외ETF·국내로 나눠 채웠습니다. 수익률은 환율 변동을 포함한 원화 기준이니 증권사 값으로 고쳐도 됩니다.`);
     return;
   }
   let v = snap ? snap[id] : undefined;
   if(typeof v !== 'number' || isNaN(v)){
-    setStatus('⚠️ 포트폴리오에서 해당 계좌 잔액을 찾을 수 없습니다.');
+    setStatus('⚠️ 포트폴리오에 해당 계좌 잔액이 없어요');
     return;
   }
   if(rng){
@@ -2041,11 +2058,14 @@ function fillFromPortfolio(id){
   }
   sv(id, v);
   upd();
-  let msg = `✅ 포트폴리오 값(${v.toLocaleString()}만원)으로 채웠습니다.`;
+  const nm = (PF_SYNC_LABELS[id] || '');
+  let msg = `✅ ${nm} ${v.toLocaleString()}만원으로 채웠어요`, full = `포트폴리오 값(${v.toLocaleString()}만원)으로 ${nm}를 채웠습니다.`;
   if((id==='nh'||id==='mf') && snap.unclassifiedPersonalPension>0){
-    msg += ` · ⚠️ 세부계좌 미지정 개인연금 ${snap.unclassifiedPersonalPension.toLocaleString()}만원은 반영되지 않았습니다 — 포트폴리오에서 개인연금의 금융회사(농협/미래에셋)를 지정해 주세요.`;
+    const u = snap.unclassifiedPersonalPension.toLocaleString();
+    msg += ` · ⚠️ 미지정 개인연금 ${u}만 미반영`;
+    full += ` 금융회사(농협/미래에셋)가 지정되지 않은 개인연금 ${u}만원은 반영되지 않았습니다 — 포트폴리오에서 지정해 주세요.`;
   }
-  setStatus(msg);
+  setStatus(msg, full);
 }
 
 // 인풋 포커스 해제 시 호출 - 범위 초과값 교정 후 대시보드 갱신
