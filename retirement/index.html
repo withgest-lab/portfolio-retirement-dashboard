@@ -801,6 +801,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 
 /* ══ 결과 탭 보기 4종(요약·근거·위기 점검·부족 대책) — 차트 자리를 꽉 채움: fitAltView가 --vs(0~8)를 정하면 글자·행·간격이 같이 커지고 남는 높이는 flex·표 행이 나눠 가진다 ══ */
 .chart-alt{--vs:0;flex-direction:column;}
+.chart-alt.alt-fit{overflow-y:hidden;}   /* 맞춤 성공 시 스크롤 잠금(맞춤 실패·접힘만 auto) */
 #scWrap,#needWrap{flex:1 1 auto;min-height:0;flex-direction:column;}
 #scWrap table,#needWrap table{flex:1 1 auto;}
 .chart-alt table{font-size:clamp(12px, calc(12px + .55px*var(--vs)), 15.5px);}
@@ -2623,26 +2624,29 @@ function renderPlanView(){
    --vs(0~8)로 글자·행 높이·간격을 한꺼번에 키워 "안 넘치는 가장 큰 값"을 이분 탐색하고, 남는 높이는 CSS(flex·표 행)가 균등 분배한다.
    0에서도 넘치면 요약만 pv1~pv3 압축 단계를 쓴다. 접힘(≤480px)은 스크롤 허용이라 대상 아님. 차트 자리 높이는 fitChartHeight가 정하므로 되먹임이 없다. */
 function fitAltView(){
-  document.querySelectorAll('.chart-alt').forEach(e=>e.style.setProperty('--vs','0'));
+  document.querySelectorAll('.chart-alt').forEach(e=>{ e.style.setProperty('--vs','0'); e.classList.remove('alt-fit'); });
   const pv = document.getElementById('planView');
   if(pv) pv.classList.remove('pv1','pv2','pv3');
   const el = ['planView','basisView','altView'].map(id=>document.getElementById(id)).find(e=>e && e.style.display !== 'none' && e.offsetParent !== null);
   if(!el || window.innerWidth <= 480 || el.clientHeight === 0) return;
-  const fits = () => el.scrollHeight <= el.clientHeight + 1;
+  // 1px라도 넘치면 .chart-alt(overflow-y:auto)가 실제로 스크롤된다 — 예전엔 +1px 허용이라 904×700 등에서 1px 스크롤이 남았다. 딱 맞으면 .alt-fit으로 스크롤을 잠근다.
+  const fits = () => el.scrollHeight <= el.clientHeight;
   const set = v => el.style.setProperty('--vs', v.toFixed(2));
+  const done = () => { if(fits()) el.classList.add('alt-fit'); };
   set(8);
-  if(fits()) return;
+  if(fits()) return done();
   set(0);
   if(!fits()){
     if(el === pv) for(const c of ['pv1','pv2','pv3']){
       if(fits()) break;
       pv.classList.add(c); pv.classList.remove(...['pv1','pv2','pv3'].filter(x=>x!==c));
     }
-    return;
+    return done();
   }
   let lo = 0, hi = 8;
   for(let i=0;i<8;i++){ const mid = (lo+hi)/2; set(mid); if(fits()) lo = mid; else hi = mid; }
   set(lo);
+  done();
 }
 // 보기 내용이 비동기로 다시 그려질 때(부족 대책 계산·위기 점검·자동설계 직후)도 다시 맞춘다
 (function(){
