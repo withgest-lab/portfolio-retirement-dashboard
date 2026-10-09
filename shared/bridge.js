@@ -58,6 +58,11 @@
     var assets = readPortfolioAssets();
     var fx = readFX();
     var sums = { nh: 0, mf: 0, unclassifiedPersonalPension: 0, irp: 0, tirp: 0, isa: 0 };
+    // 일반계좌는 세금이 다른 3칸으로 나눈다(평가액·원가, KRW):
+    //  ov  = 해외주식(통화 USD·JPY — 해외 상장 종목·ETF, 양도소득세 22%·연 250만 공제)
+    //  etf = 국내 상장 해외ETF(통화 KRW인데 투자시장이 한국이 아님 — 매매차익 15.4% 배당소득)
+    //  kr  = 국내주식·국내 ETF·현금(매매차익 비과세 근사)
+    var gen = { ov: { ev: 0, cost: 0 }, etf: { ev: 0, cost: 0 }, kr: { ev: 0, cost: 0 } };
 
     for (var i = 0; i < assets.length; i++) {
       var a = assets[i];
@@ -94,8 +99,18 @@
         case 'isa':
           sums.isa += krw;
           break;
+        case 'general':
+          var isCash = a.acctType === 'cash' || a.category === 'cash';
+          var rateG = a.currency === 'USD' ? fx.USD : a.currency === 'JPY' ? fx.JPY : 1;
+          var costG = isCash || typeof a.avgPrice !== 'number' ? krw : a.avgPrice * a.quantity * rateG;
+          var bucket = isCash ? gen.kr
+            : (a.currency === 'USD' || a.currency === 'JPY') ? gen.ov
+            : (a.market && a.market !== 'kr') ? gen.etf
+            : gen.kr;
+          bucket.ev += krw; bucket.cost += costG;
+          break;
         default:
-          break; // 일반계좌 종목·현금, 계좌유형이 없는 현금은 은퇴 계좌 잔액과 무관
+          break; // 계좌유형이 없는 현금은 은퇴 계좌 잔액과 무관
       }
     }
 
@@ -106,7 +121,12 @@
       unclassifiedPersonalPension: toManwon(sums.unclassifiedPersonalPension),
       irp: toManwon(sums.irp),
       tirp: toManwon(sums.tirp),
-      isa: toManwon(sums.isa)
+      isa: toManwon(sums.isa),
+      gen: {
+        ov: { ev: toManwon(gen.ov.ev), cost: toManwon(gen.ov.cost) },
+        etf: { ev: toManwon(gen.etf.ev), cost: toManwon(gen.etf.cost) },
+        kr: { ev: toManwon(gen.kr.ev), cost: toManwon(gen.kr.cost) }
+      }
     };
   }
 

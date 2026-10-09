@@ -662,7 +662,7 @@ test('일시 지출: 그 해 생활비에 월 환산으로 더해지고 농협�
   assert.equal(x70.lumpM, Math.round(nominal / 12));
   assert.ok(x70.curExp > x69.curExp * 1.4, '일시 지출 해 생활비');
   const extraNh = r.rows.find(x => x.age === 70).gross.nh - plain.rows.find(x => x.age === 70).gross.nh;
-  near(extraNh, nominal, nominal * 0.06, '그 해 농협 인출이 일시 지출만큼 늘어남');
+  assert.ok(extraNh >= nominal - 1 && extraNh <= nominal * 1.4, '그 해 농협 인출은 일시 지출 + 세금 보충분');
   assert.equal(r.runway, p.life);
   assert.equal(lumpsAt(p, 70, 2), 6000); assert.equal(lumpsAt(p, 69, 2), 0);
 });
@@ -674,4 +674,45 @@ test('남길 금액: 자동설계가 기대수명 시점에 그만큼(명목 환
   near(r.leftover, target, target * 0.1, '남는 돈');
   assert.equal(r.runway, p.life);
   assert.ok(simulate(withPlan(BASE)).leftover < r.leftover / 10, '입력 전엔 거의 남기지 않음');
+});
+
+
+/* ── 2026-10-09 Opus 검토 반영(단계 ③): 일시 지출 세금 보충·미달 판정·spill·단계 순서·주택연금 요건 ── */
+test('일시 지출: 그 해 세후가 (일시 지출 + 기본 생활비 수준)을 채운다(세금 보충) — 90세 마지막 해 포함', () => {
+  for(const age of [62, 75, 90]){
+    const p = withPlan(Object.assign({}, BASE, {exp: 250, lump1_age: age, lump1_amt: 3000}));
+    const r = simulate(p), x = r.rows.find(v => v.age === age), y = r.rows.find(v => v.age === age - 1) || x;
+    assert.ok(x.netInc >= x.curExp - 2, `${age}세 세후 ${x.netInc} < 생활비 ${x.curExp}`);
+  }
+});
+
+test('minNetEq: 일시 지출 해의 생활비 미달이 최저 세후에 잡힌다(일시 지출이 최저치를 가리지 않음)', () => {
+  const p = withPlan(Object.assign({}, BASE, {exp: 250, lump1_age: 57, lump1_amt: 3000}));
+  const r = simulate(p);
+  const x = r.rows.find(v => v.age === 57);
+  near(x.realEq, Math.max(0, x.netInc - x.lumpM) / x.infMul, 0.6 / x.infMul, 'lumpM은 표시용 반올림');
+  assert.ok(r.minNetEq <= x.realEq + 1e-9);
+  // 일시 지출만 있고 인출 계획은 같은 입력으로 비교: 일시 지출을 빼면 realEq = realNet
+  const plain = simulate(withPlan(BASE));
+  assert.equal(plain.minNetEq, plain.minNetReal);
+});
+
+test('일시 지출·남길 금액이 농협 잔액보다 크면 미래에셋·ISA에서 채우고, 그래도 모자란 몫은 reserveUnmet에 기록한다', () => {
+  const big = withPlan(Object.assign({}, BASE, {exp: 250, lump1_age: 70, lump1_amt: 30000}));
+  const r = simulate(big);
+  const x70 = r.rows.find(v => v.age === 70);
+  assert.ok(x70.gross.mf > 0 || x70.gross.isa > 0 || x70.gross.nh > 0);
+  const un = computeAutoPlan(Object.assign({}, BASE, {bequest: 600000})).info.reserveUnmet;
+  assert.ok(un > 0, '60억원 남기기는 못 채움');
+  assert.equal(computeAutoPlan(Object.assign({}, BASE, {bequest: 5000})).info.reserveUnmet, 0);
+});
+
+test('생활비 단계 순서: 입력 순서와 무관하게 그 나이 이하 중 가장 늦은 단계', () => {
+  const q = {exp_s1_age: 85, exp_s1_pct: 70, exp_s2_age: 75, exp_s2_pct: 80};
+  assert.equal(expPct(q, 74), 1); assert.equal(expPct(q, 75), 0.8); assert.equal(expPct(q, 84), 0.8); assert.equal(expPct(q, 90), 0.7);
+});
+
+test('주택연금: 공시가격 12억 초과는 가입 불가', () => {
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga: 150000}), 0);
+  assert.ok(housingPensionOf({hp_age: 70, gongsiga: 120000}) > 0);
 });

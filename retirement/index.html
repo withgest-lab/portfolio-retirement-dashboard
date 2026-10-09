@@ -844,7 +844,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
       <span class="hir-label">일시 지출 1</span>
       <input class="hir-input hir-age" type="number" id="lump1_age" value="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
       <input class="hir-input" type="number" id="lump1_amt" value="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-      <span class="hir-hint" title="은퇴 후 그 해에 한 번 쓰는 돈(자녀 결혼·차·집수리 등, 오늘 가치) · 개인연금 농협에서 그 해 추가 인출">그 해 한 번(오늘 가치) · 농협에서 인출</span>
+      <span class="hir-hint" id="lumpHint" title="은퇴 후 그 해에 한 번 쓰는 돈(자녀 결혼·차·집수리 등, 오늘 가치) · 세금을 보태 개인연금 농협 → 미래에셋 → ISA 순으로 인출">그 해 한 번(오늘 가치) · 농협에서 인출</span>
     </div>
     <div class="health-input-row">
       <span class="hir-label">일시 지출 2</span>
@@ -2173,6 +2173,7 @@ function planBannerHtml(p, plan, res){
   if(!rwOk)     tips.push({warn:1, t:`${res.runway}세 자산 소진 예상 · 월 수령액을 줄여야 해요`});
   if(over)      tips.push({warn:1, t:`${over}세부터 사적연금 과세분이 저율과세 기준을 넘어 세율이 올라갑니다(세후에 반영)`});
   if(res.overLimitYears > 0) tips.push({warn:1, t:`연금수령한도 초과 ${res.overLimitYears}년(${res.firstOverLimitAge}세~) · 초과분은 16.5% 과세돼요`});
+  if(plan.info.reserveUnmet > 0) tips.push({warn:1, t:`남길 금액·일시 지출 중 약 ${plan.info.reserveUnmet.toLocaleString()}만(오늘 가치)은 연금저축 잔액이 모자라 못 채워요`});
   tips.push(p.hi_dep !== 'yes'
     ? {warn:0, t:`건보료(지역가입자) ${hiTxt(p, s)} · 세후에 반영`}
     : dep.check.fail
@@ -3096,6 +3097,14 @@ function upd(){
     if(f) f.placeholder = String(p.ret);
     if(t) t.placeholder = String(p.life);
   });
+
+  // 일시 지출 나이가 은퇴 전이면 계산에 안 들어간다고 알림
+  (function(){
+    const h = document.getElementById('lumpHint'); if(!h) return;
+    const early = [1,2,3].some(i => p['lump'+i+'_amt'] > 0 && p['lump'+i+'_age'] > 0 && p['lump'+i+'_age'] < p.ret);
+    h.textContent = early ? '은퇴('+p.ret+'세) 후 나이만 계산에 반영돼요' : '그 해 한 번(오늘 가치) · 농협에서 인출';
+    h.style.color = early ? '#c93400' : '';
+  })();
 
   // 주택연금 월 수령액 안내(입력이 바뀔 때마다)
   (function(){
