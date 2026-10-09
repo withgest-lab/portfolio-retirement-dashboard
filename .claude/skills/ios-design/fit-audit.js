@@ -130,7 +130,7 @@ const seedSnaps = () => {
 const seedAll = () => ({ pf_assets_v1: seedAssets(), pf_tradelog_v1: seedTradeLog(), pf_snaps_v5: seedSnaps() });
 
 const SCREENS = {
-  retirement: { base: 'retirement/', tabs: ['design', 'income', 'result', 'health', 'tax'], go: (page, t) => page.evaluate(x => setMainTab(x), t), long: t => t === 'tax' },
+  retirement: { base: 'retirement/', tabs: ['design', 'step2', 'result', 'tax'], go: (page, t) => page.evaluate(x => setMainTab(x), t), long: t => t === 'tax' },
   portfolio: { base: 'portfolio/', seed: true },
   home: { base: '' },
   signals: { base: 'signals/', long: () => true },

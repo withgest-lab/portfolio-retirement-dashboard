@@ -590,11 +590,14 @@ body.fit-noscroll{overflow-y:hidden;}
 .fit-scale .health-calc-table{font-size:clamp(10.5px, calc(11px + .5px*var(--ps,0)), 13.5px);}
 .fit-scale .health-calc-table td{padding:clamp(2px, calc(3px + 1px*var(--ps,0)), 9px) 4px;}
 .fit-scale .unit-tag{width:auto;min-width:0;white-space:nowrap;}   /* 칸 옆 단위(세 가입·만원 시세 등)가 힌트와 겹치지 않게 글자 폭만큼 */
+/* 왼쪽 4카드의 두 번째 입력 열을 한 선으로: 첫 칸(금액 md 또는 나이 sm) + 단위 폭을 맞춰 두 번째 입력이 모두 같은 x에서 시작한다 */
+#step2Panel .health-input-row > .hir-age + .unit-tag{min-width:56px;}
+#step2Panel .sec-card:not(.hp-in):not(.hp-out) .health-input-row > .hir-input:not(.hir-age) + .unit-tag{min-width:26px;}
+#step2Panel .hir-range{margin-left:0;}
 .health-badge-ok{background:rgba(52,199,89,.14);color:#248a3d;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;display:inline-block;}
 .health-badge-warn{background:rgba(255,149,0,.14);color:#c93400;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;display:inline-block;}
 .health-detail{font-size:11px;color:#1c1c1e;line-height:1.8;margin-top:6px;background:rgba(118,118,128,.08);border-radius:10px;padding:8px 10px;}
 .health-detail b{color:#1c1c1e;}
-.health-calc-btn.calc-done{background:rgba(52,199,89,.16);color:#248a3d;transition:background .15s;}
 .health-detail.flash{animation:healthFlash 1s ease;}
 @keyframes healthFlash{0%{background:rgba(52,199,89,.2);}100%{background:rgba(118,118,128,.08);}}
 .health-calc-table{width:100%;border-collapse:collapse;font-size:11px;table-layout:auto;}
@@ -740,14 +743,13 @@ select.hir-input{width:var(--ctl-w-lg)!important;min-width:0!important;}
 
 /* ══ 소득·지출 / 건보료 패널: 섹션 카드가 패널 높이를 채우고, 행은 남는 높이를 균등 분배(fitPanel이 패널 높이를 화면 끝에 맞춤) ══ */
 .inline-panel.fit-scale.show{display:flex;flex-direction:column;}
-.inc-grid,.hp-flow{display:flex;flex-direction:column;gap:var(--gap);flex:1 1 auto;min-height:0;}
+.inc-grid{display:flex;flex-direction:column;gap:var(--gap);flex:1 1 auto;min-height:0;}
 .inc-col{display:flex;flex-direction:column;gap:var(--gap);flex:1 1 0;min-width:0;}
 .sec-card{display:flex;flex-direction:column;background:rgba(118,118,128,.06);border-radius:12px;padding:max(6px, calc(8px + 1.5px*var(--ps,0))) 12px max(4px, calc(6px + 1px*var(--ps,0)));min-width:0;}
 .inc-col .sec-card{flex:var(--rows,1) 1 auto;}   /* 기본 높이 + 남는 높이를 행 수 비율로 → 카드가 달라도 행 간격(피치)이 같다 */
 .sec-h{display:flex;align-items:center;gap:6px;font-size:clamp(11px, calc(11.5px + .5px*var(--ps,0)), 14px);font-weight:700;color:#1c1c1e;padding-bottom:max(2px, calc(2px + .8px*var(--ps,0)));border-bottom:.5px solid rgba(60,60,67,.14);}
 .sec-sub{margin-left:auto;font-weight:500;font-size:.88em;color:#636366;}
 .sec-sub b{color:#1c1c1e;}
-.step-n{display:inline-flex;align-items:center;justify-content:center;width:1.5em;height:1.5em;border-radius:50%;background:#007aff;color:#fff;font-size:.82em;font-weight:700;}
 .sec-rows{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
 .sec-rows .health-input-row{flex:1 1 0;align-items:center;flex-wrap:wrap;column-gap:6px;row-gap:2px;}
 .sec-rows .health-input-row:last-child{border-bottom:0;}
@@ -764,10 +766,8 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .ibtn{display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:#8e8e93;font:inherit;font-size:1em;font-weight:500;line-height:1;padding:0 2px;cursor:pointer;border-radius:50%;}
 .ibtn:hover,.ibtn.on{color:#007aff;}
 .ipop{position:fixed;z-index:300;max-width:min(300px, calc(100vw - 24px));background:rgba(28,28,30,.94);color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:9px 12px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);}
-/* 건보료: ① 기입 → ② 계산 → ③ 결과 */
-.hp-mid{display:flex;align-items:center;justify-content:center;}
-.health-calc-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:clamp(54px, calc(58px + 3px*var(--ps,0)), 84px);aspect-ratio:1;padding:0!important;margin:0!important;border-radius:50%;font-size:clamp(11px, calc(11.5px + .4px*var(--ps,0)), 14px);}
-.hc-arrow{font-size:1.3em;line-height:1;}
+/* 2단계 설계 오른쪽: 기입 + 자동 설계 / 결과 */
+.s2-auto{width:auto!important;margin:0 0 0 auto!important;padding:3px 10px!important;border-radius:999px;font-size:clamp(11px, calc(11.5px + .4px*var(--ps,0)), 13.5px);flex-shrink:0;white-space:nowrap;}
 .hp-out{min-width:0;}
 .hp-out .hp-hero{display:flex;gap:8px;margin-top:max(4px, calc(6px + 1.5px*var(--ps,0)));}
 .hero-tile{flex:1 1 0;min-width:0;background:#fff;border:.5px solid rgba(60,60,67,.12);border-radius:10px;padding:max(4px, calc(6px + 1.5px*var(--ps,0))) 10px;}
@@ -790,13 +790,9 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .req-st.ok{background:rgba(52,199,89,.14);color:#248a3d;}
 @media (min-width:700px){
   .inc-grid{flex-direction:row;}
-  .hp-flow{display:grid;grid-template-columns:minmax(0,1.3fr) clamp(68px, calc(64px + 5px*var(--ps,0)), 104px) minmax(0,1fr);align-items:stretch;gap:0;}
 }
 @media (max-width:699px){
   .inc-col .sec-card{flex:none;}
-  .hp-mid{padding:2px 0;}
-  .health-calc-btn{width:100%;aspect-ratio:auto;flex-direction:row;border-radius:12px;padding:9px!important;}
-  .hc-arrow{transform:rotate(90deg);}
 }
 
 /* ══ 결과 탭 보기 4종(요약·근거·위기 점검·부족 대책) — 차트 자리를 꽉 채움: fitAltView가 --vs(0~8)를 정하면 글자·행·간격이 같이 커지고 남는 높이는 flex·표 행이 나눠 가진다 ══ */
@@ -903,10 +899,9 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 
 <!-- 최상위 탭: 설계(입력) / 시뮬레이션 결과(차트) -->
 <div class="main-tabs">
-  <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')"><span class="t-e">📝 </span>설계</button>
-  <button class="tab-btn" id="mtb-income" onclick="setMainTab('income')"><span class="t-e">💸 </span>소득·지출</button>
+  <button class="tab-btn on" id="mtb-design" onclick="setMainTab('design')"><span class="t-e">📝 </span>1단계<span class="t-x"> 설계</span></button>
+  <button class="tab-btn" id="mtb-step2" onclick="setMainTab('step2')"><span class="t-e">💸 </span>2단계<span class="t-x"> 설계</span></button>
   <button class="tab-btn" id="mtb-result" onclick="setMainTab('result')"><span class="t-e">📊 </span>시뮬레이션<span class="t-x"> 결과</span></button>
-  <button class="tab-btn" id="mtb-health" onclick="setMainTab('health')"><span class="t-e">🏥 </span>건보료<span class="t-x"> 설계</span></button>
   <button class="tab-btn" id="mtb-tax" onclick="setMainTab('tax')"><span class="t-e">📖 </span>세금<span class="t-x"> 상식</span></button>
 </div>
 
@@ -961,8 +956,8 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
   <div class="note" style="margin-top:2px;">※ 소득세법·국민건강보험법 시행령·보건복지부 고시·국민연금공단의 공개 기준(2026년)을 정리한 참고용 자료입니다. 실제 세액·보험료는 개인 상황에 따라 다릅니다.</div>
 </div>
 
-<!-- 소득·지출 인라인 패널 (탭 전환, 모달 아님) — 은퇴 후에도 받는 소득. 금액은 오늘 돈 가치·세전. 카드 4장을 두 열로 균등 배치(행 간격이 남는 높이를 나눠 가짐) -->
-<div class="inline-panel fit-scale" id="incomePanel">
+<!-- 2단계 설계 인라인 패널 — 왼쪽: 은퇴 후 소득·생활비 변화·주택·일시 지출(오늘 돈 가치·세전) / 오른쪽: 건보료 기입 + 결과(실시간) + 자동 설계 -->
+<div class="inline-panel fit-scale" id="step2Panel">
   <div class="inc-grid">
   <div class="inc-col">
     <div class="sec-card" style="--rows:6">
@@ -1012,15 +1007,16 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
         </div>
       </div>
     </div>
-  </div>
-  <div class="inc-col">
-    <div class="sec-card" style="--rows:4">
-      <div class="sec-h">집 <button type="button" class="ibtn" data-tip="공시가격은 공시가격 알리미(realtyprice.kr)에서 확인하세요(5억이면 50000). 합계로 건보료 재산 과표를 계산하고, 2채 이상이면 다주택(60%)으로 자동 바뀝니다. 주택연금은 집1 기준·합산 12억 이하일 때 가입할 수 있어요.">ⓘ</button><span class="sec-sub" id="hpRes"></span></div>
+    <div class="sec-card" style="--rows:5">
+      <div class="sec-h">주택 <button type="button" class="ibtn" data-tip="공시가격은 공시가격 알리미(realtyprice.kr)에서 확인하세요(5억이면 50000). 합계로 건보료 재산 과표를 계산하고, 2채 이상이면 다주택(60%)으로 자동 바뀝니다. 주택연금은 주택1 기준·합산 12억 이하일 때 가입할 수 있어요.">ⓘ</button><span class="sec-sub" id="hpRes"></span></div>
       <div class="sec-rows">
         <div class="health-input-row">
-          <span class="hir-label">공시가격</span>
-          <span class="unit-tag">집1</span><input class="hir-input" type="number" id="gongsiga1" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()">
-          <span class="unit-tag">집2</span><input class="hir-input" type="number" id="gongsiga2" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()"><span class="unit-tag">만원</span>
+          <span class="hir-label" title="주택1 공시가격">주택1 공시</span>
+          <input class="hir-input" type="number" id="gongsiga1" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()"><span class="unit-tag">만원</span>
+        </div>
+        <div class="health-input-row">
+          <span class="hir-label" title="주택2 공시가격">주택2 공시</span>
+          <input class="hir-input" type="number" id="gongsiga2" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()"><span class="unit-tag">만원</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">합계·유형</span>
@@ -1041,23 +1037,13 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
         </div>
       </div>
     </div>
-    <div class="sec-card" style="--rows:4">
-      <div class="sec-h">일시 지출·남길 금액 <button type="button" class="ibtn" data-tip="일시 지출은 은퇴 후 그 해에 한 번 쓰는 돈(자녀 결혼·차·집수리 등, 오늘 가치)이고, 세금을 보태 개인연금 농협 → 미래에셋 → ISA 순으로 인출해요. 남길 금액은 기대수명 시점에 남길 돈(비상금·상속)으로, 자동설계가 먼저 남기고 나머지로 평탄화합니다.">ⓘ</button><span class="sec-sub" id="lumpWarn"></span></div>
+    <div class="sec-card" style="--rows:2">
+      <div class="sec-h">일시 지출·남길 금액 <button type="button" class="ibtn" data-tip="일시 지출은 은퇴 후 그 해에 한 번 쓰는 돈(자녀 결혼·차·집수리 등, 오늘 가치)이고, 세금을 보태 개인연금 농협 → 미래에셋 → ISA 순으로 인출해요. 남길 금액은 기대수명 시점에 남길 돈(비상금·상속)으로, 자동 설계가 먼저 남기고 나머지로 평탄화합니다.">ⓘ</button><span class="sec-sub" id="lumpWarn"></span></div>
       <div class="sec-rows">
         <div class="health-input-row">
-          <span class="hir-label">일시 지출 1</span>
+          <span class="hir-label">일시 지출</span>
           <input class="hir-input hir-age" type="number" id="lump1_age" value="" placeholder="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
           <input class="hir-input" type="number" id="lump1_amt" value="" placeholder="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-        </div>
-        <div class="health-input-row">
-          <span class="hir-label">일시 지출 2</span>
-          <input class="hir-input hir-age" type="number" id="lump2_age" value="" placeholder="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
-          <input class="hir-input" type="number" id="lump2_amt" value="" placeholder="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-        </div>
-        <div class="health-input-row">
-          <span class="hir-label">일시 지출 3</span>
-          <input class="hir-input hir-age" type="number" id="lump3_age" value="" placeholder="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
-          <input class="hir-input" type="number" id="lump3_amt" value="" placeholder="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">남길 금액</span>
@@ -1066,54 +1052,39 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
       </div>
     </div>
   </div>
-  </div>
-</div>
-
-<!-- 건보료 설계 인라인 패널 — ① 기입 → ② 계산 → ③ 결과 -->
-<div class="inline-panel fit-scale" id="healthPanel">
-  <div class="hp-flow">
-  <div class="sec-card hp-in">
-    <div class="sec-h"><span class="step-n">1</span>기입 <button type="button" class="ibtn" data-tip="피부양자가 될 수 없으면 은퇴 후 지역가입자로 바뀌어 소득+재산에 보험료가 붙어요. 은퇴한 해부터 매년 세후 현금흐름에서 뺍니다(2026년 요율, 오늘 돈 가치). 사적연금·ISA 인출은 부과 대상이 아니에요. 소득과 집은 소득·지출 탭 값을 그대로 씁니다.">ⓘ</button><a class="req-link sec-sub" href="#" onclick="gotoIncome();return false;">소득·지출 입력 ›</a></div>
-    <div class="sec-rows">
-      <div class="health-input-row">
-        <span class="hir-label">피부양자 가족</span>
-        <select class="hir-input" id="hi_dep" onchange="scheduleUpd()">
-          <option value="no">없음 (지역가입자)</option>
-          <option value="yes">있음 (직장가입자 가족)</option>
-        </select>
-      </div>
-      <div class="health-input-row">
-        <span class="hir-label">집</span>
-        <span class="req-val" id="reqHouse">-</span>
-      </div>
-      <div class="health-input-row">
-        <span class="hir-label">소득</span>
-        <span class="req-val" id="reqIncome">-</span>
-      </div>
-      <div class="health-input-row">
-        <span class="hir-label">국민연금</span>
-        <input class="hir-input gen-auto" type="text" id="hi_np_display" value="0" disabled><span class="unit-tag">만/월</span>
-        <span class="req-st ok">자동</span>
-      </div>
-      <div class="health-input-row">
-        <span class="hir-label">임의계속가입 <button type="button" class="ibtn" data-tip="퇴직 후 직장 건보료를 최대 36개월 유지하는 제도예요. 급여명세서의 본인 부담분(건강+장기요양)을 월 보험료에 넣으세요. 재산은 반영되지 않고, 36개월 동안 더 낮은 쪽이 적용됩니다.">ⓘ</button></span>
-        <select class="hir-input" id="hi_vol" onchange="scheduleUpd()">
-          <option value="no">신청 안 함</option>
-          <option value="yes">신청 (36개월)</option>
-        </select>
-        <input class="hir-input" type="number" id="hi_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
+  <div class="inc-col s2-right">
+    <div class="sec-card hp-in" style="--rows:3">
+      <div class="sec-h">기입 <button type="button" class="ibtn" data-tip="피부양자가 될 수 없으면 은퇴 후 지역가입자로 바뀌어 소득+재산에 보험료가 붙어요. 은퇴한 해부터 매년 세후 현금흐름에서 뺍니다(2026년 요율, 오늘 돈 가치). 사적연금·ISA 인출은 부과 대상이 아니에요. 소득과 주택은 왼쪽 값, 국민연금은 1단계 값을 그대로 씁니다.">ⓘ</button><button type="button" class="suggest-btn s2-auto" onclick="autoSuggest()" title="세후 소득 평탄화"><span>🎯 자동 설계</span></button></div>
+      <div class="sec-rows">
+        <div class="health-input-row">
+          <span class="hir-label">피부양자 가족</span>
+          <select class="hir-input" id="hi_dep" onchange="scheduleUpd()">
+            <option value="no">없음 (지역가입자)</option>
+            <option value="yes">있음 (직장가입자 가족)</option>
+          </select>
+        </div>
+        <div class="health-input-row">
+          <span class="hir-label">국민연금</span>
+          <input class="hir-input gen-auto" type="text" id="hi_np_display" value="0" disabled><span class="unit-tag">만/월</span>
+          <span class="req-st ok">자동</span>
+        </div>
+        <div class="health-input-row">
+          <span class="hir-label">임의계속가입 <button type="button" class="ibtn" data-tip="퇴직 후 직장 건보료를 최대 36개월 유지하는 제도예요. 급여명세서의 본인 부담분(건강+장기요양)을 월 보험료에 넣으세요. 재산은 반영되지 않고, 36개월 동안 더 낮은 쪽이 적용됩니다.">ⓘ</button></span>
+          <select class="hir-input" id="hi_vol" onchange="scheduleUpd()">
+            <option value="no">신청 안 함</option>
+            <option value="yes">신청 (36개월)</option>
+          </select>
+          <input class="hir-input" type="number" id="hi_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="hp-mid">
-    <button type="button" class="suggest-btn health-calc-btn" id="healthCalcBtn" onclick="calcHealthPremiumClick(this)"><span class="hc-arrow">▶</span><span>계산</span></button>
-  </div>
-  <div class="sec-card hp-out">
-    <div class="sec-h"><span class="step-n">3</span>결과 <button type="button" class="ibtn" data-tip="국민연금 수령 후 기준·오늘 돈 가치입니다. 요율은 2026년 기준 추정이며 실제 고지서와 다를 수 있어요. 임의계속가입(최대 36개월)은 첫 고지서 납부기한 2개월 이내에 신청해야 합니다.">ⓘ</button><span class="sec-sub">재산 과표 <b id="hrefRe" data-amt>-</b>만원</span></div>
-    <div class="hp-hero" id="healthHero"></div>
-    <div id="healthStatusBadge"></div>
-    <div id="healthStrip"></div>
-    <div class="health-detail" id="healthDetail"></div>
+    <div class="sec-card hp-out" style="--rows:6">
+      <div class="sec-h">결과 <button type="button" class="ibtn" data-tip="국민연금 수령 후 기준·오늘 돈 가치입니다. 요율은 2026년 기준 추정이며 실제 고지서와 다를 수 있어요. 임의계속가입(최대 36개월)은 첫 고지서 납부기한 2개월 이내에 신청해야 합니다.">ⓘ</button><span class="sec-sub">재산 과표 <b id="hrefRe" data-amt>-</b>만원</span></div>
+      <div class="hp-hero" id="healthHero"></div>
+      <div id="healthStatusBadge"></div>
+      <div id="healthStrip"></div>
+      <div class="health-detail" id="healthDetail"></div>
+    </div>
   </div>
   </div>
 </div>
@@ -1168,10 +1139,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
   <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1450"  oninput="syncInput('plimit');scheduleUpd()">
 </div>
 <div class="basic-row-action">
-<button class="suggest-btn" onclick="autoSuggest()">
-  <span style="font-size:11.5px;">🎯 자동설계</span>
-  <span style="font-size:8px;font-weight:600;opacity:.9;">세후 소득 평탄화</span>
-</button>
+<button class="suggest-btn" onclick="setMainTab('step2')"><span style="font-size:11.5px;">2단계 설계로 가기 ›</span></button>
 </div>
 </div>
 </div>
@@ -1677,7 +1645,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
   <input type="range" id="npyears-r" min="1" max="45" step="1" value="20"  oninput="syncInput('npyears');scheduleUpd()">
 </div><div class="irow np">
   <div class="irow-top">
-    <span class="ilabel" title="공단 예상액은 만 60세까지 보험료를 계속 낸다고 가정합니다. 60세 전 은퇴 시 계속 내면(임의가입, 보험료는 소득·지출 탭) 예상액 그대로, 중단하면 가입기간이 줄어 연금이 줄어듭니다">60세까지</span>
+    <span class="ilabel" title="공단 예상액은 만 60세까지 보험료를 계속 낸다고 가정합니다. 60세 전 은퇴 시 계속 내면(임의가입, 보험료는 2단계 설계 탭) 예상액 그대로, 중단하면 가입기간이 줄어 연금이 줄어듭니다">60세까지</span>
     <div class="irow-ctrl">
       <select class="ymon-select" id="npcont" onchange="scheduleUpd()" title="60세 전 은퇴 시 국민연금 납부">
         <option value="cont" selected>계속 납부</option><option value="stop">중단</option>
@@ -1823,12 +1791,12 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
         </div>
         <!-- 자동설계 요약: 마지막 자동설계 결과(팝업과 같은 내용)를 차트 자리에 겹쳐 표시 -->
         <div class="chart-alt plan-view" id="planView" style="display:none;">
-          <div class="basis-empty" id="planEmpty">설계 탭에서 <b>자동설계</b>를 실행하면 결과 요약이 여기에 표시됩니다.</div>
+          <div class="basis-empty" id="planEmpty">2단계 설계 탭에서 <b>자동 설계</b>를 실행하면 결과 요약이 여기에 표시됩니다.</div>
           <div id="planBody"></div>
         </div>
         <!-- 자동설계 근거: 차트 자리에 같은 크기로 겹쳐 표시(레이아웃 높이 불변), 스위치로 여닫음 -->
         <div class="chart-alt basis-view" id="basisView" style="display:none;">
-          <div class="basis-empty" id="basisEmpty">설계 탭에서 <b>자동설계</b>를 실행하면 계좌별 인출 순서·금액의 근거가 여기에 표시됩니다.</div>
+          <div class="basis-empty" id="basisEmpty">2단계 설계 탭에서 <b>자동 설계</b>를 실행하면 계좌별 인출 순서·금액의 근거가 여기에 표시됩니다.</div>
           <div class="suggest-result" id="suggest-box"></div>
         </div>
       </div>
@@ -2417,6 +2385,7 @@ function confirmPlan(){
   closePlanPick();
   sv('plan_mode', _pkSel);
   applyPlan(o.plan);
+  chartTab = 'flow'; _altView = null; setMainTab('result'); applyViewState();   // 확정하면 결과 탭의 "연 현금흐름"으로 이동
   toast('✓ 인출 플랜을 설정했어요 · ' + PLAN_MODES[_pkSel].name);
 }
 function toast(msg){
@@ -2672,7 +2641,7 @@ const ALL_FIELDS = [
   'hi_labor_from','hi_labor_to','hi_business_from','hi_business_to','hi_other_from','hi_other_to',
   'hi_vol','hi_volprem','np_volprem','npyears','npcont',
   'hp_age','hp_price','exp_s1_age','exp_s1_pct','exp_s2_age','exp_s2_pct',
-  'lump1_age','lump1_amt','lump2_age','lump2_amt','lump3_age','lump3_amt','bequest',
+  'lump1_age','lump1_amt','bequest',
   'gen_ov','gen_ovr','gen_etf','gen_etfr','gen_kr','gen_harvest','rgen','rvol','genage','genpay','genpayend','mfpayend','plan_mode'
 ];
 
@@ -2823,7 +2792,7 @@ function getP(){
     hi_other_from:gv('hi_other_from'),hi_other_to:gv('hi_other_to'),
     hi_vol:document.getElementById('hi_vol')?.value === 'yes' ? 'yes' : 'no', hi_volprem:gv('hi_volprem'),
     hp_age:gv('hp_age'), hp_price:gv('hp_price'), exp_s1_age:gv('exp_s1_age'), exp_s1_pct:gv('exp_s1_pct'), exp_s2_age:gv('exp_s2_age'), exp_s2_pct:gv('exp_s2_pct'),
-    lump1_age:gv('lump1_age'), lump1_amt:gv('lump1_amt'), lump2_age:gv('lump2_age'), lump2_amt:gv('lump2_amt'), lump3_age:gv('lump3_age'), lump3_amt:gv('lump3_amt'), bequest:gv('bequest'),
+    lump1_age:gv('lump1_age'), lump1_amt:gv('lump1_amt'), bequest:gv('bequest'),
     gen_ov:gv('gen_ov'), gen_ovr:gv('gen_ovr'), gen_etf:gv('gen_etf'), gen_etfr:gv('gen_etfr'), gen_kr:gv('gen_kr'),
     gen_harvest:document.getElementById('gen_harvest')?.value === 'yes' ? 'yes' : 'no', rgen:gv('rgen'), rvol:gv('rvol'), genage:gv('genage'), genpay:gv('genpay'), genpayend:gv('genpayend'), mfpayend:gv('mfpayend'), plan_mode:(['max','long','need'].includes(document.getElementById('plan_mode')?.value) ? document.getElementById('plan_mode').value : 'max'),
     np_volprem:gv('np_volprem'), npyears:gv('npyears'), npcont:document.getElementById('npcont')?.value === 'stop' ? 'stop' : 'cont',
@@ -3025,7 +2994,7 @@ function syncBodyScroll(){
    (아래 빈 공간 0). 한 열(<700px)은 스크롤 허용. */
 function fitPanel(){
   document.querySelectorAll('.fit-scale').forEach(p=>{ p.style.setProperty('--ps','0'); p.style.minHeight = ''; });
-  const panel = mainTab === 'income' ? document.getElementById('incomePanel') : mainTab === 'health' ? document.getElementById('healthPanel') : null;
+  const panel = mainTab === 'step2' ? document.getElementById('step2Panel') : null;
   if(!panel || window.innerWidth < 700) return;
   const b = document.body, de = document.documentElement;
   const fits = () => b.scrollHeight - b.clientHeight <= 0 && de.scrollWidth <= de.clientWidth;
@@ -3105,12 +3074,12 @@ window.addEventListener('resize', scheduleFit);
     if(changed) scheduleFit();
   });
   window.addEventListener('DOMContentLoaded', ()=>{
-    ['.metrics-bar','#phase-cards','.chart-head','#designTab','#incomePanel','#healthPanel'].forEach(sel=>{
+    ['.metrics-bar','#phase-cards','.chart-head','#designTab','#step2Panel'].forEach(sel=>{
       const el = document.querySelector(sel); if(el) ro.observe(el);
     });
   });
   if(document.readyState !== 'loading'){
-    ['.metrics-bar','#phase-cards','.chart-head','#designTab','#incomePanel','#healthPanel'].forEach(sel=>{
+    ['.metrics-bar','#phase-cards','.chart-head','#designTab','#step2Panel'].forEach(sel=>{
       const el = document.querySelector(sel); if(el) ro.observe(el);
     });
   }
@@ -3149,54 +3118,29 @@ document.addEventListener('click', e=>{
   pop.style.left = x + 'px'; pop.style.top = y + 'px';
 });
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeIpop(); });
-function gotoIncome(){ setMainTab('income'); }
 
 // 최상위 탭: 설계(입력 폼) / 시뮬레이션 결과(차트·시나리오) — 캔버스 차트는 display:none인 상태에서
 // 그려지면 크기가 0으로 굳어버리므로, 결과 탭으로 전환할 때는 항상 upd()를 다시 호출해
 // 실제로 보이는 크기로 다시 그린다.
 let mainTab='design';
-// 5개 탭(설계/소득·지출/시뮬레이션 결과/건보료 설계/세금 상식) 중 하나만 아래 화면으로 보인다.
+// 4개 탭(1단계 설계/2단계 설계/시뮬레이션 결과/세금 상식) 중 하나만 아래 화면으로 보인다.
 function setMainTab(t){
   mainTab=t;
-  const on = {design:'mtb-design', income:'mtb-income', result:'mtb-result', health:'mtb-health', tax:'mtb-tax'};
+  const on = {design:'mtb-design', step2:'mtb-step2', result:'mtb-result', tax:'mtb-tax'};
   Object.keys(on).forEach(k=>{ document.getElementById(on[k]).className='tab-btn'+(k===t?' on':''); });
   document.getElementById('designTab').style.display = t==='design' ? '' : 'none';
   document.getElementById('resultTab').style.display = t==='result' ? '' : 'none';
-  document.getElementById('incomePanel').classList.toggle('show', t==='income');
-  document.getElementById('healthPanel').classList.toggle('show', t==='health');
+  document.getElementById('step2Panel').classList.toggle('show', t==='step2');
   document.getElementById('taxGuidePanel').classList.toggle('show', t==='tax');
   if(t==='result') upd();
-  if(t==='health') renderHealthPanel();
+  if(t==='step2') renderHealthPanel();
   closeIpop(); syncFilledAll();
   requestAnimationFrame(()=>{ fitAll(); });
 }
 
-// "예상 건보료 계산하기" 버튼 클릭 시 — 이미 실시간으로도 갱신되지만, 버튼을 눌렀을 때
-// 실제로 뭔가 계산됐다는 걸 눈에 보이게 하기 위해 버튼 자체와 결과 영역에 짧은 시각 피드백을 준다
-function calcHealthPremiumClick(btn){
-  renderHealthPanel();
-  if(btn){
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '✓ 계산 완료';
-    btn.classList.add('calc-done');
-    setTimeout(() => {
-      btn.innerHTML = original;
-      btn.classList.remove('calc-done');
-      btn.disabled = false;
-    }, 1100);
-  }
-  const detail = document.getElementById('healthDetail');
-  if(detail){
-    detail.classList.remove('flash');
-    void detail.offsetWidth; // 리플로우 강제 → 같은 애니메이션 재실행 가능하게
-    detail.classList.add('flash');
-  }
-}
-
 // upd()가 돌 때마다(슬라이더 조작 등) 패널이 열려 있으면 같이 갱신됨
 function renderHealthPanel(){
-  const el = document.getElementById('healthPanel');
+  const el = document.getElementById('step2Panel');
   if(!el || !el.classList.contains('show')) return;
   const stripEl = document.getElementById('healthStrip');
   const badgeEl = document.getElementById('healthStatusBadge');
@@ -3206,21 +3150,6 @@ function renderHealthPanel(){
 
   const p = getP();
   const man = v => Math.round(v).toLocaleString();
-  // ① 기입 체크: 집·소득은 소득·지출 탭 값 — 입력됐으면 ✓ 요약, 아니면 ○
-  const reqHouse = document.getElementById('reqHouse'), reqIncome = document.getElementById('reqIncome');
-  if(reqHouse){
-    const hs = houseSummary({gongsiga1:gv('gongsiga1'), gongsiga2:gv('gongsiga2'), gongsiga:gv('gongsiga')});
-    const rent = gv('hi_rentprop');
-    const txt = hs.sum > 0 ? '공시가격 <span data-amt>'+man(hs.sum)+'만원</span> · '+((document.getElementById('housetype')||{}).value === 'multi' ? '다주택' : '1주택')
-              : rent > 0 ? '전월세 인정 <span data-amt>'+man(rent)+'만원</span>' : '';
-    reqHouse.className = 'req-val' + (txt ? '' : ' none');
-    reqHouse.innerHTML = txt ? '<span class="ok">✓</span>'+txt : '<span class="no">○</span>입력 없음 · 재산분 0';
-  }
-  if(reqIncome){
-    const names = [['근로','hi_labor'],['사업','hi_business'],['기타','hi_other'],['이자','hi_interest'],['배당','hi_dividend']].filter(x => gv(x[1]) > 0).map(x => x[0]);
-    reqIncome.className = 'req-val' + (names.length ? '' : ' none');
-    reqIncome.innerHTML = names.length ? '<span class="ok">✓</span>'+names.join('·')+' 입력됨' : '<span class="no">○</span>입력 없음 · 연금만 반영';
-  }
   // 은퇴~기대수명 연도별 건보료(오늘 가치 월) — 임의계속가입 구간은 파랑, 피부양자 해는 초록(0)
   if(stripEl){
     const rows = simulate(p, SA.base).rows;
@@ -3646,7 +3575,7 @@ function upd(){
   // 일시 지출 나이가 은퇴 전이면 계산에 안 들어간다고 알림(카드 제목 줄 오른쪽)
   (function(){
     const h = document.getElementById('lumpWarn'); if(!h) return;
-    const early = [1,2,3].some(i => p['lump'+i+'_amt'] > 0 && p['lump'+i+'_age'] > 0 && p['lump'+i+'_age'] < p.ret);
+    const early = p.lump1_amt > 0 && p.lump1_age > 0 && p.lump1_age < p.ret;
     h.textContent = early ? '은퇴('+p.ret+'세) 후 나이만 반영' : '';
     h.style.color = early ? '#c93400' : '';
   })();
