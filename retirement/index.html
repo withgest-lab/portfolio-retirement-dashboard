@@ -2700,15 +2700,19 @@ function loadState(){
       if(rng) rng.value = state[id];
     });
 
-    // ── 마이그레이션: 집별 공시가격(gongsiga1~3)은 신설 — 예전엔 공시가격 한 칸(gongsiga)뿐이었으므로 값이 있으면 집1로 옮긴다
+    // ── 마이그레이션: 집별 공시가격(gongsiga1·2, 예전 gongsiga3은 아래서 이전)은 신설 — 예전엔 공시가격 한 칸(gongsiga)뿐이었으므로 값이 있으면 집1로 옮긴다
     if(state.gongsiga1 === undefined && state.gongsiga !== undefined){
       const old = parseFloat(String(state.gongsiga).replace(/,/g, ''));
       const g1 = document.getElementById('gongsiga1');
       if(g1 && old > 0) g1.value = old;
     }
     // 집3은 삭제 — 저장돼 있던 집3 공시가격은 집2에 합쳐 합계(재산 과표)와 2채 이상(다주택) 판정이 그대로 유지되게 한다
-    { const g3 = parseFloat(state.gongsiga3), g2 = document.getElementById('gongsiga2');
-      if(g2 && g3 > 0) g2.value = (parseFloat(g2.value) || 0) + g3; }
+    { const g3 = parseFloat(state.gongsiga3);
+      if(g3 > 0){
+        const e1 = document.getElementById('gongsiga1'), e2 = document.getElementById('gongsiga2');
+        const m = migrateHouses(gv('gongsiga1'), gv('gongsiga2'), g3);
+        if(e1) e1.value = m[0] || ''; if(e2) e2.value = m[1] || '';
+      } }
     syncHouses();
 
     // ── 마이그레이션: tdcstart/tdcend는 이번 업데이트로 신설된 필드라 예전 저장
@@ -3184,7 +3188,7 @@ function renderHealthPanel(){
   if(reqHouse){
     const hs = houseSummary({gongsiga1:gv('gongsiga1'), gongsiga2:gv('gongsiga2'), gongsiga:gv('gongsiga')});
     const rent = gv('hi_rentprop');
-    const txt = hs.sum > 0 ? '공시가격 <span data-amt>'+man(hs.sum)+'만원</span> · '+(hs.type === 'multi' ? '다주택' : '1주택')
+    const txt = hs.sum > 0 ? '공시가격 <span data-amt>'+man(hs.sum)+'만원</span> · '+((document.getElementById('housetype')||{}).value === 'multi' ? '다주택' : '1주택')
               : rent > 0 ? '전월세 인정 <span data-amt>'+man(rent)+'만원</span>' : '';
     reqHouse.className = 'req-val' + (txt ? '' : ' none');
     reqHouse.innerHTML = txt ? '<span class="ok">✓</span>'+txt : '<span class="no">○</span>입력 없음 · 재산분 0';

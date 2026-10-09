@@ -2,7 +2,7 @@
 //
 // 사용(CLI, playwright가 NODE_PATH에 있어야 함):
 //   node .claude/skills/ios-design/fit-audit.js retirement            # 현금흐름 5탭
-//   node .claude/skills/ios-design/fit-audit.js portfolio --seed      # 포트폴리오 전 화면(가상 데이터 25종목을 심어서)
+//   node .claude/skills/ios-design/fit-audit.js portfolio --seed      # 포트폴리오 전 화면(가상 데이터 25종목·매매 60건·스냅샷 30개를 심어서)
 //   node .claude/skills/ios-design/fit-audit.js home | signals | all
 //   옵션: --boxes(입력 박스 통일 검사 추가) --base http://localhost:4173/ --extra(실기기 근사 높이 3개 추가)
 // 사용(코드):  const fa = require('<이 파일>');  console.log(await fa.measureFit(page));  console.log(await fa.measureBoxes(page));
@@ -99,8 +99,33 @@ const seedAssets = () => {
   for (let i = 1; i <= 12; i++) mk(i, 'KR' + i, '국내종목 ' + i, i % 3 ? 'general' : 'isa', 'kr', 10 * i, 10000 * i, 11000 * i, 'KRW');
   for (let i = 13; i <= 22; i++) mk(i, 'US' + i, '미국종목 ' + i, 'general', 'us', 5 * (i - 12), 100 + 10 * (i - 12), 120 + 10 * (i - 12), 'USD');
   for (let i = 23; i <= 25; i++) mk(i, 'ETF' + i, '글로벌ETF ' + i, i % 2 ? 'pension_personal' : 'irp', 'global', 100 * (i - 22), 15000, 16000, 'KRW');
+  const TYPES = ['Core', '주도주', '유망주', '원자재', '안전자산'], COS = ['가상증권A', '가상증권B', '가상은행C'];
+  rows.forEach((r, i) => { r.assetType = TYPES[i % TYPES.length]; r.company = COS[i % COS.length]; });
   return rows;
 };
+// 매매 이력 60건(매수·매도·배당·입금) — 둥근 가상 값
+const seedTradeLog = () => {
+  const assets = seedAssets(), out = [], day = 86400000, now = Date.now();
+  for (let i = 0; i < 60; i++) {
+    const a = assets[i % assets.length], kind = ['buy', 'sell', 'dividend', 'buy', 'sell'][i % 5], fx = a.currency === 'USD' ? 1400 : 1;
+    const at = now - (i + 1) * 11 * day, qty = 1 + (i % 7), price = a.currentPrice;
+    if (kind === 'dividend') out.push({ id: 't' + i, name: a.name, ticker: '—', type: 'dividend', at, acctType: 'cash', assetType: null, company: a.company, price: null, quantity: null, currency: a.currency, totalKRW: 30000 + 1000 * (i % 9), pnl: 30000 + 1000 * (i % 9), pnlPct: null, reason: '', cashAdjusted: null });
+    else out.push({ id: 't' + i, name: a.name, ticker: a.ticker, type: kind, at, acctType: a.acctType, assetType: a.assetType, company: a.company, market: a.market, price, quantity: qty, currency: a.currency, totalKRW: Math.round(price * qty * fx), pnl: kind === 'sell' ? Math.round(price * qty * fx * 0.08) : null, pnlPct: kind === 'sell' ? 8 : null, reason: kind === 'sell' ? '목표 수익 달성' : '', cashAdjusted: null });
+  }
+  return out;
+};
+// 월말 스냅샷 30개 — 자산이 완만히 늘어난 가상 이력
+const seedSnaps = () => {
+  const assets = seedAssets(), out = [], day = 86400000, now = Date.now();
+  for (let i = 0; i < 30; i++) {
+    const f = 0.7 + 0.3 * i / 29 + (i % 4 === 0 ? -0.02 : 0.01), byAsset = {}, byQty = {};
+    let total = 0;
+    assets.forEach(a => { const ev = Math.round(a.currentPrice * a.quantity * (a.currency === 'USD' ? 1400 : 1) * f); byAsset[a.id] = ev; byQty[a.id] = a.quantity; total += ev; });
+    out.push({ id: 'n' + i, timestamp: now - (29 - i) * 30 * day, totalValue: total, byAsset, byQty, manual: false });
+  }
+  return out;
+};
+const seedAll = () => ({ pf_assets_v1: seedAssets(), pf_tradelog_v1: seedTradeLog(), pf_snaps_v5: seedSnaps() });
 
 const SCREENS = {
   retirement: { base: 'retirement/', tabs: ['design', 'income', 'result', 'health', 'tax'], go: (page, t) => page.evaluate(x => setMainTab(x), t), long: t => t === 'tax' },
@@ -116,7 +141,7 @@ async function sweep(browser, preset, o) {
     const folded = w === FOLDED[0];
     const page = await browser.newPage({ viewport: { width: w, height: h } });
     await page.goto(o.base + cfg.base, { waitUntil: 'load' });
-    if (o.seed && cfg.seed) await page.evaluate(a => { try { localStorage.setItem('pf_assets_v1', JSON.stringify(a)); } catch (e) {} }, seedAssets());
+    if (o.seed && cfg.seed) await page.evaluate(m => { try { Object.keys(m).forEach(k => localStorage.setItem(k, JSON.stringify(m[k]))); } catch (e) {} }, seedAll());
     else if (preset === 'retirement') await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
     await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(preset === 'portfolio' ? 2500 : 1200);
     let targets = [['', '']];
@@ -165,5 +190,5 @@ async function main() {
   process.exit(bad ? 1 : 0);
 }
 
-module.exports = { measureFit, measureBoxes, judgeFit, judgeBoxes, seedAssets, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
+module.exports = { measureFit, measureBoxes, judgeFit, judgeBoxes, seedAssets, seedTradeLog, seedSnaps, seedAll, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
 if (require.main === module) main().catch(e => { console.error(e); process.exit(2); });

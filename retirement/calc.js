@@ -371,6 +371,13 @@ function houseSummary(p){
   return {sum, count, type: count >= 2 ? 'multi' : 'single'};
 }
 
+/* 집3 삭제 이전 저장값 이전: 집1·2·3 → 집1·2. 비어 있지 않은 값을 앞에서부터 채우고(첫 집 유지), 3채면 뒤 두 채를 합친다
+   → 합계·첫 집(주택연금 기준)·2채 이상(다주택) 판정이 그대로다. */
+function migrateHouses(h1, h2, h3){
+  const list = [h1, h2, h3].map(x => Math.max(0, +x || 0)).filter(x => x > 0);
+  return list.length > 2 ? [list[0], list[1] + list[2]] : [list[0] || 0, list[1] || 0];
+}
+
 /* 재산세 과세표준액(지방세법 시행령 109조, 2026 공정시장가액비율)
    1세대 1주택 특례: 공시가격 3억 이하 43% / 3억~6억 44% / 6억 초과 45%, 다주택·법인 60% */
 function propertyTaxBase(gongsigaMan, houseType){
@@ -1138,6 +1145,6 @@ if(typeof module !== 'undefined'){
     propertyTaxBase, PROPERTY_SCORE_TABLE, propertyInsuranceScore, regionalIncomeMonthly,
     HEALTH_RATE_INCOME, HEALTH_RATE_PROPERTY_WON, HEALTH_RATE_LTC, HEALTH_CAP_MAX, HEALTH_CAP_MIN,
     regionalHealthPremium, healthPremiumYear, npsAdjustFactor, futurePrinAdd, taxFreeBases, bridgeExtraMonthly, pensionLimitAnnual,
-    houseSummary, GEN_OV_TAX, GEN_OV_DEDUCT, genInit, genSum, genGrow, genYear, HOUSING_PENSION_PER_1EOK, housingPensionMonthly, housingPensionOf, expPct, lumpsAt, accWindows, accumulate, evalYear, simulate, buildAccRows, pmtTodayValue, computeAutoPlan
+    houseSummary, migrateHouses, GEN_OV_TAX, GEN_OV_DEDUCT, genInit, genSum, genGrow, genYear, HOUSING_PENSION_PER_1EOK, housingPensionMonthly, housingPensionOf, expPct, lumpsAt, accWindows, accumulate, evalYear, simulate, buildAccRows, pmtTodayValue, computeAutoPlan
   };
 }

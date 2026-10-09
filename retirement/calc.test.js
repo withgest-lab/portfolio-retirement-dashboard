@@ -835,6 +835,23 @@ test('남길 금액·일시 지출을 일반계좌에서 떼어 두면 끝 나�
 });
 
 /* ── 2026-10-09: 집 1·2·3 공시가격 ── */
+test('migrateHouses: 집3 삭제 이전 저장값은 합계·첫 집·2채 이상 판정이 그대로 유지된다', () => {
+  const { migrateHouses, houseSummary, housingPensionOf } = c;
+  const now = (a, b, d) => { const [x, y] = migrateHouses(a, b, d); return {gongsiga1: x, gongsiga2: y}; };
+  const cases = [[50000, 0, 20000], [0, 20700, 20700], [0, 30000, 10000], [10000, 20000, 30000], [0, 0, 40000], [50000, 0, 0], [0, 0, 0], [50000, -5, 10000]];
+  for(const [a, b, d] of cases){
+    const v = [a, b, d].map(x => Math.max(0, x)), n = houseSummary(now(a, b, d));
+    const cnt = v.filter(x => x > 0).length;
+    assert.equal(n.sum, v[0] + v[1] + v[2], `합계 ${[a, b, d]}`);
+    assert.equal(n.type, cnt >= 2 ? 'multi' : 'single', `유형 ${[a, b, d]}`);
+    assert.equal(Math.min(n.count, 2), Math.min(cnt, 2), `채수 ${[a, b, d]}`);
+  }
+  assert.deepEqual(migrateHouses(0, 20700, 20700), [20700, 20700]);
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 50000, gongsiga2: 50000, gongsiga3: 50000}) > 0, true, '집3은 읽지 않으므로 합계 10억 → 가입 가능');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 60000, gongsiga2: 60000}) > 0, true, '합계 12억 정확히 → 가능');
+  assert.equal(housingPensionOf({hp_age: 70, gongsiga1: 60000, gongsiga2: 60001}) > 0, false, '합계 12억 초과 → 불가');
+});
+
 test('houseSummary: 집별 공시가격 합계·채수·주택 유형(2채 이상 = 다주택), 입력이 없으면 옛 단일 값 1채', () => {
   const { houseSummary } = c;
   assert.deepEqual(houseSummary({gongsiga1: 50000}), {sum: 50000, count: 1, type: 'single'});
