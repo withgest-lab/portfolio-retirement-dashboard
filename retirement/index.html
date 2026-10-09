@@ -847,6 +847,16 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .ymon-amt{display:flex;align-items:center;gap:2px;min-width:0;}
 .acct-body .irow-ymon .ymon-select{justify-self:start;}
 /* 사적연금 과세분 게이지: 가운데 빈 칸(ISA 옆 ~ 국민연금 옆) 높이를 채우도록 늘리고 --sp로 글자·막대를 키운다 */
+.bal-mix{display:flex;flex-direction:column;gap:calc(4px + 2px*var(--sp,0));margin-top:calc(8px + 10px*var(--sp,0));padding-top:calc(8px + 8px*var(--sp,0));border-top:.5px solid rgba(60,60,67,.16);}
+.bal-head{display:flex;align-items:baseline;justify-content:space-between;font-size:min(13px, calc(10px + 1px*var(--sp,0)));color:#636366;}
+.bal-head b{font-size:min(17px, calc(11px + 2px*var(--sp,0)));color:#1c1c1e;}
+.bal-bar{display:flex;gap:2px;height:calc(8px + 4px*var(--sp,0));border-radius:999px;overflow:hidden;}
+.bal-bar i{min-width:3px;}
+.bal-leg{display:flex;flex-wrap:wrap;gap:calc(2px + 2px*var(--sp,0)) 12px;font-size:min(12.5px, calc(9.5px + 1px*var(--sp,0)));color:#3c3c43;}
+.bal-leg .bl{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+.bal-leg .bl i{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.bal-leg .bl b{color:#1c1c1e;}
+.bal-leg .bl em{font-style:normal;color:#8e8e93;}
 @media (min-width:700px){
   .acct-grid .limit-gauge-wrap{align-self:stretch;display:flex;flex-direction:column;justify-content:center;border-radius:12px;padding:calc(5px + 4px*var(--sp,0)) calc(8px + 5px*var(--sp,0));}
   .acct-grid .limit-gauge-info{gap:calc(2px + 2px*var(--sp,0));margin-bottom:calc(3px + 3px*var(--sp,0));font-size:min(13px, calc(10px + 1px*var(--sp,0)));}
@@ -1613,6 +1623,11 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
     <span class="limit-gauge-val" id="gauge-text">-</span>
   </div>
   <div class="limit-gauge"><div class="limit-gauge-fill" id="gauge-fill" style="width:0%;background:#34c759;"></div><i class="limit-gauge-tick" aria-hidden="true"></i></div>
+  <div class="bal-mix">
+    <div class="bal-head"><span>현재 잔액 구성</span><b id="balTotal" data-amt>-</b></div>
+    <div class="bal-bar" id="balBar"></div>
+    <div class="bal-leg" id="balLeg"></div>
+  </div>
 </div>
 <div class="acct-card c-np" style="--ac:#FF9500;--ac-ink:#C93400;">
 <div class="acct-head"><span class="name">국민연금</span></div>
@@ -3674,6 +3689,20 @@ function upd(){
       mx.toLocaleString()+'만'+(res.maxPrivAge?' ('+res.maxPrivAge+'세)':'')+' · 저율과세 기준 '+p.plimit.toLocaleString()+'만의 '+pct+'%'
       + (mx > law ? ' · '+(res.firstOverLawAge||res.firstOverPlimitAge)+'세부터 기준 초과' : pct > 100 ? ' · 여유 소진(세율은 그대로)' : '')
       + (pct > 200 ? ' ▸' : '');
+  })();
+
+  // 현재 잔액 구성(설계 탭 가운데 칸) — 입력한 현재 잔액의 계좌별 비중
+  (function(){
+    const bar = document.getElementById('balBar'), leg = document.getElementById('balLeg'), tot = document.getElementById('balTotal');
+    if(!bar || !leg || !tot) return;
+    const parts = [['gen', genSum(genInit(p))], ['nh', p.nh], ['mf', p.mf], ['irp', p.irp], ['tirp', p.tirp], ['isa', p.isa]]
+      .map(x => ({k:x[0], v:Math.max(0, +x[1] || 0)})).filter(x => x.v > 0);
+    const sum = parts.reduce((a, x) => a + x.v, 0);
+    const col = k => (C[k === 'tirp' ? 'dc' : k] || {}).line || '#8e8e93';
+    const eok = v => v >= 10000 ? (Math.round(v/100)/100).toLocaleString() + '억' : Math.round(v).toLocaleString() + '만';
+    tot.textContent = sum > 0 ? eok(sum) : '-';
+    bar.innerHTML = parts.map(x => '<i style="flex:'+x.v+' 1 0;background:'+col(x.k)+'" title="'+ACCT_SHORT[x.k]+' '+Math.round(x.v/sum*100)+'%"></i>').join('');
+    leg.innerHTML = parts.map(x => '<span class="bl"><i style="background:'+col(x.k)+'"></i>'+ACCT_SHORT[x.k]+' <b data-amt>'+eok(x.v)+'</b> <em>'+Math.round(x.v/sum*100)+'%</em></span>').join('');
   })();
 
   // 메트릭 카드 — 공백기·완성기는 오늘 돈 가치·세후 평균, 옆 숫자는 월 생활비 대비(세후 판정)
