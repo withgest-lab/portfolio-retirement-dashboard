@@ -8,7 +8,7 @@ const {
   basicIncomeTax, pensionIncomeDeduction, comprehensivePensionTax, pensionTaxes,
   calcMonthlyDepositFV, growYears, stepBalance, stepBalanceDetail, pvOfMonthlyStream,
   futurePrinAdd, taxFreeBases, simulate, computeAutoPlan, buildAccRows, accumulate, npNominalAtStart,
-  pensionLimitAnnual, bridgeExtraMonthly, healthPremiumYear, regionalIncomeMonthly,
+  pensionLimitAnnual, bridgeExtraMonthly, healthPremiumYear, regionalIncomeMonthly, totalPropertyBase,
   wageIncomeDeduction, wageTaxCredit, comprehensiveTotal, otherIncomeReal, npsMembershipFactor,
   housingPensionMonthly, housingPensionOf, expPct, lumpsAt, genYear, genInit, genSum, genGrow
 } = c;
@@ -226,6 +226,19 @@ test('건보료: 패널 단독 계산(regionalHealthPremium)과 같은 해 금�
   // 이자+배당 1,000만원 이하면 금융소득 0, 초과면 전액
   const lowFin = healthPremiumYear(Object.assign({}, HI, {hi_dividend:300}), 70, HI.np, 1).monthlyReal;
   assert.ok(lowFin < y.monthlyReal);
+});
+
+test('건보료 계산 내역 시점: regionalIncomeMonthly(p, age, npMonthly) — 생략하면 기존(p.np·수령 후), 0이면 공백기, simulate 공백기·수령 후 금액과 일치', () => {
+  const at = HI.ret, after = Math.max(HI.ret, HI.npage);
+  assert.equal(regionalIncomeMonthly(HI), regionalIncomeMonthly(HI, undefined, undefined), '기본값 불변');
+  assert.equal(regionalIncomeMonthly(HI, after, HI.np), regionalIncomeMonthly(HI), '명시해도 수령 후와 같음');
+  const gapInc = regionalIncomeMonthly(HI, at, 0), fullInc = regionalIncomeMonthly(HI);
+  near(fullInc - gapInc, HI.np * 12 * 0.5 / 12, 1e-9, '국민연금은 50%만 소득월액에 반영');
+  const r = simulate(withPlan(HI));
+  const gapRow = r.rows.find(x => x.age === at), fullRow = r.rows.find(x => x.age === after);
+  const panelGap = regionalHealthPremium(gapInc, totalPropertyBase(HI)).total, panelFull = regionalHealthPremium(fullInc, totalPropertyBase(HI)).total;
+  near(gapRow.hi / gapRow.infMul, panelGap, 0.6, '공백기 패널 = 시뮬레이션(월 명목 정수 반올림 오차)');
+  near(fullRow.hi / fullRow.infMul, panelFull, 0.6, '수령 후 패널 = 시뮬레이션');
 });
 
 test('건보료는 인출 계획과 무관(사적연금·ISA 부과 제외) — 인출을 바꿔도 세후 차이 = 세금 차이만', () => {

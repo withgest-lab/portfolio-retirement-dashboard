@@ -799,7 +799,13 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 /* ══ 결과 탭 보기 4종(요약·근거·위기 점검·부족 대책) — 차트 자리를 꽉 채움: fitAltView가 --vs(0~8)를 정하면 글자·행·간격이 같이 커지고 남는 높이는 flex·표 행이 나눠 가진다 ══ */
 .chart-alt{--vs:0;flex-direction:column;}
 .chart-alt.alt-fit{overflow-y:hidden;}   /* 맞춤 성공 시 스크롤 잠금(맞춤 실패·접힘만 auto) */
-#scWrap,#needWrap{flex:1 1 auto;min-height:0;flex-direction:column;gap:calc(6px + .6px*var(--vs));}
+#riskWrap{flex:1 1 auto;min-height:0;flex-direction:column;gap:calc(6px + .6px*var(--vs));}
+/* 위기 점검 | 부족 대책 — 한 화면 두 카드(맨 위 hero는 현재 계획 요약). 접힘(<700px)은 세로로 쌓고 스크롤 허용 */
+.risk-cols{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:calc(8px + .8px*var(--vs));}
+.risk-col{min-height:0;min-width:0;display:flex;flex-direction:column;gap:calc(3px + .3px*var(--vs));}
+.risk-col .al-head,.risk-col .al-row{column-gap:8px;padding:0 calc(10px + .4px*var(--vs));}
+.risk-col .al-row{min-height:calc(26px + 1px*var(--vs));}
+@media (max-width:699px){ .risk-cols{grid-template-columns:minmax(0,1fr);} }
 .chart-alt .mini-note{font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);margin:0;flex:0 0 auto;}
 /* 위기 점검·부족 대책: iOS 목록형 — 표 격자·진한 헤더 없이 회색 카드 + 헤어라인 행, 값은 오른쪽 정렬 숫자, 상태는 색 점 */
 .al-card{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:rgba(118,118,128,.06);border-radius:12px;padding:calc(6px + .5px*var(--vs)) 0 calc(2px + .3px*var(--vs));}
@@ -817,7 +823,9 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .al-v .al-sub{display:block;font-weight:600;}
 .al-v{text-align:right;font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-res{font-weight:600;white-space:normal;line-height:1.25;overflow:visible;}
-#needWrap .al-head,#needWrap .al-row{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,1.55fr);}
+.risk-col:not(.need-col) .al-head,.risk-col:not(.need-col) .al-row{grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr) minmax(0,.7fr) minmax(0,.85fr);}
+.need-col .al-head,.need-col .al-row{grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,.8fr) minmax(0,1.2fr);}
+.need-col .al-name b{white-space:normal;line-height:1.2;word-break:keep-all;}
 .al-dim{color:#c7c7cc;font-weight:500;}
 .al-st{font-weight:600;color:#3a3a3c;}
 .al-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:.45em;vertical-align:.05em;}
@@ -831,6 +839,10 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .hi-card{padding:calc(8px + .8px*var(--vs)) calc(12px + .6px*var(--vs)) calc(6px + .6px*var(--vs));min-width:0;}
 .hi-chart{flex:1.45 1 0;} .hi-calc{flex:1 1 0;}
 .al-ch{display:flex;align-items:baseline;gap:8px;flex:0 0 auto;font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14px);font-weight:700;color:#1c1c1e;padding-bottom:calc(4px + .4px*var(--vs));margin-bottom:calc(4px + .4px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
+/* 세그먼트(iOS): 회색 트랙 + 흰 선택 칩 — 계산 내역 제목 오른쪽 */
+.seg{display:inline-flex;margin-left:auto;flex:0 0 auto;background:rgba(118,118,128,.14);border-radius:999px;padding:2px;gap:1px;}
+.seg button{border:0;background:none;border-radius:999px;padding:2px 11px;font:inherit;font-size:clamp(10.5px, calc(10.5px + .2px*var(--vs)), 12px);font-weight:600;color:#3c3c43;cursor:pointer;white-space:nowrap;line-height:1.5;}
+.seg button.on{background:#fff;color:#007aff;box-shadow:0 1px 2px rgba(0,0,0,.14);}
 .al-ch span{font-size:clamp(10px, calc(10px + .25px*var(--vs)), 12px);font-weight:500;color:#8e8e93;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hi-view #healthStrip{flex:1 1 0;min-height:60px;display:flex;flex-direction:column;}
 .hi-view .health-strip{flex:1 1 auto;height:auto;min-height:50px;margin:0 0 2px;background:#fff;gap:calc(1px + .15px*var(--vs));}
@@ -848,17 +860,17 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .plan-view .pb-mode{margin:0;font-size:11.5px;}   /* 탭 글자와 같은 크기로 고정 */
 .plan-view .pb-grid{margin:0;gap:calc(8px + .8px*var(--vs));}
 .plan-view .pb-card{padding:calc(10px + 1.2px*var(--vs)) calc(12px + .8px*var(--vs));}
-.plan-view .pb-label{font-size:clamp(11px, calc(11px + .35px*var(--vs)), 13.5px);}
-.plan-view .pb-val{font-size:clamp(19px, calc(19px + 1.1px*var(--vs)), 30px);}
-.plan-view .pb-sub{font-size:clamp(11px, calc(11px + .35px*var(--vs)), 14px);margin-top:calc(5px + .6px*var(--vs));}
+.plan-view .pb-label{font-size:clamp(10.5px, calc(10.5px + .2px*var(--vs)), 12px);}
+.plan-view .pb-val{font-size:clamp(17px, calc(17px + .5px*var(--vs)), 21px);}   /* 다른 탭·자동 설계 근거 글자와 균형 — 예전 최대 30px가 아래 본문을 밀어 겹쳤다 */
+.plan-view .pb-sub{font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);margin-top:calc(4px + .5px*var(--vs));}
 .plan-view .pb-phases{margin:0;flex:1 1 auto;min-height:0;}   /* 남는 높이는 수입원 행이 나눠 채움(배너 행 아래·섹션 사이에 빈 띠가 생기지 않게) */
 .plan-view .pb-phase{display:flex;flex-direction:column;}
 .plan-view .pb-phase > div:last-child{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
 @media (min-width:700px){ .plan-view .pb-phase > div:last-child{display:grid;grid-template-rows:repeat(var(--n,5), minmax(0,1fr));} }   /* 두 열이 같은 행 격자(--n=더 긴 열의 행 수)라 좌우 행이 수평으로 맞는다(접힘은 세로로 쌓이므로 제외) */
-.plan-view .pb-phase-title{font-size:clamp(12px, calc(12px + .4px*var(--vs)), 15px);}
-.plan-view .pb-phase-row{height:auto;min-height:clamp(26px, calc(27px + 1.7px*var(--vs)), 46px);font-size:clamp(12px, calc(12.5px + .35px*var(--vs)), 15px);}
+.plan-view .pb-phase-title{font-size:clamp(11.5px, calc(11.5px + .25px*var(--vs)), 13.5px);}
+.plan-view .pb-phase-row{height:auto;min-height:clamp(22px, calc(23px + 1.2px*var(--vs)), 36px);font-size:clamp(11.5px, calc(12px + .2px*var(--vs)), 13.5px);}
 .plan-view .pb-tips{margin:0;padding:calc(8px + .8px*var(--vs)) 14px;gap:calc(5px + .7px*var(--vs));}
-.plan-view .pb-tip{font-size:clamp(11.5px, calc(12px + .35px*var(--vs)), 14.5px);}
+.plan-view .pb-tip{font-size:clamp(11px, calc(11.5px + .2px*var(--vs)), 13px);}
 /* 근거: 공백기 | 완성기 두 칸 + 아래 평탄화·세금 한 칸, 한 항목 한 줄 */
 .basis-view{display:flex;flex-direction:column;}
 .basis-view .suggest-result.show{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;gap:calc(6px + .6px*var(--vs));padding:0;background:none;}
@@ -1798,8 +1810,7 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
         <button class="tab-btn" id="tb-asset" onclick="setTab('asset')">연 자산 흐름</button>
         <button class="tab-btn" id="tb-plan" onclick="setAltView('plan')" title="마지막 자동 설계 결과 요약(근거는 요약 오른쪽 위 버튼)">자동 설계 요약</button>
         <button class="tab-btn" id="tb-hi" onclick="setAltView('hi')" title="은퇴 후 지역가입자 건보료 — 공백기·수령 후 월 금액, 연도별 변화, 계산 내역">건보료 예상</button>
-        <button class="tab-btn" id="tb-sc" onclick="setAltView('sc')" title="수익률·물가·폭락·장수·간병 같은 위기에서 계획이 버티는지">위기 점검</button>
-        <button class="tab-btn" id="tb-need" onclick="setAltView('need')" title="생활비가 부족할 때 무엇을 얼마나 바꾸면 되는지(자동 설계를 다시 계산)">부족 대책</button>
+        <button class="tab-btn" id="tb-risk" onclick="setAltView('risk')" title="수익률·물가·폭락·장수·간병 같은 위기에서 계획이 버티는지, 생활비가 부족하면 무엇을 얼마나 바꾸면 되는지(자동 설계를 다시 계산)">위기 점검 &amp; 부족 대책</button>
       </div>
       <div class="legend" id="chart-legend"></div>
     </div>
@@ -1808,20 +1819,24 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
         <canvas id="mainChart"></canvas>
         <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
         <div class="chart-alt" id="altView" style="display:none;">
-          <div id="scWrap" style="display:none;">
-            <div class="al-card">
-              <div class="al-head"><span>상황</span><span>최저 세후</span><span>생활비 미달</span><span>자산 유지</span></div>
-              <div class="al-body" id="sc-body"></div>
-            </div>
-            <div class="mini-note" id="sc-note"></div>
-          </div>
-          <div id="needWrap" style="display:none;">
+          <div id="riskWrap" style="display:none;">
             <div id="need-head"></div>
-            <div class="al-card">
-              <div class="al-head"><span>바꾸는 것</span><span>바꾼 값</span><span>최저 세후</span><span id="need-th4">충족하려면</span></div>
-              <div class="al-body" id="need-body"></div>
+            <div class="risk-cols">
+              <div class="risk-col">
+                <div class="al-card">
+                  <div class="al-head"><span>상황</span><span>최저 세후</span><span>생활비 미달</span><span>자산 유지</span></div>
+                  <div class="al-body" id="sc-body"></div>
+                </div>
+                <div class="mini-note" id="sc-note"></div>
+              </div>
+              <div class="risk-col need-col">
+                <div class="al-card">
+                  <div class="al-head"><span>바꾸는 것</span><span>바꾼 값</span><span>최저 세후</span><span id="need-th4">충족하려면</span></div>
+                  <div class="al-body" id="need-body"></div>
+                </div>
+                <div class="mini-note" id="need-note"></div>
+              </div>
             </div>
-            <div class="mini-note" id="need-note"></div>
           </div>
         </div>
         <!-- 자동설계 요약: 마지막 자동설계 결과(팝업과 같은 내용)를 차트 자리에 겹쳐 표시 -->
@@ -1834,7 +1849,7 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
           <div class="al-hero" id="healthHero"></div>
           <div class="hi-body">
             <div class="al-card hi-card hi-chart"><div class="al-ch">연도별 월 건보료<span>월·오늘 가치 · 파랑 임의계속가입 · 초록 피부양자</span></div><div id="healthStrip"></div></div>
-            <div class="al-card hi-card hi-calc"><div class="al-ch">계산 내역</div><div id="healthDetail"></div></div>
+            <div class="al-card hi-card hi-calc"><div class="al-ch">계산 내역<div class="seg" id="hiPhaseSeg" role="tablist"><button type="button" role="tab" data-ph="gap" onclick="setHiPhase('gap')">공백기</button><button type="button" role="tab" data-ph="full" onclick="setHiPhase('full')">국민연금 수령 후</button></div></div><div id="healthDetail"></div></div>
           </div>
         </div>
         <!-- 자동설계 근거: 차트 자리에 같은 크기로 겹쳐 표시(레이아웃 높이 불변), 스위치로 여닫음 -->
@@ -2646,7 +2661,9 @@ function fitAltView(){
   const el = ['planView','hiView','basisView','altView'].map(id=>document.getElementById(id)).find(e=>e && e.style.display !== 'none' && e.offsetParent !== null);
   if(!el || window.innerWidth <= 480 || el.clientHeight === 0) return;
   // 1px라도 넘치면 .chart-alt(overflow-y:auto)가 실제로 스크롤된다 — 예전엔 +1px 허용이라 904×700 등에서 1px 스크롤이 남았다. 딱 맞으면 .alt-fit으로 스크롤을 잠근다.
-  const fits = () => el.scrollHeight <= el.clientHeight;
+  // 요약은 수입원 행 격자가 자기 칸 밖으로 넘쳐 아래 팁 상자와 겹쳐도 요약 전체 scrollHeight는 그대로일 수 있어 칸별 넘침도 본다
+  const cellsFit = () => el !== pv || [...el.querySelectorAll('.pb-phases, .pb-phase > div:last-child')].every(c => c.scrollHeight <= c.clientHeight + 1);
+  const fits = () => el.scrollHeight <= el.clientHeight && cellsFit();
   const set = v => el.style.setProperty('--vs', v.toFixed(2));
   const done = () => { if(fits()) el.classList.add('alt-fit'); };
   set(8);
@@ -2870,7 +2887,7 @@ let _needKey = '', _needRun = 0, _needTimer = null;
 function scheduleNeedView(){ clearTimeout(_needTimer); _needTimer = setTimeout(renderNeedView, 350); }
 function renderNeedView(){
   const body = document.getElementById('need-body');
-  if(!body || _altView !== 'need') return;
+  if(!body || _altView !== 'risk') return;
   const p = getP(), key = JSON.stringify(p);
   if(key === _needKey) return;
   _needKey = key;
@@ -2927,18 +2944,18 @@ function renderNeedView(){
 const p0Mode = () => (document.getElementById('plan_mode') || {}).value;
 function renderStressView(){
   const body = document.getElementById('sc-body');
-  if(!body || _altView !== 'sc') return;
+  if(!body || _altView !== 'risk') return;
   const p = getP();
   const rows = stressRows(p);
   const M = v => Math.round(v).toLocaleString() + '만';
   const dot = good => '<i class="al-dot '+(good ? 'ok' : 'bad')+'"></i>';
   body.innerHTML = rows.map(r => {
-    const ok = r.ok, shortTxt = r.mc ? (r.shortYears ? '중앙값 '+r.shortYears+'년' : '없음') : (r.shortYears ? r.shortYears+'년 ('+r.firstShortAge+'세~)' : '없음');
+    const ok = r.ok;
     const keepCol = r.mc ? (r.successPct >= 80 ? '#248a3d' : r.successPct >= 50 ? '#c77700' : '#ff3b30') : ok ? '#248a3d' : '#ff3b30';
     return '<div class="al-row'+(r.key==='base' ? ' cur' : '')+'">'
       + '<div class="al-name"><b>'+r.label+'</b>'+(r.note ? '<span class="al-sub">'+r.note+'</span>' : '')+'</div>'
       + '<div class="al-v" style="color:'+(r.minNet >= p.exp - 0.5 ? NET_OK : NET_SHORT)+'">'+M(r.minNet)+'</div>'
-      + '<div class="al-v al-st">'+dot(!r.shortYears)+shortTxt+'</div>'
+      + '<div class="al-v al-st">'+dot(!r.shortYears)+(r.mc ? (r.shortYears ? r.shortYears+'년' : '없음')+'<span class="al-sub">중앙값</span>' : r.shortYears ? r.shortYears+'년<span class="al-sub">'+r.firstShortAge+'세~</span>' : '없음')+'</div>'
       + '<div class="al-v" style="color:'+keepCol+'">'+(r.mc ? r.successPct+'% 유지' : (ok ? r.life+'세+' : r.runway+'세 소진'))+'</div>'
       + '</div>';
   }).join('');
@@ -2946,23 +2963,21 @@ function renderStressView(){
   if(note) note.textContent = '인출 계획은 그대로 두고 상황만 바꾼 결과 · 최저 세후는 매년 중 가장 적은 해 · 시장 변동은 하위 10% — ' + (p0Mode() === 'long' ? '100세까지 플랜이라 성공 확률이 더 높아요' : '최대로 쓰기는 성공 확률 50% 안팎이 정상이에요');
 }
 
-let _altView = null;   // null | 'sc' | 'need' | 'basis' | 'plan' | 'hi'
+let _altView = null;   // null | 'risk'(위기 점검 & 부족 대책) | 'basis' | 'plan' | 'hi'
 function setAltView(v){
   _altView = (_altView === v) ? null : v;
   applyViewState();
 }
 function applyViewState(){
   const on = _altView === 'basis' ? 'plan' : (_altView || chartTab);   // 근거 화면에서도 "자동 설계 요약" 탭 강조
-  ['flow','asset','plan','hi','sc','need'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
-  const cmp = _altView==='sc' || _altView==='need';
+  ['flow','asset','plan','hi','risk'].forEach(x=>{ const b=document.getElementById('tb-'+x); if(b) b.className='tab-btn'+(x===on?' on':''); });
+  const cmp = _altView==='risk';
   const alt = document.getElementById('altView');
   if(alt){
     alt.style.display = cmp ? 'flex' : 'none';
-    document.getElementById('scWrap').style.display   = _altView==='sc'   ? 'flex' : 'none';
-    document.getElementById('needWrap').style.display = _altView==='need' ? 'flex' : 'none';
+    document.getElementById('riskWrap').style.display = cmp ? 'flex' : 'none';
   }
-  if(_altView==='need') renderNeedView();
-  if(_altView==='sc') renderStressView();
+  if(_altView==='risk'){ renderNeedView(); renderStressView(); }
   // 보기 4종(요약·근거·위기 점검·부족 대책): 차트 자리에 겹쳐 보이고, 이때만 아래 단계 카드(적립기·공백기·완성기)를 숨겨 넓게 본다
   const basisV = _altView==='basis', planV = _altView==='plan';
   const basis = !!_altView;   // 요약·근거·위기 점검·부족 대책은 모두 단계 카드를 숨기고 차트 자리를 아래 끝까지(fitChartHeight 상한 해제)
@@ -3198,6 +3213,8 @@ function setMainTab(t){
   requestAnimationFrame(()=>{ fitAll(); });
 }
 
+let _hiPhase = 'gap';   // 계산 내역 기준: 'gap'(공백기) | 'full'(국민연금 수령 후)
+function setHiPhase(v){ _hiPhase = v; renderHiView(); }
 // "건보료 예상" 보기 — upd()가 돌 때마다(입력 변경) 이 보기가 열려 있으면 같이 갱신된다. 금액은 calc.js healthPremiumYear/simulate 결과 그대로.
 function renderHiView(){
   const el = document.getElementById('hiView');
@@ -3220,8 +3237,15 @@ function renderHiView(){
         }).join('') + '</div><div class="health-strip-cap"><span>'+rows[0].age+'세</span><span>'+Math.round(mx*10)/10+'만 ↑ 최대</span><span>'+rows[rows.length-1].age+'세</span></div>'
       : '';
   }
+  // 계산 내역 기준 시점: 공백기(은퇴 직후, 국민연금 0) / 국민연금 수령 후(개시 시점 명목). 공백기가 없으면(수령 나이 ≤ 은퇴 나이) 수령 후만.
+  const hasGap = p.npage > p.ret;
+  const phase = hasGap && _hiPhase !== 'full' ? 'gap' : 'full';
+  const seg = document.getElementById('hiPhaseSeg');
+  if(seg){ seg.style.display = hasGap ? '' : 'none'; seg.querySelectorAll('button').forEach(bt => { const on = bt.dataset.ph === phase; bt.classList.toggle('on', on); bt.setAttribute('aria-selected', on); }); }
   // 피부양자 판정: 국민연금 개시 시점의 명목 금액으로(기준선 2,000만원은 물가로 오르지 않는 명목 고정)
-  const dep = dependentAtNpStart(p);
+  const dep = phase === 'gap'
+    ? (() => { const income = dependentTotalIncome(p, 0, p.ret); return {npNom: 0, income, prop: totalPropertyBase(p), check: dependentStatusCheck(income, p.realestate||0, p.hi_business)}; })()
+    : dependentAtNpStart(p);
   const totalIncome = dep.income;
   const propBase = dep.prop;
   const check = dep.check;
@@ -3230,7 +3254,7 @@ function renderHiView(){
   const hiAt = age => Math.round(healthPremiumYear(p, age, age >= p.npage ? p.np : 0, Math.pow(1 + p.inf/100, age - p.age), p.inf).monthlyReal * 10) / 10;   // simulate와 같은 단위(그 해 물가 배수)
   const hiFull = hiAt(Math.max(p.ret, p.npage));
   const hiGap = hiAt(p.ret);
-  const keep = p.hi_dep === 'yes' && !check.fail;
+  const keep = p.hi_dep === 'yes' && !check.fail;   // 판정 타일도 계산 내역과 같은 시점(공백기/수령 후) 기준
   // 큰 숫자 3칸: 공백기(있을 때) · 수령 후 · 판정(+재산 과표)
   if(heroEl){
     const tile = (cap, v) => '<div class="al-tile"><span class="al-cap">'+cap+'</span><b data-amt>'+v.toLocaleString()+'<small>만원/월</small></b><span class="al-s" data-amt>연 약 '+man(v*12)+'만원</span></div>';
@@ -3245,12 +3269,12 @@ function renderHiView(){
       '<table class="health-calc-table">'
       +'<tr><td>재산 과표</td><td>전월세 재산 인정액 포함</td><td>'+Math.round(propBase).toLocaleString()+'만원</td></tr>'
       +'<tr><td>허용 소득 상한</td><td>(연)</td><td>'+threshold.toLocaleString()+'만원</td></tr>'
-      +'<tr><td>합산 소득</td><td>국민연금 개시('+p.npage+'세) 명목</td><td>'+Math.round(totalIncome).toLocaleString()+'만원</td></tr>'
+      +'<tr><td>합산 소득</td><td>'+(phase === 'gap' ? '은퇴('+p.ret+'세) 명목 · 국민연금 없음' : '국민연금 개시('+p.npage+'세) 명목')+'</td><td>'+Math.round(totalIncome).toLocaleString()+'만원</td></tr>'
       +'<tr class="hc-total"><td>소득 여유</td><td></td><td>'+margin.toLocaleString()+'만원</td></tr>'
       +'</table>'
-      +'<div class="hc-note">'+(check.warn ? '사업소득 '+p.hi_business.toLocaleString()+'만원 — '+check.warn+' · ' : '')+'연금은 매년 물가만큼 오르는데 기준선은 고정이라 여유가 줄어요(오늘 월 '+p.np+'만 → '+p.npage+'세 월 '+dep.npNom+'만).</div>';
+      +'<div class="hc-note">'+(check.warn ? '사업소득 '+p.hi_business.toLocaleString()+'만원 — '+check.warn+' · ' : '')+(phase === 'gap' ? '기준선(2,000만원)은 명목 고정이라 소득이 물가만큼 오르면 여유가 줄어요.' : '연금은 매년 물가만큼 오르는데 기준선은 고정이라 여유가 줄어요(오늘 월 '+p.np+'만 → '+p.npage+'세 월 '+dep.npNom+'만).')+'</div>';
   } else {
-    const incomeMonthly = regionalIncomeMonthly(p);
+    const incomeMonthly = phase === 'gap' ? regionalIncomeMonthly(p, p.ret, 0) : regionalIncomeMonthly(p);
     const prem = regionalHealthPremium(incomeMonthly, propBase);
     detailEl.innerHTML =
       '<table class="health-calc-table">'
@@ -3776,8 +3800,7 @@ function upd(){
   if(mainTab === 'result') fitChartHeight();
 
   // 부족 대책·위기 점검 보기가 열려 있으면 입력이 바뀐 뒤 다시 계산(부족 대책은 행마다 자동설계를 돌려 잠깐 걸림 → 디바운스)
-  if(_altView==='need') scheduleNeedView();
-  if(_altView==='sc') renderStressView();
+  if(_altView==='risk'){ scheduleNeedView(); renderStressView(); }
 
   // 건보료 예상 보기가 열려 있으면 입력이 바뀔 때 실시간 갱신
   if(_altView==='hi') renderHiView();

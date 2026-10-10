@@ -418,8 +418,8 @@ function propertyInsuranceScore(totalPropertyMan){
 }
 
 // 지역가입자 소득월액(만원/월) — 공적연금·근로 50%, 사업·기타 100%, 금융소득(1,000만원 초과 시 전액) 100%
-function regionalIncomeMonthly(p, age){
-  const it = healthIncomeItems(p, undefined, age);
+function regionalIncomeMonthly(p, age, npMonthly){   // npMonthly: 국민연금 월액을 직접 지정(공백기 = 0). 생략하면 p.np
+  const it = healthIncomeItems(p, npMonthly, age);
   const weightedAnnual = it.pensionAnnual*0.5 + it.laborAnnual*0.5 + it.businessAnnual + it.otherAnnual + it.financeIncluded;
   return weightedAnnual / 12;
 }
