@@ -6564,6 +6564,10 @@ let divSelMonth = null;      // 월별 보기에서 연 달(0~11) — null이면
 let divSelStock = null;      // 종목별 보기에서 펼친 종목 키
 let divEditKey = null;       // 수정 중인 항목(확정은 기록 id, 자동은 항목 key)
 let divCashAdd = false;      // 자동 배당을 확인할 때 현금 잔액에도 더할지
+let divCo = 'all';           // 금융회사별 보기(all=합계, 월별·종목별 공용) — 증권사 앱과 계좌별로 대조할 때 쓴다
+const DIV_CO_OPTS = [['all','합계'],['nh','농협'],['mf','미래']];
+const divCoItems = items => divCo==='all' ? items : items.filter(it=>it.company===divCo);
+const divCoHeld = a => divCo==='all' || a.company===divCo;
 const divAddOpen = {}, divBasis = {monthly:'net', stock:'net'};
 const DIV_ACCT_LABEL = {general:'일반', isa:'ISA', pension_personal:'개인연금', pension_retirement:'퇴직연금', irp:'IRP'};
 const DIV_ACCT_OPTS = [['general','일반계좌'],['isa','ISA'],['pension_personal','개인연금'],['pension_retirement','퇴직연금'],['irp','IRP 개인']];
@@ -6631,6 +6635,7 @@ function divPick(kind, v){
   divEditKey = null;
   renderAllDividendViews();
 }
+function setDivCo(k){ divCo = k; divEditKey = null; divMemoReset(); renderDividendMonthly(); renderDividendByStock(); }
 function toggleDivCash(btn){ divCashAdd = !divCashAdd; toggleBanner(btn); }
 function toggleDivAdd(ctx, btn){ divAddOpen[ctx] = !divAddOpen[ctx]; toggleBanner(btn); }
 
@@ -6737,7 +6742,7 @@ function renderDivTop(ctx, year){
   const state = divHistState.loading ? '<span class="dv-state">배당 정보 불러오는 중…</span>' : (divHistState.failed ? `<span class="dv-state">${divHistState.failed}개 종목은 못 불러왔어요</span>` : '');
   return `<div class="tax-bar"><select class="tax-year" aria-label="연도" onchange="setDivYear(this.value)">${opts}</select>
     <button type="button" class="btn btn-ghost dv-btn" onclick="divReload()" title="보유 종목 배당 정보 새로고침" aria-label="새로고침">🔄</button>${state}
-    <div class="tax-end"><button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" data-target="dnew_wrap_${ctx}" onclick="toggleDivAdd('${ctx}',this)">배당 수동 입력<span class="sw"></span></button></div></div>`;
+    <div class="tax-end">${fmSeg(DIV_CO_OPTS, divCo, k=>`dv_co_${ctx}_${k}`, k=>`setDivCo('${k}')`)}<button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" data-target="dnew_wrap_${ctx}" onclick="toggleDivAdd('${ctx}',this)">배당 수동 입력<span class="sw"></span></button></div></div>`;
 }
 // 받은 배당 풍선 — 금융회사 × 계좌 합계(증권사 앱의 배당 내역과 맞춰 볼 때 쓴다)와 근거가 약한 금액
 function divBreakdownTip(items){
@@ -6758,7 +6763,7 @@ function renderDivKpi(year, items){
   const cur = year===new Date().getFullYear();
   const got = items.filter(it=>it.src!=='proj').reduce((s,it)=>s+it.net,0), proj = items.filter(it=>it.src==='proj').reduce((s,it)=>s+it.net,0);
   const t = finTotals(year), left = 2000 - t.endMan;
-  const cache = loadDivHist(), held = assets.filter(divEligible);
+  const cache = loadDivHist(), held = assets.filter(divEligible).filter(divCoHeld);
   let ann = 0, ev = 0; held.forEach(a=>{ const p = divProfile(a, cache); if(p){ ann += p.annualGross; ev += evKRW(a); } });
   const tile = (l, v, cls) => `<div class="cgt-t"><div class="cgt-l">${l}</div><div class="cgt-v ${cls||''}">${v}</div></div>`;
   const gotTile = `<button type="button" class="cgt-t dv-link ibtn-t" data-tip="${divAttr(divBreakdownTip(items))}"><div class="cgt-l">받은 배당(세후) ⓘ</div><div class="cgt-v">${maskAmt(fmt(got))}</div></button>`;
@@ -6826,7 +6831,7 @@ function addDivManual(ctx){
 function renderDividendMonthly(){
   const el = document.getElementById('divMonthly');
   if(!el) return;
-  const year = divYear(), cur = year===new Date().getFullYear(), items = buildDividendLedger(year);
+  const year = divYear(), cur = year===new Date().getFullYear(), items = divCoItems(buildDividendLedger(year));
   const byM = Array.from({length:12}, ()=>({got:0, proj:0, list:[]}));
   items.forEach(it=>{ const m = byM[new Date(it.pay).getMonth()]; m.list.push(it); if(it.src==='proj') m.proj += it.net; else m.got += it.net; });
   let sel = divSelMonth;
@@ -6846,9 +6851,9 @@ function renderDividendMonthly(){
 function renderDividendByStock(){
   const el = document.getElementById('divStock');
   if(!el) return;
-  const year = divYear(), cur = year===new Date().getFullYear(), items = buildDividendLedger(year), cache = loadDivHist();
+  const year = divYear(), cur = year===new Date().getFullYear(), items = divCoItems(buildDividendLedger(year)), cache = loadDivHist();
   const groups = new Map();
-  assets.filter(divEligible).forEach(a=>{ const k = divHoldKey(a); if(!groups.has(k)) groups.set(k, {key:k, name:a.name, acct:divAcctKey(a), asset:a, items:[]}); });
+  assets.filter(divEligible).filter(divCoHeld).forEach(a=>{ const k = divHoldKey(a); if(!groups.has(k)) groups.set(k, {key:k, name:a.name, acct:divAcctKey(a), asset:a, items:[]}); });
   items.forEach(it=>{ const k = it.akey || 'n:'+it.name; if(!groups.has(k)) groups.set(k, {key:k, name:it.name, acct:it.acct, asset:null, items:[]}); groups.get(k).items.push(it); });
   const rows = [...groups.values()].map(g=>{
     g.got = g.items.filter(it=>it.src!=='proj').reduce((s,it)=>s+it.net,0);
