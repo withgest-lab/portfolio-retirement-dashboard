@@ -241,6 +241,19 @@ test('건보료 계산 내역 시점: regionalIncomeMonthly(p, age, npMonthly) �
   near(fullRow.hi / fullRow.infMul, panelFull, 0.6, '수령 후 패널 = 시뮬레이션');
 });
 
+test('건보료 계산 내역: 금융소득 1,000만원 기준은 명목(그해 물가) 비교 — 오늘 가치 900이어도 명목 1,000 넘으면 반영, healthPremiumYear와 정확히 같음', () => {
+  const P = Object.assign({}, BASE, {realestate: 30000, hi_interest: 450, hi_dividend: 450});
+  for(const age of [P.ret, P.ret + 4, 70]){
+    const mul = Math.pow(1 + P.inf/100, age - P.age), np = age >= P.npage ? P.np : 0;
+    const detail = regionalHealthPremium(regionalIncomeMonthly(P, age, np), totalPropertyBase(P)).total;
+    assert.equal(detail, healthPremiumYear(P, age, np, mul, P.inf).monthlyReal, age + '세');
+  }
+  const mul57 = Math.pow(1 + P.inf/100, P.ret - P.age);
+  assert.ok(900 * mul57 > 1000, '테스트 전제: 명목 1,000 초과');
+  const low = Object.assign({}, P, {hi_interest: 300, hi_dividend: 300});   // 오늘 가치 600 → 명목에서도 1,000 이하(제외)
+  assert.ok(regionalIncomeMonthly(low, low.ret, 0) < regionalIncomeMonthly(P, P.ret, 0));
+});
+
 test('건보료는 인출 계획과 무관(사적연금·ISA 부과 제외) — 인출을 바꿔도 세후 차이 = 세금 차이만', () => {
   const p = withPlan(HI);
   const a = simulate(p), b = simulate(Object.assign({}, p, {isam: p.isam * 1.5, nhpay: p.nhpay * 0.5}));

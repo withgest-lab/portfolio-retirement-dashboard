@@ -338,7 +338,8 @@ function healthIncomeItems(p, npMonthly, age){
   const a = age !== undefined ? age : Math.max(p.ret, p.npage || p.ret);   // 기본: 국민연금 수령 개시 시점(소득 기간 칸 반영)
   const o = otherIncomeReal(p, a);
   const pensionAnnual = (npMonthly !== undefined ? npMonthly : p.np) * 12;
-  const financeIncluded = o.fin > 1000 ? o.fin : 0; // 이자+배당 1,000만원 초과 시 전액, 이하면 0
+  const mul = Math.pow(1 + (p.inf || 0)/100, Math.max(0, a - (p.age !== undefined ? p.age : a)));   // 그해 물가 배수 — 1,000만원 기준선은 명목 고정(healthPremiumYear와 같은 비교)
+  const financeIncluded = o.fin * mul > 1000 ? o.fin : 0; // 이자+배당 명목 1,000만원 초과 시 전액, 이하면 0
   return {pensionAnnual, laborAnnual: o.labor, businessAnnual: o.business, otherAnnual: o.other, financeIncluded};
 }
 

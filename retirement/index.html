@@ -2309,11 +2309,12 @@ function onTirptaxInput(){
 }
 
 // 국민연금 개시 시점 피부양자 판정 — 2,000만원 기준선은 명목 고정이라 그때의 명목 국민연금으로 본다
+function businessNominal(p, age){ return otherIncomeReal(p, age).business * Math.pow(1 + (p.inf || 0)/100, Math.max(0, age - p.age)); }   // 사업소득 기간·물가 반영(healthPremiumYear와 같은 값)
 function dependentAtNpStart(p){
   const npNom = npNominalAtStart(p);
   const income = dependentTotalIncome(p, npNom);
   const prop = totalPropertyBase(p);
-  return {npNom, income, prop, check: dependentStatusCheck(income, p.realestate||0, p.hi_business)};
+  return {npNom, income, prop, check: dependentStatusCheck(income, p.realestate||0, businessNominal(p, Math.max(p.ret, p.npage || p.ret)))};
 }
 
 // 공백기·완성기 평균(오늘 돈 가치) — 지표 카드·배너·자동설계 근거가 같은 simulate() 결과를 쓴다
@@ -3226,9 +3227,9 @@ function renderHiView(){
 
   const p = getP();
   const man = v => Math.round(v).toLocaleString();
+  const rows = simulate(p, SA.base).rows;   // 막대·위 타일은 같은 시뮬레이션 결과(실제로 현금흐름에서 빼는 금액)
   // 은퇴~기대수명 연도별 건보료(오늘 가치 월) — 임의계속가입 구간은 파랑, 피부양자 해는 초록(0)
   if(stripEl){
-    const rows = simulate(p, SA.base).rows;
     const mx = Math.max(1, ...rows.map(x => x.hi / x.infMul));
     stripEl.innerHTML = rows.length
       ? '<div class="health-strip">' + rows.map(x => {
@@ -3244,23 +3245,25 @@ function renderHiView(){
   if(seg){ seg.style.display = hasGap ? '' : 'none'; seg.querySelectorAll('button').forEach(bt => { const on = bt.dataset.ph === phase; bt.classList.toggle('on', on); bt.setAttribute('aria-selected', on); }); }
   // 피부양자 판정: 국민연금 개시 시점의 명목 금액으로(기준선 2,000만원은 물가로 오르지 않는 명목 고정)
   const dep = phase === 'gap'
-    ? (() => { const income = dependentTotalIncome(p, 0, p.ret); return {npNom: 0, income, prop: totalPropertyBase(p), check: dependentStatusCheck(income, p.realestate||0, p.hi_business)}; })()
+    ? (() => { const income = dependentTotalIncome(p, 0, p.ret); return {npNom: 0, income, prop: totalPropertyBase(p), check: dependentStatusCheck(income, p.realestate||0, businessNominal(p, p.ret))}; })()
     : dependentAtNpStart(p);
   const totalIncome = dep.income;
   const propBase = dep.prop;
   const check = dep.check;
 
-  // 현금흐름에 실제로 빼는 금액(오늘 가치) — calc.js healthPremiumYear와 같은 계산
-  const hiAt = age => Math.round(healthPremiumYear(p, age, age >= p.npage ? p.np : 0, Math.pow(1 + p.inf/100, age - p.age), p.inf).monthlyReal * 10) / 10;   // simulate와 같은 단위(그 해 물가 배수)
+  // 현금흐름에 실제로 빼는 금액(오늘 가치) — simulate 행(임의계속가입·일반계좌 해외ETF 이익까지 반영)에서 읽는다
+  const rowAt = age => rows.find(r => r.age === age);
+  const hiAt = age => { const x = rowAt(age); return Math.round(healthPremiumYear(p, age, age >= p.npage ? p.np : 0, Math.pow(1 + p.inf/100, age - p.age), p.inf, x ? x.genEtfGain : 0).monthlyReal * 10) / 10; };   // simulate와 같은 호출(일반계좌 해외ETF 이익 포함)
   const hiFull = hiAt(Math.max(p.ret, p.npage));
   const hiGap = hiAt(p.ret);
-  const keep = p.hi_dep === 'yes' && !check.fail;   // 판정 타일도 계산 내역과 같은 시점(공백기/수령 후) 기준
+  const keep = p.hi_dep === 'yes' && !check.fail;   // 계산 내역(선택한 시점)의 피부양자 판정
+  const keepFull = p.hi_dep === 'yes' && !dependentAtNpStart(p).check.fail;   // 위 판정 타일은 항상 국민연금 수령 후 기준 — 연금이 시작되면 탈락하는지가 핵심
   // 큰 숫자 3칸: 공백기(있을 때) · 수령 후 · 판정(+재산 과표)
   if(heroEl){
     const tile = (cap, v) => '<div class="al-tile"><span class="al-cap">'+cap+'</span><b data-amt>'+v.toLocaleString()+'<small>만원/월</small></b><span class="al-s" data-amt>연 약 '+man(v*12)+'만원</span></div>';
     heroEl.innerHTML = (p.npage > p.ret ? tile('공백기 '+p.ret+'~'+(p.npage-1)+'세', hiGap) : '')
       + tile((p.npage > p.ret ? '국민연금 수령 후 ' : '은퇴 후 ')+Math.max(p.ret, p.npage)+'세~', hiFull)
-      + '<div class="al-tile"><span class="al-cap">판정</span><b style="color:'+(keep ? '#248a3d' : '#c93400')+'">'+(keep ? '피부양자 유지' : p.hi_dep === 'yes' ? '지역가입자 전환' : '지역가입자')+'</b><span class="al-s">재산 과표 <span data-amt>'+p.realestate.toLocaleString()+'</span>만원</span></div>';
+      + '<div class="al-tile"><span class="al-cap">판정</span><b style="color:'+(keepFull ? '#248a3d' : '#c93400')+'">'+(keepFull ? '피부양자 유지' : p.hi_dep === 'yes' ? '지역가입자 전환' : '지역가입자')+'</b><span class="al-s">재산 과표 <span data-amt>'+p.realestate.toLocaleString()+'</span>만원</span></div>';
   }
   if(keep){
     const threshold = propBase > 54000 ? 1000 : 2000;
@@ -3274,15 +3277,25 @@ function renderHiView(){
       +'</table>'
       +'<div class="hc-note">'+(check.warn ? '사업소득 '+p.hi_business.toLocaleString()+'만원 — '+check.warn+' · ' : '')+(phase === 'gap' ? '기준선(2,000만원)은 명목 고정이라 소득이 물가만큼 오르면 여유가 줄어요.' : '연금은 매년 물가만큼 오르는데 기준선은 고정이라 여유가 줄어요(오늘 월 '+p.np+'만 → '+p.npage+'세 월 '+dep.npNom+'만).')+'</div>';
   } else {
-    const incomeMonthly = phase === 'gap' ? regionalIncomeMonthly(p, p.ret, 0) : regionalIncomeMonthly(p);
+    const atAge = phase === 'gap' ? p.ret : Math.max(p.ret, p.npage);
+    const mulAt = Math.pow(1 + p.inf/100, atAge - p.age), etfGain = (rowAt(atAge) || {}).genEtfGain || 0;
+    let incomeMonthly = phase === 'gap' ? regionalIncomeMonthly(p, p.ret, 0) : regionalIncomeMonthly(p);
+    if(etfGain > 0){   // 일반계좌 해외ETF 매매차익은 금융소득에 합산(이자+배당과 합쳐 명목 1,000만원 초과 시 전액)
+      const fin = otherIncomeReal(p, atAge).fin, xf = etfGain / mulAt;
+      incomeMonthly += ((fin + xf) * mulAt > 1000 ? fin + xf : 0) / 12 - (fin * mulAt > 1000 ? fin : 0) / 12;
+    }
     const prem = regionalHealthPremium(incomeMonthly, propBase);
+    const hy = healthPremiumYear(p, atAge, phase === 'gap' ? 0 : p.np, mulAt, p.inf, etfGain);
+    const volRow = hy.volContinued ? '<tr><td>임의계속가입</td><td>36개월 고정액 · 위 금액보다 낮은 쪽 적용</td><td>'+(Math.round(hy.monthlyReal*10)/10).toLocaleString()+'만원</td></tr>' : '';
+    const totalMan = hy.volContinued ? Math.round(hy.monthlyReal*10)/10 : prem.total;
     detailEl.innerHTML =
       '<table class="health-calc-table">'
       +'<tr><td>소득분</td><td>소득월액 '+prem.incomeMonthly.toLocaleString()+'만×'+(HEALTH_RATE_INCOME*100).toFixed(2)+'%</td><td>'+prem.incomePremium.toLocaleString()+'만원</td></tr>'
       +'<tr><td>재산분</td><td>'+prem.score.toLocaleString()+'점×'+HEALTH_RATE_PROPERTY_WON+'원</td><td>'+prem.propertyPremium.toLocaleString()+'만원</td></tr>'
       +'<tr class="hc-sum"><td>건강보험료</td><td>소득분+재산분'+(prem.capped?' (월 상/하한)':'')+'</td><td>'+prem.healthPremium.toLocaleString()+'만원</td></tr>'
       +'<tr><td>장기요양보험료</td><td>×'+(HEALTH_RATE_LTC*100).toFixed(2)+'%</td><td>'+prem.ltcPremium.toLocaleString()+'만원</td></tr>'
-      +'<tr class="hc-total"><td>월 합계</td><td></td><td>'+prem.total.toLocaleString()+'만원</td></tr>'
+      +volRow
+      +'<tr class="hc-total"><td>월 합계</td><td></td><td>'+totalMan.toLocaleString()+'만원</td></tr>'
       +'</table>'
       +(p.hi_dep === 'yes' ? '<div class="hc-note" style="color:#c93400;">'+check.reason+'</div>' : '');
   }

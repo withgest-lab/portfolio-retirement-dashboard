@@ -157,6 +157,8 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .page.active{display:flex;flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-bottom:48px;}
 .subpage{display:none;flex-direction:column;gap:16px;}
 .subpage.active{display:flex;}
+/* 스크롤 영역(flex 열) 안의 카드는 줄어들지 않는다 — fillScrollerCard가 min-height를 px로 주면 flex의 '내용 크기 최소값(auto)'이 풀려, 행이 많은 카드(원금기록장·스냅샷 표)나 안내 문구가 길어진 카드가 화면 높이로 눌려 둥근 카드 밖으로 내용이 삐져나와 보였다(2026-10-10) */
+.page > .card,.subpage > .card{flex-shrink:0;}
 /* 서브탭이 있는 페이지: 페이지 자체는 스크롤하지 않고(서브탭바 고정) 활성 서브페이지만 스크롤 */
 .page.active:has(> .subtabbar){overflow:hidden;padding-bottom:0;}
 .page.active:has(> .subtabbar) > .subpage.active{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-bottom:48px;}
