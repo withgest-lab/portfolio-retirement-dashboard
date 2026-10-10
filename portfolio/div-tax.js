@@ -340,7 +340,7 @@ const BASIS_RANK = {log:0, input:1, est:2, unknown:3};
 const worse = (a, b) => (BASIS_RANK[b]||0) > (BASIS_RANK[a]||0) ? b : a;
 function realizeGains(o){
   const method = o.method==='avg' ? 'avg' : 'fifo', fxAt = o.fxAt, buyFx = o.buyFx || {};
-  const sales = [], remaining = {}, needFx = [];
+  const sales = [], remaining = {}, needFx = [], opening = [];
   (o.groups||[]).forEach(g=>{
     const ccy = g.ccy || 'KRW';
     const trades = (g.trades||[]).filter(r=>(r.type==='buy'||r.type==='sell') && +r.quantity>0 && +r.price>0).sort(tradeOrder(ccy));
@@ -355,7 +355,7 @@ function realizeGains(o){
       else { fx = seenFx(); basis = 'est'; }
       if(op.avg == null) basis = 'unknown';
       lots.push({qty:op.q0, nat:op.avg, fx, basis});
-      if(ccy!=='KRW' && !(inFx > 0)) needFx.push(g.key);
+      if(ccy!=='KRW'){ opening.push(g.key); if(!(inFx > 0)) needFx.push(g.key); }
     }
     const take = (qty, sell) => {   // 매도 수량만큼 취득가(원)·외화 원가·근거를 가져온다
       // 원가를 모르는 로트는 처음 팔릴 때 그 매도가·환율을 원가로 본다(양도차익 0, 근거 unknown) — 0원 취득가로 세금이 부풀지 않게
@@ -392,7 +392,7 @@ function realizeGains(o){
     remaining[g.key] = {qty:lots.reduce((s,l)=>s+l.qty,0), cost:lots.reduce((s,l)=>s+l.qty*l.nat*l.fx,0), nat:lots.reduce((s,l)=>s+l.qty*l.nat,0),
       basis: lots.reduce((w,l)=>worse(w, l.basis), 'log')};
   });
-  return {sales, remaining, needFx};
+  return {sales, remaining, needFx, opening};
 }
 // 연도별 양도세 — 해외주식 매도(결제일이 그 해) + 수동 입력(원). 손익통산 후 공제·세율. 원가를 모르는 매도 수(nUnknown)는 화면이 따로 알린다
 function cgtSummary(sales, manual, year){
