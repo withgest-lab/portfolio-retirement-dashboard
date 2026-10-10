@@ -6468,19 +6468,35 @@ async function ensureFxHistory(force){
 }
 function divFxAt(){ const c = loadFxHist(); return DT.makeFxAt(c ? {USD:c.USD, JPY:c.JPY} : null, Date.now(), FX); }
 
-// 전량 매도해 보유 목록에서 사라진 종목 — 그 해 받은 배당이 빠지지 않게 매수/매도 이력으로 "0주 보유"를 만든다
+// 매매 이력(r)이 이 보유(a)의 것인지 — 기본 매칭에 더해, 이력에 금융회사·계좌가 적혀 있고 보유와 다르면 다른 보유로 본다
+// (농협에서 팔고 미래에서 계속 보유할 때 농협 매도가 미래 종목에 붙어 농협 배당은 빠지고 미래 수량은 부풀려지는 것을 막는다)
+function divTradeOwns(r, a){
+  if(!tradeMatchesAsset(r, a)) return false;
+  if(r.company && a.company && r.company!==a.company) return false;
+  if(r.acctType && a.acctType && DT.normAcct(r.acctType)!==DT.normAcct(a.acctType)) return false;
+  return true;
+}
+// 보유 목록에서 사라진 종목 — 그 해 받은 배당이 빠지지 않게 매수/매도 이력으로 "0주 보유"를 만든다.
+//  · 3년 안에 전량 매도한 종목, · 매도 기록 없이 사라졌지만 스냅샷 수량이 매수 이력과 명확히 맞는 종목(inferred — 스냅샷에 마지막으로 보인 시점까지만 보유로 본다)
 function divSoldHoldings(log){
   const out = new Map();
   log.forEach(r=>{
     if(!(r.type==='buy' || r.type==='sell') || r.acctType==='cash' || !r.ticker || r.ticker==='—' || /-USD$/i.test(r.ticker) || r.assetType==='가상자산') return;
-    if(assets.some(a=>tradeMatchesAsset(r, a))) return;
+    if(assets.some(a=>divTradeOwns(r, a))) return;
     const pseudo = {ticker:r.ticker, name:r.name, acctType:r.acctType, company:r.company||null, currency:r.currency||'KRW'};
     const k = divHoldKey(pseudo);
     if(!out.has(k)) out.set(k, Object.assign(pseudo, {key:k, trades:[]}));
     out.get(k).trades.push(r);
   });
-  const cut = Date.now() - 3*365*DIV_DAY;
-  return [...out.values()].filter(g=>g.trades.some(r=>r.type==='sell' && r.at >= cut));
+  const cut = Date.now() - 3*365*DIV_DAY, groups = [...out.values()];
+  const links = DT.linkSnapIds(groups, loadSnaps(), assets.map(a=>a.id));
+  return groups.filter(g=>{
+    const l = links.get(g.key);
+    if(l){ g.snapIds = l.ids; g.endAt = l.endAt; }
+    if(g.trades.some(r=>r.type==='sell' && r.at >= cut)) return true;
+    if(l && !g.trades.some(r=>r.type==='sell') && l.endAt >= cut){ g.inferred = true; return true; }
+    return false;
+  });
 }
 // 배당 이력을 받아 올 티커(보유 + 전량 매도)
 const divTickers = log => [...new Set(assets.filter(divEligible).map(divAssetKey).concat(divSoldHoldings(log).map(divAssetKey)))];
@@ -6526,12 +6542,13 @@ function divMemoReset(){ if(divLedgerMemo) divLedgerMemo.clear(); }
 function buildDividendLedger(year){
   if(divLedgerMemo.has(year)) return divLedgerMemo.get(year);
   const now = Date.now(), cache = loadDivHist(), log = loadTradeLog();
-  const holds = assets.filter(divEligible).map(a=>({a, key:divHoldKey(a), trades: log.filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a))}))
+  const holds = assets.filter(divEligible).map(a=>({a, key:divHoldKey(a), trades: log.filter(r=>(r.type==='buy'||r.type==='sell') && divTradeOwns(r, a))}))
     .concat(divSoldHoldings(log).map(g=>({a:g, key:g.key, trades:g.trades, sold:true})));
   const holdings = holds.map(x=>{
     const a = x.a, h = cache[divAssetKey(a)];
     return {key:x.key, id: x.sold ? null : a.id, ticker:a.ticker, name:a.name, ccy:a.currency||'KRW', acct:divAcctKey(a), legacyAcct:divLegacyAcct(a), company:a.company||null,
-      quantity: x.sold ? 0 : a.quantity, soldOut: !!x.sold, kind: divKindOf(a.ticker, a.name, cache), trades:x.trades, ev: h ? h.ev : [], assetAcct:a.acctType||null};
+      quantity: x.sold ? 0 : a.quantity, soldOut: !!x.sold, kind: divKindOf(a.ticker, a.name, cache), trades:x.trades, ev: h ? h.ev : [], assetAcct:a.acctType||null,
+      snapIds: x.sold ? a.snapIds : null, inferred: !!(x.sold && a.inferred), endAt: x.sold ? a.endAt : null};
   });
   const records = log.filter(r=>r.type==='dividend').map(r=>Object.assign({}, r, {owners: holds.filter(x=>divRecMatchesAsset(r, x.a)).map(x=>x.key)}));
   const acctOf = new Map(holdings.map(h=>[h.key, h.assetAcct]));
@@ -6697,6 +6714,7 @@ function divStatus(it){
   const p = [];
   if(it.src==='proj') p.push(it.known ? '예정' : '예상');
   if(it.qtyBasis==='assumed') p.push('수량 추정');
+  if(it.qtyBasis==='snapinf') p.push('스냅샷 근거');
   if(it.est) p.push('세후 환산');
   return p;
 }

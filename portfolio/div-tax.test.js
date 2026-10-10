@@ -313,3 +313,45 @@ test('금융소득 추가 납부: 세율 구간을 걸치는 경우', () => {
   // 다른 과표 4,500 + 초과 1,000 → 4,500~5,000은 15%, 5,000~5,500은 24%: (75 + 120 − 140) × 1.1 = 60.5
   near(T.finExtraTaxMan(3000, 4500), 60.5, 0.01);
 });
+
+test('옛 스냅샷 id 연결: 수량 곡선이 명확히 맞는 것만', () => {
+  const snap = (t, byQty) => ({ timestamp: t, byAsset: Object.fromEntries(Object.keys(byQty).map(k => [k, byQty[k] * 10000])), byQty });
+  // 가상 종목: 3월 매수 10, 5월 매수 20(누적 30), 8월 전량 매도
+  const g = { key: 'X|general|가상증권A', trades: [{ at: d(2026, 3, 2), type: 'buy', quantity: 10 }, { at: d(2026, 5, 4), type: 'buy', quantity: 20 }, { at: d(2026, 8, 3), type: 'sell', quantity: 30 }] };
+  const snaps = [snap(d(2026, 4, 1), { old1: 10, live: 5 }), snap(d(2026, 6, 1), { old1: 30, live: 5 }), snap(d(2026, 7, 1), { old1: 30, live: 5 }), snap(d(2026, 9, 1), { live: 5 })];
+  const l = T.linkSnapIds([g], snaps, ['live']);
+  assert.deepEqual(l.get(g.key), { ids: ['old1'], endAt: d(2026, 7, 1) });
+  // 현재 자산 id는 후보가 아니다 / 수량이 안 맞으면 연결하지 않는다
+  assert.equal(T.linkSnapIds([g], [snap(d(2026, 4, 1), { z: 7 }), snap(d(2026, 6, 1), { z: 9 })], []).size, 0);
+  // 한 시점만 일치: 단가가 체결 단가와 ±25% 안이면 연결, 아니면 버림
+  const g1 = { key: 'Y', trades: [{ at: d(2026, 3, 2), type: 'buy', quantity: 10, totalKRW: 100000 }] };
+  assert.equal(T.linkSnapIds([g1], [{ timestamp: d(2026, 4, 1), byAsset: { o: 105000 }, byQty: { o: 10 } }], []).size, 1);
+  assert.equal(T.linkSnapIds([g1], [{ timestamp: d(2026, 4, 1), byAsset: { o: 300000 }, byQty: { o: 10 } }], []).size, 0);
+  // 같은 id가 두 종목에 맞으면 둘 다 버린다
+  const g2 = { key: 'Z', trades: [{ at: d(2026, 3, 2), type: 'buy', quantity: 10, totalKRW: 100000 }] };
+  assert.equal(T.linkSnapIds([g1, g2], [{ timestamp: d(2026, 4, 1), byAsset: { o: 105000 }, byQty: { o: 10 } }], []).size, 0);
+});
+
+test('배당락일 수량: 연결된 옛 스냅샷·매도 기록 없이 사라진 종목', () => {
+  const now = d(2026, 10, 10);
+  const snaps = [[d(2026, 4, 1), 10], [d(2026, 6, 1), 30], [d(2026, 7, 1), 30]].map(([t, q]) => ({ timestamp: t, byAsset: { old1: q * 1e4 }, byQty: { old1: q } }));
+  const buys = [{ at: d(2026, 3, 2), type: 'buy', quantity: 10 }, { at: d(2026, 5, 4), type: 'buy', quantity: 20 }];
+  const h = { id: null, quantity: 0, soldOut: true, inferred: true, snapIds: ['old1'], endAt: d(2026, 7, 1) };
+  assert.deepEqual(T.qtyAt(h, d(2026, 6, 20), buys, snaps, now), { qty: 30, basis: 'snapinf' });
+  assert.deepEqual(T.qtyAt(h, d(2026, 4, 10), buys, snaps, now), { qty: 10, basis: 'snapinf' });   // 4/1 스냅샷(10주)에서 가까움
+  // 마지막으로 보인 시점 뒤의 배당락은 보유 여부가 불명확해 0
+  assert.equal(T.qtyAt(h, d(2026, 7, 20), buys, snaps, now).qty, 0);
+  // 연결된 스냅샷으로 전량 매도 종목도 수량을 정한다(매도 기록은 있음)
+  const sold = { id: null, quantity: 0, soldOut: true, snapIds: ['old1'] };
+  assert.deepEqual(T.qtyAt(sold, d(2026, 6, 20), buys.concat([{ at: d(2026, 8, 3), type: 'sell', quantity: 30 }]), snaps, now), { qty: 30, basis: 'snap' });
+});
+
+test('장부: 매도 기록 없이 사라진 종목의 배당은 스냅샷 근거로 추가', () => {
+  const now = d(2026, 10, 10);
+  const snaps = [d(2026, 4, 1), d(2026, 6, 1), d(2026, 7, 1)].map(t => ({ timestamp: t, byAsset: { old1: 3e5 }, byQty: { old1: 30 } }));
+  const h = holding({ key: 'X|general|', id: null, quantity: 0, soldOut: true, inferred: true, snapIds: ['old1'], endAt: d(2026, 7, 1), company: null,
+    trades: [{ at: d(2026, 3, 2), type: 'buy', quantity: 30 }], ev: [{ ex: d(2026, 6, 27), dps: 100 }, { ex: d(2026, 9, 27), dps: 100 }] });
+  const items = T.buildLedger({ year: 2026, now, holdings: [h], records: [], snaps });
+  assert.equal(items.length, 1);   // 6/27 배당락만 — 9/27은 마지막으로 보인 7/1 이후라 제외
+  assert.equal(items[0].qty, 30); assert.equal(items[0].qtyBasis, 'snapinf'); assert.equal(items[0].src, 'auto');
+});

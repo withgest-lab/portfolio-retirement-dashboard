@@ -4,7 +4,7 @@
 
    금액 단위: 장부·양도세는 원, 금융소득 추가 세액(finExtraTaxMan)은 만원(소득세 구간표가 만원 기준).
    근거(basis) 필드 — 화면이 "추정"을 표시하는 기준이다:
-     qtyBasis  snap(31일 이내 스냅샷 수량에서 매매 재생) · log(매매 이력·스냅샷이 배당락일 전부터 있음) · now(앞으로의 배당, 현재 수량) · assumed(근거 없음 → 현재 수량 가정)
+     qtyBasis  snapinf(매도 기록 없이 사라진 종목 — 연결된 스냅샷 수량) · snap(31일 이내 스냅샷 수량에서 매매 재생) · log(매매 이력·스냅샷이 배당락일 전부터 있음) · now(앞으로의 배당, 현재 수량) · assumed(근거 없음 → 현재 수량 가정)
      payBasis  record(기록일) · learned(이 종목의 실제 지급 지연을 기록에서 학습) · est(배당락일 + 시장별 지연)
      fxBasis   hist(지급일·결제일 환율) · now(현재 환율) · na(원화)
    세법 근거
@@ -116,15 +116,21 @@ function makeFxAt(series, now, current){
 // 가장 가까운 기준점(스냅샷 수량 또는 현재 수량)에서 그 사이 매매만 앞/뒤로 재생한다 — 보유종목을 직접 고쳐(이력 없이) 수량이 바뀌어도
 // 스냅샷이 그 전 수량을 기억하고 있으면 과거 배당락일에 새 수량을 쓰지 않는다.
 // 배당 권리는 날짜로 판단: 체결일(시장 날짜) < 배당락일이면 권리 있음(배당락일 당일 매수는 못 받는다).
+// h.snapIds: 이 보유의 스냅샷 id들(목록에서 사라진 종목은 linkSnapIds가 찾아 준 옛 id, 없으면 [h.id])
+// h.inferred: 매도 기록 없이 목록에서 사라진 종목 — h.endAt(스냅샷에 마지막으로 보인 시각)까지만 보유로 보고, 그 뒤 배당락은 수량 0
 function qtyAt(h, ex, trades, snaps, now){
+  const inferred = !!h.inferred;
+  if(inferred && !(ex <= h.endAt)) return {qty: 0, basis:'snapinf'};
   if(ex > now) return {qty: Math.max(0, h.quantity||0), basis:'now'};
   const exD = dayStart(ex), ccy = h.ccy || 'KRW';
   const after = r => tradeDay(r.at, ccy) >= exD;
-  const anchors = [{t: now, q: h.quantity||0, snap:false}];
-  if(h.id != null) (snaps||[]).forEach(s=>{
-    const v = s.byAsset && s.byAsset[h.id], q = s.byQty && s.byQty[h.id];
+  const anchors = inferred ? [] : [{t: now, q: h.quantity||0, snap:false}];
+  const ids = h.snapIds && h.snapIds.length ? h.snapIds : (h.id != null ? [h.id] : []);
+  (snaps||[]).forEach(s=>ids.forEach(id=>{
+    const v = s.byAsset && s.byAsset[id], q = s.byQty && s.byQty[id];
     if(v > 0 && q > 0) anchors.push({t: s.timestamp, q, snap:true});
-  });
+  }));
+  if(!anchors.length) return {qty: 0, basis:'snapinf'};
   let best = anchors[0];
   anchors.forEach(a=>{ if(Math.abs(a.t - ex) < Math.abs(best.t - ex)) best = a; });
   let q = best.q;
@@ -135,10 +141,61 @@ function qtyAt(h, ex, trades, snaps, now){
     else if(r.at > best.t && !after(r)) q += s*n;                  // 기준점이 앞: 그 뒤~배당락 전 체결을 적용
   });
   let basis;
-  if(best.snap && Math.abs(best.t - ex) <= 31*DAY) basis = 'snap';
+  if(inferred) basis = 'snapinf';
+  else if(best.snap && Math.abs(best.t - ex) <= 31*DAY) basis = 'snap';
   else if(h.soldOut || anchors.some(a=>a.snap && a.t <= ex) || (trades||[]).some(r=>(r.type==='buy'||r.type==='sell') && !after(r))) basis = 'log';
   else basis = 'assumed';
   return {qty: Math.max(0, q), basis};
+}
+
+// ── 옛 스냅샷 id 연결 ──
+// 스냅샷에는 자산 id→수량·평가액만 있어 목록에서 사라진 종목은 어느 종목인지 모른다. 그 id를 과거 보유(매매 이력으로 만든 수량 곡선)와 대조해
+// 명확하게 맞는 것만 이어 준다 — 같은 시점 수량이 2번 이상 일치(어긋남 20% 이하)하거나, 1번 일치 + 단가가 가까운 체결 단가의 ±25% 이내.
+// groups: [{key, trades:[{at,type,quantity,totalKRW}]}], snaps, liveIds(현재 자산 id) → Map(key → {ids, endAt})  (endAt = 연결된 스냅샷 중 마지막 시각)
+function linkSnapIds(groups, snaps, liveIds){
+  const live = new Set([...(liveIds||[])].map(String)), pts = new Map();
+  (snaps||[]).forEach(s=>{
+    const bq = s.byQty || {}, ba = s.byAsset || {};
+    Object.keys(bq).forEach(id=>{
+      const q = +bq[id], v = +ba[id];
+      if(live.has(String(id)) || !(q > 0 && v > 0)) return;
+      if(!pts.has(id)) pts.set(id, []);
+      pts.get(id).push({t:s.timestamp, q, v});
+    });
+  });
+  const cands = [];   // {key, id, m, endAt, ts:Set}
+  (groups||[]).forEach(g=>{
+    const trs = (g.trades||[]).filter(r=>(r.type==='buy'||r.type==='sell') && +r.quantity>0).slice().sort((a,b)=>a.at-b.at);
+    if(!trs.length) return;
+    const sgn = r => (r.type==='sell' ? -1 : 1) * (+r.quantity);
+    const hasSell = trs.some(r=>r.type==='sell');
+    const opening = hasSell ? Math.max(0, -trs.reduce((s,r)=>s+sgn(r), 0)) : 0;   // 전량 매도 종목이면 기록 이전부터 가진 수량
+    const qAt = t => opening + trs.reduce((s,r)=>s + (r.at <= t ? sgn(r) : 0), 0);
+    pts.forEach((P, id)=>{
+      let m = 0, x = 0, endAt = 0;
+      P.forEach(p=>{ const q = qAt(p.t); if(Math.abs(p.q - q) <= Math.max(1e-6, q*0.005)){ m++; endAt = Math.max(endAt, p.t); } else x++; });
+      if(!m || x > (m + x) * 0.2) return;
+      if(m < 2){
+        const p = P.find(p=>Math.abs(p.q - qAt(p.t)) <= Math.max(1e-6, qAt(p.t)*0.005));
+        const near = trs.filter(r=>+r.totalKRW > 0).sort((a,b)=>Math.abs(a.at-p.t) - Math.abs(b.at-p.t))[0];
+        if(!near) return;
+        const ref = near.totalKRW / near.quantity, unit = p.v / p.q;
+        if(Math.abs(unit/ref - 1) > 0.25) return;
+      }
+      cands.push({key:g.key, id, m, endAt, ts:new Set(P.map(p=>p.t))});
+    });
+  });
+  const idCount = new Map();
+  cands.forEach(c=>idCount.set(c.id, (idCount.get(c.id)||0) + 1));
+  const out = new Map();
+  cands.filter(c=>idCount.get(c.id)===1).sort((a,b)=>b.m - a.m).forEach(c=>{   // 같은 id가 여러 종목에 맞으면 버린다
+    const cur = out.get(c.key) || {ids:[], endAt:0, ts:new Set()};
+    if([...c.ts].some(t=>cur.ts.has(t))) return;   // 같은 시점에 두 id가 동시에 있으면 한 종목의 곡선이 아니다
+    cur.ids.push(c.id); cur.endAt = Math.max(cur.endAt, c.endAt); c.ts.forEach(t=>cur.ts.add(t));
+    out.set(c.key, cur);
+  });
+  out.forEach((v, k)=>out.set(k, {ids:v.ids, endAt:v.endAt}));
+  return out;
 }
 
 // ── 지급일 ──
@@ -409,7 +466,7 @@ const etfDivIncome = (sales, year) => sales.filter(s=>s.year===year && s.ccy==='
 
 const api = {DAY, DIV_WHT, SHELTERED, CGT_EXEMPT, CGT_RATE, FIN_THRESHOLD_MAN, INCOME_TAX_BANDS,
   normAcct, isSheltered, incomeTaxMan, marginalRate, finExtraTaxMan, dateStr, addBizDays, nextBiz, tradeDay, settleDate, makeFxAt,
-  qtyAt, basePay, payDate, learnLag, freqOf, periodOf, recordAmounts, buildLedger, openingAvg, realizeGains, cgtSummary, cgtTaxOf, etfDivIncome};
+  qtyAt, linkSnapIds, basePay, payDate, learnLag, freqOf, periodOf, recordAmounts, buildLedger, openingAvg, realizeGains, cgtSummary, cgtTaxOf, etfDivIncome};
 if(typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.DivTax = api;
 })(typeof window !== 'undefined' ? window : this);
