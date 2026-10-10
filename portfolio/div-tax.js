@@ -280,7 +280,7 @@ function recordAmounts(r, acct){
    o.snaps, o.fxAt(ccy, ts), o.dismiss(Set — 새 키 "key|날짜"와 옛 키 "티커|계좌|날짜" 모두), o.now
    기록은 연도와 무관하게 전 회차와 짝짓는다: ① exAt(배당락일)이 같은 회차 ② 나머지는 지급일이 가장 가까운 회차(창 안, 가까운 쌍부터).
    항목: {src:'confirmed'|'auto'|'proj', id, key, akey, name, ticker, acct, company, ccy, ex, pay, qty, dps, gross, wht, net, est, known,
-          qtyBasis, payBasis, fxBasis, guess} — guess = 화면에 "추정"으로 보일 항목(수량 근거 없음 또는 작년 회차로 만든 예상) */
+          qtyBasis, payBasis, fxBasis, guess, ckey} — ckey = 확정 항목이 대신한 야후 회차 키("보유키|배당락일"), guess = 화면에 "추정"으로 보일 항목(수량 근거 없음 또는 작년 회차로 만든 예상) */
 function buildLedger(o){
   const now = o.now, year = o.year;
   const y0 = new Date(year,0,1).getTime(), y1 = new Date(year+1,0,1).getTime();
@@ -322,6 +322,7 @@ function buildLedger(o){
       cyc.forEach(c=>{ if(!c.rec && x.r.at >= c.e.ex - 3*DAY && x.r.at <= c.pd.pay + c.win) pairs.push({x, c, d:Math.abs(x.r.at - c.pd.pay)}); });
     });
     pairs.sort((a,b)=>a.d-b.d).forEach(p=>{ if(!p.x.used && !p.c.rec){ p.c.rec = p.x; p.x.used = true; } });
+    cyc.forEach(c=>{ if(c.rec) c.rec.ckey = `${h.key}|${dateStr(c.e.ex)}`; });   // 이 확정 기록이 대신한 회차 — 기록을 지울 때 같은 회차 자동 항목이 되살아나지 않게 화면이 제외 목록에 넣는다
     const mk = (ex, pay, payBasis, dps, q, src, known) => {
       const fx = pay <= now ? fxAt(h.ccy, pay) : fxAt(h.ccy, now + DAY);
       const gross = dps * q.qty * fx.rate, wht = tax ? gross*rate : 0;
@@ -358,6 +359,8 @@ function buildLedger(o){
       items.push(mk(k.ex, pd.pay, pd.basis, k.dps, {qty:h.quantity, basis:'now'}, 'proj', false));
     });
   });
+  const recById = new Map(recs.map(x=>[x.r.id, x]));
+  items.forEach(it=>{ if(it.src==='confirmed'){ const x = recById.get(it.id); if(x && x.ckey) it.ckey = x.ckey; } });
   return items.sort((a,b)=>a.pay-b.pay);
 }
 

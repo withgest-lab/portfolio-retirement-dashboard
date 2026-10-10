@@ -121,6 +121,14 @@ test('장부: 자동·예상·기록 중복 제거·제외', () => {
   assert.equal(T.buildLedger({ year: 2026, now, holdings: [h], records: [], snaps: [], dismiss: new Set([k]) }).length, items.length - 1);
   const oldKey = `X|general|${T.dateStr(auto[0].ex)}`;
   assert.equal(T.buildLedger({ year: 2026, now, holdings: [h], records: [], snaps: [], dismiss: new Set([oldKey]) }).length, items.length - 1);
+  // 확정 기록은 자기가 대신한 회차 키(ckey)를 알려 준다 — 기록을 지울 때 이 키를 제외하면 같은 회차 자동 항목이 되살아나지 않는다
+  const c = items2.find(i => i.src === 'confirmed');
+  assert.ok(c.ckey && items.some(i => i.key === c.ckey));
+  const items3 = T.buildLedger({ year: 2026, now, holdings: [h], records: [], snaps: [], dismiss: new Set([c.ckey]) });
+  assert.equal(items3.length, items.length - 1);
+  // 짝지어진 회차가 없는 기록(보유 종목과 무관)은 ckey가 없다
+  const lone = T.buildLedger({ year: 2026, now, holdings: [h], records: [{ id: 'r9', type: 'dividend', at: d(2026, 5, 5), name: '가상 배당처', acct: 'general', currency: 'KRW', totalKRW: 1000, owners: [] }], snaps: [] });
+  assert.equal(lone.find(i => i.src === 'confirmed').ckey, undefined);
 });
 
 test('장부: 비과세 계좌는 원천징수 0, 미국 배당은 지급일 환율', () => {

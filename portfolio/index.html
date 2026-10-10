@@ -445,6 +445,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .fm-a .btn{padding:8px 18px;font-size:13px;min-width:76px;}
 .fm-seg{width:100%;flex-wrap:nowrap;}
 .fm-seg button{flex:1 1 0;padding:8px 6px;font-size:12.5px;white-space:nowrap;}
+/* 배당 폼: 세후/세전 스위치 + ⓘ는 왼쪽, 원금기록장 스위치와 버튼은 오른쪽 한 줄 */
+.dv-form .fm-seg{width:auto;flex:0 0 auto;}
+.dv-form .fm-seg button{flex:0 0 auto;padding:7px 14px;}
+.dv-segg{display:inline-flex;align-items:center;gap:8px;margin-right:auto;}
 .fm-tabs{margin-bottom:12px;}
 .fm-seg button.m-buy.active{color:#ff3b30;} .fm-seg button.m-sell.active{color:#0a84ff;} .fm-seg button.m-cash.active{color:#248a3d;}
 .fm-seg button.m-set.active{color:#248a3d;} .fm-seg button.m-in.active{color:#007aff;} .fm-seg button.m-out.active{color:#ff3b30;} .fm-seg button.m-div.active{color:#c76a00;}
@@ -556,7 +560,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .card .tbl-wrap.tbl-cap.dv-st table.table-auto th,.card .tbl-wrap.tbl-cap.dv-st table.table-auto td{font-size:13px;white-space:nowrap;text-align:right;}
 .card .tbl-wrap.tbl-cap.dv-st table.table-auto th{font-size:10.5px;}
 .card .tbl-wrap.tbl-cap.dv-st table.table-auto th:first-child,.card .tbl-wrap.tbl-cap.dv-st table.table-auto td:first-child{text-align:left;width:100%;max-width:0;}
-@media(max-width:599px){ .card .tbl-wrap.tbl-cap.dv-st table.table-auto th:nth-child(4),.card .tbl-wrap.tbl-cap.dv-st table.table-auto tr:not(.dv-open) td:nth-child(4){display:none;} .dv-row{grid-template-columns:34px minmax(0,1fr) auto 62px;column-gap:6px;} }
+@media(max-width:599px){ #divStock .tbl-wrap.tbl-cap.dv-st table.table-auto th:nth-child(4),#divStock .tbl-wrap.tbl-cap.dv-st table.table-auto tr:not(.dv-open) td:nth-child(4){display:none;}   /* 종목별 '다음' 열만 — 양도세 표의 수정·삭제 아이콘 열은 접힘에서도 보인다 */
+   .dv-row{grid-template-columns:34px minmax(0,1fr) auto 62px;column-gap:6px;} }
 .dv-st-row{cursor:pointer;}
 .dv-st-row td:nth-child(3){font-weight:700;}
 .dv-tn{display:flex;align-items:center;gap:6px;min-width:0;}
@@ -587,6 +592,9 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   display:flex;gap:10px;align-items:center;}
 @media (hover: hover) { .suggest-item:hover{background:var(--color-section-bg);} }
 .suggest-item:last-child{border-bottom:none;}
+.suggest-head{padding:6px 14px 3px;font-size:10px;font-weight:700;color:var(--color-tertiary);}
+.dv-flash{animation:dvflash 1.5s ease-out;}
+@keyframes dvflash{0%,55%{background:rgba(0,122,255,.14);}100%{background:transparent;}}
 
 /* ── 비중 ── */
 .biased-wrap{display:flex;gap:0;align-items:flex-start;flex-wrap:wrap;}
@@ -1568,7 +1576,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <script src="../shared/dialog.js"></script>
 <script src="../shared/icons.js"></script>
 <script src="../shared/ios-select.js"></script>
-<script src="div-tax.js?v=20261010"></script>
+<script src="div-tax.js?v=20261011"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
 /* ════════════════════════════════════════
@@ -3472,10 +3480,11 @@ function adjustCashBalance(currency, amountInCurrency, sign, company, cashAcctTy
 }
 
 function addTradeLog(entry){
-  const arr = loadTradeLog();
-  arr.unshift({ id: uid(), ...entry });
+  const arr = loadTradeLog(), rec = { id: uid(), ...entry };
+  arr.unshift(rec);
   saveTradeLog(arr);
   renderSoldHistory();
+  return rec.id;
 }
 
 function deleteSoldHistory(id){
@@ -4364,7 +4373,7 @@ function executeTrade(){
     const arr = loadTradeLog().filter(r=>r.id!==tradeLogId);
     saveTradeLog(arr);
     renderSoldHistory();
-    renderCapitalGainsTax();
+    renderTaxViews();   // 양도세 표뿐 아니라 한눈에 요약·할 일, 금융소득(해외 ETF 매매차익)도 같은 이력을 쓴다
     renderYearlyReturns();
     return;
   }
@@ -5468,6 +5477,7 @@ function addCgtManual(){
   const arr = loadCgtManual();
   arr.push({id:'cgt'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36), at:new Date(dateV+'T00:00:00').getTime(), name, pnl:Math.round(man*10000)});
   saveCgtManual(arr);
+  ['cgt_date','cgt_name','cgt_pnl'].forEach(id=>{ const f = document.getElementById(id); if(f) f.value = ''; });   // 다시 그릴 때 입력값이 되살아나 중복 추가되지 않게 비운다
   renderTaxViews();
 }
 async function deleteCgtManual(id){
@@ -5547,8 +5557,7 @@ function renderCapitalGainsTax(){
   if(!el) return;
   const year = taxYear(), isCur = year===new Date().getFullYear();
   const cg = cgtData(year), log = loadTradeLog(), s = cg.sum, set = cg.set;
-  const items = s.sales.map(x=>({src:'app', x, r:log.find(r=>r.id===x.id), id:x.id, name:x.name, at:x.settle, pnl:x.gain}))
-    .concat(s.manual.map(m=>({src:'manual', id:m.id, name:m.name, at:m.at, pnl:m.pnl}))).sort((a,b)=>b.at-a.at);
+  const items = s.sales.map(x=>({src:'app', x, r:log.find(r=>r.id===x.id), id:x.id, name:x.name, at:x.settle, pnl:x.gain})).sort((a,b)=>b.at-a.at);   // 수동 입력은 오른쪽 '직접 입력'에만 보인다(같은 기록을 두 곳에 쓰지 않는다)
   const gainMan = Math.round(s.gain/10000), taxableMan = Math.round(s.taxable/10000), taxM = Math.round(s.tax/10000), leftMan = Math.round(s.left/10000);
   const tile = (lbl, val, cls) => `<div class="cgt-t"><div class="cgt-l">${lbl}</div><div class="cgt-v ${cls||''}">${val}</div></div>`;
   let notes = '';
@@ -5735,7 +5744,7 @@ function renderPrincipalLedger(){
     const dt = new Date(r.at);
     const dtStr = `${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
     const badge = isIn
-      ? `<span class="acctType-badge" style="background:#34c75920;color:#34c759;">입금</span>`
+      ? `<span class="acctType-badge" style="background:#34c75920;color:#34c759;">${r.src==='dividend' ? '배당' : '입금'}</span>`
       : `<span class="acctType-badge" style="background:#ff3b3020;color:var(--color-up);">출금</span>`;
     const mainRow = `<tr>
       <td style="text-align:left;font-size:12px;color:var(--color-tertiary);">${dtStr}</td>
@@ -5838,7 +5847,9 @@ function addPrincipalLedgerEntry(){
 
 async function deletePrincipalLedgerEntry(id){
   if(!await iosConfirm({title:'원금 기록 삭제', message:'삭제한 기록은 되돌릴 수 없어요.', okText:'삭제', destructive:true})) return;
-  saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
+  const rest = loadTradeLog().filter(r=>r.id!==id);
+  rest.forEach(r=>{ if(r.principalId===id) r.principalId = null; });   // 배당 기록에서 이 입금과의 연결을 푼다
+  saveTradeLog(rest);
   renderPrincipalLedger();
   renderMonthlyTable();
   drawPrincipalVsValueChart();
@@ -6580,12 +6591,14 @@ const divYear = () => divYearSel!=null ? divYearSel : new Date().getFullYear();
 let divSelMonth = null;      // 월별 보기에서 연 달(0~11) — null이면 올해는 이번 달, 지난해는 배당이 있는 마지막 달
 let divSelStock = null;      // 종목별 보기에서 펼친 종목 키
 let divEditKey = null;       // 수정 중인 항목(확정은 기록 id, 자동은 항목 key)
-let divCashAdd = false;      // 자동 배당을 확인할 때 현금 잔액에도 더할지
+let divEditCtx = null;       // 수정 폼이 열린 보기(monthly|stock) — 두 보기가 같은 항목을 그려도 폼은 한 곳에만 연다
+let divFlashId = null;       // 방금 추가·저장한 항목(목록에서 잠깐 강조)
+const divPr = {};            // 폼별 "원금기록장에 추가" 스위치 상태 — 키는 폼 접두사(dn_monthly·de_stock …)
 let divCo = 'all';           // 금융회사별 보기(all=합계, 월별·종목별 공용) — 증권사 앱과 계좌별로 대조할 때 쓴다
 const DIV_CO_OPTS = [['all','합계'],['nh','농협'],['mf','미래']];
 const divCoItems = items => divCo==='all' ? items : items.filter(it=>it.company===divCo);
 const divCoHeld = a => divCo==='all' || a.company===divCo;
-const divAddOpen = {}, divBasis = {monthly:'net', stock:'net'};
+const divAddOpen = {}, divBasis = {};   // divBasis: 폼 접두사 → 'net'(세후, 기본)|'gross'(세전)
 const DIV_ACCT_LABEL = {general:'일반', isa:'ISA', pension_personal:'개인연금', pension_retirement:'퇴직연금', irp:'IRP'};
 const DIV_ACCT_OPTS = [['general','일반계좌'],['isa','ISA'],['pension_personal','개인연금'],['pension_retirement','퇴직연금'],['irp','IRP 개인']];
 const divFx = c => c==='USD' ? FX.USD : c==='JPY' ? FX.JPY : 1;
@@ -6619,31 +6632,75 @@ function divCalcAmounts(acct, ccy, amountKRW, basis){
 // 배당 확정 기록 한 건 저장 — 수동 입력·자동 항목 확인이 같은 경로(자산·현금 잔액은 건드리지 않는다)
 function recordDividend(o){
   const c = divCalcAmounts(o.acct, o.ccy, o.amountKRW, o.basis);
-  addTradeLog({name:o.name, ticker:o.ticker||'—', type:'dividend', at:o.at, acctType:'cash', assetType:null, company:o.company||null, acct:o.acct,
+  const e = {name:o.name, ticker:o.ticker||'—', type:'dividend', at:o.at, acctType:'cash', assetType:null, company:o.company||null, acct:o.acct,
     price:o.dps ?? null, quantity:o.qty ?? null, currency:o.ccy, totalKRW:c.net, pnl:c.net, pnlPct:null, gross:c.gross, wht:c.wht,
-    exAt:o.ex || null, src:o.src || 'manual', reason:'', cashAdjusted:null});
+    exAt:o.ex || null, src:o.src || 'manual', reason:'', cashAdjusted:null, principalId:o.principalId || null};
+  if(o.id) e.id = o.id;
+  addTradeLog(e);
   return c;
 }
-function divAddCash(ccy, netKRW, company, assetAcct){
-  adjustCashBalance(ccy, netKRW/divFx(ccy), +1, company||null, assetAcct||null);
-  saveAssets(); renderAll();
+// 배당(세후, 실제 입금액)을 원금기록장의 입금으로 — 원금이 그만큼 늘어난 것으로 봐 원금 대비 자산가치를 맞춘다(자산·현금 잔액은 건드리지 않는다)
+function divPrincipalEntry(id, divId, f, net){
+  return {id, divId, name:f.name, ticker:'—', type:'deposit', at:f.at, acctType:'cash', assetType:null, company:f.company||null, price:null, quantity:null,
+    currency:'KRW', totalKRW:net, pnl:null, pnlPct:null, reason:'', cashAdjusted:null, src:'dividend'};
+}
+// 수정·저장 때 배당 기록과 원금 입금을 같이 맞춘다(arr = 매매이력 배열, r = 배당 기록) — 스위치를 껐으면 입금을 지운다
+function divSyncPrincipal(arr, r, f, net, on){
+  const i = r.principalId ? arr.findIndex(x=>x.id===r.principalId) : -1;
+  if(on){
+    if(i>=0) Object.assign(arr[i], {at:f.at, name:f.name, company:f.company||null, totalKRW:net, currency:'KRW'});
+    else { const id = uid(); arr.unshift(divPrincipalEntry(id, r.id, f, net)); r.principalId = id; }
+  } else if(i>=0){ arr.splice(i, 1); r.principalId = null; }
 }
 
-// 다시 그려져도 입력 중이던 수동 입력 폼 값이 지워지지 않게(시세·배당 정보 갱신이 끝나며 다시 그릴 수 있다)
+// 다시 그려져도 입력 중이던 폼 값이 지워지지 않게(시세·배당 정보 갱신이 끝나며 다시 그릴 수 있다) — 같은 폼(data-k)일 때만 되살린다
 function divSetHtml(el, ctx, html){
-  const keep = {};
-  el.querySelectorAll(`#dnew_wrap_${ctx} input, #dnew_wrap_${ctx} select`).forEach(f=>{ if(f.id) keep[f.id] = f.value; });
+  if(el._divHtml===html && el.firstChild) return;   // 그릴 내용이 그대로면 손대지 않는다(입력 중인 값·안내 문구·포커스 유지)
+  el._divHtml = html;
+  const keep = {}, act = document.activeElement;
+  const actId = act && el.contains(act) && act.id ? act.id : null;
+  const caret = actId && typeof act.selectionStart==='number' ? [act.selectionStart, act.selectionEnd] : null;
+  el.querySelectorAll('.dv-form').forEach(fm=>{
+    const m = {}, sg = {};
+    fm.querySelectorAll('input, select').forEach(f=>{ if(f.id) m[f.id] = {v:f.value, d:Object.assign({}, f.dataset)}; });
+    fm.querySelectorAll('.suggest-box').forEach(b=>{ if(b.id) sg[b.id] = {h:b.innerHTML, d:b.style.display}; });
+    const er = [...fm.querySelectorAll('.field-err')].map(e=>{ const c = e.closest('label') && e.closest('label').querySelector('input,select'); return c && c.id ? [c.id, e.textContent] : null; }).filter(Boolean);
+    keep[fm.dataset.p] = {k:fm.dataset.k, m, sg, er};
+  });
   el.innerHTML = html;
-  Object.keys(keep).forEach(id=>{ const f = document.getElementById(id); if(f && keep[id]!=='') f.value = keep[id]; });
-  const sid = `dn_stock_${ctx}`, nid = `dn_name_${ctx}`;
-  if(document.getElementById(sid)) toggleCustomInput(sid, nid);
+  el.querySelectorAll('.dv-form').forEach(fm=>{
+    const o = keep[fm.dataset.p]; if(!o || o.k!==fm.dataset.k) return;
+    Object.keys(o.m).forEach(id=>{
+      const f = document.getElementById(id); if(!f) return;
+      if(o.m[id].v!=='') f.value = o.m[id].v;
+      Object.assign(f.dataset, o.m[id].d);
+    });
+    Object.keys(o.sg).forEach(id=>{ const b = document.getElementById(id); if(b){ b.innerHTML = o.sg[id].h; b.style.display = o.sg[id].d; } });
+    o.er.forEach(([id, msg])=>fieldError(id, msg));   // 안내 문구도 다시 그리며 지워지지 않게
+  });
+  // 입력 중에 다시 그려져도(시세·배당 정보 갱신) 포커스와 커서가 그대로 — 글자가 끊기지 않게
+  if(actId){
+    const f = document.getElementById(actId);
+    if(f){ try{ f.focus({preventScroll:true}); if(caret) f.setSelectionRange(caret[0], caret[1]); }catch(e){} }
+  }
 }
 function setDivYear(y){ divYearSel = parseInt(y,10); divSelMonth = null; divSelStock = null; divEditKey = null; renderAllDividendViews(); }
 function renderAllDividendViews(){
   divMemoReset();
   renderDividendMonthly();
   renderDividendByStock();
-  renderTaxViews();   // 세금 화면이 같은 장부를 쓰므로 함께 갱신
+  // 세금 화면이 같은 장부를 쓰지만 세금 탭에 들어갈 때 어차피 다시 그린다(PAGE_RENDER_HOOKS) — 지금 보고 있을 때만 갱신해 배당 화면 반응을 늦추지 않는다
+  const tp = document.getElementById('page_tax');
+  if(tp && tp.classList.contains('active')) renderTaxViews();
+  divRevealFlash();
+}
+// 방금 추가·저장한 행을 보이는 목록 안으로 가져와 잠깐 강조한다
+function divRevealFlash(){
+  if(!divFlashId) return;
+  const rows = [...document.querySelectorAll('.dv-row.dv-flash')].filter(r=>r.offsetParent!==null);
+  if(rows[0]) rows[0].scrollIntoView({block:'nearest'});
+  const id = divFlashId;
+  setTimeout(()=>{ if(divFlashId===id) divFlashId = null; }, 1600);
 }
 function divReload(){ ensureDividendHistory(true); }
 function divPick(kind, v){
@@ -6653,16 +6710,18 @@ function divPick(kind, v){
   renderAllDividendViews();
 }
 function setDivCo(k){ divCo = k; divEditKey = null; divMemoReset(); renderDividendMonthly(); renderDividendByStock(); }
-function toggleDivCash(btn){ divCashAdd = !divCashAdd; toggleBanner(btn); }
+function toggleDivPr(p, btn){ divPr[p] = !divPr[p]; toggleBanner(btn); }
 function toggleDivAdd(ctx, btn){ divAddOpen[ctx] = !divAddOpen[ctx]; toggleBanner(btn); }
 
 // 항목 하나를 확정 기록으로 — 원본 계산값(세전)을 그대로 쓰고 날짜·금액은 수정한 값이 있으면 그것으로
 function divItemById(key){ return buildDividendLedger(divYear()).find(it=>(it.src==='confirmed' ? it.id : it.key)===key); }
-function divConfirm(it, over){
-  recordDividend({at: over ? over.at : it.pay, name: it.name, ticker: it.ticker, acct: over ? over.acct : it.acct, ccy: it.ccy, qty: it.qty, dps: it.dps,
-    amountKRW: over ? over.amountKRW : it.gross, basis: over ? 'net' : 'gross', company: it.company, ex: it.ex,
-    src: over && divDateStr(over.at)!==divDateStr(it.pay) ? 'edited' : 'auto'});
-  if(divCashAdd) divAddCash(it.ccy, over ? over.amountKRW : it.net, it.company, it.assetAcct);
+// 자동·예정 항목을 확정 기록으로 — 종목·티커·금융회사·배당락일은 항목 그대로, 날짜·계좌·수량·금액은 폼 값
+function divConfirm(it, f, pr){
+  const divId = uid(), prId = pr ? uid() : null;
+  const c = recordDividend({id:divId, principalId:prId, at:f.at, name:it.name, ticker:it.ticker, acct:f.acct, ccy:f.ccy, qty:f.qty ?? it.qty, dps:f.dps ?? it.dps,
+    amountKRW:f.amountKRW, basis:f.basis, company:it.company, ex:it.ex, src: divDateStr(f.at)!==divDateStr(it.pay) ? 'edited' : 'auto'});
+  if(prId) addTradeLog(divPrincipalEntry(prId, divId, {at:f.at, name:it.name, company:it.company}, c.net));
+  return divId;
 }
 function dismissDivItem(key){
   divMemoReset();
@@ -6675,31 +6734,65 @@ async function restoreDivDismissed(){
   if(!await iosConfirm({title:'제외한 배당 되돌리기', message:'제외한 자동 배당을 모두 다시 보여 드려요.', okText:'되돌리기'})) return;
   localStorage.setItem(DIV_DISMISS_KEY, '[]'); renderAllDividendViews();
 }
-function editDivItem(key){ divEditKey = divEditKey===key ? null : key; renderAllDividendViews(); }
-function saveDivEdit(key){
-  const it = divItemById(key); if(!it) return;
-  const dateV = document.getElementById('de_date').value, acct = document.getElementById('de_acct').value;
-  const name = document.getElementById('de_name').value.trim();
-  const amount = parseFloat(document.getElementById('de_amount').value);
-  if(!dateV){ fieldError('de_date','날짜를 입력해 주세요.'); return; }
-  if(!name){ fieldError('de_name','종목/배당처를 입력해 주세요.'); return; }
-  if(isNaN(amount) || amount<=0){ fieldError('de_amount','금액을 입력해 주세요.'); return; }
-  const at = new Date(dateV+'T00:00:00').getTime();
-  divEditKey = null;
-  if(it.src==='confirmed'){
-    const arr = loadTradeLog(), r = arr.find(x=>x.id===key); if(!r) return;
-    const c = divCalcAmounts(acct, r.currency||'KRW', Math.round(amount), 'net');
-    Object.assign(r, {at, name, acct, gross:c.gross, wht:c.wht, totalKRW:c.net, pnl:c.net});
-    delete r.basis;
-    saveTradeLog(arr);
-  } else {
-    divConfirm(Object.assign({}, it, {name}), {at, acct, amountKRW: Math.round(amount)});
+// 수정 폼 열기·닫기 — 같은 항목을 다시 누르면 닫힌다. 폼은 누른 보기(ctx)에만 연다
+function editDivItem(key, ctx){
+  const open = divEditKey===key && divEditCtx===ctx;
+  divEditKey = open ? null : key; divEditCtx = open ? null : ctx;
+  if(!open){
+    const it = divItemById(key), p = `de_${ctx}`;
+    divBasis[p] = 'net';
+    divPr[p] = !!(it && it.src==='confirmed' && (loadTradeLog().find(r=>r.id===it.id)||{}).principalId);
   }
   renderAllDividendViews();
 }
+// 배당락일 — 보유 종목의 기록이면 가장 가까운 야후 배당락일(지급 150일 전까지)을 붙여, 같은 회차 자동 항목과 겹쳐 세지 않게 한다
+function divNearEx(a, at, keep){
+  if(!a) return keep || null;
+  const ev = (loadDivHist()[divAssetKey(a)]||{}).ev || [];
+  if(keep && ev.some(e=>e.ex===keep) && at >= keep - 3*DIV_DAY && at - keep <= 150*DIV_DAY) return keep;
+  const e = ev.filter(e=>e.ex <= at && at - e.ex <= 150*DIV_DAY).pop();
+  return e ? e.ex : null;
+}
+// 폼 값 읽기·검증 — 추가(dn_)·수정(de_) 폼이 같은 칸 구성이라 하나로 읽는다. 실패하면 칸 아래 안내를 띄우고 null
+function readDivForm(p){
+  const g = k => document.getElementById(`${p}_${k}`), nameEl = g('name'), name = nameEl.value.trim();
+  const dateV = g('date').value, amount = parseFloat(g('amt').value), qty = parseFloat(g('qty').value), per = parseFloat(g('per').value);
+  if(!dateV){ fieldError(g('date'),'배당일을 입력해 주세요.'); return null; }
+  if(!name){ fieldError(nameEl,'종목을 고르거나 입력해 주세요.'); return null; }
+  if(isNaN(amount) || amount<=0){ fieldError(g('amt'),'금액을 입력해 주세요.'); return null; }
+  const a = assets.find(x=>x.id===nameEl.dataset.assetId) || null;
+  const at = new Date(dateV+'T00:00:00').getTime();
+  return {at, name, a, ticker: nameEl.dataset.ticker || (a ? a.ticker : ''), company: nameEl.dataset.company || (a ? a.company : null) || null,
+    acct:g('acct').value, ccy:g('cur').value, qty:isNaN(qty)?null:qty, dps:isNaN(per)?null:per, amountKRW:Math.round(amount), basis:divBasis[p]||'net', pr:!!divPr[p]};
+}
+function saveDivEdit(key, ctx){
+  const it = divItemById(key); if(!it) return;
+  const p = `de_${ctx}`, f = readDivForm(p); if(!f) return;
+  divEditKey = null; divEditCtx = null;
+  let id = key;
+  if(it.src==='confirmed'){
+    const arr = loadTradeLog(), r = arr.find(x=>x.id===key); if(!r) return;
+    const c = divCalcAmounts(f.acct, f.ccy, f.amountKRW, f.basis);
+    Object.assign(r, {at:f.at, name:f.name, ticker:f.ticker||'—', acct:f.acct, currency:f.ccy, company:f.company, quantity:f.qty, price:f.dps,
+      exAt: divNearEx(f.a, f.at, r.exAt), gross:c.gross, wht:c.wht, totalKRW:c.net, pnl:c.net});
+    if(r.src==='auto' && divDateStr(f.at)!==divDateStr(it.pay)) r.src = 'edited';
+    delete r.basis;
+    divSyncPrincipal(arr, r, f, c.net, f.pr);
+    saveTradeLog(arr);
+  } else {
+    id = divConfirm(it, f, f.pr);
+  }
+  divFlashId = id;
+  renderAllDividendViews();
+}
 async function deleteDividendEntry(id){
-  if(!await iosConfirm({title:'배당 기록 삭제', message:'삭제한 기록은 되돌릴 수 없어요.', okText:'삭제', destructive:true})) return;
-  saveTradeLog(loadTradeLog().filter(r=>r.id!==id));
+  const log = loadTradeLog(), rec = log.find(r=>r.id===id), it = divItemById(id);
+  const hasPr = !!(rec && rec.principalId && log.some(r=>r.id===rec.principalId)), ck = it && it.ckey;
+  const note = [hasPr ? '원금기록장의 입금도 함께 지워요.' : '', ck ? '같은 회차의 자동 배당은 다시 나타나지 않게 제외해요.' : ''].filter(Boolean).join(' ');
+  if(!await iosConfirm({title:'배당 기록 삭제', message:'삭제한 기록은 되돌릴 수 없어요.'+(note ? ' '+note : ''), okText:'삭제', destructive:true})) return;
+  saveTradeLog(log.filter(r=>r.id!==id && !(hasPr && r.id===rec.principalId)));
+  if(ck){ const list = loadDivDismiss(); if(!list.includes(ck)) list.push(ck); localStorage.setItem(DIV_DISMISS_KEY, JSON.stringify(list)); }
+  if(divEditKey===id){ divEditKey = null; divEditCtx = null; }
   renderAllDividendViews();
 }
 
@@ -6724,19 +6817,9 @@ function renderDivRow(it, opts){
   opts = opts || {};
   const key = it.src==='confirmed' ? it.id : it.key;
   const d = new Date(it.pay);
-  if(key && divEditKey===key){
-    const dv = divDateStr(it.pay);
-    return `<div class="fm" style="margin:8px 0;"><div class="fm-grid">
-        ${fmField('날짜', fmInput('de_date',{type:'date',value:dv}))}
-        ${fmField('종목/배당처', fmInput('de_name',{value:it.name, readonly: it.src!=='confirmed'}))}
-        ${fmField('계좌', fmSelect('de_acct', DIV_ACCT_OPTS, it.acct, {custom:false}))}
-        ${fmField('금액(원, 세후)', fmInput('de_amount',{type:'number',value:Math.round(it.net)}))}
-      </div><div class="fm-a">
-        ${it.src!=='confirmed' ? `<button type="button" class="tgl-banner${divCashAdd?' on':''}" role="switch" aria-checked="${divCashAdd}" onclick="toggleDivCash(this)">현금에 더하기<span class="sw"></span></button>` : ''}
-        <button class="btn btn-ghost" data-fm-cancel onclick="editDivItem('${divQ(key)}')">취소</button>
-        <button class="btn btn-green" data-fm-primary onclick="saveDivEdit('${divQ(key)}')">저장</button>
-      </div></div>`;
-  }
+  const ctx = opts.ctx || 'monthly';
+  if(key && divEditKey===key && divEditCtx===ctx)
+    return divFormHtml(`de_${ctx}`, ctx, divEditValues(it), {mode:'edit', key, locked: it.src!=='confirmed', style:'margin:8px 0;'});
   const detail = (it.qty && it.dps) ? `${it.qty.toLocaleString()}주 × ${CUR_SYM[it.ccy]||''}${+it.dps.toFixed(4)}` : '';
   const taxed = divTaxable(it.acct) && it.wht>0 ? `세전 ${fmt(it.gross)}` : '';
   const status = divStatus(it);
@@ -6744,9 +6827,9 @@ function renderDivRow(it, opts){
   const main = opts.noName ? `<span class="dv-name dv-plain">${detail || '기록'}</span>` : `<span class="dv-name">${it.name}</span>${divAcctChip(it.acct)}`;
   const editable = it.src==='confirmed' || it.src==='auto' || (it.src==='proj' && it.known);
   const acts = !editable ? '' : it.src==='confirmed'
-    ? iconBtn('edit', `editDivItem('${divQ(key)}')`) + iconBtn('del', `deleteDividendEntry('${divQ(key)}')`)
-    : iconBtn('edit', `editDivItem('${divQ(key)}')`) + iconBtn('del', `dismissDivItem('${divQ(key)}')`);
-  return `<div class="dv-row">
+    ? iconBtn('edit', `editDivItem('${divQ(key)}','${ctx}')`) + iconBtn('del', `deleteDividendEntry('${divQ(key)}')`)
+    : iconBtn('edit', `editDivItem('${divQ(key)}','${ctx}')`) + iconBtn('del', `dismissDivItem('${divQ(key)}')`);
+  return `<div class="dv-row${key && key===divFlashId ? ' dv-flash' : ''}">
     <span class="dv-date">${d.getMonth()+1}.${String(d.getDate()).padStart(2,'0')}</span>
     <div class="dv-l"><div class="dv-main">${main}</div>${sub ? `<div class="dv-sub">${maskAmt(sub)}</div>` : ''}</div>
     <span class="dv-amt ${it.src==='proj'?'dim':''}">${divMan(it.net)}</span>
@@ -6756,7 +6839,7 @@ function renderDivRow(it, opts){
 // 위쪽 공통 줄(연도·새로고침·수동 입력 스위치)과 KPI 타일
 function renderDivTop(ctx, year){
   const cur = new Date().getFullYear(), on = !!divAddOpen[ctx];
-  const opts = [cur, cur-1, cur-2].map(y=>`<option value="${y}"${y===year?' selected':''}>${y}년</option>`).join('');
+  const opts = [...new Set([cur, cur-1, cur-2, year])].sort((a,b)=>b-a).map(y=>`<option value="${y}"${y===year?' selected':''}>${y}년</option>`).join('');
   const state = divHistState.loading ? '<span class="dv-state">배당 정보 불러오는 중…</span>' : (divHistState.failed ? `<span class="dv-state">${divHistState.failed}개 종목은 못 불러왔어요</span>` : '');
   return `<div class="tax-bar"><select class="tax-year" aria-label="연도" onchange="setDivYear(this.value)">${opts}</select>
     <button type="button" class="btn btn-ghost dv-btn" onclick="divReload()" title="보유 종목 배당 정보 새로고침" aria-label="새로고침">🔄</button>${state}
@@ -6788,61 +6871,128 @@ function renderDivKpi(year, items){
   const link = `<button type="button" class="cgt-t dv-link" onclick="switchPage('tax');switchSubPage('tax','fit')"><div class="cgt-l">금융소득 2,000만까지</div><div class="cgt-v ${left<0?'dn':''}">${maskAmt(left<0 ? '초과 '+Math.abs(Math.round(left)).toLocaleString()+'만원' : Math.round(left).toLocaleString()+'만원')} ›</div></button>`;
   return `<div class="cgt-flow dv-kpi">${gotTile}${cur ? tile('연말까지 예상', maskAmt(fmt(proj))) + tile('예상 배당률', ev>0 ? maskAmt((ann/ev*100).toFixed(1)+'%') : '—') : ''}${link}</div>`;
 }
-// 수동 입력 폼 — 보유 종목을 고르면 계좌·통화·수량이 채워지고, 수량×주당 배당금이면 세전 금액이 계산된다
-function renderDivAddForm(ctx){
-  const on = !!divAddOpen[ctx], held = assets.filter(divEligible);
-  const dupT = {}; held.forEach(a=>{ dupT[divAssetKey(a)] = (dupT[divAssetKey(a)]||0)+1; });
-  const stockOpts = held.map(a=>`<option value="${a.id}">${a.name}${dupT[divAssetKey(a)]>1 ? ' · '+(DIV_ACCT_LABEL[divAcctKey(a)]||'') : ''}</option>`).join('');
-  const sid = `dn_stock_${ctx}`, nid = `dn_name_${ctx}`;
-  return `<div id="dnew_wrap_${ctx}" style="${on?'':'display:none;'}margin:0 0 12px;">
-    <div class="notice" style="margin:0 0 8px;">자동으로 잡히지 않는 과거·직접 받은 배당을 기록해요 · 기본은 기록 전용(현금 잔액 미반영)</div>
-    <div class="fm"><div class="fm-grid">
-      ${fmField('배당일', fmInput(`dn_date_${ctx}`,{type:'date',value:divDateStr(Date.now())}))}
-      ${fmField('종목', `<select class="fm-select" id="${sid}" onchange="toggleCustomInput('${sid}','${nid}');divPickStock('${ctx}')"><option value="">-- 선택 --</option>${stockOpts}<option value="__custom__">+ 직접입력</option></select><input class="fm-input fm-custom" id="${nid}" placeholder="종목/배당처 직접 입력" autocomplete="off" style="display:none">`, {cls:'s6'})}
-      ${fmField('계좌', fmSelect(`dn_acct_${ctx}`, DIV_ACCT_OPTS, 'general', {custom:false}))}
-      ${fmField('통화', fmSelect(`dn_cur_${ctx}`, FM_CUR, 'KRW', {custom:false}).replace('<select ', `<select onchange="divCalcAmount('${ctx}')" `))}
-      ${fmField('수량', fmInput(`dn_qty_${ctx}`,{type:'number',ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${ctx}')"`}))}
-      ${fmField('주당 배당금', fmInput(`dn_per_${ctx}`,{type:'number',ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${ctx}')"`}))}
-      ${fmField('금액(원)', fmInput(`dn_amt_${ctx}`,{type:'number',ph:'0',attrs:'min="0"'}))}
+// 세후·세전 안내(ⓘ) — 증권사 화면과 맞춰 볼 때 어느 금액을 넣을지, 세금은 어떻게 되는지
+const DIV_BASIS_TIP = '세후(입금액): 세금을 떼고 계좌에 실제 들어온 돈이에요. 입금 알림·잔고에 보이는 금액이라 보통 이쪽을 넣어요.\n세전: 원천징수 전 배당금(수량 × 주당 배당금)이에요. 증권사 배당 내역에는 보통 세전·세금·입금액이 함께 나와요.\n일반계좌는 받을 때 15.4%(미국 15%·일본 15.315%)가 이미 떼여 따로 낼 세금이 없어요. 다만 이자·배당 세전 합계가 연 2,000만원을 넘으면 다음 해 5월 종합소득세 신고 대상이에요(세금 > 금융소득에서 계산). ISA·연금계좌는 원천징수가 없어 세전과 세후가 같아요.\n어느 쪽으로 넣어도 앱이 세전·세금·세후를 모두 계산해요.';
+// 배당 입력 폼 — 추가(dn_ctx)와 수정(de_ctx)이 같은 칸 구성. 종목 칸은 보유 종목·종목 목록 자동완성이고, 보유 종목을 고르면 계좌·통화·수량이 채워진다.
+// 수량×주당 배당금을 넣으면 세전 금액이 계산되고, 금액 칸을 직접 고치면 그 값이 기준이다(세후/세전 선택). o.locked: 자동·예정 항목은 종목·계좌·통화를 고정한다.
+function divFormHtml(p, ctx, v, o){
+  const add = o.mode==='add', lock = !!o.locked, basis = divBasis[p] || 'net', on = !!divPr[p];
+  const lockSel = h => lock ? h.replace('<select ', '<select disabled ') : h;
+  const nameIn = `<input class="fm-input" id="${p}_name" placeholder="종목명 또는 티커 검색" value="${fmEsc(v.name)}"${lock ? ' readonly' : ` oninput="divSearchStock('${p}',this.value)"`} autocomplete="off" data-asset-id="${fmEsc(v.assetId||'')}" data-ticker="${fmEsc(v.ticker||'')}" data-company="${fmEsc(v.company||'')}"><div class="suggest-box" id="${p}_sugg" data-for="${p}_name"></div>`;
+  const acts = add
+    ? `<button class="btn btn-green" data-fm-primary onclick="addDivManual('${ctx}')">추가</button>`
+    : `<button class="btn btn-ghost" data-fm-cancel onclick="editDivItem('${divQ(o.key)}','${ctx}')">취소</button><button class="btn btn-green" data-fm-primary onclick="saveDivEdit('${divQ(o.key)}','${ctx}')">저장</button>`;
+  return `<div class="fm dv-form" data-p="${p}" data-k="${add ? 'add' : divAttr(o.key)}"${o.style ? ` style="${o.style}"` : ''}><div class="fm-grid">
+      ${fmField('배당일', fmInput(`${p}_date`,{type:'date',value:v.date}))}
+      ${fmField('종목', nameIn, {cls:'s6'})}
+      ${fmField('계좌', lockSel(fmSelect(`${p}_acct`, DIV_ACCT_OPTS, v.acct, {custom:false})))}
+      ${fmField('통화', lockSel(fmSelect(`${p}_cur`, FM_CUR, v.ccy, {custom:false})).replace('<select ', `<select onchange="divCalcAmount('${p}')" `))}
+      ${fmField('수량', fmInput(`${p}_qty`,{type:'number',value:v.qty,ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${p}')"`}))}
+      ${fmField('주당 배당금', fmInput(`${p}_per`,{type:'number',value:v.dps,ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${p}')"`}))}
+      ${fmField('금액(원)', fmInput(`${p}_amt`,{type:'number',value:v.amount,ph:'0',attrs:'min="0"'}))}
     </div><div class="fm-a">
-      ${fmSeg([['net','세후(입금액)'],['gross','세전']], divBasis[ctx], k=>`dn_basis_${ctx}_${k}`, k=>`setDivBasis('${ctx}','${k}')`)}
-      <button type="button" class="tgl-banner${divCashAdd?' on':''}" role="switch" aria-checked="${divCashAdd}" onclick="toggleDivCash(this)">현금에 더하기<span class="sw"></span></button>
-      <button class="btn btn-green" data-fm-primary onclick="addDivManual('${ctx}')">추가</button>
-    </div></div></div>`;
+      <span class="dv-segg">${fmSeg([['net','세후(입금액)'],['gross','세전']], basis, k=>`${p}_basis_${k}`, k=>`setDivBasis('${p}','${k}')`)}<button type="button" class="ibtn" data-tip="${divAttr(DIV_BASIS_TIP)}" aria-label="세후·세전 안내">ⓘ</button></span>
+      <button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" title="받은 배당(세후)을 원금기록장에 입금으로 남겨요" onclick="toggleDivPr('${p}',this)">원금기록장에 추가<span class="sw"></span></button>
+      ${acts}
+    </div></div>`;
 }
-function setDivBasis(ctx, k){
-  divBasis[ctx] = k;
-  ['net','gross'].forEach(x=>{ const b = document.getElementById(`dn_basis_${ctx}_${x}`); if(b) b.classList.toggle('active', x===k); });
+function renderDivAddForm(ctx){
+  const on = !!divAddOpen[ctx];
+  return `<div id="dnew_wrap_${ctx}" style="${on?'':'display:none;'}margin:0 0 12px;">
+    <div class="notice" style="margin:0 0 8px;">자동으로 잡히지 않는 과거·직접 받은 배당을 기록해요 · 자산·현금 잔액에는 반영되지 않아요</div>
+    ${divFormHtml(`dn_${ctx}`, ctx, {date:divDateStr(Date.now()), name:'', assetId:'', ticker:'', company:'', acct:'general', ccy:'KRW', qty:'', dps:'', amount:''}, {mode:'add'})}</div>`;
 }
-function divPickStock(ctx){
-  const a = assets.find(x=>x.id===document.getElementById(`dn_stock_${ctx}`).value);
-  if(!a) return;
-  document.getElementById(`dn_acct_${ctx}`).value = divAcctKey(a);
-  document.getElementById(`dn_cur_${ctx}`).value = a.currency || 'KRW';
-  document.getElementById(`dn_qty_${ctx}`).value = a.quantity;
-  divCalcAmount(ctx);
+// 수정 폼 초기값 — 항목(it)의 값 그대로. 보유 종목과 이어지면 그 종목이 선택된 상태로 열린다
+function divEditValues(it){
+  const a = it.akey ? assets.find(x=>divHoldKey(x)===it.akey) : null;
+  return {date:divDateStr(it.pay), name:it.name, assetId:a ? a.id : '', ticker: it.ticker && it.ticker!=='—' ? it.ticker : '', company:it.company||'',
+    acct:it.acct, ccy:it.ccy, qty:it.qty||'', dps: it.dps ? +(+it.dps).toFixed(6) : '', amount:Math.round(it.net)};
 }
-function divCalcAmount(ctx){
-  const qty = parseFloat(document.getElementById(`dn_qty_${ctx}`).value), per = parseFloat(document.getElementById(`dn_per_${ctx}`).value);
+function setDivBasis(p, k){
+  divBasis[p] = k;
+  ['net','gross'].forEach(x=>{ const b = document.getElementById(`${p}_basis_${x}`); if(b) b.classList.toggle('active', x===k); });
+}
+function divCalcAmount(p){
+  const g = k => document.getElementById(`${p}_${k}`);
+  const qty = parseFloat(g('qty').value), per = parseFloat(g('per').value);
   if(isNaN(qty) || isNaN(per)) return;
-  document.getElementById(`dn_amt_${ctx}`).value = Math.round(qty*per*divFx(document.getElementById(`dn_cur_${ctx}`).value));
-  setDivBasis(ctx, 'gross');   // 수량×주당 배당금은 원천징수 전 금액
+  g('amt').value = Math.round(qty*per*divFx(g('cur').value));
+  setDivBasis(p, 'gross');   // 수량×주당 배당금은 원천징수 전 금액
 }
+function divResetForm(p){
+  const g = k => document.getElementById(`${p}_${k}`), n = g('name'); if(!n) return;
+  g('date').value = divDateStr(Date.now()); n.value = ''; n.dataset.assetId = ''; n.dataset.ticker = ''; n.dataset.company = '';
+  g('acct').value = 'general'; g('cur').value = 'KRW'; ['qty','per','amt'].forEach(k=>{ g(k).value = ''; });
+  const sb = g('sugg'); if(sb) sb.style.display = 'none';
+}
+
+/* ── 종목 자동완성 — 보유 종목을 먼저, 그다음 종목 목록(stocks.csv). 글자를 고치면 선택한 종목과의 연결을 풀어 목록에 없는 배당처도 그대로 적을 수 있다 ── */
+const divSuggOthers = {}, divSuggTimer = {};
+const divAcctColor = a => ACCTTYPE_COLS[divAcctKey(a)] || ACCTTYPE_COLS[a.acctType] || '#8e8e93';
+function divSearchStock(p, q){
+  const input = document.getElementById(`${p}_name`), box = document.getElementById(`${p}_sugg`);
+  if(!input || !box) return;
+  input.dataset.assetId = ''; input.dataset.ticker = ''; input.dataset.company = '';
+  clearTimeout(divSuggTimer[p]);
+  q = String(q).trim().toLowerCase();
+  if(!q){ box.style.display = 'none'; return; }
+  divSuggTimer[p] = setTimeout(()=>{
+    const score = (n, t) => n.startsWith(q) ? 0 : t.startsWith(q) ? 1 : n.includes(q) ? 2 : t.includes(q) ? 3 : -1;
+    const held = assets.filter(divEligible);
+    const mine = held.map(a=>({a, sc:score(a.name.toLowerCase(), String(a.ticker).toLowerCase())})).filter(x=>x.sc>=0)
+      .sort((x,y)=>x.sc-y.sc || x.a.name.localeCompare(y.a.name,'ko')).slice(0,6).map(x=>x.a);
+    const heldNames = new Set(held.map(a=>a.name));
+    const others = rankStockMatches(q, 12).filter(s=>!heldNames.has(s.n)).slice(0,6);
+    divSuggOthers[p] = others;
+    const hl = s => { const i = s.toLowerCase().indexOf(q); return i<0 ? fmEsc(s) : fmEsc(s.slice(0,i)) + '<b style="color:var(--color-accent)">' + fmEsc(s.slice(i,i+q.length)) + '</b>' + fmEsc(s.slice(i+q.length)); };
+    const chip = (t, c) => `<span style="background:${c}20;color:${c};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;flex-shrink:0;">${fmEsc(t)}</span>`;
+    const row = (click, tag, name, sub) => `<div class="suggest-item" onclick="${click}">${tag}<span style="flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hl(name)}</span><span style="font-size:11px;color:var(--color-tertiary);flex-shrink:0;">${fmEsc(sub)}</span></div>`;
+    const dup = {}; held.forEach(a=>{ dup[a.name] = (dup[a.name]||0)+1; });
+    let h = '';
+    if(mine.length) h += (others.length ? '<div class="suggest-head">보유 종목</div>' : '') + mine.map(a=>row(`divPickHeld('${p}','${a.id}')`, chip(DIV_ACCT_LABEL[divAcctKey(a)]||'', divAcctColor(a)), a.name + (dup[a.name]>1 && a.company ? ' · '+(COMPANY_LABELS[a.company]||a.company) : ''), a.ticker)).join('');
+    if(others.length){
+      const kind = {stock_kr:['KR','#007aff'], stock_us:['US','#ff9500'], stock_jp:['JP','#30b0c7'], crypto:['코인','#ff3b30']};
+      h += (mine.length ? '<div class="suggest-head">종목 목록</div>' : '') + others.map((s,i)=>{ const k = kind[s.c] || [ACCTTYPE_LABELS[s.c]||s.c||'', '#8e8e93']; return row(`divPickOther('${p}',${i})`, chip(k[0], k[1]), s.n, s.t); }).join('');
+    }
+    box.innerHTML = h || '<div style="padding:10px 14px;font-size:12px;color:var(--color-tertiary)">목록에 없어요 — 입력한 이름 그대로 기록해요</div>';
+    box.style.display = 'block';
+  }, 120);
+}
+function divPickHeld(p, id){
+  const a = assets.find(x=>x.id===id); if(!a) return;
+  const g = k => document.getElementById(`${p}_${k}`), n = g('name');
+  n.value = a.name; n.dataset.assetId = a.id; n.dataset.ticker = a.ticker; n.dataset.company = a.company || '';
+  g('acct').value = divAcctKey(a); g('cur').value = a.currency || 'KRW'; g('qty').value = a.quantity;
+  g('sugg').style.display = 'none';
+  divCalcAmount(p);
+  g('per').focus();
+}
+function divPickOther(p, i){
+  const s = (divSuggOthers[p]||[])[i]; if(!s) return;
+  const g = k => document.getElementById(`${p}_${k}`), n = g('name');
+  n.value = s.n; n.dataset.assetId = ''; n.dataset.ticker = s.t; n.dataset.company = '';
+  if([...g('cur').options].some(o=>o.value===s.cur)) g('cur').value = s.cur;
+  g('sugg').style.display = 'none';
+  divCalcAmount(p);
+  g('per').focus();
+}
+document.addEventListener('click', e=>{
+  document.querySelectorAll('.suggest-box[data-for]').forEach(b=>{ if(b.style.display!=='none' && !b.contains(e.target) && e.target.id!==b.dataset.for) b.style.display = 'none'; });
+});
 function addDivManual(ctx){
-  const g = id => document.getElementById(`${id}_${ctx}`);
-  const dateV = g('dn_date').value, sv = g('dn_stock').value, a = assets.find(x=>x.id===sv);
-  const name = sv==='__custom__' ? g('dn_name').value.trim() : (a ? a.name : '');
-  const amount = parseFloat(g('dn_amt').value), qty = parseFloat(g('dn_qty').value), per = parseFloat(g('dn_per').value);
-  if(!dateV){ fieldError(`dn_date_${ctx}`,'배당일을 입력해 주세요.'); return; }
-  if(!name){ fieldError(sv==='__custom__' ? `dn_name_${ctx}` : `dn_stock_${ctx}`,'종목을 고르거나 입력해 주세요.'); return; }
-  if(isNaN(amount) || amount<=0){ fieldError(`dn_amt_${ctx}`,'금액을 입력해 주세요.'); return; }
-  const acct = g('dn_acct').value, ccy = g('dn_cur').value, at = new Date(dateV+'T00:00:00').getTime();
-  // 보유 종목의 기록이면 가장 가까운 야후 배당락일(지급 150일 전까지)을 붙여, 같은 회차 자동 항목과 겹쳐 세지 않게 한다
-  const ev = a ? ((loadDivHist()[divAssetKey(a)]||{}).ev || []).filter(e=>e.ex <= at && at - e.ex <= 150*DIV_DAY).pop() : null;
-  const c = recordDividend({at, name, ticker:a?a.ticker:'', acct, ccy, qty:isNaN(qty)?null:qty, dps:isNaN(per)?null:per,
-    amountKRW:Math.round(amount), basis:divBasis[ctx], company:a?a.company:null, ex: ev ? ev.ex : null, src:'manual'});
-  if(divCashAdd) divAddCash(ccy, c.net, a?a.company:null, a?a.acctType:acct);
-  divAddOpen[ctx] = false; divBasis[ctx] = 'net';
+  const p = `dn_${ctx}`, f = readDivForm(p); if(!f) return;
+  const divId = uid(), prId = f.pr ? uid() : null;
+  const c = recordDividend({id:divId, principalId:prId, at:f.at, name:f.name, ticker:f.ticker, acct:f.acct, ccy:f.ccy, qty:f.qty, dps:f.dps, amountKRW:f.amountKRW,
+    basis:f.basis, company:f.company, ex:divNearEx(f.a, f.at), src:'manual'});
+  if(prId) addTradeLog(divPrincipalEntry(prId, divId, f, c.net));
+  // 방금 넣은 기록이 지금 보기 밖(다른 연도·달·금융회사·접힌 종목)이면 보이도록 옮기고 잠깐 강조한다
+  const d = new Date(f.at);
+  divYearSel = d.getFullYear(); divSelMonth = d.getMonth();
+  if(divCo!=='all' && (f.company||null)!==divCo) divCo = 'all';
+  const it = buildDividendLedger(divYearSel).find(x=>x.id===divId);
+  divSelStock = it ? (it.akey || 'n:'+it.name) : null;
+  divEditKey = null; divEditCtx = null; divFlashId = divId;
+  divResetForm(p); divBasis[p] = 'net'; divPr[p] = false; divAddOpen[ctx] = false;
   renderAllDividendViews();
 }
 
@@ -6862,7 +7012,7 @@ function renderDividendMonthly(){
   const dismissed = loadDivDismiss().length;
   const list = byM[sel].list.slice().sort((a,b)=>a.pay-b.pay);
   const head = `<div class="dv-head"><span>${sel+1}월 · ${list.length}건</span>${dismissed ? `<button type="button" class="btn btn-ghost dv-btn" onclick="restoreDivDismissed()">제외 ${dismissed}건 되돌리기</button>` : ''}</div>`;
-  const body = list.length ? list.map(it=>renderDivRow(it)).join('') : `<div class="dv-empty">${items.length ? '이 달 배당이 없어요.' : (divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목의 배당 이력이 아직 없어요 — 종목을 추가하거나 배당을 직접 기록하세요.')}</div>`;
+  const body = list.length ? list.map(it=>renderDivRow(it,{ctx:'monthly'})).join('') : `<div class="dv-empty">${items.length ? '이 달 배당이 없어요.' : (divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목의 배당 이력이 아직 없어요 — 종목을 추가하거나 배당을 직접 기록하세요.')}</div>`;
   divSetHtml(el, 'monthly', `${renderDivTop('monthly', year)}${renderDivAddForm('monthly')}${renderDivKpi(year, items)}<div class="div-cal-grid">${cells}</div>${head}<div class="dv-list">${body}</div>`);
 }
 
@@ -6885,7 +7035,7 @@ function renderDividendByStock(){
     const nx = nd ? `${nd.getMonth()+1}.${String(nd.getDate()).padStart(2,'0')} · ${maskAmt(fmt(g.next.net))}` : '—';
     const pf = g.prof ? `${g.prof.freq}${g.prof.yieldPct!=null ? ' · '+maskAmt(g.prof.yieldPct.toFixed(1)+'%') : ''}` : '—';
     let h = `<tr class="dv-st-row" onclick="divPick('stock','${divQ(g.key)}')"><td><div class="dv-tn"><i class="dv-chev${open?' open':''}"></i><span class="nm">${g.name}</span>${divAcctChip(g.acct)}</div></td><td>${pf}</td><td class="${g.got?'':'dim'}">${g.got ? maskAmt(fmt(g.got)) : '—'}</td><td class="dim">${cur ? nx : '—'}</td></tr>`;
-    if(open) h += `<tr class="dv-open"><td colspan="4" onclick="event.stopPropagation()"><div class="dv-list">${g.items.length ? g.items.slice().sort((a,b)=>a.pay-b.pay).map(it=>renderDivRow(it,{noName:true})).join('') : '<div class="dv-empty">이 해의 배당이 없어요.</div>'}</div></td></tr>`;
+    if(open) h += `<tr class="dv-open"><td colspan="4" onclick="event.stopPropagation()"><div class="dv-list">${g.items.length ? g.items.slice().sort((a,b)=>a.pay-b.pay).map(it=>renderDivRow(it,{noName:true, ctx:'stock'})).join('') : '<div class="dv-empty">이 해의 배당이 없어요.</div>'}</div></td></tr>`;
     return h;
   }).join('') || `<tr><td colspan="4" class="dv-empty">${divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목이 없어요 — 배당을 직접 기록해 주세요.'}</td></tr>`;
   divSetHtml(el, 'stock', `${renderDivTop('stock', year)}${renderDivAddForm('stock')}${renderDivKpi(year, items)}

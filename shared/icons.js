@@ -167,8 +167,15 @@
     if (!oc || oc.indexOf('flashPress(') >= 0 || el.disabled || el.matches(PRESS_SKIP) || el.closest(PRESS_SKIP)) return;
     e.preventDefault(); e.stopPropagation();
     el.classList.add('pressed-flash');
+    var holder = el.closest('[id]'), holderId = holder && holder.id, label = el.textContent;
     setTimeout(function () {
       el.classList.remove('pressed-flash');
+      // 그 사이 화면이 다시 그려져 버튼이 새 요소로 바뀌었으면(시세·배당 정보 갱신 등) 같은 자리의 같은 버튼을 찾아 누른다 — 안 그러면 누른 동작이 조용히 사라진다
+      if (!el.isConnected && holderId) {
+        var h = document.getElementById(holderId);
+        el = h && ((h.getAttribute('onclick') === oc && h.matches(PRESS_TARGET) && h) ||
+          Array.prototype.find.call(h.querySelectorAll(PRESS_TARGET), function (b) { return b.getAttribute('onclick') === oc && b.textContent === label; })) || el;
+      }
       if (!el.isConnected || el.disabled) return;
       el.__pressReplay = true; el.click();
       el.__pressReplay = false;                                           // 클릭이 막혔더라도 플래그가 남지 않게
