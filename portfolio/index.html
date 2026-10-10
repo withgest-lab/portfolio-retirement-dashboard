@@ -482,16 +482,30 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .fi-bar-cap{position:relative;height:14px;margin-top:3px;font-size:10px;color:var(--color-tertiary);}
 .fi-bar-cap span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap;}
 .fi-bar-cap span:first-child{left:0;transform:none;}
-/* 금융소득 월별 누적 막대 — 높이 --fh, 점선은 종합과세 기준 */
-.fi-months{--fh:clamp(96px,17vh,170px);position:relative;display:flex;gap:6px;align-items:flex-end;height:calc(var(--fh) + 14px);margin:14px 0 4px;}
+/* 금융소득 월별 누적 막대 — 카드의 남는 높이를 차트가 전부 쓴다(최소 높이 아래로는 줄지 않음), 점선은 종합과세 기준 */
+.card:has(> #finIncomeThreshold){display:flex;flex-direction:column;}
+#finIncomeThreshold{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+#finIncomeThreshold > *{flex:0 0 auto;}
+#finIncomeThreshold > .fi-months{flex:1 1 auto;}
+.fi-months{position:relative;display:flex;gap:6px;align-items:stretch;min-height:84px;margin:14px 0 4px;}
 .fi-m{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10px;color:var(--color-tertiary);}
-.fi-m-bars{width:100%;height:var(--fh);display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
+.fi-m-bars{width:100%;flex:1 1 auto;min-height:0;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
 .fi-m-bars i{display:block;width:100%;flex:0 0 auto;}
+.fi-m > span{flex:0 0 14px;line-height:14px;}
 .fi-m i.b0,.fi-key i.b0{background:rgba(142,142,147,.4);} .fi-m i.b1,.fi-key i.b1{background:#ff3b30;} .fi-m i.b2,.fi-key i.b2{background:rgba(255,59,48,.35);}
 .fi-guide{position:absolute;left:0;right:0;border-top:1px dashed rgba(60,60,67,.5);height:0;pointer-events:none;}
 .fi-guide em{position:absolute;right:0;top:-14px;font-style:normal;font-size:10px;color:var(--color-tertiary);}
 .fi-key{display:inline-flex;align-items:center;gap:4px;margin-right:12px;}
 .fi-key i{display:inline-block;width:8px;height:8px;border-radius:2px;}
+/* ⓘ 안내 풍선(현금흐름 .ibtn/.ipop과 같은 모양) — 누르면 버튼 아래에 작은 풍선, 바깥·ESC로 닫힘 */
+.ibtn{display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:#8e8e93;font:inherit;font-size:1em;font-weight:500;line-height:1;padding:0 2px;cursor:pointer;border-radius:50%;}
+.ibtn:hover,.ibtn.on{color:#007aff;}
+.ipop{position:fixed;z-index:300;max-width:min(300px, calc(100vw - 24px));background:rgba(28,28,30,.94);color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:9px 12px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);}
+.tax-bar{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:nowrap;}
+.tax-bar .sum-chip{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.tax-bar .tax-end{margin-left:auto;display:flex;align-items:center;gap:6px;flex:0 0 auto;}
+.tax-bar select{box-sizing:border-box;height:28px;border:1px solid var(--color-border);border-radius:7px;padding:0 8px;font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);flex-shrink:0;}
+.cand-sub{font-size:11px;font-weight:700;color:var(--color-tertiary);margin:12px 0 4px;}
 /* ── 자산 목록 필터 ── */
 .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
 .filter-bar .tgl-banner{margin-left:auto;flex-shrink:0;}   /* 수동 입력 스위치(·이력 초기화)는 항상 줄 맨 오른쪽 */
@@ -5361,6 +5375,38 @@ function addCash(){
 // 국내 상장(KRW)은 개인 원칙 비과세, ISA·연금계좌 안의 매매는 계좌 규칙(비과세·과세이연)이라 여기서 뺀다.
 // 매매이력의 실현손익(pnl, 원)은 체결 당시 환율로 환산된 값이라 양도차익 계산(취득·양도 시점 환율)에 가깝다.
 const CGT_EXEMPT_MAN = 250, CGT_RATE = 0.22;
+// 세금관리 연도 — 5월 신고 시즌(1~5월)에는 작년 수치가 기본, 그 외에는 올해. 양도세·금융소득 두 탭이 같은 연도를 본다.
+let taxYearSel = null;
+function taxYear(){ if(taxYearSel!=null) return taxYearSel; const d = new Date(); return d.getMonth()<5 ? d.getFullYear()-1 : d.getFullYear(); }
+function setTaxYear(y){ taxYearSel = parseInt(y,10); renderCapitalGainsTax(); renderFinIncomeThreshold(); }
+function taxYearBar(year, endHtml){
+  const cur = new Date().getFullYear();
+  const opts = [cur, cur-1, cur-2].map(y=>`<option value="${y}"${y===year?' selected':''}>${y}년</option>`).join('');
+  return `<div class="tax-bar"><select class="tax-year" aria-label="연도" onchange="setTaxYear(this.value)">${opts}</select>`
+    + `<div class="sum-chip" title="${year}년 1.1~12.31 지급·매도분이 대상이며 ${year+1}년 5월에 확정신고합니다"><span class="sum-chip-v">신고 ${year+1}년 5월</span></div>${endHtml||''}</div>`;
+}
+function closeIpop(){
+  const o = document.getElementById('ipop'); if(o) o.remove();
+  document.querySelectorAll('.ibtn.on').forEach(b=>b.classList.remove('on'));
+}
+document.addEventListener('click', e=>{
+  const btn = e.target.closest && e.target.closest('.ibtn');
+  if(!btn){ if(!e.target.closest || !e.target.closest('#ipop')) closeIpop(); return; }
+  e.preventDefault();
+  const was = btn.classList.contains('on');
+  closeIpop();
+  if(was) return;
+  const pop = document.createElement('div');
+  pop.id = 'ipop'; pop.className = 'ipop'; pop.setAttribute('role', 'tooltip');
+  pop.textContent = btn.getAttribute('data-tip') || '';
+  document.body.appendChild(pop);
+  btn.classList.add('on');
+  const r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  const x = Math.min(Math.max(8, r.left + r.width/2 - w/2), window.innerWidth - w - 8);
+  let y = r.bottom + 6; if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+});
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeIpop(); });
 const CGT_MANUAL_KEY = 'pf_cgt_manual_v1';   // 이 앱에 없는 매도(다른 증권사·과거) — 기록 전용, 자산·현금 잔액에는 반영하지 않음
 function loadCgtManual(){
   try{ const a = JSON.parse(localStorage.getItem(CGT_MANUAL_KEY) || '[]'); return Array.isArray(a) ? a.filter(x=>x && typeof x.at==='number' && isFinite(x.pnl)) : []; }catch(e){ return []; }
@@ -5387,7 +5433,7 @@ async function deleteCgtManual(id){
 function renderCapitalGainsTax(){
   const el = document.getElementById('capGainsTax');
   if(!el) return;
-  const year = new Date().getFullYear();
+  const year = taxYear(), isCur = year===new Date().getFullYear();
   const inYear = r => new Date(r.at).getFullYear()===year;
   const app = loadTradeLog().filter(r => r.type==='sell' && r.currency!=='KRW' && r.acctType!=='cash' && (r.acctType==='general' || !r.acctType) && inYear(r));
   const manual = loadCgtManual().filter(inYear);
@@ -5398,16 +5444,28 @@ function renderCapitalGainsTax(){
   const taxableMan = Math.max(0, gainMan - CGT_EXEMPT_MAN);
   const taxMan = Math.round(taxableMan * CGT_RATE);
   const leftMan = Math.max(0, CGT_EXEMPT_MAN - Math.max(0, gainMan));   // 올해 더 실현해도 세금이 없는 이익
-  // 아직 안 판 일반계좌 해외 종목의 평가손익(원화) — "지금 팔면" 가정용
-  let unrealGain = 0, unrealLoss = 0;
-  assets.forEach(a=>{ if(a.currency==='KRW' || a.acctType==='cash' || (a.acctType && a.acctType!=='general')) return; const d = evKRW(a) - costKRW(a); if(d>0) unrealGain += d; else unrealLoss += d; });
-  const ugMan = Math.round(unrealGain/10000), ulMan = Math.round(-unrealLoss/10000);
   const man = n => maskAmt(n.toLocaleString()+'만원'), sman = n => maskAmt((n>=0?'+':'−')+Math.abs(n).toLocaleString()+'만원');
   const tile = (lbl, val, cls) => `<div class="cgt-t"><div class="cgt-l">${lbl}</div><div class="cgt-v ${cls||''}">${val}</div></div>`;
+  // 올해만: 남은 공제·절세 후보(아직 안 판 일반계좌 해외 종목을 지금 팔면 세금이 어떻게 바뀌는지, 종목별)
   const tips = [];
-  if(gainMan < CGT_EXEMPT_MAN) tips.push(`올해 이익을 <b>${man(leftMan)}</b>까지 더 실현해도 세금이 없어요 — 이익 종목을 팔고 바로 다시 사면 매수 단가가 올라 나중 세금이 줄어요.` + (ugMan>0 ? ` (지금 평가이익 ${man(ugMan)})` : ''));
-  else tips.push(`기본공제 250만원을 넘었어요 — 과세표준 <b>${man(taxableMan)}</b>에 22%가 붙습니다.`);
-  if(ulMan>0 && taxMan>0){ const useMan = Math.min(ulMan, taxableMan); tips.push(`평가손실 종목(${man(ulMan)})을 연내 팔면 손익이 통산돼 세금이 최대 <b>${man(Math.round(useMan*CGT_RATE))}</b> 줄어요.`); }
+  let candHtml = '';
+  if(isCur){
+    if(gainMan < CGT_EXEMPT_MAN) tips.push(`올해 이익을 <b>${man(leftMan)}</b>까지 더 실현해도 세금이 없어요 — 이익 종목을 팔고 바로 다시 사면 매수 단가가 올라 나중 세금이 줄어요.`);
+    else tips.push(`기본공제 250만원을 넘었어요 — 과세표준 <b>${man(taxableMan)}</b>에 22%가 붙습니다.`);
+    const taxIf = d => Math.round(Math.max(0, gainMan + Math.round(d/10000) - CGT_EXEMPT_MAN) * CGT_RATE);
+    const cands = assets.filter(a=>!(a.currency==='KRW' || a.acctType==='cash' || (a.acctType && a.acctType!=='general')))
+      .map(a=>{ const d = evKRW(a) - costKRW(a); return {name:a.name, d, delta: taxIf(d) - taxMan}; })
+      .filter(c=>Math.abs(c.d) >= 10000)
+      .sort((x,y)=>x.delta-y.delta || y.d-x.d);
+    if(cands.length){
+      const eff = c => c.delta<0 ? `<span class="dn">세금 ${man(-c.delta)} 줄어요</span>` : c.delta>0 ? `<span class="up">세금 ${man(c.delta)} 늘어요</span>` : `<span class="dim">세금 변화 없음</span>`;
+      candHtml = `<div class="cand-sub">지금 팔면 (일반계좌 해외 보유)</div>
+        <div class="tbl-wrap tbl-cap c4"><table class="table-auto">
+          <thead><tr><th style="text-align:left">종목</th><th>평가손익</th><th>세금 변화</th></tr></thead>
+          <tbody>${cands.slice(0,8).map(c=>`<tr><td style="text-align:left">${c.name}</td><td class="${c.d>=0?'up':'dn'}">${c.d>=0?'+':''}${fmt(c.d)}</td><td>${eff(c)}</td></tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+  }
   const rows = items.map(x=>{
     const isApp = x.src==='app';
     let h = `<tr><td style="text-align:left">${x.name}${isApp ? '' : ' <span class="acctType-badge" style="background:#ff950020;color:#ff9500;">수동</span>'}</td><td>${new Date(x.at).toLocaleDateString('ko-KR')}</td>
@@ -5415,12 +5473,9 @@ function renderCapitalGainsTax(){
       <td style="white-space:nowrap;">${isApp ? iconBtn('edit', `toggleTradeLogEdit('${x.id}')`)+iconBtn('del', `deleteSoldHistory('${x.id}')`) : iconBtn('del', `deleteCgtManual('${x.id}')`)}</td></tr>`;
     if(isApp && editingTradeLogId===x.id) h += renderTradeLogEditForm(x.r, 4);
     return h;
-  }).join('') || `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-tertiary);">올해 일반계좌 해외주식 매도 기록이 없습니다.</td></tr>`;
+  }).join('') || `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-tertiary);">일반계좌 해외주식 매도 기록이 없습니다.</td></tr>`;
   el.innerHTML = `
-    <div class="filter-bar pl-bar">
-      <div class="sum-chip" title="올해 1.1~12.31 매도분이 대상이며 내년 5/1~5/31에 확정신고합니다"><span class="sum-chip-l">${year}년 매도분</span><span class="sum-chip-v">신고 내년 5월</span></div>
-      <button type="button" class="tgl-banner${cgtAddOpen?' on':''}" role="switch" aria-checked="${cgtAddOpen}" data-target="cgtAddWrap" onclick="toggleCgtAdd(this)">양도 수동 입력<span class="sw"></span></button>
-    </div>
+    ${taxYearBar(year, `<div class="tax-end"><button type="button" class="tgl-banner${cgtAddOpen?' on':''}" role="switch" aria-checked="${cgtAddOpen}" data-target="cgtAddWrap" onclick="toggleCgtAdd(this)">양도 수동 입력<span class="sw"></span></button></div>`)}
     <div id="cgtAddWrap" style="${cgtAddOpen?'':'display:none;'}margin:0 0 12px;">
       <div class="notice" style="margin:0 0 8px;">이 앱에 없는 매도(다른 증권사·과거)를 기록해 합산합니다 · 자산·현금 잔액에는 반영되지 않는 기록 전용</div>
       <div class="fm">
@@ -5441,7 +5496,9 @@ function renderCapitalGainsTax(){
     </div>
     <div class="notice">💡 일반계좌 해외주식 매도 ${app.length}건${manual.length?` + 수동 입력 ${manual.length}건`:''}의 실현손익을 합산(이익 ${sman(profitMan)} · 손실 ${sman(lossMan)}, 같은 해 손익통산)합니다. 체결 당시 환율로 환산된 원화 손익이며 ISA·연금계좌 매매는 제외돼요.</div>
     ${tips.map(t=>`<div class="notice">💡 ${t}</div>`).join('')}
-    <div class="tbl-wrap tbl-cap c4" style="margin-top:10px;">
+    ${candHtml}
+    <div class="cand-sub">매도 내역</div>
+    <div class="tbl-wrap tbl-cap c4">
       <table class="table-auto">
         <thead><tr><th style="text-align:left">종목</th><th>매도일</th><th>실현손익</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
@@ -5481,7 +5538,7 @@ const marginalRate = base => (INCOME_TAX_BANDS.find(([hi])=>base<=hi) || INCOME_
 function renderFinIncomeThreshold(){
   const el = document.getElementById('finIncomeThreshold');
   if(!el) return;
-  const year = new Date().getFullYear();
+  const year = taxYear(), isCur = year===new Date().getFullYear();
   // 앱 배당은 배당 장부(보유 종목 자동 추정 + 확정 기록)의 세전 금액 — ISA·연금계좌 배당은 빠진다
   const fin = finIncomeOf(year);
   const appMan = Math.round(fin.got/10000);
@@ -5503,8 +5560,8 @@ function renderFinIncomeThreshold(){
   const scale = THRESHOLD*1.5, pct = Math.min(100, endMan/scale*100), tickHi = HI_LINE/scale*100, tickTh = THRESHOLD/scale*100;
   const col = endMan > THRESHOLD ? '#ff3b30' : endMan > HI_LINE ? '#ff9500' : '#34c759';
   const status = endMan > THRESHOLD
-    ? `<span style="font-weight:700;color:#ff3b30;">기준 초과 예상 ${man(excess)} — 초과분이 다른 소득과 합산돼 ${Math.round(rate*100)}% 구간에서 과세, 추가 납부 약 <b>${man(extraMan)}</b></span>`
-    : `<span style="font-weight:700;color:#248a3d;">기준 이내 — 연말까지 ${man(THRESHOLD-endMan)} 여유, 15.4% 원천징수로 끝나요</span>`;
+    ? `<span style="font-weight:700;color:#ff3b30;">기준 초과 ${isCur?'예상 ':''}${man(excess)} — 초과분이 다른 소득과 합산돼 ${Math.round(rate*100)}% 구간에서 과세, 추가 납부 약 <b>${man(extraMan)}</b></span>`
+    : `<span style="font-weight:700;color:#248a3d;">기준 이내 — ${isCur?'연말까지 ':''}${man(THRESHOLD-endMan)} 여유, 15.4% 원천징수로 끝나요</span>`;
   // 월별 누적(직접 입력분 + 받은 배당 누적 + 예상 배당 누적) — 어느 달에 기준선을 넘는지
   const mMax = Math.max(THRESHOLD*1.1, endMan*1.05);
   let cumC = 0, cumP = 0;
@@ -5516,22 +5573,25 @@ function renderFinIncomeThreshold(){
   const inp = (field, v, lbl) => fmField(lbl, fmInput('fi_'+field, {type:'number', value:v||'', ph:'0', attrs:`min="0" step="1" onchange="saveFinInput('${field}',this.value,${year})"`}));
   const eligible = assets.filter(divEligible).length;
   const histNote = divHistState.loading ? ' 보유 종목 배당 정보를 불러오는 중…'
-    : (divHistState.failed ? ` 배당 정보를 못 불러온 종목이 ${divHistState.failed}개 있어요 — 그 종목은 기록한 배당만 반영돼요.` : '');
-  const srcNote = `앱 배당 ${man(appMan)}(세전, 확정 ${fin.nConfirmed}건${fin.nAuto?` · 보유 종목 기준 자동 ${fin.nAuto}건`:''}${fin.nEst?` · 세후 입금액 기준 환산 ${fin.nEst}건`:''})`
-    + (fin.nSheltered ? ` — ISA·연금계좌 ${fin.nSheltered}건(${man(fin.shelteredGross/10000)})은 제외` : '');
+    : (divHistState.failed ? ` 배당 정보를 못 불러온 종목 ${divHistState.failed}개는 기록한 배당만 반영돼요.` : '');
+  const srcNote = `앱 배당 ${man(appMan)}(확정 ${fin.nConfirmed}건${fin.nAuto?` · 자동 ${fin.nAuto}건`:''}${fin.nEst?` · 세후 환산 ${fin.nEst}건`:''})`
+    + (fin.nSheltered ? ` · ISA·연금 ${fin.nSheltered}건 제외` : '');
+  const tip = '배당은 원천징수 전(세전) 금액으로 합산하며 ISA·연금계좌 배당은 합산되지 않아요. 이자와 다른 증권사 배당은 아래에 직접 입력하세요. 추가 세금은 입력한 과세표준 위에 초과분을 얹어 누진세율(6~45%)과 지방소득세 10%를 적용한 참고값이며 배당가산(Gross-up)·세액공제는 반영하지 않습니다. 배당 기록은 배당금관리에서 고칠 수 있어요.';
+  const tile = (lbl, val, cls) => `<div class="cgt-t"><div class="cgt-l">${lbl}</div><div class="cgt-v ${cls||''}">${val}</div></div>`;
+  const flow = isCur
+    ? tile('이자·배당 합계', man(totalMan)) + '<span class="cgt-op">+</span>' + tile('연말까지 예상 배당', man(projMan)) + '<span class="cgt-op">=</span>'
+      + tile('연말 예상 합계', man(endMan), endMan>THRESHOLD?'dn':'') + '<span class="cgt-op">/</span>' + tile('종합과세 기준', '2,000만원')
+    : tile('이자·배당 합계', man(totalMan), endMan>THRESHOLD?'dn':'') + '<span class="cgt-op">/</span>' + tile('종합과세 기준', '2,000만원');
+  const endBtns = `<div class="tax-end"><button type="button" class="ibtn" data-tip="${tip}" aria-label="안내">ⓘ</button><button type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:12px;" onclick="switchPage('dividend')">배당금관리 ›</button></div>`;
   el.innerHTML = `
-    <div class="cgt-flow">
-      <div class="cgt-t"><div class="cgt-l">올해 이자·배당 합계</div><div class="cgt-v">${man(totalMan)}</div></div><span class="cgt-op">+</span>
-      <div class="cgt-t"><div class="cgt-l">연말까지 예상 배당</div><div class="cgt-v">${man(projMan)}</div></div><span class="cgt-op">=</span>
-      <div class="cgt-t"><div class="cgt-l">연말 예상 합계</div><div class="cgt-v ${endMan>THRESHOLD?'dn':''}">${man(endMan)}</div></div><span class="cgt-op">/</span>
-      <div class="cgt-t"><div class="cgt-l">종합과세 기준</div><div class="cgt-v">2,000만원</div></div>
-    </div>
+    ${taxYearBar(year, endBtns)}
+    <div class="cgt-flow">${flow}</div>
     <div class="fi-bar" role="img" aria-label="금융소득 ${Math.round(endMan)}만원, 기준 2,000만원"><i style="width:${pct}%;background:${col}"></i><b style="left:${tickHi}%"></b><b style="left:${tickTh}%"></b></div>
     <div class="fi-bar-cap"><span>0</span><span style="left:${tickHi}%">1,000 건보료 반영</span><span style="left:${tickTh}%">2,000 종합과세</span></div>
     <div class="notice" style="margin:8px 0 0;">${status}</div>
-    <div class="notice">💡 합계 = ${srcNote} + 아래 직접 입력(이자·타 계좌 배당). ${endMan>HI_LINE ? '이자+배당이 1,000만원을 넘으면 지역가입자 건보료 소득에 전액 반영돼요(현금흐름과 같은 기준).' : '1,000만원 이하라 건보료 소득에는 반영되지 않아요.'}${histNote}${!eligible && !fin.nConfirmed ? ' 보유 종목이 없어 배당을 직접 기록해야 반영돼요.' : ''}</div>
-    <div class="fi-months" aria-label="월별 누적 금융소득"><div class="fi-guide" style="bottom:calc(var(--fh) * ${(THRESHOLD/mMax).toFixed(4)} + 14px)"><em>2,000</em></div>${monthCols}</div>
-    <div class="notice" style="margin:2px 0 0;"><span class="fi-key"><i class="b0"></i>직접 입력</span><span class="fi-key"><i class="b1"></i>받은 배당 누적</span><span class="fi-key"><i class="b2"></i>예상 배당 누적</span></div>
+    <div class="notice">💡 합계 = ${srcNote} + 아래 직접 입력(이자·타 계좌 배당). ${endMan>HI_LINE ? '1,000만원을 넘으면 지역가입자 건보료 소득에 전액 반영돼요(현금흐름과 같은 기준).' : '1,000만원 이하라 건보료 소득에는 반영되지 않아요.'}${histNote}${!eligible && !fin.nConfirmed && isCur ? ' 보유 종목이 없어 배당을 직접 기록해야 반영돼요.' : ''}</div>
+    <div class="fi-months" aria-label="월별 누적 금융소득"><div class="fi-guide" style="bottom:calc((100% - 14px) * ${(THRESHOLD/mMax).toFixed(4)} + 14px)"><em>2,000</em></div>${monthCols}</div>
+    <div class="notice" style="margin:2px 0 0;"><span class="fi-key"><i class="b0"></i>직접 입력</span><span class="fi-key"><i class="b1"></i>받은 배당 누적</span>${isCur?'<span class="fi-key"><i class="b2"></i>예상 배당 누적</span>':''}</div>
     <div class="fm" style="margin-top:10px;">
       <div class="fm-grid">
         ${inp('int', intMan, '이자 소득(만원)')}
@@ -5539,7 +5599,6 @@ function renderFinIncomeThreshold(){
         ${inp('base', baseMan, '다른 종합소득 과세표준(만원, 선택)')}
       </div>
     </div>
-    <div class="notice">추가 세금 추정은 입력한 과세표준 위에 초과분을 얹어 누진세율(6~45%)과 지방소득세 10%를 적용한 참고값이에요. 배당가산(Gross-up)·세액공제는 반영하지 않습니다. 배당 기록은 배당금관리 탭에서 수정하세요.</div>
   `;
 }
 
