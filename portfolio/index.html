@@ -448,7 +448,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* 배당 폼: 세후/세전 스위치 + ⓘ는 왼쪽, 원금기록장 스위치와 버튼은 오른쪽 한 줄 */
 .dv-form .fm-seg{width:auto;flex:0 0 auto;}
 .dv-form .fm-seg button{flex:0 0 auto;padding:7px 14px;}
-.dv-segg{display:inline-flex;align-items:center;gap:8px;margin-right:auto;}
+.dv-segg{display:inline-flex;align-items:center;gap:8px;min-height:36px;}
+.fm-f.s9{grid-column:span 9;}
 .fm-tabs{margin-bottom:12px;}
 .fm-seg button.m-buy.active{color:#ff3b30;} .fm-seg button.m-sell.active{color:#0a84ff;} .fm-seg button.m-cash.active{color:#248a3d;}
 .fm-seg button.m-set.active{color:#248a3d;} .fm-seg button.m-in.active{color:#007aff;} .fm-seg button.m-out.active{color:#ff3b30;} .fm-seg button.m-div.active{color:#c76a00;}
@@ -461,7 +462,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .fm-hint{font-size:11px;color:var(--color-tertiary);margin-top:8px;}
 @media (max-width:640px){
   .fm{padding:12px;}
-  .fm-f,.fm-f.s4{grid-column:span 6;} .fm-f.s6,.fm-f.s8,.fm-f.s12{grid-column:span 12;}
+  .fm-f,.fm-f.s4{grid-column:span 6;} .fm-f.s6,.fm-f.s8,.fm-f.s9,.fm-f.s12{grid-column:span 12;}
   .fm-a .btn{flex:1 1 0;}
 }
 .form-status{font-size:12px;color:var(--color-secondary);padding-top:8px;min-height:18px;}
@@ -1271,7 +1272,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <select id="assetFilterCompany" onchange="setAssetFilter('company', this.value)"><option value="">금융회사 전체</option></select>
     <select id="assetFilterAcctType" onchange="setAssetFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
     <select id="assetFilterAssetType" onchange="setAssetFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addAssetWrap" onclick="toggleBanner(this)">매매 수동 입력<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addAssetWrap" data-onopen="prefillAssetFormFromFilter" onclick="toggleBanner(this)">매매 수동 입력<span class="sw"></span></button>
   </div>
   <!-- 매수/매도/현금 수동 입력 — 필터 줄 오른쪽 끝 스위치 "매매 수동 입력"으로 열고 닫는다(스위치 바로 아래에 펼쳐 스크롤 없이 보임) -->
   <div id="addAssetWrap" style="display:none;margin:0 0 14px;">
@@ -1318,7 +1319,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <select id="tradeLogFilterCompany" onchange="setTradeLogFilter('company', this.value)"><option value="">금융회사 전체</option></select>
     <select id="tradeLogFilterAcctType" onchange="setTradeLogFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
     <select id="tradeLogFilterAssetType" onchange="setTradeLogFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addTradeLogWrap" onclick="toggleBanner(this)">이력 수동 입력<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addTradeLogWrap" data-onopen="prefillTradeLogFormFromFilter" onclick="toggleBanner(this)">이력 수동 입력<span class="sw"></span></button>
     <button class="btn btn-ghost" onclick="clearTradeLog()" style="flex-shrink:0;">이력 초기화</button>
   </div>
   <!-- 이력 수동 입력: 위 스위치로 열고 닫는다. 기록 전용 — 자산·현금 잔액에는 반영되지 않는다 -->
@@ -3589,7 +3590,8 @@ function saveTradeLogEdit(id){
   saveTradeLog(arr);
   editingTradeLogId = null;
   renderSoldHistory();
-  renderCapitalGainsTax();
+  revealTradeLogIfFiltered(r);   // 금융회사 등을 바꿔 켜 둔 필터에서 사라지면 필터를 풀어 보여 준다
+  renderTaxViews();               // 양도세 표뿐 아니라 한눈에·금융소득도 같은 이력을 쓴다
   renderYearlyReturns();
 }
 
@@ -3669,13 +3671,14 @@ function addTradeLog_manual(){
     pnl = Math.round((price-existing.avgPrice)*qty*fxRate);
     pnlPct = Math.round(((price-existing.avgPrice)/existing.avgPrice)*10000)/100;
   }
-  addTradeLog({
+  const newLogId = addTradeLog({
     name: existing?existing.name:name,
     ticker: existing?existing.ticker:(tickerInput||'—'),
     type, at, acctType:acctTypeVal, assetType:assetTypeVal, company:companyVal, market:marketVal,
     price, quantity:qty, currency, totalKRW,
     pnl, pnlPct, reason, cashAdjusted:null
   });
+  revealTradeLogIfFiltered(loadTradeLog().find(r=>r.id===newLogId));   // 켜 둔 필터에 안 맞으면 필터를 풀어 방금 넣은 이력이 보이게
   st.textContent = `✅ ${name} 매매 이력 추가 (자산 목록/현금 미반영)`;
   document.getElementById('tl_name').value='';
   document.getElementById('tl_date').value='';
@@ -3764,6 +3767,40 @@ function saveSnap(isManual=false){
 // 계좌유형/자산유형)을 그대로 재사용해 두 탭에서 일관된 필터 UX를 유지한다.
 let tradeLogFilter = {search:'', market:'', acctType:'', company:'', assetType:''};
 function setTradeLogFilter(key, val){ tradeLogFilter[key]=val; renderSoldHistory(); }
+// 필터 판정 — 목록 그리기와 "방금 저장한 항목이 지금 필터에 보이는가" 확인이 같은 조건을 쓴다
+function tradeLogPassesFilter(r){
+  const f = tradeLogFilter;
+  if(f.search){
+    const q = f.search.trim().toLowerCase();
+    if(q && !(r.name.toLowerCase().includes(q) || (r.ticker&&r.ticker.toLowerCase().includes(q)))) return false;
+  }
+  if(f.market && r.market!==f.market) return false;
+  if(f.acctType && r.acctType!==f.acctType) return false;
+  if(f.company && r.company!==f.company) return false;
+  if(f.assetType && r.assetType!==f.assetType) return false;
+  return true;
+}
+// 목록 필터를 모두 "전체"로 — 검색칸·풀다운 표시도 같이 맞춘다(id = idPrefix + 키 첫 글자 대문자)
+function clearListFilter(f, idPrefix){
+  Object.keys(f).forEach(k=>{ f[k] = ''; const el = document.getElementById(idPrefix + k.charAt(0).toUpperCase() + k.slice(1)); if(el) el.value = ''; });
+}
+// 추가·수정으로 저장한 항목이 켜 둔 필터에 안 맞으면 필터를 풀어 목록에 보이게 한다 — 저장은 됐는데 안 보여 "추가가 안 된다"고 느끼던 문제(DESIGN_GUIDELINES 25절)
+function revealTradeLogIfFiltered(r){
+  if(!r || tradeLogPassesFilter(r)) return;
+  clearListFilter(tradeLogFilter, 'tradeLogFilter');
+  renderSoldHistory();
+}
+// 필터를 켠 채 입력 폼을 열면 분류 칸(투자시장·금융회사·계좌유형·자산유형)의 빈 값을 그 필터로 채운다 — 저장한 항목이 필터에서 바로 보이게
+function prefillFormFromFilter(filter, map){
+  Object.keys(map).forEach(k=>{
+    const v = filter[k], sel = document.getElementById(map[k][0]);
+    if(!v || !sel || sel.value || (k==='acctType' && v==='cash')) return;
+    fillSelectOrCustom(map[k][0], map[k][1], v);
+  });
+}
+function prefillTradeLogFormFromFilter(){
+  prefillFormFromFilter(tradeLogFilter, {market:['tl_market','tl_market_custom'], company:['tl_company','tl_company_custom'], acctType:['tl_accttype','tl_accttype_custom'], assetType:['tl_assettype','tl_assettype_custom']});
+}
 // 계좌유형/자산유형/투자시장은 고정 목록이라 최초 1회만 채우고, 금융회사는 매매 이력에 실제
 // 등장한 값 기준으로 매번 다시 채운다(자산 목록에서는 이미 사라진 금융회사의 과거 이력도
 // 걸러볼 수 있어야 하므로 assets가 아니라 매매 이력 자체에서 목록을 뽑는다).
@@ -3803,17 +3840,7 @@ function renderSoldHistory(){
   // 계좌 배지 색: 자산목록 테이블(renderTable)과 동일한 방식(전체 assets 기준 등장 순서로
   // LINE_COLS 순환 할당)을 그대로 재사용해, 같은 계좌면 매매이력에서도 항상 같은 색이 되게 함.
   const subAcctNames = [...new Set(assets.filter(a=>a.company).map(a=>a.company))];
-  arr = arr.filter(r=>{
-    if(tradeLogFilter.search){
-      const q=tradeLogFilter.search.trim().toLowerCase();
-      if(q && !(r.name.toLowerCase().includes(q) || (r.ticker&&r.ticker.toLowerCase().includes(q)))) return false;
-    }
-    if(tradeLogFilter.market && r.market!==tradeLogFilter.market) return false;
-    if(tradeLogFilter.acctType && r.acctType!==tradeLogFilter.acctType) return false;
-    if(tradeLogFilter.company && r.company!==tradeLogFilter.company) return false;
-    if(tradeLogFilter.assetType && r.assetType!==tradeLogFilter.assetType) return false;
-    return true;
-  });
+  arr = arr.filter(tradeLogPassesFilter);
   if(!arr.length){
     const filterActive = tradeLogFilter.search||tradeLogFilter.market||tradeLogFilter.acctType||tradeLogFilter.company||tradeLogFilter.assetType;
     el.innerHTML = `<tr><td colspan="5" class="tl-empty">${filterActive?'조건에 맞는 이력이 없습니다':'매수/매도 이력 없음'}</td></tr>`;
@@ -3981,6 +4008,30 @@ let editingPrincipalLedgerId=null;
 let assetFilter = {search:'', market:'', acctType:'', company:'', assetType:''};
 let assetSort = {field:null, dir:1}; // field: 'ev'|'pnl', dir: 1=오름차순 -1=내림차순
 function setAssetFilter(key, val){ assetFilter[key]=val; renderTable(); }
+function assetPassesFilter(a){
+  const f = assetFilter;
+  if(f.search){
+    const q = f.search.trim().toLowerCase();
+    if(q && !(a.name.toLowerCase().includes(q) || (a.ticker&&a.ticker.toLowerCase().includes(q)))) return false;
+  }
+  if(f.market && a.market!==f.market) return false;
+  if(f.acctType && a.acctType!==f.acctType && !(a.acctType==='cash' && a.cashAcctType===f.acctType)) return false;
+  if(f.company && a.company!==f.company) return false;
+  if(f.assetType && a.assetType!==f.assetType) return false;
+  return true;
+}
+function revealAssetIfFiltered(a){
+  if(!a || assetPassesFilter(a)) return;
+  clearListFilter(assetFilter, 'assetFilter');
+  renderTable();
+}
+function prefillAssetFormFromFilter(){
+  prefillFormFromFilter(assetFilter, {market:['af_market','af_market_custom'], company:['af_company','af_company_custom'], acctType:['af_accttype','af_accttype_custom'], assetType:['af_assettype','af_assettype_custom']});
+  prefillFormFromFilter(assetFilter, {market:['cf_market','cf_market_custom'], company:['cf_company','cf_company_custom'], assetType:['cf_assettype','cf_assettype_custom']});
+}
+// 변화추이 그래프: 지금 모든 종목이 선택된 상태에서 새 종목을 추가하면 새 종목도 선택한다(일부만 골라 둔 선택은 건드리지 않는다)
+const allChartSelected = () => assets.every(a=>selectedAssets.has(a.id));
+function chartSelectNew(a, wasAll){ if(a && wasAll){ selectedAssets.add(a.id); saveChartSel(); } }
 function setAssetSort(field){
   if(assetSort.field===field) assetSort.dir*=-1;
   else { assetSort.field=field; assetSort.dir=1; }
@@ -4025,17 +4076,7 @@ function renderTable(){
   // 계좌별 색상: 등장 순서대로 LINE_COLS를 순환 할당(그래프 라인 색과 동일 팔레트, 일관성 유지) — 필터로 줄어든 목록이 아니라 전체 자산 기준으로 고정해야 색이 안 바뀜
   const subAcctNames=[...new Set(assets.filter(a=>a.company).map(a=>a.company))];
 
-  let list = assets.filter(a=>{
-    if(assetFilter.search){
-      const q=assetFilter.search.trim().toLowerCase();
-      if(q && !(a.name.toLowerCase().includes(q) || (a.ticker&&a.ticker.toLowerCase().includes(q)))) return false;
-    }
-    if(assetFilter.market && a.market!==assetFilter.market) return false;
-    if(assetFilter.acctType && a.acctType!==assetFilter.acctType && !(a.acctType==='cash' && a.cashAcctType===assetFilter.acctType)) return false;
-    if(assetFilter.company && a.company!==assetFilter.company) return false;
-    if(assetFilter.assetType && a.assetType!==assetFilter.assetType) return false;
-    return true;
-  });
+  let list = assets.filter(assetPassesFilter);
   if(assetSort.field){
     list = list.slice().sort((a,b)=>{
       const va = assetSort.field==='ev' ? evKRW(a) : (evKRW(a)-costKRW(a));
@@ -4406,6 +4447,7 @@ function executeTrade(){
     if(trade.market !== undefined) a.market = trade.market || null;
     editingId=null;
     saveAssets();renderAll();
+    revealAssetIfFiltered(a);
     return;
   }
 
@@ -4430,6 +4472,7 @@ function executeTrade(){
     propagateHoldingAttrsToTradeLog(attrBefore, a);
     editingId=null; quickTradeId=null;
     saveAssets();renderAll();
+    revealAssetIfFiltered(a);
     return;
   }
 
@@ -4458,6 +4501,8 @@ function executeTrade(){
       existing = assets.find(a=>nameTickerAcctTypeMatch(a) && assetTypeOk(a) && a.company===company);
     }
     let cashName = null;
+    let touched = existing;   // 이번 매수로 바뀐·생긴 종목(현금 차감으로 생기는 현금 행이 아님)
+    const wasAllSel = allChartSelected();
     if(existing){
       const attrBefore = holdingAttrSnapshot(existing);
       const prevQty  = existing.quantity;
@@ -4472,16 +4517,19 @@ function executeTrade(){
       if(st){ st.textContent=`✅ ${existing.name} ${fQty.toLocaleString()}주 매수 → 총 ${totalQty.toLocaleString()}주${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
       assets.push({id:uid(),ticker:tickerVal,name,acctType:acctType,quantity:fQty,avgPrice:fPrice,currentPrice:fPrice,prevPrice:fPrice,currency:cur,assetType:assetType||null,company:company||null,market:market||inferMarket({name,ticker:tickerVal,acctType,currency:cur})||null,...(bondFields||{})});
+      touched = assets[assets.length-1];
       cashName = acctType!=='cash' ? adjustCashBalance(cur, fPrice*fQty, -1, company||null, acctType||null) : null;
       if(st){ st.textContent=`✅ ${name} 추가 완료${isBond?'':' — 🔄 시세 갱신으로 현재가를 불러오세요.'}${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     }
     // 계좌 미선택 시(빈칸) 기존 보유분의 계좌를 그대로 사용 — 안 그러면 재매수 시 계좌가 null로 찍혀
     // 원래 보유분(예: 미래에셋)과 매매이력의 계좌가 어긋나 종목 상세 차트에서 해당 거래가 안 보이게 됨.
+    if(!existing) chartSelectNew(touched, wasAllSel);
     const loggedCompany = existing ? (existing.company||null) : (company||null);
     const loggedMarket = existing ? (existing.market||null) : (market||null);
     addTradeLog({name, ticker:tickerVal, type:'buy', at:Date.now(), acctType:acctType||null, assetType:assetType||null, company:loggedCompany, market:loggedMarket, price:fPrice, quantity:fQty, currency:cur, totalKRW:Math.round(fPrice*fQty*(cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1)), pnl:null, pnlPct:null, reason:tradeReason, cashAdjusted:cashName});
     resetBuyForm();
     saveAssets();renderAll();
+    revealAssetIfFiltered(touched);
     saveSnap(true); // 매수 시점 수동 스냅샷 (압축 제외)
     return;
   }
@@ -4519,6 +4567,7 @@ function executeTrade(){
     const {name:cName, amount, cur, isDividend, divAmount, divSource, cashMode:trCashMode, rawAmount, company, cashAcctTypeVal, assetType, market} = trade;
     const acct = company||null;
     const cashAcctTypeVal2 = cashAcctTypeVal||null;
+    const wasAllSelCash = allChartSelected();
     const existing = assets.find(a=>a.acctType==='cash'&&a.name===cName&&a.currency===cur&&(a.company||null)===acct&&(a.cashAcctType||null)===cashAcctTypeVal2);
     if(existing){
       existing.avgPrice=amount; existing.currentPrice=amount; existing.prevPrice=amount; existing.quantity=1;
@@ -4568,7 +4617,10 @@ function executeTrade(){
     document.getElementById('cf_assettype_custom').value='';
     document.getElementById('cf_assettype_custom').style.display='none';
     if(document.getElementById('cf_div_source')) document.getElementById('cf_div_source').value='';
+    const touchedCash = existing || assets[assets.length-1];
+    if(!existing) chartSelectNew(touchedCash, wasAllSelCash);
     saveAssets();renderAll();
+    revealAssetIfFiltered(touchedCash);
     return;
   }
 
@@ -5437,7 +5489,7 @@ function taxYear(){ if(taxYearSel!=null) return taxYearSel; const d = new Date()
 function setTaxYear(y){ taxYearSel = parseInt(y,10); renderTaxViews(); }
 function taxYearBar(year, endHtml){
   const cur = new Date().getFullYear();
-  const opts = [cur, cur-1, cur-2].map(y=>`<option value="${y}"${y===year?' selected':''}>${y}년</option>`).join('');
+  const opts = [...new Set([cur, cur-1, cur-2, year])].sort((a,b)=>b-a).map(y=>`<option value="${y}"${y===year?' selected':''}>${y}년</option>`).join('');
   return `<div class="tax-bar"><select class="tax-year" aria-label="연도" onchange="setTaxYear(this.value)">${opts}</select>`
     + `<div class="sum-chip" title="${year}년 1.1~12.31 지급·매도분이 대상이며 ${year+1}년 5월에 확정신고합니다"><span class="sum-chip-v">신고 ${year+1}년 5월</span></div>${endHtml||''}</div>`;
 }
@@ -5477,6 +5529,7 @@ function addCgtManual(){
   const arr = loadCgtManual();
   arr.push({id:'cgt'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36), at:new Date(dateV+'T00:00:00').getTime(), name, pnl:Math.round(man*10000)});
   saveCgtManual(arr);
+  taxYearSel = new Date(dateV+'T00:00:00').getFullYear();   // 다른 연도 매도면 그 연도로 옮겨 방금 넣은 기록이 보이게
   ['cgt_date','cgt_name','cgt_pnl'].forEach(id=>{ const f = document.getElementById(id); if(f) f.value = ''; });   // 다시 그릴 때 입력값이 되살아나 중복 추가되지 않게 비운다
   renderTaxViews();
 }
@@ -6676,6 +6729,7 @@ function divSetHtml(el, ctx, html){
       Object.assign(f.dataset, o.m[id].d);
     });
     Object.keys(o.sg).forEach(id=>{ const b = document.getElementById(id); if(b){ b.innerHTML = o.sg[id].h; b.style.display = o.sg[id].d; } });
+    fm.querySelectorAll('select').forEach(sel=>{ if(sel.value==='__custom__'){ const c = sel.parentNode.querySelector('.fm-custom'); if(c) c.style.display = 'block'; } });   // "직접입력" 칸도 열린 채로
     o.er.forEach(([id, msg])=>fieldError(id, msg));   // 안내 문구도 다시 그리며 지워지지 않게
   });
   // 입력 중에 다시 그려져도(시세·배당 정보 갱신) 포커스와 커서가 그대로 — 글자가 끊기지 않게
@@ -6762,7 +6816,7 @@ function readDivForm(p){
   if(isNaN(amount) || amount<=0){ fieldError(g('amt'),'금액을 입력해 주세요.'); return null; }
   const a = assets.find(x=>x.id===nameEl.dataset.assetId) || null;
   const at = new Date(dateV+'T00:00:00').getTime();
-  return {at, name, a, ticker: nameEl.dataset.ticker || (a ? a.ticker : ''), company: nameEl.dataset.company || (a ? a.company : null) || null,
+  return {at, name, a, ticker: nameEl.dataset.ticker || (a ? a.ticker : ''), company: readSelectOrCustom(`${p}_co`, `${p}_co_custom`, false) || null,
     acct:g('acct').value, ccy:g('cur').value, qty:isNaN(qty)?null:qty, dps:isNaN(per)?null:per, amountKRW:Math.round(amount), basis:divBasis[p]||'net', pr:!!divPr[p]};
 }
 function saveDivEdit(key, ctx){
@@ -6783,6 +6837,7 @@ function saveDivEdit(key, ctx){
     id = divConfirm(it, f, f.pr);
   }
   divFlashId = id;
+  if(divCo!=='all' && (f.company||null)!==divCo && it.src==='confirmed') divCo = 'all';   // 금융회사를 바꿔 지금 보기에서 사라지면 합계로
   renderAllDividendViews();
 }
 async function deleteDividendEntry(id){
@@ -6878,20 +6933,21 @@ const DIV_BASIS_TIP = '세후(입금액): 세금을 떼고 계좌에 실제 들�
 function divFormHtml(p, ctx, v, o){
   const add = o.mode==='add', lock = !!o.locked, basis = divBasis[p] || 'net', on = !!divPr[p];
   const lockSel = h => lock ? h.replace('<select ', '<select disabled ') : h;
-  const nameIn = `<input class="fm-input" id="${p}_name" placeholder="종목명 또는 티커 검색" value="${fmEsc(v.name)}"${lock ? ' readonly' : ` oninput="divSearchStock('${p}',this.value)"`} autocomplete="off" data-asset-id="${fmEsc(v.assetId||'')}" data-ticker="${fmEsc(v.ticker||'')}" data-company="${fmEsc(v.company||'')}"><div class="suggest-box" id="${p}_sugg" data-for="${p}_name"></div>`;
+  const nameIn = `<input class="fm-input" id="${p}_name" placeholder="종목명 또는 티커 검색" value="${fmEsc(v.name)}"${lock ? ' readonly' : ` oninput="divSearchStock('${p}',this.value)"`} autocomplete="off" data-asset-id="${fmEsc(v.assetId||'')}" data-ticker="${fmEsc(v.ticker||'')}"><div class="suggest-box" id="${p}_sugg" data-for="${p}_name"></div>`;
   const acts = add
     ? `<button class="btn btn-green" data-fm-primary onclick="addDivManual('${ctx}')">추가</button>`
     : `<button class="btn btn-ghost" data-fm-cancel onclick="editDivItem('${divQ(o.key)}','${ctx}')">취소</button><button class="btn btn-green" data-fm-primary onclick="saveDivEdit('${divQ(o.key)}','${ctx}')">저장</button>`;
   return `<div class="fm dv-form" data-p="${p}" data-k="${add ? 'add' : divAttr(o.key)}"${o.style ? ` style="${o.style}"` : ''}><div class="fm-grid">
       ${fmField('배당일', fmInput(`${p}_date`,{type:'date',value:v.date}))}
       ${fmField('종목', nameIn, {cls:'s6'})}
+      ${fmField('금융회사', lockSel(fmSelect(`${p}_co`, FM_COMPANY, v.company, {blank:'-- 없음 --', customId:`${p}_co_custom`})).replace('<input class="fm-input fm-custom"', lock ? '<input readonly class="fm-input fm-custom"' : '<input class="fm-input fm-custom"'))}
       ${fmField('계좌', lockSel(fmSelect(`${p}_acct`, DIV_ACCT_OPTS, v.acct, {custom:false})))}
       ${fmField('통화', lockSel(fmSelect(`${p}_cur`, FM_CUR, v.ccy, {custom:false})).replace('<select ', `<select onchange="divCalcAmount('${p}')" `))}
       ${fmField('수량', fmInput(`${p}_qty`,{type:'number',value:v.qty,ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${p}')"`}))}
       ${fmField('주당 배당금', fmInput(`${p}_per`,{type:'number',value:v.dps,ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${p}')"`}))}
       ${fmField('금액(원)', fmInput(`${p}_amt`,{type:'number',value:v.amount,ph:'0',attrs:'min="0"'}))}
+      <div class="fm-f s9 dv-basis"><span class="fm-l" aria-hidden="true">&nbsp;</span><span class="dv-segg">${fmSeg([['net','세후(입금액)'],['gross','세전']], basis, k=>`${p}_basis_${k}`, k=>`setDivBasis('${p}','${k}')`)}<button type="button" class="ibtn" data-tip="${divAttr(DIV_BASIS_TIP)}" aria-label="세후·세전 안내">ⓘ</button></span></div>
     </div><div class="fm-a">
-      <span class="dv-segg">${fmSeg([['net','세후(입금액)'],['gross','세전']], basis, k=>`${p}_basis_${k}`, k=>`setDivBasis('${p}','${k}')`)}<button type="button" class="ibtn" data-tip="${divAttr(DIV_BASIS_TIP)}" aria-label="세후·세전 안내">ⓘ</button></span>
       <button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" title="받은 배당(세후)을 원금기록장에 입금으로 남겨요" onclick="toggleDivPr('${p}',this)">원금기록장에 추가<span class="sw"></span></button>
       ${acts}
     </div></div>`;
@@ -6900,8 +6956,10 @@ function renderDivAddForm(ctx){
   const on = !!divAddOpen[ctx];
   return `<div id="dnew_wrap_${ctx}" style="${on?'':'display:none;'}margin:0 0 12px;">
     <div class="notice" style="margin:0 0 8px;">자동으로 잡히지 않는 과거·직접 받은 배당을 기록해요 · 자산·현금 잔액에는 반영되지 않아요</div>
-    ${divFormHtml(`dn_${ctx}`, ctx, {date:divDateStr(Date.now()), name:'', assetId:'', ticker:'', company:'', acct:'general', ccy:'KRW', qty:'', dps:'', amount:''}, {mode:'add'})}</div>`;
+    ${divFormHtml(`dn_${ctx}`, ctx, {date:divDateStr(Date.now()), name:'', assetId:'', ticker:'', company:divDefaultCo(), acct:'general', ccy:'KRW', qty:'', dps:'', amount:''}, {mode:'add'})}</div>`;
 }
+// 추가 폼의 금융회사 기본값 — 금융회사 보기(농협·미래)를 켜 둔 채 추가하면 그 보기에 바로 보이도록 그 값으로
+const divDefaultCo = () => divCo==='all' ? '' : divCo;
 // 수정 폼 초기값 — 항목(it)의 값 그대로. 보유 종목과 이어지면 그 종목이 선택된 상태로 열린다
 function divEditValues(it){
   const a = it.akey ? assets.find(x=>divHoldKey(x)===it.akey) : null;
@@ -6921,8 +6979,8 @@ function divCalcAmount(p){
 }
 function divResetForm(p){
   const g = k => document.getElementById(`${p}_${k}`), n = g('name'); if(!n) return;
-  g('date').value = divDateStr(Date.now()); n.value = ''; n.dataset.assetId = ''; n.dataset.ticker = ''; n.dataset.company = '';
-  g('acct').value = 'general'; g('cur').value = 'KRW'; ['qty','per','amt'].forEach(k=>{ g(k).value = ''; });
+  g('date').value = divDateStr(Date.now()); n.value = ''; n.dataset.assetId = ''; n.dataset.ticker = '';
+  g('acct').value = 'general'; g('cur').value = 'KRW'; fillSelectOrCustom(`${p}_co`, `${p}_co_custom`, divDefaultCo()); ['qty','per','amt'].forEach(k=>{ g(k).value = ''; });
   const sb = g('sugg'); if(sb) sb.style.display = 'none';
 }
 
@@ -6932,7 +6990,7 @@ const divAcctColor = a => ACCTTYPE_COLS[divAcctKey(a)] || ACCTTYPE_COLS[a.acctTy
 function divSearchStock(p, q){
   const input = document.getElementById(`${p}_name`), box = document.getElementById(`${p}_sugg`);
   if(!input || !box) return;
-  input.dataset.assetId = ''; input.dataset.ticker = ''; input.dataset.company = '';
+  input.dataset.assetId = ''; input.dataset.ticker = '';
   clearTimeout(divSuggTimer[p]);
   q = String(q).trim().toLowerCase();
   if(!q){ box.style.display = 'none'; return; }
@@ -6961,8 +7019,8 @@ function divSearchStock(p, q){
 function divPickHeld(p, id){
   const a = assets.find(x=>x.id===id); if(!a) return;
   const g = k => document.getElementById(`${p}_${k}`), n = g('name');
-  n.value = a.name; n.dataset.assetId = a.id; n.dataset.ticker = a.ticker; n.dataset.company = a.company || '';
-  g('acct').value = divAcctKey(a); g('cur').value = a.currency || 'KRW'; g('qty').value = a.quantity;
+  n.value = a.name; n.dataset.assetId = a.id; n.dataset.ticker = a.ticker;
+  fillSelectOrCustom(`${p}_co`, `${p}_co_custom`, a.company || ''); g('acct').value = divAcctKey(a); g('cur').value = a.currency || 'KRW'; g('qty').value = a.quantity;
   g('sugg').style.display = 'none';
   divCalcAmount(p);
   g('per').focus();
@@ -6970,7 +7028,7 @@ function divPickHeld(p, id){
 function divPickOther(p, i){
   const s = (divSuggOthers[p]||[])[i]; if(!s) return;
   const g = k => document.getElementById(`${p}_${k}`), n = g('name');
-  n.value = s.n; n.dataset.assetId = ''; n.dataset.ticker = s.t; n.dataset.company = '';
+  n.value = s.n; n.dataset.assetId = ''; n.dataset.ticker = s.t;
   if([...g('cur').options].some(o=>o.value===s.cur)) g('cur').value = s.cur;
   g('sugg').style.display = 'none';
   divCalcAmount(p);
