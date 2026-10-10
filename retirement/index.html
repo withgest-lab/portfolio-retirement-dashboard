@@ -824,8 +824,14 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .al-v{text-align:right;font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-res{font-weight:600;white-space:normal;line-height:1.25;overflow:visible;}
 .risk-col:not(.need-col) .al-head,.risk-col:not(.need-col) .al-row{grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr) minmax(0,.7fr) minmax(0,.85fr);}
-.need-col .al-head,.need-col .al-row{grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,.8fr) minmax(0,1.2fr);}
+.need-col .al-head,.need-col .al-row{grid-template-columns:minmax(0,1.25fr) minmax(0,.8fr) minmax(0,1.15fr);}
 .need-col .al-name b{white-space:normal;line-height:1.2;word-break:keep-all;}
+.need-col .al-res{display:flex;align-items:center;justify-content:flex-end;text-align:right;line-height:1.25;word-break:keep-all;}
+.need-col .al-name .al-sub{font-variant-numeric:tabular-nums;}
+.need-col .al-hero{gap:calc(5px + .5px*var(--vs));}
+.need-col .al-tile{padding:calc(6px + .6px*var(--vs)) 10px;}
+.need-col .al-tile b{font-size:clamp(15px, calc(15px + .5px*var(--vs)), 19px);}
+.risk-h{flex:0 0 auto;font-size:clamp(12.5px, calc(12.5px + .3px*var(--vs)), 15px);font-weight:700;color:#1c1c1e;padding:0 4px;}
 .al-dim{color:#c7c7cc;font-weight:500;}
 .al-st{font-weight:600;color:#3a3a3c;}
 .al-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:.45em;vertical-align:.05em;}
@@ -1820,9 +1826,9 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
         <div class="chart-tooltip" id="chartTooltip" style="display:none;"></div>
         <div class="chart-alt" id="altView" style="display:none;">
           <div id="riskWrap" style="display:none;">
-            <div id="need-head"></div>
             <div class="risk-cols">
               <div class="risk-col">
+                <div class="risk-h">위기 점검</div>
                 <div class="al-card">
                   <div class="al-head"><span>상황</span><span>최저 세후</span><span>생활비 미달</span><span>자산 유지</span></div>
                   <div class="al-body" id="sc-body"></div>
@@ -1830,8 +1836,10 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
                 <div class="mini-note" id="sc-note"></div>
               </div>
               <div class="risk-col need-col">
+                <div class="risk-h">부족 대책</div>
+                <div id="need-head"></div>   <!-- 지금 계획의 기준 결과(매년 최소·평균·생활비 대비) — 부족 대책 계산의 출발점이라 이 카드 위에 -->
                 <div class="al-card">
-                  <div class="al-head"><span>바꾸는 것</span><span>바꾼 값</span><span>최저 세후</span><span id="need-th4">충족하려면</span></div>
+                  <div class="al-head"><span>바꾸는 것</span><span>최저 세후</span><span id="need-th4">충족하려면</span></div>
                   <div class="al-body" id="need-body"></div>
                 </div>
                 <div class="mini-note" id="need-note"></div>
@@ -2908,7 +2916,7 @@ function renderNeedView(){
     th4.textContent = short ? '충족하려면' : '가능한 만큼';
     const rows = [];
     const cell = (v, d) => v == null ? '<div class="al-v al-dim">—</div>' : `<div class="al-v">${M(v)}<span class="al-sub" style="color:${d >= 0 ? NET_OK : NET_SHORT}">${sg(d)}</span></div>`;
-    const row = (name, change, minNet, delta, result) => rows.push(`<div class="al-row"><div class="al-name"><b>${name}</b></div><div class="al-v">${change}</div>${minNet == null ? '<div class="al-v al-dim">—</div>' : cell(minNet, delta)}<div class="al-v al-res">${result}</div></div>`);
+    const row = (name, change, minNet, delta, result) => rows.push(`<div class="al-row"><div class="al-name"><b>${name}</b>${change && change !== '—' ? `<span class="al-sub">${change}</span>` : ''}</div>${minNet == null ? '<div class="al-v al-dim">—</div>' : cell(minNet, delta)}<div class="al-v al-res${result === '—' ? ' al-dim' : ''}">${result}</div></div>`);
     const e = got.exp, r = got.ret, sv = got.save, n = got.np, d = got.need;
     if(e) row('월 생활비', `${p.exp} → ${e.to}만`, null, 0, short ? `${M(e.to)}이면 충족` : `최대 ${M(e.to)}까지`);
     if(r){
