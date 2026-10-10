@@ -810,35 +810,36 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 /* 위기 점검·부족 대책: iOS 목록형 — 표 격자·진한 헤더 없이 회색 카드 + 헤어라인 행, 값은 오른쪽 정렬 숫자, 상태는 색 점 */
 .al-card{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:rgba(118,118,128,.06);border-radius:12px;padding:calc(6px + .5px*var(--vs)) 0 calc(2px + .3px*var(--vs));}
 .al-head,.al-row{display:grid;grid-template-columns:minmax(0,1.8fr) repeat(3,minmax(0,1fr));column-gap:12px;align-items:center;padding:0 calc(14px + .5px*var(--vs));}
-.al-head{flex:0 0 auto;font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);font-weight:600;color:#8e8e93;padding-bottom:calc(4px + .3px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
+.al-head{flex:0 0 auto;font-size:clamp(10.5px, calc(10.5px + .2px*var(--vs)), 12px);font-weight:600;color:#8e8e93;padding-bottom:calc(4px + .3px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.14);}
 .al-head > span:not(:first-child){text-align:right;}
 .al-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
 .al-row{flex:1 1 0;min-height:calc(30px + 1.2px*var(--vs));border-bottom:.5px solid rgba(60,60,67,.1);}
 .al-row:last-child{border-bottom:0;}
 .al-row.cur{background:rgba(0,122,255,.09);border-radius:10px;border-bottom-color:transparent;}
 .al-name{display:flex;flex-direction:column;justify-content:center;min-width:0;}
-.al-name b{font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14px);font-weight:600;color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-name b{font-size:clamp(11.5px, calc(12px + .2px*var(--vs)), 13.5px);font-weight:600;color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-row.cur .al-name b{color:#007aff;font-weight:700;}
-.al-sub{font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-sub{font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-v .al-sub{display:block;font-weight:600;}
-.al-v{text-align:right;font-size:clamp(12px, calc(12px + .3px*var(--vs)), 14.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-v{text-align:right;font-size:clamp(11.5px, calc(12px + .2px*var(--vs)), 13.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-res{font-weight:600;white-space:normal;line-height:1.25;overflow:visible;}
 .risk-col:not(.need-col) .al-head,.risk-col:not(.need-col) .al-row{grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr) minmax(0,.7fr) minmax(0,.85fr);}
 .need-col .al-head,.need-col .al-row{grid-template-columns:minmax(0,1.25fr) minmax(0,.8fr) minmax(0,1.15fr);}
 .need-col .al-name b{white-space:normal;line-height:1.2;word-break:keep-all;}
+.chart-alt .mini-note,.pb-tip,.al-res,.risk-col .al-name .al-sub{text-wrap:balance;word-break:keep-all;}
+.risk-col .al-name .al-sub{white-space:normal;overflow:visible;line-height:1.25;}   /* 긴 조건 설명은 말줄임 대신 ' · ' 기준으로 균형 있게 두 줄 */
 .need-col .al-res{display:flex;align-items:center;justify-content:flex-end;text-align:right;line-height:1.25;word-break:keep-all;}
 .need-col .al-name .al-sub{font-variant-numeric:tabular-nums;}
 .need-col .al-hero{gap:calc(5px + .5px*var(--vs));}
 .need-col .al-tile{padding:calc(6px + .6px*var(--vs)) 10px;}
-.need-col .al-tile b{font-size:clamp(15px, calc(15px + .5px*var(--vs)), 19px);}
-.risk-h{flex:0 0 auto;font-size:clamp(12.5px, calc(12.5px + .3px*var(--vs)), 15px);font-weight:700;color:#1c1c1e;padding:0 4px;}
+.risk-h{flex:0 0 auto;font-size:clamp(11.5px, calc(11.5px + .25px*var(--vs)), 13.5px);font-weight:700;color:#1c1c1e;padding:0 4px;}
 .al-dim{color:#c7c7cc;font-weight:500;}
 .al-st{font-weight:600;color:#3a3a3c;}
 .al-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:.45em;vertical-align:.05em;}
 .al-dot.ok{background:#34c759;} .al-dot.bad{background:#ff3b30;}
 .al-hero{flex:0 0 auto;display:flex;gap:calc(8px + .8px*var(--vs));}
 .al-tile{flex:1 1 0;min-width:0;display:flex;flex-direction:column;background:rgba(118,118,128,.08);border-radius:12px;padding:calc(7px + .9px*var(--vs)) 14px;}
-.al-cap,.al-s{font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.al-cap,.al-s{font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);color:#8e8e93;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-tile b small{font-size:.42em;font-weight:500;color:#636366;margin-left:3px;letter-spacing:0;}
 .hi-view{gap:calc(8px + .8px*var(--vs));}
 .hi-body{flex:1 1 auto;min-height:0;display:flex;gap:calc(8px + .8px*var(--vs));}
@@ -860,7 +861,7 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .hi-view .health-calc-table tr.hc-total td{font-size:clamp(13px, calc(13px + .3px*var(--vs)), 15.5px);}
 .hi-view .hc-note{flex:0 0 auto;margin-top:calc(4px + .5px*var(--vs));font-size:clamp(10px, calc(10px + .3px*var(--vs)), 12.5px);color:#636366;line-height:1.45;}
 @media (max-width:699px){ .hi-body{flex-direction:column;} .al-hero{flex-wrap:wrap;} .al-hero .al-tile{flex:1 1 140px;} }
-.al-tile b{font-size:clamp(17px, calc(17px + .6px*var(--vs)), 22px);font-weight:800;letter-spacing:-.02em;line-height:1.2;color:#1c1c1e;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.al-tile b{font-size:clamp(17px, calc(17px + .5px*var(--vs)), 21px);font-weight:800;letter-spacing:-.02em;line-height:1.2;color:#1c1c1e;font-variant-numeric:tabular-nums;white-space:nowrap;}
 /* 요약 */
 .plan-view #planBody{display:flex;flex-direction:column;justify-content:flex-start;flex:1 1 auto;min-height:0;gap:calc(4px + .8px*var(--vs));}
 .plan-view .pb-mode{margin:0;font-size:11.5px;}   /* 탭 글자와 같은 크기로 고정 */
@@ -868,6 +869,8 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .plan-view .pb-card{padding:calc(10px + 1.2px*var(--vs)) calc(12px + .8px*var(--vs));}
 .plan-view .pb-label{font-size:clamp(10.5px, calc(10.5px + .2px*var(--vs)), 12px);}
 .plan-view .pb-val{font-size:clamp(17px, calc(17px + .5px*var(--vs)), 21px);}   /* 다른 탭·자동 설계 근거 글자와 균형 — 예전 최대 30px가 아래 본문을 밀어 겹쳤다 */
+.pb-tx{min-width:0;text-wrap:balance;word-break:keep-all;}
+.pb-tx .nw{white-space:nowrap;}
 .plan-view .pb-sub{font-size:clamp(10.5px, calc(10.5px + .25px*var(--vs)), 12.5px);margin-top:calc(4px + .5px*var(--vs));}
 .plan-view .pb-phases{margin:0;flex:1 1 auto;min-height:0;}   /* 남는 높이는 수입원 행이 나눠 채움(배너 행 아래·섹션 사이에 빈 띠가 생기지 않게) */
 .plan-view .pb-phase{display:flex;flex-direction:column;}
@@ -2557,12 +2560,14 @@ function planBannerHtml(p, plan, res){
   // 카드값 — 값 한 줄 + 상태 한 줄(색점+짧은 문구). 같은 내용을 하단에 다시 쓰지 않는다.
   const V = {}, VC = {};   // 칸 id → 내용 / 글자색
   const pbSet = (id, html)=>{ V[id] = html; };
-  const pbSt  = (ok, text)=>`<span class="pb-st ${ok?'ok':'bad'}"></span>${text}`;
+  // 줄바꿈은 ' · ' 사이에서만(낱말 중간 금지) + 두 줄이 비슷한 길이로(text-wrap:balance)
+  const pbTx = t=>`<span class="pb-tx">${String(t).split(' · ').map(x=>`<span class="nw">${x}</span>`).join(' · ')}</span>`;
+  const pbSt  = (ok, text)=>`<span class="pb-st ${ok?'ok':'bad'}"></span>${pbTx(text)}`;
   const pbMan = n=>(n>=0?'+':'−')+Math.abs(n)+'만';
   const m = v => (Math.round(v*10)/10)+'만';
 
   // 공백기·완성기는 생활비 여유/부족 축(파랑/빨강) — 차트 세후 선·지표 카드와 같은 색
-  const pbLiv = (vs, text)=>`<span class="pb-st ${vs>=0?'surplus':'bad'}"></span>${text}`;
+  const pbLiv = (vs, text)=>`<span class="pb-st ${vs>=0?'surplus':'bad'}"></span>${pbTx(text)}`;
   const livCol = vs => vs>=0 ? NET_OK : NET_SHORT;
   if(s.hasGap){
     pbSet('pb-gap-total', s.gapNet+'만원/월');
