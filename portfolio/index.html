@@ -6261,11 +6261,12 @@ async function fetchDividendEvents(ticker){
     const ev = Object.values(r.events?.dividends || {}).map(v=>({ex:v.date*1000, dps:v.amount})).filter(e=>e.dps>0).sort((a,b)=>a.ex-b.ex);
     return {cur:r.meta.currency||null, ev};
   };
+  let notFound = true;   // 모든 시도가 "그런 종목 없음"(404)이면 실패가 아니라 배당 정보가 없는 종목(펀드 등)으로 캐시한다
   for(const t of tries){
     const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1mo&range=2y&events=div`);
-    try{ return await hedgedFirst(buildCands(urls, parse), 10000); }catch(e){}
+    try{ return await hedgedFirst(buildCands(urls, parse), 10000); }catch(e){ if(!(e && e.definitive)) notFound = false; }
   }
-  return null;
+  return notFound ? {cur:null, ev:[]} : null;
 }
 // 보유 종목의 배당 이력을 캐시(24시간)로 채우고 끝나면 배당·세금 화면을 다시 그린다. force=true면 캐시를 무시한다.
 async function ensureDividendHistory(force){
