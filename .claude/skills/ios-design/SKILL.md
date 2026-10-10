@@ -73,10 +73,16 @@ description: 이 저장소(포트폴리오·현금흐름·홈·매매전략)의 
 - 하나의 카드로 읽혀야 하는 영역은 안쪽에 또 카드를 만들지 않는다(헤어라인으로만 나눔). 폭이 다른 카드·헤더가 겹쳐 "따로 노는" 느낌이 나면 구조를 합친다.
 - **표·목록 열 간격**: 값 열이 남는 폭을 나눠 가져 100px씩 벌어지면 "첫 열이 남는 폭, 값 열은 내용 폭"(매매이력 `tl-table`·`.tbl-cap`)으로 모은다. 그 열을 덮는 `!important` 잔재를 확인할 것.
 
-## 8. 검증 (보고 전 필수)
+## 8. 검증 (보고 전 필수) — 수정 크기에 맞춰 단계화 (2026-10-10, 토큰 효율)
+**먼저 수정 크기를 판단하고 보고에 한 줄로 적는다("작은 수정 → 부분 검증" / "큰 수정 → 풀 검증").**
+- **작은 수정** — 문구·색·한 칸 폭·한 카드 안 정렬·간격 한두 개처럼 한 화면의 일부만 건드리고 공통 CSS·구조를 안 바꾼 경우: 바뀐 화면만 **펼침 904×900·펼침+90도 1003×700 두 뷰포트** 실측(가로·세로 넘침, `fit-audit` 모듈의 `measureFit/measureBoxes` 겹침·두 줄·잘림 0) + 스크린샷 1~2장. dup-check·`fit-audit all`·배포본 재확인은 생략한다.
+- **큰 수정** — 탭·카드 구조 변경, 새 화면·새 컴포넌트, 레이아웃 시스템·공통 CSS·토큰 변경, 여러 화면에 영향(예: 입력 폭 토큰, 탭 이름, 결과 보기 통합): 아래 1~6 **풀 검증**(4개 뷰포트 × 영향받는 모든 탭, dup-check, `fit-audit <preset> --boxes`, 배포본 재확인).
+- 판단이 애매하면 큰 수정으로 본다. 어느 쪽이든 **겹침·두 줄 꺾임·단위 글자와 입력 박스 겹침 0**(DESIGN_GUIDELINES 22절)은 항상 확인한다.
+
+### 풀 검증 절차
 1. `npx --yes serve -l 4173 .` + npx 캐시 playwright(`NODE_PATH`)로 위 5개 뷰포트를 띄운다. 폰트 CDN(cdn.jsdelivr.net)은 막지 말 것(글꼴 폭이 달라짐). **4173이 이미 쓰이면 serve가 다른 포트로 올라간다 — 로그의 포트를 확인할 것.**
 2. 수치로 확인: 가로 `scrollWidth - clientWidth === 0`, 한 화면 대상은 스크롤러에 `.fit-noscroll`·휠 후 `scrollTop === 0`, 배너 줄 높이(한 줄), 라벨 겹침 0.
 3. **중복 문구 검사**: 화면 상태마다 `.claude/skills/ios-design/dup-check.js`(`await require(...).run(page, {names:['이 화면의 종목명', ...], frame})`)로 exact(같은 문구 2회↑)·token(낱말 3회↑)·names(이름 2회↑)를 센다. 수정 전(`git archive HEAD`를 다른 포트로 서빙)·후 건수를 같이 보고하고, 남은 항목은 "데이터 값의 정상 반복(일반계좌×4 등)·오버레이 뒤 화면·의도적 구조 중복"인지 사람이 판정해 이유를 적는다.
-4. **꽉 채움·입력 박스 검사(필수)**: `node .claude/skills/ios-design/fit-audit.js <preset> --boxes [--seed] [--extra]`(preset: retirement·portfolio·home·signals·all, 기본 base `http://localhost:4173/`, `--base`로 배포 URL 지정). 4개 뷰포트 × 모든 탭·서브탭에서 세로·가로 넘침, 하단 빈 공간, 휠 후 scrollTop, 같은 줄 박스 높이 차, 높이·폭 종류, 어긋난 왼쪽 선을 표로 보고 FAIL을 모두 고친다. 포트폴리오는 `--seed`(가상 종목 25개)로 목록이 실제 길이일 때도 본다. 예외 화면은 스크립트의 `LONG` 목록에 이유와 함께 추가.
+4. **꽉 채움·입력 박스·겹침 검사(풀 검증 필수)**: `node .claude/skills/ios-design/fit-audit.js <preset> --boxes [--seed] [--extra]`(preset: retirement·portfolio·home·signals·all, 기본 base `http://localhost:4173/`, `--base`로 배포 URL 지정). 4개 뷰포트 × 모든 탭·서브탭에서 세로·가로 넘침, 하단 빈 공간, 휠 후 scrollTop, 같은 줄 박스 높이 차, 높이·폭 종류, 어긋난 왼쪽 선을 표로 보고 FAIL을 모두 고친다. 포트폴리오는 `--seed`(가상 종목 25개)로 목록이 실제 길이일 때도 본다. 예외 화면은 스크립트의 `LONG` 목록에 이유와 함께 추가.
 5. 스크린샷을 직접 본다(정렬·쏠림·색 조합).
 6. 커밋 → (요청 시) push → 배포본 재확인(`--base` 배포 URL로 fit-audit 재실행).
