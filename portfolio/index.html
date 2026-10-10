@@ -593,6 +593,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
   display:flex;gap:10px;align-items:center;}
 @media (hover: hover) { .suggest-item:hover{background:var(--color-section-bg);} }
 .suggest-item:last-child{border-bottom:none;}
+.cash-ccy{white-space:nowrap;line-height:1.35;}
 .suggest-head{padding:6px 14px 3px;font-size:10px;font-weight:700;color:var(--color-tertiary);}
 .dv-flash{animation:dvflash 1.5s ease-out;}
 @keyframes dvflash{0%,55%{background:rgba(0,122,255,.14);}100%{background:transparent;}}
@@ -1577,7 +1578,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <script src="../shared/dialog.js"></script>
 <script src="../shared/icons.js"></script>
 <script src="../shared/ios-select.js"></script>
-<script src="div-tax.js?v=20261011"></script>
+<script src="div-tax.js?v=20261012"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
 /* ════════════════════════════════════════
@@ -3448,35 +3449,43 @@ function migrateSoldHistory(){
 // cashAcctType: 매매 종목의 구분(개인연금/퇴직연금/IRP 등) — 계좌 안에 구분별로 현금이 나뉘어
 // 있으면(예: 농협 개인연금 현금 vs 농협 퇴직연금 현금) 정확히 그 구분의 현금만 조정한다.
 // 구분이 일치하는 현금이 없지만 그 계좌·통화에 현금이 하나뿐이면(기존 방식) 하위호환으로 그걸 사용.
-function adjustCashBalance(currency, amountInCurrency, sign, company, cashAcctType){
-  const acct = company||null;
-  const wantAcctType = cashAcctType||null;
+// 현금 행 찾기 — 같은 금융회사·통화에서 계좌구분이 같은 행, 없으면 그 계좌 현금이 하나뿐일 때 그 행. 없으면 null, 여러 개라 모호하면 'amb'
+function findCashRow(currency, company, cashAcctType){
+  const acct = company||null, wantAcctType = cashAcctType||null;
   const pool = assets.filter(a=>a.acctType==='cash' && a.currency===currency && (a.company||null)===acct);
   const exactMatches = pool.filter(a=>(a.cashAcctType||null)===wantAcctType);
-
-  let cash;
-  if(exactMatches.length===1){
-    cash = exactMatches[0];
-  } else if(exactMatches.length===0 && pool.length===1){
-    cash = pool[0];
-  } else if(exactMatches.length===0 && pool.length===0){
-    const acctLabel = acct ? (COMPANY_LABELS[acct]||acct) : null;
-    const acctTypeLabel = wantAcctType ? (ACCTTYPE_LABELS[wantAcctType]||wantAcctType) : null;
-    const labelParts = [acctLabel, acctTypeLabel].filter(Boolean).join('·');
-    // 같은 계좌·구분의 다른 통화 현금이 있으면 그 속성(안전자산 등)을 이어받는다
-    const sibling = assets.find(a=>a.acctType==='cash' && (a.company||null)===acct && (a.cashAcctType||null)===wantAcctType && a.assetType);
-    const created = {id:uid(), ticker:'—', name: labelParts?`현금(${labelParts}·${currency})`:`현금(${currency})`,
-      acctType:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, company:acct, cashAcctType:wantAcctType,
-      assetType: sibling ? sibling.assetType : null,
-      market: currency==='USD'?'us':currency==='JPY'?'jp':'kr'};
-    assets.push(created);
-    cash = created;
-  } else {
-    console.warn(`[현금 자동반영 건너뜀] ${currency} 현금 행이 ${pool.length}개 있어 어느 것을 조정할지 모호합니다. 수동으로 확인해 주세요.`);
+  if(exactMatches.length===1) return exactMatches[0];
+  if(exactMatches.length===0 && pool.length===1) return pool[0];
+  if(exactMatches.length===0 && pool.length===0) return null;
+  return 'amb';
+}
+// 그 계좌·구분·통화의 현금 행을 새로 만든다(보유종목 표에서는 같은 계좌 현금 줄 안에 통화 한 줄로 보인다)
+function createCashRow(currency, company, cashAcctType){
+  const acct = company||null, wantAcctType = cashAcctType||null;
+  const acctLabel = acct ? (COMPANY_LABELS[acct]||acct) : null;
+  const acctTypeLabel = wantAcctType ? (ACCTTYPE_LABELS[wantAcctType]||wantAcctType) : null;
+  const labelParts = [acctLabel, acctTypeLabel].filter(Boolean).join('·');
+  // 같은 계좌·구분의 다른 통화 현금이 있으면 그 속성(안전자산 등)을 이어받는다
+  const sibling = assets.find(a=>a.acctType==='cash' && (a.company||null)===acct && (a.cashAcctType||null)===wantAcctType && a.assetType);
+  const created = {id:uid(), ticker:'—', name: labelParts?`현금(${labelParts}·${currency})`:`현금(${currency})`,
+    acctType:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, company:acct, cashAcctType:wantAcctType,
+    assetType: sibling ? sibling.assetType : null,
+    market: currency==='USD'?'us':currency==='JPY'?'jp':'kr'};
+  assets.push(created);
+  return created;
+}
+function cashRowAdd(cash, amount){
+  const newAmt = Math.round(((cash.avgPrice||0) + amount)*100)/100;
+  cash.avgPrice = newAmt; cash.currentPrice = newAmt; cash.prevPrice = newAmt;
+}
+function adjustCashBalance(currency, amountInCurrency, sign, company, cashAcctType){
+  let cash = findCashRow(currency, company, cashAcctType);
+  if(cash==='amb'){
+    console.warn(`[현금 자동반영 건너뜀] ${currency} 현금 행이 여러 개 있어 어느 것을 조정할지 모호합니다. 수동으로 확인해 주세요.`);
     return null;
   }
-  const newAmt = (cash.avgPrice||0) + sign*amountInCurrency;
-  cash.avgPrice = newAmt; cash.currentPrice = newAmt; cash.prevPrice = newAmt;
+  if(!cash) cash = createCashRow(currency, company, cashAcctType);
+  cashRowAdd(cash, sign*amountInCurrency);
   return cash.name;
 }
 
@@ -4096,7 +4105,14 @@ function renderTable(){
     return;
   }
 
+  // 현금은 금융회사+계좌구분마다 한 줄(통화 ₩·$·¥는 줄 안에) — 배당·매매로 통화가 늘어도 표의 줄이 늘지 않는다. 저장은 통화별 기록 그대로
+  const cashGroups = new Map();
+  list.filter(a=>a.acctType==='cash').forEach(a=>{ const k = cashGroupKey(a); if(!cashGroups.has(k)) cashGroups.set(k, []); cashGroups.get(k).push(a); });
   tb.innerHTML=list.map(a=>{
+    if(a.acctType==='cash'){
+      const g = cashGroups.get(cashGroupKey(a));
+      return g[0]===a ? cashGroupRowsHtml(g, a.company ? LINE_COLS[subAcctNames.indexOf(a.company)%LINE_COLS.length] : null) : '';
+    }
     const ev=evKRW(a),cost=costKRW(a),pnl=ev-cost,rtn=cost>0?(pnl/cost)*100:0;
     const dayChg=a.acctType==='cash'?0:(a.prevPrice>0?((a.currentPrice-a.prevPrice)/a.prevPrice)*100:0);
     const sym=CUR_SYM[a.currency];
@@ -4280,6 +4296,70 @@ function renderTable(){
     if(stillVisible){ setTimeout(()=>loadAndDrawStockChart(chartDetailId), 30); cmpMarkButton(chartDetailId); }
   }
 }
+const cashGroupKey = a => (a.company||'')+'|'+(a.cashAcctType||'');
+const CASH_CCY_ORDER = {KRW:0, USD:1, JPY:2};
+// 같은 계좌의 현금 기록들(통화별)을 한 줄로 — 현재가 칸에 통화별 잔액, 평가금액은 원화 합계. 연필은 통화를 골라 고친다
+function cashGroupRowsHtml(group, sac){
+  const g = group.slice().sort((x,y)=>(CASH_CCY_ORDER[x.currency]??9)-(CASH_CCY_ORDER[y.currency]??9));
+  const lead = g[0], na = `<span style="color:var(--color-tertiary);font-size:11px;">—</span>`;
+  const named = g.find(a=>!/^현금(\(|$)/.test(a.name));
+  const name = g.length===1 ? lead.name : (named ? named.name : '현금');
+  const same = f => g.every(a=>(a[f]||null)===(lead[f]||null)) ? lead[f] : null;
+  const market = same('market'), assetType = same('assetType');
+  const badge = (txt, col) => `<span class="acctType-badge" style="background:${col}20;color:${col}">${txt}</span>`;
+  const fxOf = a => a.currency==='USD' ? `$1=₩${FX.USD.toFixed(0)}` : a.currency==='JPY' ? `¥1=₩${FX.JPY.toFixed(2)}` : '';
+  const lines = g.map(a=>`<div class="cash-ccy"${fxOf(a)?` title="${fxOf(a)}"`:''}>${unitPriceStr(a.currentPrice, a.currency)}</div>`).join('');
+  const total = g.reduce((t,a)=>t+evKRW(a), 0);
+  const ids = g.map(a=>a.id).join(',');
+  let rows = `<tr class="cash-row">
+      <td class="name-cell"><div class="name-main">${name}</div><div class="name-sub"></div></td>
+      <td class="fold-hide">${market ? badge(MARKET_LABELS[market]||market, MARKET_COLS[market]||'#8e8e93') : na}</td>
+      <td class="fold-hide">${lead.company ? badge(COMPANY_LABELS[lead.company]||lead.company, sac||'#8e8e93') : na}</td>
+      <td class="fold-hide">${lead.cashAcctType ? badge(ACCTTYPE_LABELS[lead.cashAcctType]||lead.cashAcctType, ACCTTYPE_COLS[lead.cashAcctType]||'#8e8e93') : na}</td>
+      <td class="fold-hide">${assetType ? badge(assetType, ASSETTYPE_COLS[assetType]||'#8e8e93') : na}</td>
+      <td style="font-size:11px;">${lines}</td>
+      <td class="fold-hide fold-hide-narrow" style="font-size:11px;">${na}</td>
+      <td style="font-size:11px;">${fmt(total)}</td>
+      <td style="font-size:11px;">${na}</td>
+      <td class="fold-hide"></td>
+      <td style="white-space:nowrap;text-align:right;" onclick="event.stopPropagation()">${iconBtn('edit', `toggleEdit('${lead.id}')`)}</td>
+      <td class="fold-hide" style="white-space:nowrap;text-align:right;" onclick="event.stopPropagation()">${g.length===1 ? iconBtn('del', `confirmDelete('${lead.id}','${lead.name.replace(/'/g,'')}')`) : iconBtn('del', `deleteCashGroup('${ids}')`)}</td>
+    </tr>`;
+  if(editingId===lead.id){
+    const id = lead.id, cm = editCashModes[id]||'set';
+    rows += `<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
+      <div class="fm">
+        <div class="fm-h"><b>현금 수정</b></div>
+        <div class="fm-sec">분류</div>
+        <div class="fm-grid">${fmClassFields({market:[`ep_market_${id}`,`ep_market_custom_${id}`],company:[`ep_company_${id}`,`ep_company_custom_${id}`],acct:[`ep_cashaccttype_${id}`,`ep_cashaccttype_custom_${id}`],asset:[`ep_assettype_${id}`,`ep_assettype_custom_${id}`]},
+          {market:lead.market,company:lead.company,acct:lead.cashAcctType,asset:assetType},{blank:BL_NONE})}</div>
+        <div class="fm-sec">금액</div>
+        <div class="fm-grid">
+          <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${id}`,k=>`setEditCashMode('${id}','${k}')`)}</div>
+          ${fmField('통화', fmSelect(`ep_ccy_${id}`, FM_CUR, lead.currency, {custom:false}))}
+          ${fmField('금액', fmInput(`ep_cash_amt_${id}`,{type:'number',ph:'0',attrs:'min="0"'}), {id:`ep_amt_label_${id}`})}
+        </div>
+        <div class="fm-a">
+          <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
+          <button class="btn btn-green" data-fm-primary onclick="confirmEditCash('${id}')">저장</button>
+        </div>
+      </div>
+    </td></tr>`;
+  }
+  return rows;
+}
+// 여러 통화가 든 계좌 현금 한 줄을 지운다(통화별 기록 모두)
+async function deleteCashGroup(idsStr){
+  const ids = idsStr.split(','), g = assets.filter(a=>ids.includes(a.id));
+  if(!g.length) return;
+  const what = g.map(a=>unitPriceStr(a.currentPrice, a.currency)).join(' · ');
+  if(!await iosConfirm({title:'현금 삭제', message:`이 계좌 현금(${what})을 모두 지워요.`, okText:'삭제', destructive:true})) return;
+  saveSnap(true);
+  assets = assets.filter(a=>!ids.includes(a.id));
+  ids.forEach(id=>selectedAssets.delete(id)); saveChartSel();
+  editingId = null;
+  saveAssets(); renderAll();
+}
 /* 종목 상세 패널(제목·기간 탭·가격 차트·지표·매매 이력). inCmp=true면 비교 화면 왼쪽 칸용 — 보유 요약을 위에 두고,
    표 전용 버튼(트리맵으로 가기·세부 정보 닫기·매매전략)은 뺀다. id는 같아서 loadAndDrawStockChart가 그대로 그린다. */
 function stockDetailPanelHtml(a, SL, inCmp){
@@ -4439,12 +4519,18 @@ function executeTrade(){
 
   // 현금 잔액 수정 (연필 버튼)
   if(mode==='edit_cash'){
-    const a=assets.find(x=>x.id===id); if(!a) return;
+    let a = id ? assets.find(x=>x.id===id) : null;
+    if(!a && trade.newCcy && trade.src) a = createCashRow(trade.newCcy, trade.src.company, trade.src.cashAcctType);   // 이 계좌에 처음 생기는 통화
+    if(!a) return;
     a.avgPrice=trade.newAmt; a.currentPrice=trade.newAmt; a.prevPrice=trade.newAmt;
-    if(trade.company !== undefined) a.company = trade.company || null;
-    if(trade.cashAcctTypeVal !== undefined) a.cashAcctType = trade.cashAcctTypeVal || null;
-    if(trade.assetType !== undefined) a.assetType = trade.assetType || null;
-    if(trade.market !== undefined) a.market = trade.market || null;
+    if(trade.setMode) a.balanceSetAt = Date.now();   // 잔액을 직접 맞춘 시각 — 이보다 앞선 배당은 이미 포함으로 보고 자동 입금하지 않는다
+    // 분류: 바꾼 칸만, 금융회사·계좌구분·자산유형은 그 계좌 현금 전체에(한 줄이 같이 움직이게), 투자시장은 고른 통화만
+    const src = trade.src || {company:a.company||null, cashAcctType:a.cashAcctType||null, market:a.market||null, assetType:a.assetType||null};
+    const grp = assets.filter(x=>x===a || (trade.groupIds||[]).includes(x.id));
+    if(trade.company !== undefined && (trade.company||null)!==src.company) grp.forEach(x=>{ x.company = trade.company || null; });
+    if(trade.cashAcctTypeVal !== undefined && (trade.cashAcctTypeVal||null)!==src.cashAcctType) grp.forEach(x=>{ x.cashAcctType = trade.cashAcctTypeVal || null; });
+    if(trade.assetType !== undefined && (trade.assetType||null)!==(src.assetType||null)) grp.forEach(x=>{ x.assetType = trade.assetType || null; });
+    if(trade.market !== undefined && (trade.market||null)!==(src.market||null)) a.market = trade.market || null;
     editingId=null;
     saveAssets();renderAll();
     revealAssetIfFiltered(a);
@@ -4571,6 +4657,7 @@ function executeTrade(){
     const existing = assets.find(a=>a.acctType==='cash'&&a.name===cName&&a.currency===cur&&(a.company||null)===acct&&(a.cashAcctType||null)===cashAcctTypeVal2);
     if(existing){
       existing.avgPrice=amount; existing.currentPrice=amount; existing.prevPrice=amount; existing.quantity=1;
+      if(trCashMode==='set') existing.balanceSetAt = Date.now();
       if(assetType) existing.assetType=assetType; // 폼에서 자산유형을 비워도 기존 값(안전자산 등)을 지우지 않음
       if(market) existing.market=market; // 폼에서 투자시장을 비워도 기존 값을 지우지 않음
       if(st){ st.textContent=`✅ ${cName} ${CUR_SYM[cur]}${amount.toLocaleString()} 으로 업데이트`; setTimeout(()=>{st.textContent='';},3000); }
@@ -5292,7 +5379,12 @@ function setEditCashMode(id, mode){
 }
 
 function confirmEditCash(id){
-  const a=assets.find(x=>x.id===id); if(!a) return;
+  const lead=assets.find(x=>x.id===id); if(!lead) return;
+  const group = assets.filter(x=>x.acctType==='cash' && cashGroupKey(x)===cashGroupKey(lead));
+  const ccy = document.getElementById(`ep_ccy_${id}`)?.value || lead.currency;
+  const target = group.find(x=>x.currency===ccy);
+  // 이 계좌에 그 통화 현금이 아직 없으면 잔액 0인 새 기록으로 본다(저장할 때 만든다)
+  const a = target || {id:null, name:`${lead.name} ${ccy}`, currency:ccy, avgPrice:0, company:lead.company, market:lead.market, cashAcctType:lead.cashAcctType, assetType:lead.assetType};
   const mode=editCashModes[id]||'set';
   const amt=parseFloat(document.getElementById(`ep_cash_amt_${id}`)?.value);
   const st=document.getElementById('formStatus');
@@ -5319,7 +5411,8 @@ function confirmEditCash(id){
   }
   const modeColors={set:'#34c759',in:'#007aff',out:'#ff3b30'};
   const modeLabels={set:'잔액 설정',in:'입금',out:'출금'};
-  pendingTrade={id, mode:'edit_cash', newAmt, company, market, cashAcctTypeVal, assetType};
+  pendingTrade={id: a.id, mode:'edit_cash', newAmt, company, market, cashAcctTypeVal, assetType, setMode: mode==='set',
+    groupIds: group.map(x=>x.id), newCcy: target ? null : ccy, src:{company:lead.company||null, cashAcctType:lead.cashAcctType||null, market:lead.market||null, assetType:lead.assetType||null}};
   const acctChanged = company !== (a.company||'');
   const marketChanged = market !== (a.market||'');
   const acctTypeChanged = cashAcctTypeVal !== (a.cashAcctType||'');
@@ -5356,7 +5449,12 @@ function setCashMode(mode){
   if(divRow) divRow.style.display = mode==='div' ? 'block' : 'none';
 }
 
-function addCash(){
+async function addCash(){
+  if(cashMode==='div'){
+    const src = (document.getElementById('cf_div_source')?.value||'').trim(), T = src.toUpperCase();
+    const held = src && assets.filter(divEligible).find(a=>a.name===src || divAssetKey(a)===T);
+    if(held && !await iosConfirm({title:'보유 종목 배당', message:`${held.name} 배당은 지급일에 현금으로 자동 입금돼요. 여기서 또 넣으면 두 번 늘어나요.`, okText:'그래도 추가'})) return;
+  }
   const nameRaw = readSelectOrCustom('cf_name','cf_name_custom', false);
   if(nameRaw===null) return;
   const name   = nameRaw || '현금';
@@ -6586,6 +6684,7 @@ async function ensureDividendHistory(force){
   await Promise.all([worker(), worker(), fxJob]);
   saveDivHist(cache);
   divHistState.loading = false;
+  applyDividendAutoCash();   // 새 배당 이력으로 지급일이 지난 보유 종목 배당을 현금에 넣는다
   renderAllDividendViews();
 }
 const divKindOf = (ticker, name, cache) => { const t = (cache[String(ticker).trim().toUpperCase()]||{}).type; return t ? (t==='ETF' ? 'etf' : 'stock') : (DIV_ETF_RE.test(name||'') ? 'etf' : 'stock'); };
@@ -6687,7 +6786,7 @@ function recordDividend(o){
   const c = divCalcAmounts(o.acct, o.ccy, o.amountKRW, o.basis);
   const e = {name:o.name, ticker:o.ticker||'—', type:'dividend', at:o.at, acctType:'cash', assetType:null, company:o.company||null, acct:o.acct,
     price:o.dps ?? null, quantity:o.qty ?? null, currency:o.ccy, totalKRW:c.net, pnl:c.net, pnlPct:null, gross:c.gross, wht:c.wht,
-    exAt:o.ex || null, src:o.src || 'manual', reason:'', cashAdjusted:null, principalId:o.principalId || null};
+    exAt:o.ex || null, src:o.src || 'manual', reason:'', cashAdjusted:null, principalId:o.principalId || null, createdAt:Date.now()};
   if(o.id) e.id = o.id;
   addTradeLog(e);
   return c;
@@ -6704,6 +6803,80 @@ function divSyncPrincipal(arr, r, f, net, on){
     if(i>=0) Object.assign(arr[i], {at:f.at, name:f.name, company:f.company||null, totalKRW:net, currency:'KRW'});
     else { const id = uid(); arr.unshift(divPrincipalEntry(id, r.id, f, net)); r.principalId = id; }
   } else if(i>=0){ arr.splice(i, 1); r.principalId = null; }
+}
+
+/* ── 배당일 현금 자동 입금 ──
+   보유 종목 배당은 지급일이 되면 세후 금액이 그 금융회사·계좌구분·통화의 현금에 들어간다(원금은 그대로 → 수익률에 수익으로 잡힘).
+   시작일(이 기능이 처음 돈 날) 전 지급분·옛 수동 기록·원금기록장에 넣은 기록은 건드리지 않는다. 기록마다 cash:{state, assetId, ccy, amt, acctType}:
+   'in' 입금함 · 'set' 그 현금을 지급일 뒤에 '잔액 설정'으로 맞춰 이미 포함 · 'amb' 같은 통화 현금 행이 여러 개라 못 넣음. 계산 대상 고르기는 div-tax.js autoCashDue. */
+const DIV_AUTOCASH_KEY = 'pf_div_autocash_v1';   // {from: 시작일 0시, done: {회차 키: 기록 id}} — 백업 포함
+function loadDivAutoCash(){
+  try{ const m = JSON.parse(localStorage.getItem(DIV_AUTOCASH_KEY)); if(m && typeof m.from==='number' && m.done && typeof m.done==='object' && !Array.isArray(m.done)) return m; }catch(e){}
+  return null;
+}
+function saveDivAutoCash(m){ try{ localStorage.setItem(DIV_AUTOCASH_KEY, JSON.stringify(m)); }catch(e){} }
+function divAutoCashState(){
+  let m = loadDivAutoCash();
+  if(!m){ const d = new Date(); d.setHours(0,0,0,0); m = {from:d.getTime(), done:{}}; saveDivAutoCash(m); }
+  return m;
+}
+// 기록 r(배당)의 세후 금액을 현금에 넣는다. acctType = 그 보유 종목의 계좌유형(현금 구분을 고르는 데 쓴다)
+function divCreditCash(r, acctType){
+  const ccy = r.currency || 'KRW';
+  const amt = DT.netInCcy({ccy, net:+r.totalKRW||0, gross:+r.gross||0, dps:+r.price||0, qty:+r.quantity||0}, divFx(ccy));
+  const base = {ccy, amt, acctType: acctType || null};
+  const row = findCashRow(ccy, r.company||null, acctType||null);
+  if(row==='amb'){ r.cash = Object.assign({state:'amb'}, base); return; }
+  if(row && row.balanceSetAt && row.balanceSetAt > r.at){ r.cash = Object.assign({state:'set', assetId:row.id}, base); return; }
+  const cash = row || createCashRow(ccy, r.company||null, acctType||null);
+  cashRowAdd(cash, amt);
+  r.cash = Object.assign({state:'in', assetId:cash.id}, base);
+}
+// 입금을 되돌린다(수정·삭제) — 입금한 행이 지워졌으면 같은 규칙으로 다시 찾는다
+function divUncreditCash(r){
+  const c = r.cash;
+  if(c && c.state==='in'){
+    let row = assets.find(a=>a.id===c.assetId && a.acctType==='cash');
+    if(!row){ const f = findCashRow(c.ccy, r.company||null, c.acctType); row = f && f!=='amb' ? f : null; }
+    if(row) cashRowAdd(row, -c.amt);
+  }
+  r.cash = null;
+}
+// 이 기록이 현금 자동 입금 대상인가 — 시작일 이후 만든 보유 종목 기록, 원금 연결 없음, 지급일이 시작일~지금
+function divCashEligible(r, held){
+  const st = divAutoCashState();
+  return !!held && !r.principalId && r.createdAt!=null && r.createdAt >= st.from && r.at >= st.from && r.at <= Date.now();
+}
+function divMarkDone(it, id){ const st = divAutoCashState(); st.done[DT.autoCashKey(it)] = id; saveDivAutoCash(st); }
+function divUnmarkDone(id){ const st = divAutoCashState(); Object.keys(st.done).forEach(k=>{ if(st.done[k]===id) delete st.done[k]; }); saveDivAutoCash(st); }
+const divCashAmtStr = c => c ? unitPriceStr(c.amt, c.ccy) : '';
+let divAutoCashBusy = false;
+function applyDividendAutoCash(){
+  if(divAutoCashBusy || document.hidden || !Array.isArray(assets)) return 0;
+  divAutoCashBusy = true;
+  try{
+    const st = divAutoCashState(), now = Date.now(), done = new Set(Object.keys(st.done));
+    const arr = loadTradeLog();
+    let n = 0;
+    for(let y = new Date(st.from).getFullYear(); y <= new Date(now).getFullYear(); y++){
+      divMemoReset();
+      DT.autoCashDue(buildDividendLedger(y), {from:st.from, now, done}).forEach(it=>{
+        let r;
+        if(it.src==='auto'){
+          r = {id:uid(), name:it.name, ticker:it.ticker||'—', type:'dividend', at:it.pay, acctType:'cash', assetType:null, company:it.company||null, acct:it.acct,
+            price:it.dps, quantity:it.qty, currency:it.ccy, totalKRW:Math.round(it.net), pnl:Math.round(it.net), pnlPct:null, gross:Math.round(it.gross), wht:Math.round(it.wht),
+            exAt:it.ex, src:'auto', reason:'', cashAdjusted:null, principalId:null, createdAt:now};
+          arr.unshift(r);
+        } else {
+          r = arr.find(x=>x.id===it.id); if(!r) return;
+        }
+        divCreditCash(r, it.assetAcct);
+        const k = DT.autoCashKey(it); st.done[k] = r.id; done.add(k); n++;
+      });
+    }
+    if(n){ saveTradeLog(arr); saveDivAutoCash(st); saveAssets(); renderAll(); renderAllDividendViews(); }
+    return n;
+  } finally { divAutoCashBusy = false; divMemoReset(); }
 }
 
 // 다시 그려져도 입력 중이던 폼 값이 지워지지 않게(시세·배당 정보 갱신이 끝나며 다시 그릴 수 있다) — 같은 폼(data-k)일 때만 되살린다
@@ -6775,7 +6948,16 @@ function divConfirm(it, f, pr){
   const c = recordDividend({id:divId, principalId:prId, at:f.at, name:it.name, ticker:it.ticker, acct:f.acct, ccy:f.ccy, qty:f.qty ?? it.qty, dps:f.dps ?? it.dps,
     amountKRW:f.amountKRW, basis:f.basis, company:it.company, ex:it.ex, src: divDateStr(f.at)!==divDateStr(it.pay) ? 'edited' : 'auto'});
   if(prId) addTradeLog(divPrincipalEntry(prId, divId, {at:f.at, name:it.name, company:it.company}, c.net));
+  divCreditIfDue(divId, it, true, it.assetAcct);
   return divId;
+}
+// 방금 저장한 기록이 자동 입금 대상이면 바로 넣는다(지급일이 아직이면 그날 applyDividendAutoCash가 넣는다)
+function divCreditIfDue(id, it, held, acctType){
+  const arr = loadTradeLog(), r = arr.find(x=>x.id===id);
+  if(!r || r.cash || !divCashEligible(r, held)) return;
+  divCreditCash(r, acctType);
+  saveTradeLog(arr); saveAssets(); renderAll();
+  if(it && it.akey) divMarkDone(Object.assign({}, it, {ex: r.exAt!=null ? r.exAt : it.ex, id}), id);
 }
 function dismissDivItem(key){
   divMemoReset();
@@ -6832,7 +7014,13 @@ function saveDivEdit(key, ctx){
     if(r.src==='auto' && divDateStr(f.at)!==divDateStr(it.pay)) r.src = 'edited';
     delete r.basis;
     divSyncPrincipal(arr, r, f, c.net, f.pr);
+    // 현금: 입금했던 기록이면 옛 금액을 되돌리고 새 값으로 다시(금융회사·통화가 바뀌면 다른 현금으로)
+    const held = !!(f.a || it.akey), acctType = f.a ? f.a.acctType : it.assetAcct;
+    const hadCash = !!r.cash;
+    if(hadCash) divUncreditCash(r);
+    if(divCashEligible(r, held)){ divCreditCash(r, acctType); if(it.akey) divMarkDone(it, r.id); }
     saveTradeLog(arr);
+    if(hadCash || r.cash){ saveAssets(); renderAll(); }
   } else {
     id = divConfirm(it, f, f.pr);
   }
@@ -6843,8 +7031,11 @@ function saveDivEdit(key, ctx){
 async function deleteDividendEntry(id){
   const log = loadTradeLog(), rec = log.find(r=>r.id===id), it = divItemById(id);
   const hasPr = !!(rec && rec.principalId && log.some(r=>r.id===rec.principalId)), ck = it && it.ckey;
-  const note = [hasPr ? '원금기록장의 입금도 함께 지워요.' : '', ck ? '같은 회차의 자동 배당은 다시 나타나지 않게 제외해요.' : ''].filter(Boolean).join(' ');
+  const inCash = !!(rec && rec.cash && rec.cash.state==='in');
+  const note = [inCash ? `현금 잔액에서도 ${divCashAmtStr(rec.cash)}을 빼요.` : '', hasPr ? '원금기록장의 입금도 함께 지워요.' : '', ck ? '같은 회차의 자동 배당은 다시 나타나지 않게 제외해요.' : ''].filter(Boolean).join(' ');
   if(!await iosConfirm({title:'배당 기록 삭제', message:'삭제한 기록은 되돌릴 수 없어요.'+(note ? ' '+note : ''), okText:'삭제', destructive:true})) return;
+  if(inCash){ divUncreditCash(rec); saveAssets(); renderAll(); }
+  if(rec && rec.cash!==undefined) divUnmarkDone(id);
   saveTradeLog(log.filter(r=>r.id!==id && !(hasPr && r.id===rec.principalId)));
   if(ck){ const list = loadDivDismiss(); if(!list.includes(ck)) list.push(ck); localStorage.setItem(DIV_DISMISS_KEY, JSON.stringify(list)); }
   if(divEditKey===id){ divEditKey = null; divEditCtx = null; }
@@ -6864,6 +7055,7 @@ function divStatus(it){
   if(it.qtyBasis==='assumed') p.push('수량 추정');
   if(it.qtyBasis==='snapinf') p.push('스냅샷 근거');
   if(it.est) p.push('세후 환산');
+  if(it.cash) p.push(it.cash.state==='in' ? '현금 입금' : it.cash.state==='set' ? '잔액에 포함' : '현금 반영 못 함');
   return p;
 }
 
@@ -6874,7 +7066,7 @@ function renderDivRow(it, opts){
   const d = new Date(it.pay);
   const ctx = opts.ctx || 'monthly';
   if(key && divEditKey===key && divEditCtx===ctx)
-    return divFormHtml(`de_${ctx}`, ctx, divEditValues(it), {mode:'edit', key, locked: it.src!=='confirmed', style:'margin:8px 0;'});
+    return divFormHtml(`de_${ctx}`, ctx, divEditValues(it), {mode:'edit', key, locked: it.src!=='confirmed', style:'margin:8px 0;', showPr: it.src==='confirmed' && !!it.principalId});
   const detail = (it.qty && it.dps) ? `${it.qty.toLocaleString()}주 × ${CUR_SYM[it.ccy]||''}${+it.dps.toFixed(4)}` : '';
   const taxed = divTaxable(it.acct) && it.wht>0 ? `세전 ${fmt(it.gross)}` : '';
   const status = divStatus(it);
@@ -6912,6 +7104,8 @@ function divBreakdownTip(items){
   if(!by.size) return '받은 배당이 아직 없어요.';
   const lines = [...by.values()].sort((a,b)=>b.net-a.net).map(g=>`${g.co} ${DIV_ACCT_LABEL[g.acct]||g.acct}  ${maskAmt(fmt(g.net))}`);
   if(nGuess) lines.push(`수량 근거가 없어 현재 수량으로 계산한 ${nGuess}건 ${maskAmt(fmt(guess))}`);
+  const st = loadDivAutoCash();
+  if(st){ const d = new Date(st.from); lines.push(`보유 종목 배당은 ${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}부터 지급일에 현금 자동 입금`); }
   return lines.join('\n');
 }
 const divAttr = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
@@ -6948,14 +7142,14 @@ function divFormHtml(p, ctx, v, o){
       ${fmField('금액(원)', fmInput(`${p}_amt`,{type:'number',value:v.amount,ph:'0',attrs:'min="0"'}))}
       <div class="fm-f s9 dv-basis"><span class="fm-l" aria-hidden="true">&nbsp;</span><span class="dv-segg">${fmSeg([['net','세후(입금액)'],['gross','세전']], basis, k=>`${p}_basis_${k}`, k=>`setDivBasis('${p}','${k}')`)}<button type="button" class="ibtn" data-tip="${divAttr(DIV_BASIS_TIP)}" aria-label="세후·세전 안내">ⓘ</button></span></div>
     </div><div class="fm-a">
-      <button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" title="받은 배당(세후)을 원금기록장에 입금으로 남겨요" onclick="toggleDivPr('${p}',this)">원금기록장에 추가<span class="sw"></span></button>
+      ${o.showPr ? `<button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" title="이 배당을 원금기록장 입금으로 남겨 둔 기록이에요 — 끄면 그 입금을 지워요" onclick="toggleDivPr('${p}',this)">원금기록장에 추가<span class="sw"></span></button>` : ''}
       ${acts}
     </div></div>`;
 }
 function renderDivAddForm(ctx){
   const on = !!divAddOpen[ctx];
   return `<div id="dnew_wrap_${ctx}" style="${on?'':'display:none;'}margin:0 0 12px;">
-    <div class="notice" style="margin:0 0 8px;">자동으로 잡히지 않는 과거·직접 받은 배당을 기록해요 · 자산·현금 잔액에는 반영되지 않아요</div>
+    <div class="notice" style="margin:0 0 8px;">보유 종목 배당은 지급일에 세후 금액이 그 계좌 현금으로 자동 입금돼요 · 직접 입력한 배당처는 기록만</div>
     ${divFormHtml(`dn_${ctx}`, ctx, {date:divDateStr(Date.now()), name:'', assetId:'', ticker:'', company:divDefaultCo(), acct:'general', ccy:'KRW', qty:'', dps:'', amount:''}, {mode:'add'})}</div>`;
 }
 // 추가 폼의 금융회사 기본값 — 금융회사 보기(농협·미래)를 켜 둔 채 추가하면 그 보기에 바로 보이도록 그 값으로
@@ -6995,6 +7189,8 @@ function divSearchStock(p, q){
   q = String(q).trim().toLowerCase();
   if(!q){ box.style.display = 'none'; return; }
   divSuggTimer[p] = setTimeout(()=>{
+    const box = document.getElementById(`${p}_sugg`);   // 그 사이 화면이 다시 그려졌을 수 있으니 지금 보이는 상자를 다시 찾는다
+    if(!box) return;
     const score = (n, t) => n.startsWith(q) ? 0 : t.startsWith(q) ? 1 : n.includes(q) ? 2 : t.includes(q) ? 3 : -1;
     const held = assets.filter(divEligible);
     const mine = held.map(a=>({a, sc:score(a.name.toLowerCase(), String(a.ticker).toLowerCase())})).filter(x=>x.sc>=0)
@@ -7039,10 +7235,17 @@ document.addEventListener('click', e=>{
 });
 function addDivManual(ctx){
   const p = `dn_${ctx}`, f = readDivForm(p); if(!f) return;
+  const ex = divNearEx(f.a, f.at);
+  // 보유 종목의 같은 회차(배당락일)가 이미 기록돼 있으면 두 번 적지 않게 — 자동 입금된 회차를 또 적으면 현금이 두 번 늘어난다
+  if(f.a && ex!=null){
+    const dup = loadTradeLog().find(r=>r.type==='dividend' && r.exAt===ex && divRecMatchesAsset(r, f.a));
+    if(dup){ fieldError(`${p}_name`, `이 회차는 ${new Date(dup.at).getMonth()+1}월 ${new Date(dup.at).getDate()}일 기록이 이미 있어요 — 목록에서 연필로 고쳐 주세요.`); return; }
+  }
   const divId = uid(), prId = f.pr ? uid() : null;
   const c = recordDividend({id:divId, principalId:prId, at:f.at, name:f.name, ticker:f.ticker, acct:f.acct, ccy:f.ccy, qty:f.qty, dps:f.dps, amountKRW:f.amountKRW,
-    basis:f.basis, company:f.company, ex:divNearEx(f.a, f.at), src:'manual'});
+    basis:f.basis, company:f.company, ex, src:'manual'});
   if(prId) addTradeLog(divPrincipalEntry(prId, divId, f, c.net));
+  if(f.a) divCreditIfDue(divId, {hid:f.a.id, akey:divHoldKey(f.a), ex, id:divId}, true, f.a.acctType);
   // 방금 넣은 기록이 지금 보기 밖(다른 연도·달·금융회사·접힌 종목)이면 보이도록 옮기고 잠깐 강조한다
   const d = new Date(f.at);
   divYearSel = d.getFullYear(); divSelMonth = d.getMonth();
@@ -7978,6 +8181,10 @@ function propagateHoldingAttrsToTradeLog(before, asset){
   log.forEach(r=>{
     if((r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, matchAsset)){
       fields.forEach(f=>{ if((r[f]||null)!==after[f]){ r[f]=after[f]; changed=true; } });
+    } else if(r.type==='dividend' && divRecMatchesAsset(r, matchAsset)){
+      // 배당 기록도 같은 보유로 계속 짝지어지게(풀리면 같은 회차 자동 항목이 다시 생겨 현금이 두 번 들어갈 수 있다)
+      if(fields.includes('company') && (r.company||null)!==after.company){ r.company = after.company; changed = true; }
+      if(fields.includes('acctType') && r.acct && r.acct!==DT.normAcct(after.acctType)){ r.acct = DT.normAcct(after.acctType); changed = true; }
     }
   });
   if(changed){ saveTradeLog(log); renderSoldHistory(); } // 매매이력 탭은 열려 있지 않아도 다시 그려 둬야 돌아왔을 때 옛 값이 안 보인다
@@ -9795,7 +10002,7 @@ const BACKUP_VERSION = 2;
 const RETIREMENT_KEY = 'retirement_dashboard_v1'; // retirement/index.html의 STORAGE_KEY와 반드시 같아야 함
 // 1회 보정 완료 표시 — 같이 옮겨야 복원한 데이터가 새 기기에서 한 번 더 자동 보정되어 백업과 달라지는 일이 없다
 const BACKUP_FLAG_KEYS = [CRYPTO_FIX_KEY, CRYPTO_LOG_FIX_KEY, TRADELOG_ATTRSYNC_KEY, NAME_FIX_KEY, NAME_LOG_FIX_KEY];
-const BACKUP_STORAGE_KEYS = [ASSETS_KEY, FX_KEY, SNAP_KEY, TRADE_KEY, OTHER_FIN_INCOME_KEY, OTHER_INTEREST_KEY, OTHER_TAXBASE_KEY, FIN_INPUTS_KEY, DIV_DISMISS_KEY, CGT_MANUAL_KEY, TAX_SET_KEY, RETIREMENT_KEY, ...BACKUP_FLAG_KEYS];
+const BACKUP_STORAGE_KEYS = [ASSETS_KEY, FX_KEY, SNAP_KEY, TRADE_KEY, OTHER_FIN_INCOME_KEY, OTHER_INTEREST_KEY, OTHER_TAXBASE_KEY, FIN_INPUTS_KEY, DIV_DISMISS_KEY, DIV_AUTOCASH_KEY, CGT_MANUAL_KEY, TAX_SET_KEY, RETIREMENT_KEY, ...BACKUP_FLAG_KEYS];
 
 function buildBackupData(){
   // assets/fx는 메모리상 전역변수 대신 localStorage에서 직접 다시 읽는다(스냅샷/
@@ -9824,6 +10031,7 @@ function buildBackupData(){
     otherTaxBase: finInput(new Date().getFullYear(), 'base'),
     finInputs: loadFinInputs(),
     divDismiss: loadDivDismiss(),
+    divAutoCash: loadDivAutoCash(),
     cgtManual: loadCgtManual(),
     taxSettings: loadTaxSettings(),
     retirement,
@@ -9877,6 +10085,7 @@ function validateBackupData(d){
   if((d.otherInterest!=null && !isFinite(parseFloat(d.otherInterest))) || (d.otherTaxBase!=null && !isFinite(parseFloat(d.otherTaxBase)))) return '금융소득 입력값이 올바르지 않습니다.';
   if(d.finInputs!=null && (!isObj(d.finInputs) || !Object.values(d.finInputs).every(y=>isObj(y) && Object.values(y).every(v=>isFinite(parseFloat(v)))))) return '연도별 이자·배당 입력이 올바르지 않습니다.';
   if(d.divDismiss!=null && (!Array.isArray(d.divDismiss) || !d.divDismiss.every(x=>typeof x==='string'))) return '자동 배당 제외 목록이 올바르지 않습니다.';
+  if(d.divAutoCash!=null && !(isObj(d.divAutoCash) && typeof d.divAutoCash.from==='number' && isObj(d.divAutoCash.done) && Object.values(d.divAutoCash.done).every(v=>typeof v==='string'))) return '배당 자동 입금 기록이 올바르지 않습니다.';
   if(d.cgtManual!=null && (!Array.isArray(d.cgtManual) || !d.cgtManual.every(x=>isObj(x) && typeof x.at==='number' && isFinite(x.pnl)))) return '양도소득 수동 기록이 올바르지 않습니다.';
   if(d.taxSettings!=null && (!isObj(d.taxSettings) || !['fifo','avg'].includes(d.taxSettings.method) || !isObj(d.taxSettings.buyFx) || !Object.values(d.taxSettings.buyFx).every(v=>isFinite(parseFloat(v))))) return '세금 설정(양도차익 방식·매입 환율)이 올바르지 않습니다.';
   if(d.retirement!=null && (!isObj(d.retirement) || !Object.values(d.retirement).every(v=>v===null || typeof v==='string' || typeof v==='number'))) return '현금흐름 데이터가 올바르지 않습니다.';
@@ -9939,6 +10148,10 @@ function applyBackupData(data){
     writes[FIN_INPUTS_KEY] = conv;
     parts.push({label:'연도별 이자·배당 입력', key:FIN_INPUTS_KEY, origRaw:conv});
   }
+  if(data.divAutoCash){
+    writes[DIV_AUTOCASH_KEY] = JSON.stringify(data.divAutoCash);
+    parts.push({label:'배당 자동 입금 기록', key:DIV_AUTOCASH_KEY, origRaw:JSON.stringify(data.divAutoCash)});
+  } else removes.push(DIV_AUTOCASH_KEY);   // 옛 백업: 복원한 날부터 자동 입금을 시작한다
   if(Array.isArray(data.divDismiss)){
     writes[DIV_DISMISS_KEY] = JSON.stringify(data.divDismiss);
     parts.push({label:'자동 배당 제외 목록', key:DIV_DISMISS_KEY, origRaw:JSON.stringify(data.divDismiss)});
@@ -10565,7 +10778,11 @@ async function cmpFromHash(){
     buildChartHistory();
   });
   setStatus('ok','초기 데이터 로드 완료 — 🔄 버튼으로 최신 시세 갱신');
+  // 보유 종목 배당 → 지급일에 현금 자동 입금: 저장된 배당 이력으로 먼저, 이력을 새로 받은 뒤 한 번 더
+  setTimeout(()=>{ applyDividendAutoCash(); ensureDividendHistory(); }, 1500);
 })();
+setInterval(()=>{ applyDividendAutoCash(); ensureDividendHistory(); }, 30*60*1000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) applyDividendAutoCash(); });
 
 // 5분마다 자동 시세 갱신
 // 1시간마다는 스냅샷도 저장 (그래프 포인트 확보)

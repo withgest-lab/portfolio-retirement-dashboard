@@ -298,7 +298,8 @@ function buildLedger(o){
     const a = recordAmounts(r, acct);
     items.push({src:'confirmed', id:r.id, key:r.id, akey: owner ? owner.key : null, name:r.name||'(미지정)', ticker:r.ticker||'', acct,
       company: r.company || (owner ? owner.company : null), ccy:r.currency||'KRW', ex:r.exAt||null, pay:r.at, qty:r.quantity||null, dps:r.price||null,
-      gross:a.gross, wht:a.wht, net:a.net, est:a.est, known:true, qtyBasis:'record', payBasis:'record', fxBasis:'record', guess:false});
+      gross:a.gross, wht:a.wht, net:a.net, est:a.est, known:true, qtyBasis:'record', payBasis:'record', fxBasis:'record', guess:false,
+      hid: owner && owner.id!=null ? owner.id : null, cash: r.cash || null, createdAt: r.createdAt || null, principalId: r.principalId || null});
   });
   // 2) 보유 항목별 야후 배당 이력 → 자동(지급 지남)·지급 예정(이미 배당락), 3) 작년 같은 회차 반복 → 예상
   (o.holdings||[]).forEach(h=>{
@@ -328,7 +329,7 @@ function buildLedger(o){
       const gross = dps * q.qty * fx.rate, wht = tax ? gross*rate : 0;
       return {src, id:null, key:`${h.key}|${dateStr(ex)}`, akey:h.key, name:h.name, ticker:h.ticker, acct, company:h.company||null, ccy:h.ccy,
         ex, pay, qty:q.qty, dps, gross, wht, net:gross - wht, est:false, known, qtyBasis:q.basis, payBasis, fxBasis:fx.basis,
-        guess: q.basis==='assumed' || !known};
+        guess: q.basis==='assumed' || !known, hid: h.id!=null ? h.id : null};
     };
     const T = String(h.ticker).trim().toUpperCase();
     cyc.forEach(c=>{
@@ -362,6 +363,26 @@ function buildLedger(o){
   const recById = new Map(recs.map(x=>[x.r.id, x]));
   items.forEach(it=>{ if(it.src==='confirmed'){ const x = recById.get(it.id); if(x && x.ckey) it.ckey = x.ckey; } });
   return items.sort((a,b)=>a.pay-b.pay);
+}
+
+/* ── 배당일 현금 자동 입금 ──
+   보유 종목 배당은 지급일이 되면 그 계좌 현금에 세후 금액을 한 번만 넣는다(원금은 그대로 → 수익률에 수익으로 잡힌다).
+   대상: 시작일(from) ≤ 지급일 ≤ 지금인 보유 종목 항목 중 ① 자동 항목(수량 근거가 추정이 아닌 것) ② 시작일 이후 새로 만든 확정 기록(원금 연결 없음·아직 미입금).
+   done: 이미 입금한 회차 키 — 기록의 금융회사를 바꾸거나 짝이 풀려 자동 항목이 다시 나타나도 두 번 넣지 않는다. */
+const autoCashKey = it => `${it.hid!=null ? it.hid : it.akey}|${it.ex!=null ? dateStr(it.ex) : 'r:'+it.id}`;
+function autoCashDue(items, o){
+  const done = o.done || new Set(), keyOf = o.keyOf || autoCashKey;
+  return (items||[]).filter(it => it.akey && it.pay >= o.from && it.pay <= o.now && !done.has(keyOf(it)) && (
+    (it.src==='auto' && it.qtyBasis!=='assumed') ||
+    (it.src==='confirmed' && !it.cash && !it.principalId && it.createdAt!=null && it.createdAt >= o.from)));
+}
+// 입금할 금액(그 통화 단위) — 원화는 세후 원화, 외화는 세후 원화 ÷ 기록 당시 환율(세전 ÷ 주당×수량), 모르면 fxNow
+function netInCcy(it, fxNow){
+  const ccy = it.ccy || 'KRW';
+  if(ccy==='KRW') return Math.round(it.net);
+  const fx = (it.dps > 0 && it.qty > 0 && it.gross > 0) ? it.gross/(it.dps*it.qty) : (fxNow || 1);
+  const v = it.net / fx;
+  return ccy==='JPY' ? Math.round(v) : Math.round(v*100)/100;
 }
 
 /* ── 해외주식 양도차익(원화) ──
@@ -469,7 +490,8 @@ const etfDivIncome = (sales, year) => sales.filter(s=>s.year===year && s.ccy==='
 
 const api = {DAY, DIV_WHT, SHELTERED, CGT_EXEMPT, CGT_RATE, FIN_THRESHOLD_MAN, INCOME_TAX_BANDS,
   normAcct, isSheltered, incomeTaxMan, marginalRate, finExtraTaxMan, dateStr, addBizDays, nextBiz, tradeDay, settleDate, makeFxAt,
-  qtyAt, linkSnapIds, basePay, payDate, learnLag, freqOf, periodOf, recordAmounts, buildLedger, openingAvg, realizeGains, cgtSummary, cgtTaxOf, etfDivIncome};
+  qtyAt, linkSnapIds, basePay, payDate, learnLag, freqOf, periodOf, recordAmounts, buildLedger, openingAvg, realizeGains, cgtSummary, cgtTaxOf, etfDivIncome,
+  autoCashKey, autoCashDue, netInCcy};
 if(typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.DivTax = api;
 })(typeof window !== 'undefined' ? window : this);

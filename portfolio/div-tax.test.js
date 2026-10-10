@@ -363,3 +363,31 @@ test('장부: 매도 기록 없이 사라진 종목의 배당은 스냅샷 근�
   assert.equal(items.length, 1);   // 6/27 배당락만 — 9/27은 마지막으로 보인 7/1 이후라 제외
   assert.equal(items[0].qty, 30); assert.equal(items[0].qtyBasis, 'snapinf'); assert.equal(items[0].src, 'auto');
 });
+
+test('배당일 자동 입금: 대상·한 번만·통화 금액', () => {
+  const now = d(2026, 10, 10), from = d(2026, 10, 5);
+  const h = holding({ id: 'h1', ev: monthlyEv(new Date(2025, 0, 1), 21, 50), trades: [{ at: d(2024, 6, 3), type: 'buy', quantity: 100 }] });   // 매수 근거가 있어야 수량이 '추정'이 아니다
+  const items = T.buildLedger({ year: 2026, now, holdings: [h], records: [], snaps: [] });
+  assert.ok(items.every(i => i.hid === 'h1'));
+  const hNo = holding({ id: 'h2', ev: monthlyEv(new Date(2025, 0, 1), 21, 50) });   // 근거 없음 → 수량 추정 → 자동 입금 안 함
+  assert.equal(T.autoCashDue(T.buildLedger({ year: 2026, now, holdings: [hNo], records: [], snaps: [] }), { from: d(2026, 1, 1), now }).length, 0);
+  const due = T.autoCashDue(items, { from: d(2026, 1, 1), now });
+  assert.ok(due.length > 0 && due.every(i => i.src === 'auto' && i.pay >= d(2026, 1, 1) && i.pay <= now));
+  // 시작일 이전 지급은 대상이 아니고, 이미 넣은 회차는 다시 넣지 않는다
+  assert.equal(T.autoCashDue(items, { from: now + 1, now }).length, 0);
+  const done = new Set(due.map(T.autoCashKey));
+  assert.equal(T.autoCashDue(items, { from: d(2026, 1, 1), now, done }).length, 0);
+  // 확정 기록: 시작일 이후 만든 것만, 원금 연결·이미 입금은 제외
+  const rec = (o) => Object.assign({ id: 'r' + Math.random(), type: 'dividend', at: d(2026, 10, 7), name: '가상 ETF', ticker: 'X', acct: 'general', currency: 'KRW', totalKRW: 4230, gross: 5000, wht: 770, src: 'manual', owners: [h.key] }, o);
+  const conf = recs => T.buildLedger({ year: 2026, now, holdings: [h], records: recs, snaps: [] }).filter(i => i.src === 'confirmed');
+  assert.equal(T.autoCashDue(conf([rec({ createdAt: d(2026, 10, 6) })]), { from, now }).length, 1);
+  assert.equal(T.autoCashDue(conf([rec({})]), { from, now }).length, 0);                                    // 옛 기록(createdAt 없음)
+  assert.equal(T.autoCashDue(conf([rec({ createdAt: d(2026, 10, 6), principalId: 'p1' })]), { from, now }).length, 0);
+  assert.equal(T.autoCashDue(conf([rec({ createdAt: d(2026, 10, 6), cash: { state: 'in' } })]), { from, now }).length, 0);
+  // 금액: 원화는 세후 원화, 외화는 기록 당시 환율로 되돌린 통화 금액(원천 15% 뒤)
+  assert.equal(T.netInCcy({ ccy: 'KRW', net: 4230.4 }), 4230);
+  assert.equal(T.netInCcy({ ccy: 'USD', dps: 0.5, qty: 10, gross: 0.5 * 10 * 1400, net: 0.5 * 10 * 1400 * 0.85 }), 4.25);
+  assert.equal(T.netInCcy({ ccy: 'USD', net: 1400 * 3 }, 1400), 3);
+  assert.equal(T.netInCcy({ ccy: 'JPY', dps: 20, qty: 100, gross: 20 * 100 * 9, net: 20 * 100 * 9 * (1 - 0.15315) }), 1694);
+});
+
