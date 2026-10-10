@@ -4,11 +4,11 @@
 //   node .claude/skills/ios-design/fit-audit.js retirement            # 현금흐름 4탭(1·2단계 설계/결과/세금 상식) + 결과 보기 6종(연 현금흐름·연 자산 흐름·요약·건보료 예상·근거·위기 점검&부족 대책, 자동 설계 확정 경로 포함)
 //   node .claude/skills/ios-design/fit-audit.js portfolio --seed      # 포트폴리오 전 화면(가상 데이터 25종목·매매 60건·스냅샷 30개를 심어서)
 //   node .claude/skills/ios-design/fit-audit.js home | signals | all
-//   옵션: --boxes(입력 박스 통일 검사 추가) --base http://localhost:4173/ --extra(실기기 근사 높이 3개 추가)
+//   옵션: --boxes(입력 박스 통일 검사 추가) --base http://localhost:4173/ --extra(이전 검증 폭 904/1003 등 7개 추가)
 // 사용(코드):  const fa = require('<이 파일>');  console.log(await fa.measureFit(page));  console.log(await fa.measureBoxes(page));
 //
 // 기준(FAIL) — 말하지 않아도 항상 적용되는 규칙:
-//   ① 펼침·펼침+90도(904×900·904×780·1003×810·1003×700)에서 세로 넘침 0(스크롤 잠금 포함)·가로 넘침 0
+//   ① 펼침·펼침+90도(750×832·750×700·832×750·832×620 — 실기기 폭)에서 세로 넘침 0(스크롤 잠금 포함)·가로 넘침 0
 //   ② 화면 아래 빈 공간 ≤ MAX_BLANK(20px, 바깥 여백 포함) — 남는 높이는 카드·행·차트가 채운다
 //   ③ 휠로 끌어도 scrollTop 0(터치 유격 없음)
 //   ④ 입력 박스 통일(--boxes): 같은 줄 컨트롤 높이 차 ≤ 1px, 높이 종류 ≤ 2, 폭 종류 ≤ 3, 어긋난 왼쪽 선(2~12px 차) 0
@@ -16,8 +16,9 @@
 // 예외(내용이 본질적으로 긴 화면): LONG 목록 — 가로 넘침 0만 검사. 접힘(390×800)은 가로 0만.
 
 const MAX_BLANK = 20;
-const VIEWPORTS = [[904, 900], [904, 780], [1003, 810], [1003, 700]];
-const EXTRA = [[904, 850], [1003, 760], [1003, 620]];
+// 실기기(Fold7 안쪽 화면 1968×2184px ÷ 밀도 2.625) 캡처 비교로 확정(2026-10-10): 펼침 기본 ≈ 750px, 펼침+90도 ≈ 832px. 높이는 주소창 유무로 2종.
+const VIEWPORTS = [[750, 832], [750, 700], [832, 750], [832, 620]];
+const EXTRA = [[904, 900], [904, 780], [1003, 810], [1003, 700], [904, 850], [1003, 760], [1003, 620]];   // 이전 검증 폭(--extra) — 넓은 화면 회귀 확인용
 const FOLDED = [390, 800];
 // 긴 화면(세로 스크롤 허용) — 내용이 본질적으로 길거나 사용자 데이터 행 수에 따라 늘어나는 목록. 짧을 때는 마지막 카드가 화면 끝까지 늘어나 빈 공간이 없어야 한다(fillScrollerCard).
 const LONG = new Set(['retirement/tax', 'signals', 'folded',
@@ -62,7 +63,7 @@ const IN_PAGE_BOXES = () => {
   // ④ 어긋난 왼쪽 선: 같은 카드·패널 안에서 왼쪽 위치가 2~12px 차이로 비슷하게 늘어선 입력(같은 열인데 안 맞는 것)
   const nearMiss = [];
   const groups = new Map();
-  els.forEach((e, i) => { const c = e.closest('.acct-card, .inline-panel, .basic-row, .modal, .fm, .card') || document.body; if (!groups.has(c)) groups.set(c, []); groups.get(c).push(items[i]); });
+  els.forEach((e, i) => { const c = e.closest('.acct-card, .sec-card, .inline-panel, .basic-row, .modal, .fm, .card') || document.body; if (!groups.has(c)) groups.set(c, []); groups.get(c).push(items[i]); });
   groups.forEach(list => { const ls = list.slice().sort((x, y) => x.left - y.left); for (let i = 1; i < ls.length; i++) { const d = ls[i].left - ls[i - 1].left; if (d >= 2 && d <= 12) nearMiss.push(ls[i - 1].id + '↔' + ls[i].id + '(' + Math.round(d) + 'px)'); } });
   // ⑤ 겹침·두 줄·잘림 — 같은 행(.health-input-row/.irow/.fm-f 등) 안의 컨트롤·단위·라벨 사각형 교차, 글자 두 줄 꺾임, 입력 값 잘림
   const rowSel = '.health-input-row, .irow, .fm-f, .ymon-amt, .irow-ctrl, .hir-range';
@@ -91,7 +92,9 @@ const IN_PAGE_BOXES = () => {
     if (tops.length && Math.max(...tops) - Math.min(...tops) > 4) wraps.push(nm(e));
     else if (e.scrollWidth > e.clientWidth + 1 && getComputedStyle(e).overflow !== 'visible') clipped.push(nm(e));
   });
-  return { count: items.length, hKinds: kinds(items, 'h', 1), wKinds: kinds(items, 'w', 2), sameLine, nearMiss, overlaps, wraps, clipped };
+  // 폭 종류: 내용에 맞춘 select(.hir-input)와 의도된 전용 폭(.hir-wide)은 3단계(sm/md/lg) 판정에서 뺀다(높이·정렬·겹침은 그대로 검사)
+  const wItems = items.filter((_, i) => !(els[i].matches('.hir-wide') || (els[i].tagName === 'SELECT' && els[i].classList.contains('hir-input'))));
+  return { count: items.length, hKinds: kinds(items, 'h', 1), wKinds: kinds(wItems, 'w', 2), sameLine, nearMiss, overlaps, wraps, clipped };
 };
 
 async function measureFit(page) {

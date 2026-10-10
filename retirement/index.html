@@ -701,7 +701,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
    연납입+월 선택 행과 일반 행 높이가 항상 같다). sp=0이면 기존 값과 완전히 같다. */
 @media (min-width:421px){
   html:not(.dense) .acct-head{padding:calc(4px + 3px*var(--sp,0)) 6px;font-size:min(13px, calc(11px + 1px*var(--sp,0)));}
-  html:not(.dense) .acct-body{padding:calc(4px + 3px*var(--sp,0)) calc(5px + 2px*var(--sp,0));gap:calc(2px + 3px*var(--sp,0));}
+  html:not(.dense) .acct-body{padding:calc(4px + 3px*var(--sp,0)) calc(5px + 2px*var(--sp,0));gap:calc(2px + 3px*var(--sp,0) + 1px*var(--sg,0));}   /* --sg: 가로 폭 때문에 --sp를 더 못 키울 때(실기기 750px) 남는 높이를 행 간격으로만 쓴다 */
   html:not(.dense) .acct-body .irow-top{gap:calc(2px + 1px*var(--sp,0));}
   html:not(.dense) .acct-body .ilabel{font-size:min(11.5px, calc(9.5px + 1px*var(--sp,0)));letter-spacing:min(.04em, calc(.01em + .015em*var(--sp,0)));}
   html:not(.dense) .acct-body .ival-input{height:calc(20px + 4px*var(--sp,0));font-size:min(15px, calc(12.5px + 1px*var(--sp,0)));width:min(76px, calc(64px + 4px*var(--sp,0)));letter-spacing:min(.03em, calc(.015em + .01em*var(--sp,0)));}
@@ -765,22 +765,26 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 .hi-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;}
 .hi-col .health-input-row{flex:1 1 0;align-items:center;flex-wrap:nowrap;column-gap:6px;row-gap:2px;min-width:0;}   /* 건보료 카드 행은 줄바꿈 금지(22절) — 합계·유형 같은 행이 실기기 글꼴에서 두 줄로 꺾이던 문제 */
 .hi-col .health-input-row > .unit-tag{flex:0 0 auto;}
-select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형은 '1주택/다주택' 짧은 이름 + md 폭 → 합계 칸 오른쪽 한 줄 */
+/* 재산 '합계·유형' 행은 가로 여유가 있어 자기 폭: 합계 7~9자(1,800,000)와 '다주택'이 안 잘리게 둘 다 84px(실기기 750px 캡처에서 180,30( / 다주트로 잘렸다) */
+#gongsiga.hir-wide,select.hir-input.hir-house{width:84px!important;}
+.hi-col .health-input-row:has(#gongsiga) > .unit-tag{min-width:22px!important;}
+select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행의 두 번째 칸(월 보험료)이 위 '다주택' 선택과 같은 x에서 시작 */
 .hi-col .health-input-row:last-child,.hi-col .health-input-row:has(+ .sec-subh){border-bottom:0;}
 .hi-col .sec-subh:first-child{padding-top:max(2px, calc(2px + .6px*var(--ps,0)));}
 .s2-bottom{flex:2.6 1 auto;display:grid;grid-template-columns:minmax(0,.93fr) minmax(0,1.03fr) minmax(0,1.03fr);grid-template-rows:auto repeat(2,minmax(0,1fr));gap:var(--gap);min-height:0;}
 .s2-bottom > .sec-card{min-width:0;}
 /* 세 카드의 머리·1행·2행이 같은 y — 카드가 행 트랙을 공유(subgrid, 카드마다 행이 정확히 2개). 줄바꿈 없음 */
-@media (min-width:800px){
+@media (min-width:700px){
   .s2-bottom > .sec-card{display:grid;grid-row:span 3;grid-template-rows:subgrid;row-gap:0;}
   .s2-bottom .sec-rows{display:contents;}
 }
 .s2-bottom .health-input-row{flex-wrap:nowrap;min-width:0;}
-.s2-bottom .health-input-row > .hir-label{flex:0 0 76px;width:76px;}
+.s2-bottom .health-input-row > .hir-label{flex:0 0 58px;width:58px;}
 .s2-bottom .health-input-row > .unit-tag,.s2-bottom .health-input-row > .req-st{flex:0 0 auto;white-space:nowrap;}
 .s2-bottom .health-input-row > .hir-input{flex:0 1 auto;min-width:30px;}
 /* 입력 폭 토큰(sm/md/lg 3종)을 화면 폭에 비례해 세 카드·건보료 카드 모두 같은 값으로: 904px에서 sm≈41·md≈67, 1003px 이상은 기존 46/76 */
-#step2Panel{--ctl-w-sm:clamp(34px, calc(((100vw - 48px) / 3 - 177px) * .377), 46px);--ctl-w-md:clamp(56px, calc(((100vw - 48px) / 3 - 177px) * .623), 76px);}
+#step2Panel{--ctl-w-sm:clamp(38px, calc(((100vw - 48px) / 3 - 157px) * .45), 46px);--ctl-w-md:clamp(57px, calc(((100vw - 48px) / 3 - 157px) * .62), 76px);}   /* 건보료 카드·아래 3카드가 같은 sm/md — 750px(펼침 기본)에서 3카드 안쪽 ≈205px에 라벨+입력+단위가 한 줄로 들어가는 최소값 */
+#step2Panel input.hir-input{padding-left:2px!important;padding-right:4px!important;}   /* 6자리 공시가격(110300)·근로 123456이 md 폭에서 잘리지 않게 입력 칸만 좌우 여백 축소(select는 ▾ 자리가 있어 제외) */
 .req-val{flex:1 1 0;min-width:0;font-size:clamp(11px, calc(11.5px + .5px*var(--ps,0)), 14px);color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .req-val .ok{color:#34c759;font-weight:700;margin-right:3px;}
 .req-val .no{color:#aeaeb2;font-weight:700;margin-right:3px;}
@@ -789,7 +793,7 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .req-st{font-size:clamp(10px, calc(10.5px + .4px*var(--ps,0)), 12px);font-weight:700;border-radius:999px;padding:1px 7px;background:rgba(118,118,128,.14);color:#636366;}
 .hc-note{margin-top:6px;font-size:clamp(10px, calc(10.5px + .4px*var(--ps,0)), 12.5px);color:#636366;line-height:1.5;}
 .req-st.ok{background:rgba(52,199,89,.14);color:#248a3d;}
-@media (max-width:799px){
+@media (max-width:699px){
   .s2-bottom{grid-template-columns:minmax(0,1fr);grid-template-rows:none;}
 }
 @media (max-width:699px){
@@ -928,7 +932,8 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 }
 /* 계좌 카드 제목: 가로·세로 가운데 정렬(🔗 버튼은 오른쪽 끝에 띄워 제목이 카드 폭의 정중앙에 오게 한다) */
 .acct-grid .acct-head{position:relative;align-items:center;justify-content:center;text-align:center;}
-.acct-grid .acct-head .name{flex:0 1 auto;text-align:center;padding:0 26px;}
+.acct-grid .acct-head .name{flex:0 1 auto;text-align:center;padding:0 22px;}
+@media (min-width:421px) and (max-width:799px){ .acct-grid .acct-head .name{font-size:min(11px, 1em);padding:0 20px;letter-spacing:-.01em;} }   /* 실기기 펼침 기본(≈750px): 5장 카드 머리에서 '퇴직연금 DC 농협'이 잘리지 않게 한 단계 작게 */
 .acct-grid .acct-head .pf-sync-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0;}
 /* 개인정보 숨기기(html.privacy-on, 포트폴리오 앱 토글을 따름): 설계 화면에 기입한 값과 슬라이더 손잡이를 가린다(입력·수정은 가능) */
 .privacy-on .ival-input,.privacy-on .hir-input,.privacy-on .ymon-select{color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
@@ -1071,7 +1076,7 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
         </div>
         <div class="health-input-row">
           <span class="hir-label">합계·유형</span>
-          <input class="hir-input gen-auto" type="text" id="gongsiga" value="0" readonly tabindex="-1"><span class="unit-tag">만원</span>
+          <input class="hir-input gen-auto hir-wide" type="text" id="gongsiga" value="0" readonly tabindex="-1"><span class="unit-tag">만원</span>
           <select class="hir-input hir-house" id="housetype" onchange="scheduleUpd()" title="1주택 = 1세대 1주택(공정시장가액 43~45%), 다주택 = 다주택자·법인(60%)">
             <option value="single">1주택</option>
             <option value="multi">다주택</option>
@@ -1131,14 +1136,14 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
       </div>
     </div>
     <div class="sec-card">
-      <div class="sec-h">연금 <button type="button" class="ibtn" data-tip="국민연금 임의가입 보험료와 주택연금이에요. 건보료 소득·재산에는 반영되지 않고 현금흐름에만 쓰입니다.">ⓘ</button><span class="sec-sub" id="hpRes"></span></div>
+      <div class="sec-h">연금 <button type="button" class="ibtn" data-tip="국민연금 임의가입 보험료와 주택연금이에요. 건보료 소득·재산에는 반영되지 않고 현금흐름에만 쓰입니다. ① 임의가입: 60세 전에 은퇴하고 국민연금을 계속 낼 때, 만 60세 전까지 내는 월 보험료(오늘 가치, 기준소득월액×9.5%)예요. 비우면 비용 없이 예상액 그대로 받는 것으로 봅니다. ② 주택연금: 앞 칸은 가입 나이, 뒤 칸은 주택 시세예요. 가입 나이를 비우면 가입 안 함이고, 시세를 비우면 공시가격÷0.69로 봅니다. 종신 정액형(명목 고정)이고 비과세이며 건보료 소득에도 들어가지 않아요.">ⓘ</button><span class="sec-sub" id="hpRes"></span></div>
       <div class="sec-rows">
         <div class="health-input-row">
-          <span class="hir-label">임의가입 <button type="button" class="ibtn" data-tip="60세 전에 은퇴하고 국민연금을 계속 낼 때, 만 60세 전까지 내는 월 보험료(오늘 가치, 기준소득월액×9.5%)예요. 비우면 비용 없이 예상액 그대로 받는 것으로 봅니다.">ⓘ</button></span>
+          <span class="hir-label">임의가입</span>
           <input class="hir-input" type="number" id="np_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
         </div>
         <div class="health-input-row">
-          <span class="hir-label">주택연금 <button type="button" class="ibtn" data-tip="앞 칸은 가입 나이, 뒤 칸은 주택 시세예요. 가입 나이를 비우면 가입 안 함이고, 시세를 비우면 공시가격÷0.69로 봅니다. 종신 정액형(명목 고정)이고 비과세이며 건보료 소득에도 들어가지 않아요.">ⓘ</button></span>
+          <span class="hir-label">주택연금</span>
           <input class="hir-input hir-age" type="number" id="hp_age" value="" placeholder="가입" title="가입 나이" min="0" max="85" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
           <input class="hir-input" type="number" id="hp_price" value="" placeholder="시세" title="주택 시세" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
         </div>
@@ -3050,10 +3055,11 @@ function applyViewState(){
    body.clientHeight(보이는 높이)보다 크면 그때그때 dense를 붙인다. 420px 이하(접힘)는
    이미 다른 방식(가로 1열)으로 압축하므로 대상 아님. 420~520px는 폰트가 더 커도 항상
    빠듯하므로 기존처럼 무조건 켠다(넘침 측정 전에 먼저 눌러 깜빡임 방지). */
+const SG_MAX = 14;   // 행 간격 추가 스케일 상한(px)
 const SP_MAX = 3;   // 설계 탭 여유 스케일 상한(펼침+90도에서 아래 빈 공간을 쓰기 위해 1 → 3)
 function fitDensity(){
   const html = document.documentElement;
-  html.style.setProperty('--sp', '0');
+  html.style.setProperty('--sp', '0'); html.style.setProperty('--sg', '0');
   if(window.innerWidth <= 420 || mainTab !== 'design'){ html.classList.remove('dense'); return; }
   if(window.innerHeight <= 520){ html.classList.add('dense'); return; }
   html.classList.remove('dense');
@@ -3068,6 +3074,16 @@ function fitDensity(){
     if(designFits()) lo = mid; else hi = mid;
   }
   html.style.setProperty('--sp', lo.toFixed(3));
+  // 가로 폭이 먼저 한계라 아직 세로가 남으면(750×832 등) 행 간격만 더 벌려 아래 빈 공간을 채운다(글자·입력 폭은 그대로)
+  let a = 0, z = SG_MAX;
+  html.style.setProperty('--sg', String(SG_MAX));
+  if(designFits()) a = SG_MAX;
+  else for(let i=0;i<8;i++){
+    const mid = (a+z)/2;
+    html.style.setProperty('--sg', mid.toFixed(2));
+    if(designFits()) a = mid; else z = mid;
+  }
+  html.style.setProperty('--sg', a.toFixed(2));
 }
 // 설계 탭이 한 화면에 들어가는지: 세로·가로 넘침 없음, 기본정보 한 줄, 연납입+월 선택 한 줄, 짝 입력칸이 칸 안에
 function designFits(){
