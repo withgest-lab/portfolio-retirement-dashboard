@@ -464,6 +464,7 @@ button{font-family:inherit;cursor:pointer;}
   background:#fff;border:.5px solid rgba(60,60,67,.18);border-radius:14px;padding:6px 14px 12px;
   box-shadow:0 12px 32px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.06);}
 .basis-view{padding:2px 4px 6px;}
+.basis-view .pb-mode{margin-bottom:14px;}   /* 요약 화면과 같은 배너 위·아래 갭(14px) */
 .basis-view .suggest-result{margin:0;font-size:11.5px;}
 .basis-view .suggest-result ul{line-height:1.7;}
 .chart-main.basis-mode .phase-cards{display:none !important;}
@@ -757,7 +758,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 /* 2단계 설계 오른쪽: 건보료 설계(자동 설계 캡슐 + 건보료 입력 + 주택 입력). 결과는 시뮬레이션 결과의 "건보료 예상" */
 .sec-subh{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-size:clamp(11px, calc(11.5px + .5px*var(--ps,0)), 14px);font-weight:700;color:#1c1c1e;padding:max(3px, calc(6px + 1px*var(--ps,0))) 0 max(2px, calc(2px + .6px*var(--ps,0)));border-bottom:.5px solid rgba(60,60,67,.14);}
 .s2-auto{width:auto!important;margin:0 0 0 auto!important;height:clamp(30px, calc(30px + 1.2px*var(--ps,0)), 40px);padding:0 clamp(16px, calc(16px + 1px*var(--ps,0)), 24px)!important;border-radius:999px;font-size:clamp(12.5px, calc(12.5px + .35px*var(--ps,0)), 15px);font-weight:800;flex-shrink:0;white-space:nowrap;}   /* 건보료 설계 카드 머리 우측 상단 — 키워서 눈에 띄고 누르기 쉽게 */
-.hi-top > .sec-h{padding-bottom:max(3px, calc(4px + .8px*var(--ps,0)));}
+.hi-top > .sec-h{padding-bottom:calc(max(6px, calc(8px + 1.5px*var(--ps,0))) - .5px);}   /* 자동 설계 버튼 위(카드 padding-top)·아래(구분선까지) 빈 공간 동일 */
 /* 위: 건보료 설계(내부 2열: 소득 | 재산·자격) / 아래: 건보료와 무관한 입력 3카드 — 카드 높이는 행 수 비율(위 6.6 : 아래 2.6)로 나눠 행 간격이 비슷 */
 .hi-top{flex:6.6 1 auto;}
 .hi-cols{display:flex;gap:16px;flex:1 1 auto;min-height:0;}
@@ -864,7 +865,7 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .al-tile b{font-size:clamp(17px, calc(17px + .5px*var(--vs)), 21px);font-weight:800;letter-spacing:-.02em;line-height:1.2;color:#1c1c1e;font-variant-numeric:tabular-nums;white-space:nowrap;}
 /* 요약 */
 .plan-view #planBody{display:flex;flex-direction:column;justify-content:flex-start;flex:1 1 auto;min-height:0;gap:calc(4px + .8px*var(--vs));}
-.plan-view .pb-mode{margin:0;font-size:11.5px;}   /* 탭 글자와 같은 크기로 고정 */
+.plan-view .pb-mode{margin:0 0 calc(10px - .8px*var(--vs));font-size:11.5px;}   /* 배너 아래 = #planBody gap(4+.8vs) + 이 여백 = 14px = 탭 줄~배너 위 간격 → 배너 위·아래 갭 동일 */   /* 탭 글자와 같은 크기로 고정 */
 .plan-view .pb-grid{margin:0;gap:calc(8px + .8px*var(--vs));}
 .plan-view .pb-card{padding:calc(10px + 1.2px*var(--vs)) calc(12px + .8px*var(--vs));}
 .plan-view .pb-label{font-size:clamp(10.5px, calc(10.5px + .2px*var(--vs)), 12px);}
@@ -2409,13 +2410,14 @@ function planOptions(p){
   });
   return opts;
 }
+let _planCalc = false;
 function openPlanPick(){
   const body = document.getElementById('pkBody'), box = document.getElementById('planPick');
   if(!body || !box) return;
   const p = getP();
-  body.innerHTML = '<div class="pk-note" style="grid-column:1/-1;text-align:center;">플랜을 계산하는 중…</div>';
-  box.classList.add('show'); document.getElementById('planPickBackdrop').classList.add('show');
-  setTimeout(()=>{   // 계산(약 0.5초) 동안 팝업을 먼저 보여 준다
+  if(_planCalc) return;   // 계산 중 다시 눌러도 한 번만
+  _planCalc = true; setTimeout(()=>{ _planCalc = false; }, 8000);   // 계산이 예외로 끝나도 8초 뒤 다시 누를 수 있게
+  setTimeout(()=>{   // 계산(약 0.2~0.5초)이 끝난 뒤 팝업을 한 번에 연다 — "계산하는 중" 문구가 0.2초 깜빡이던 것 제거
     const opts = planOptions(p);
     _planPickOpts = opts;
     const saved = ['max','long','need'].includes(document.getElementById('plan_mode').value) ? document.getElementById('plan_mode').value : '';   // 아직 고른 적 없으면 빈값 → 추천(100세까지)
@@ -2437,6 +2439,8 @@ function openPlanPick(){
     }).join('');
     _pkSel = rec; const go = document.getElementById('pkGo'); if(go) go.disabled = false;
     const note = document.getElementById('pkNote');
+    box.classList.add('show'); document.getElementById('planPickBackdrop').classList.add('show');
+    _planCalc = false;
     if(note) note.textContent = `매달 금액은 세후·오늘 돈 가치(잔여는 세전 계좌 잔액)입니다. “시장 변동 시”는 은퇴 후 해마다 수익률이 ±${p.rvol > 0 ? p.rvol : 12}%p 흔들리는 시뮬레이션 200회 중 ${p.life}세까지 자산이 남는 비율입니다.`;
   }, 30);
 }
@@ -3144,7 +3148,7 @@ function fitChartHeight(){
   // 그래도 body가 넘치면(글꼴·아이콘 변환 등으로 다른 요소가 늦게 커진 경우) 넘친 만큼 더 줄임
   const overflow = document.body.scrollHeight - document.body.clientHeight;
   if(overflow > 0) next = Math.max(170, next - overflow - 2);
-  if(Math.abs(next - cur) >= 2) wrap.style.height = next + 'px';
+  if(Math.abs(next - cur) >= 2){ wrap.style.height = next + 'px'; try{ if(typeof mainChart !== 'undefined' && mainChart){ mainChart.stop(); mainChart.resize(); } }catch(e){} }   // 차트도 같은 프레임에 새 크기로(Chart.js 자동 리사이즈는 다음 프레임이라 결과 탭이 열릴 때 작은 차트가 한 프레임 보였다)
 }
 
 // 렌더링 뒤 아이콘 변환(shared/icons.js MutationObserver)·글꼴 로드·회전 등으로 카드 높이가
@@ -3224,6 +3228,7 @@ function setMainTab(t){
   document.getElementById('taxGuidePanel').classList.toggle('show', t==='tax');
   if(t==='result') upd();
   closeIpop(); syncFilledAll();
+  fitAll();   // 첫 화면부터 맞는 크기로(예전엔 rAF라 결과 차트가 기본 높이로 먼저 그려졌다 커졌다)
   requestAnimationFrame(()=>{ fitAll(); });
 }
 
