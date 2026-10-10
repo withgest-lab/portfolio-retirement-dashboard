@@ -4,7 +4,7 @@
 //   node .claude/skills/ios-design/fit-audit.js retirement            # 현금흐름 4탭(1·2단계 설계/결과/세금 상식) + 결과 보기 6종(연 현금흐름·연 자산 흐름·요약·건보료 예상·근거·위기 점검&부족 대책, 자동 설계 확정 경로 포함)
 //   node .claude/skills/ios-design/fit-audit.js portfolio --seed      # 포트폴리오 전 화면(가상 데이터 25종목·매매 60건·스냅샷 30개를 심어서)
 //   node .claude/skills/ios-design/fit-audit.js home | signals | all
-//   옵션: --boxes(입력 박스 통일 검사 추가) --base http://localhost:4173/ --extra(이전 검증 폭 904/1003 등 7개 추가)
+//   옵션: --folded(접힘 384·412 추가: 가로 넘침 + 글자 겹침 0) --boxes(입력 박스 통일 검사 추가) --base http://localhost:4173/ --extra(이전 검증 폭 904/1003 등 7개 추가)
 // 사용(코드):  const fa = require('<이 파일>');  console.log(await fa.measureFit(page));  console.log(await fa.measureBoxes(page));
 //
 // 기준(FAIL) — 말하지 않아도 항상 적용되는 규칙:
@@ -13,13 +13,15 @@
 //   ③ 휠로 끌어도 scrollTop 0(터치 유격 없음)
 //   ④ 입력 박스 통일(--boxes): 같은 줄 컨트롤 높이 차 ≤ 1px, 높이 종류 ≤ 2, 폭 종류 ≤ 3, 어긋난 왼쪽 선(2~12px 차) 0
 //   ⑤ 겹침·두 줄(--boxes, DESIGN_GUIDELINES 22절): 같은 행의 입력·선택·단위(세·만·%)·라벨 사각형이 1px 넘게 겹침 0, 라벨·단위가 두 줄로 꺾임 0, 입력 값이 칸 밖으로 잘림 0
-// 예외(내용이 본질적으로 긴 화면): LONG 목록 — 가로 넘침 0만 검사. 접힘(390×800)은 가로 0만.
+//   ⑥ 글자 겹침(--boxes 또는 --folded, 모든 폭): 화면에 보이는 글자 줄 사각형끼리 겹침 0 — 카드 밖으로 삐져나온 글자·축소 사슬로 서로 눌린 글자를 잡는다(2026-10-10 시뮬레이션 접힘 사고 재발 방지)
+// 예외(내용이 본질적으로 긴 화면): LONG 목록 — 가로 넘침 0만 검사. 접힘은 가로 0 + 글자 겹침 0.
 
 const MAX_BLANK = 20;
 // 실기기(Fold7 안쪽 화면 1968×2184px ÷ 밀도 2.625) 캡처 비교로 확정(2026-10-10): 펼침 기본 ≈ 750px, 펼침+90도 ≈ 832px. 높이는 주소창 유무로 2종.
 const VIEWPORTS = [[750, 832], [750, 700], [832, 750], [832, 620]];
 const EXTRA = [[904, 900], [904, 780], [1003, 810], [1003, 700], [904, 850], [1003, 760], [1003, 620]];   // 이전 검증 폭(--extra) — 넓은 화면 회귀 확인용
-const FOLDED = [390, 800];
+// 접힘(--folded): 실기기 접힌 화면은 ≈411px(커버)·좁은 쪽 384px 둘 다 본다 — 세로 스크롤은 허용, 가로 넘침·글자 겹침은 0
+const FOLDEDS = [[384, 800], [412, 860]];
 // 긴 화면(세로 스크롤 허용) — 내용이 본질적으로 길거나 사용자 데이터 행 수에 따라 늘어나는 목록. 짧을 때는 마지막 카드가 화면 끝까지 늘어나 빈 공간이 없어야 한다(fillScrollerCard).
 const LONG = new Set(['retirement/tax', 'signals', 'folded',
   'portfolio/portfolio', 'portfolio/tradelog', 'portfolio/dashboard/alloc', 'portfolio/returns/monthly_table', 'portfolio/dividend/monthly', 'portfolio/dividend/stock',
@@ -108,6 +110,47 @@ async function measureFit(page) {
   return Object.assign(m, { wheelTop: Math.round(top) });
 }
 async function measureBoxes(page) { return page.evaluate(IN_PAGE_BOXES); }
+// 화면에 보이는 글자 줄(텍스트 노드별 Range 사각형)끼리 2px 넘게 겹치는 쌍을 찾는다. 스크롤 영역·overflow:hidden 안에서 잘려 안 보이는 부분은 제외.
+const IN_PAGE_TEXTOVERLAP = () => {
+  const skip = 'script,style,canvas,svg,#ipop,.chart-tooltip,.ipop,.toast,select,option,textarea,input';
+  const rects = [];
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let n;
+  while ((n = walker.nextNode())) {
+    const t = n.textContent.trim();
+    if (!t) continue;
+    const el = n.parentElement;
+    if (!el || el.closest(skip)) continue;
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || cs.display === 'none' || +cs.opacity === 0) continue;
+    let hidden = false;
+    for (let a = el; a && a !== document.body; a = a.parentElement) { const c = getComputedStyle(a); if (c.display === 'none' || c.visibility === 'hidden' || (c.position === 'fixed' && +c.zIndex >= 300)) { hidden = true; break; } }   // 떠 있는 일시 오버레이(토스트·풍선·말풍선)는 대상 아님
+    if (hidden) continue;
+    const rg = document.createRange(); rg.selectNodeContents(n);
+    [...rg.getClientRects()].forEach(r => {
+      if (r.width < 2 || r.height < 4) return;
+      // 자기 자신·조상 중 overflow가 visible이 아닌 상자로 사각형을 잘라(말줄임·스크롤 영역) 실제로 보이는 부분만 남긴다
+      let L = r.left, T = r.top, R = r.right, B = r.bottom, vis = true;
+      for (let a = el; a && a !== document.documentElement; a = a.parentElement) {
+        const c = getComputedStyle(a);
+        if (c.overflowX === 'visible' && c.overflowY === 'visible') continue;
+        const b = a.getBoundingClientRect();
+        L = Math.max(L, b.left); T = Math.max(T, b.top); R = Math.min(R, b.right); B = Math.min(B, b.bottom);
+        if (R - L < 2 || B - T < 4) { vis = false; break; }
+      }
+      if (vis) rects.push({ l: L, t: T, r: R, b: B, s: t.slice(0, 14), el });
+    });
+  }
+  const hits = [];
+  for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
+    const a = rects[i], b = rects[j];
+    if (a.el === b.el) continue;
+    const w = Math.min(a.r, b.r) - Math.max(a.l, b.l), h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
+    if (w > 2 && h > 3) hits.push(a.s + '↔' + b.s);
+  }
+  return { count: rects.length, hits };
+};
+async function measureOverlap(page) { return page.evaluate(IN_PAGE_TEXTOVERLAP); }
 
 const judgeFit = (m, isLong) => {
   const f = [];
@@ -118,6 +161,7 @@ const judgeFit = (m, isLong) => {
   if (m.wheelTop > 0) f.push('휠 후 scrollTop ' + m.wheelTop);
   return f;
 };
+const judgeOverlap = o => (o && o.hits.length ? ['글자 겹침 ' + o.hits.length + '건: ' + o.hits.slice(0, 3).join(' | ')] : []);
 const judgeBoxes = b => {
   const f = [];
   if (b.sameLine.length) f.push('같은 줄 높이 차: ' + b.sameLine.slice(0, 3).join(' | '));
@@ -190,8 +234,8 @@ const SCREENS = {
 async function sweep(browser, preset, o) {
   const cfg = SCREENS[preset], rows = [];
   const vps = VIEWPORTS.concat(o.extra ? EXTRA : []);
-  for (const [w, h] of vps.concat(o.folded ? [FOLDED] : [])) {
-    const folded = w === FOLDED[0];
+  for (const [w, h] of vps.concat(o.folded ? FOLDEDS : [])) {
+    const folded = w < 600;
     const page = await browser.newPage({ viewport: { width: w, height: h } });
     await page.goto(o.base + cfg.base, { waitUntil: 'load' });
     if (o.seed && cfg.seed) await page.evaluate(m => { try { Object.keys(m).forEach(k => localStorage.setItem(k, JSON.stringify(m[k]))); } catch (e) {} }, seedAll());
@@ -213,6 +257,7 @@ async function sweep(browser, preset, o) {
       const fit = await measureFit(page), fails = judgeFit(fit, isLong);
       let boxes = null;
       if (o.boxes && !folded) { boxes = await measureBoxes(page); fails.push(...judgeBoxes(boxes)); }
+      if (o.boxes || folded) fails.push(...judgeOverlap(await measureOverlap(page)));
       rows.push({ vp: w + '×' + h, name, fit, boxes, fails, isLong });
     }
     await page.close();
@@ -243,5 +288,5 @@ async function main() {
   process.exit(bad ? 1 : 0);
 }
 
-module.exports = { measureFit, measureBoxes, judgeFit, judgeBoxes, seedAssets, seedTradeLog, seedSnaps, seedAll, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
+module.exports = { measureFit, measureBoxes, measureOverlap, judgeOverlap, judgeFit, judgeBoxes, seedAssets, seedTradeLog, seedSnaps, seedAll, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
 if (require.main === module) main().catch(e => { console.error(e); process.exit(2); });

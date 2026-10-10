@@ -349,7 +349,7 @@ hr.div{border:none;border-top:.5px solid rgba(60,60,67,.12);margin:6px 0;}
 /* 세금 상식은 실행 탭이 아닌 가이드 — 작게, 맨 오른쪽에 */
 .main-tabs #mtb-tax{flex:0 0 auto;margin-left:auto;padding:4px 10px;font-size:11px;font-weight:600;}
 @media (max-width:480px){ .main-tabs .tab-btn .t-x{display:none;} }
-@media (max-width:420px){ .main-tabs .tab-btn .t-e{display:none;} }
+@media (max-width:480px){ .main-tabs .tab-btn .t-e{display:none;} }
 .phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;}
 /* 차트 나이 구간에 맞춰 정렬된 상태(alignPhaseCards): 열 폭을 px로 주고 카드 사이 틈은
    각 카드 안쪽 여백으로 만들어 카드 외곽선이 정확히 경계에 오게 함 */
@@ -605,8 +605,8 @@ body.fit-noscroll{overflow-y:hidden;}
 
 /* ═══ 반응형 ═══ */
 
-/* 접힌 상태: ~410px */
-@media (max-width:410px){
+/* 접힌 상태: ≤480px — 실기기 접힌(커버) 화면은 폭이 ≈384~412px로 기기·설정마다 달라, 410 이하만 접힘으로 보면 411~412에서 5열 카드가 으스러진다(2026-10-10) */
+@media (max-width:480px){
   .metrics-bar{grid-template-columns:repeat(2,1fr);}
   .phase-cards{grid-template-columns:1fr;}
   h1{font-size:13px;}
@@ -629,8 +629,8 @@ body.fit-noscroll{overflow-y:hidden;}
   .inline-panel{padding:8px 10px 10px;}
 }
 
-/* 태블릿: 411~900px */
-@media (min-width:411px) and (max-width:900px){
+/* 태블릿: 481~900px */
+@media (min-width:481px) and (max-width:900px){
   .metrics-bar{grid-template-columns:repeat(4,1fr);}
   .phase-cards{grid-template-columns:1fr 1fr 1fr;}
   table{font-size:9px;}
@@ -647,7 +647,7 @@ body.fit-noscroll{overflow-y:hidden;}
 /* 411px+ 전용 압축(폴드 펼침 세로/가로 둘 다) — 설계 탭이 가로/세로 스크롤 없이
    한 화면에 들어가야 함. 퇴직연금 카드에 납입 시작/종료 나이 행이 추가된 만큼
    카드·패널 padding/gap을 소폭 줄여 상쇄한다. 410px 이하(폴드 접힘)는 대상 아님. */
-@media (min-width:411px){
+@media (min-width:481px){
   .acct-head{padding:4px 6px;}
   .acct-body{padding:4px 5px 4px;gap:2px;}
   .acct-body .ival-input{padding:2px 4px;}
@@ -699,7 +699,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
    모든 카드에 같은 값으로만 적용(짧은 카드만 늘리지 않음)하고, 카드 사이 행 정렬이 깨지지 않도록
    입력칸·월 선택의 높이를 명시값으로 같이 키운다(일반 입력 = 월 선택 = 20+4sp, 짝 입력 = 18+4sp →
    연납입+월 선택 행과 일반 행 높이가 항상 같다). sp=0이면 기존 값과 완전히 같다. */
-@media (min-width:421px){
+@media (min-width:481px){
   html:not(.dense) .acct-head{padding:calc(4px + 3px*var(--sp,0)) 6px;font-size:min(13px, calc(11px + 1px*var(--sp,0)));}
   html:not(.dense) .acct-body{padding:calc(4px + 3px*var(--sp,0)) calc(5px + 2px*var(--sp,0));gap:calc(2px + 3px*var(--sp,0) + 1px*var(--sg,0));}   /* --sg: 가로 폭 때문에 --sp를 더 못 키울 때(실기기 750px) 남는 높이를 행 간격으로만 쓴다 */
   html:not(.dense) .acct-body .irow-top{gap:calc(2px + 1px*var(--sp,0));}
@@ -721,7 +721,7 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 :root{--ctl-h:calc(20px + 4px*var(--sp,0));--ctl-w-sm:min(52px, calc(44px + 3px*var(--sp,0)));--ctl-w-md:min(76px, calc(64px + 4px*var(--sp,0)));--ctl-w-lg:148px;
   --ctl-fs:min(14px, calc(12px + .8px*var(--sp,0)));--bi-w:var(--ctl-w-sm);--bi-h:var(--ctl-h);}
 html.dense{--ctl-h:18px;--ctl-w-sm:40px;--ctl-w-md:58px;--ctl-fs:11px;--bi-w:var(--ctl-w-sm);--bi-h:var(--ctl-h);}
-@media (max-width:420px){ :root{--ctl-h:24px;--ctl-w-sm:48px;--ctl-w-md:66px;--ctl-fs:12.5px;} }
+@media (max-width:480px){ :root{--ctl-h:24px;--ctl-w-sm:48px;--ctl-w-md:66px;--ctl-fs:12.5px;} }
 .fit-scale{--ctl-h:clamp(22px, calc(26px + 1.6px*var(--ps,0)), 40px);--ctl-w-sm:46px;--ctl-w-md:76px;--ctl-w-lg:148px;--ctl-fs:clamp(11.5px, calc(13px + .6px*var(--ps,0)), 15px);}
 .ival-input,.ymon-select,.hir-input{box-sizing:border-box;height:var(--ctl-h)!important;padding-top:0!important;padding-bottom:0!important;line-height:calc(var(--ctl-h) - 2px);font-size:var(--ctl-fs)!important;letter-spacing:0!important;}
 .acct-body .ival-input,.hir-input{width:var(--ctl-w-md)!important;}
@@ -933,11 +933,28 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
 /* 계좌 카드 제목: 가로·세로 가운데 정렬(🔗 버튼은 오른쪽 끝에 띄워 제목이 카드 폭의 정중앙에 오게 한다) */
 .acct-grid .acct-head{position:relative;align-items:center;justify-content:center;text-align:center;}
 .acct-grid .acct-head .name{flex:0 1 auto;text-align:center;padding:0 22px;}
-@media (min-width:421px) and (max-width:799px){ .acct-grid .acct-head .name{font-size:min(11px, 1em);padding:0 20px;letter-spacing:-.01em;} }   /* 실기기 펼침 기본(≈750px): 5장 카드 머리에서 '퇴직연금 DC 농협'이 잘리지 않게 한 단계 작게 */
+@media (min-width:481px) and (max-width:799px){ .acct-grid .acct-head .name{font-size:min(11px, 1em);padding:0 20px;letter-spacing:-.01em;} }   /* 실기기 펼침 기본(≈750px): 5장 카드 머리에서 '퇴직연금 DC 농협'이 잘리지 않게 한 단계 작게 */
 .acct-grid .acct-head .pf-sync-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0;}
 /* 개인정보 숨기기(html.privacy-on, 포트폴리오 앱 토글을 따름): 설계 화면에 기입한 값과 슬라이더 손잡이를 가린다(입력·수정은 가능) */
 .privacy-on .ival-input,.privacy-on .hir-input,.privacy-on .ymon-select{color:transparent!important;text-shadow:0 0 8px rgba(60,60,67,.65);caret-color:#1c1c1e;}
 .privacy-on input[type=range]{visibility:hidden;}
+
+/* ═══ 접힘(≤480px) 시뮬레이션 결과 — 보기 4종은 차트 위에 겹치는 고정 높이 박스가 아니라 일반 흐름(세로 스크롤 허용, 겹침 0) ═══
+   예전엔 min(78vh,620px) 박스 안에 absolute 오버레이 + flex:1/min-height:0 축소 사슬을 두어, 내용이 박스보다 길면 자식이 줄어들어 서로 겹쳤다.
+   실기기 커버 화면은 ≈411px라 410 이하 규칙만으로는 접힘을 못 잡으므로 접힘 기준을 480으로 둔다(지표 2×2·단계 카드 1열도 같은 기준). */
+@media (max-width:480px){
+  .chart-main.plan-mode .chart-canvas-wrap{height:auto !important;}
+  .chart-main.plan-mode .chart-canvas-wrap > canvas{position:absolute;left:0;top:0;height:0 !important;visibility:hidden;pointer-events:none;}
+  .chart-alt,.chart-alt.alt-fit{position:static;inset:auto;overflow:visible;padding:2px 0 10px;}
+  .chart-alt #riskWrap,.chart-alt .risk-cols,.chart-alt .risk-col,.chart-alt .al-card,.chart-alt .al-body,.chart-alt .al-row,
+  .chart-alt .hi-body,.chart-alt .hi-card,.chart-alt .hi-chart,.chart-alt .hi-calc,.hi-view #healthDetail,
+  .plan-view #planBody,.plan-view .pb-phases,.plan-view .pb-phase > div:last-child{flex:none;min-height:0;}
+  .chart-alt .al-row{min-height:34px;}
+  .hi-view #healthStrip{flex:none;height:190px;min-height:0;}
+  .hi-view .health-strip{flex:1 1 auto;height:100%;min-height:0;}
+  .plan-view .pb-sub{white-space:normal;flex-wrap:wrap;}
+  .chart-tooltip{max-width:calc(100vw - 32px);min-width:0;}
+}
 </style>
 </head>
 <body>
@@ -2071,7 +2088,7 @@ function alignPhaseCards(){
   el.classList.remove('aligned');
   el.style.gridTemplateColumns = ''; el.style.paddingLeft = ''; el.style.paddingRight = '';
   // 이미 은퇴해 적립기 카드가 없으면 기본 3등분 대신 카드 수만큼 균등(접힘 1열은 CSS 그대로)
-  if(el.children.length !== 3 && window.innerWidth > 410) el.style.gridTemplateColumns = 'repeat('+el.children.length+',1fr)';
+  if(el.children.length !== 3 && window.innerWidth > 480) el.style.gridTemplateColumns = 'repeat('+el.children.length+',1fr)';
   const g = mainChart && phaseGeom(mainChart);
   if(!g || window.innerWidth <= 480 || g.segs.length !== el.children.length) return;
   // 카드별 최소 폭(내용 길이가 달라 다르게) — 이보다 좁아지면 글자가 단어마다 끊겨 카드가
@@ -3060,7 +3077,7 @@ const SP_MAX = 3;   // 설계 탭 여유 스케일 상한(펼침+90도에서 아
 function fitDensity(){
   const html = document.documentElement;
   html.style.setProperty('--sp', '0'); html.style.setProperty('--sg', '0');
-  if(window.innerWidth <= 420 || mainTab !== 'design'){ html.classList.remove('dense'); return; }
+  if(window.innerWidth <= 480 || mainTab !== 'design'){ html.classList.remove('dense'); return; }
   if(window.innerHeight <= 520){ html.classList.add('dense'); return; }
   html.classList.remove('dense');
   if(!designFits()){ html.classList.add('dense'); return; }
