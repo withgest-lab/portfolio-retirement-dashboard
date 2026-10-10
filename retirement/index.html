@@ -805,7 +805,9 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .risk-cols{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:calc(8px + .8px*var(--vs));}
 .risk-col{min-height:0;min-width:0;display:flex;flex-direction:column;gap:calc(3px + .3px*var(--vs));}
 .risk-col .al-head,.risk-col .al-row{column-gap:8px;padding:0 calc(10px + .4px*var(--vs));}
-.risk-col .al-row{min-height:calc(26px + 1px*var(--vs));}
+.risk-col .al-row{min-height:calc(34px + .6px*var(--vs));}   /* 이름 + 보조 한 줄이 들어가는 높이 — 모자라면 fitAltView가 글자·행을 줄인다 */
+.risk-compact1 .risk-col .al-row{min-height:30px;} .risk-compact1 .al-sub{font-size:10.5px;}
+.risk-compact2 .risk-col .al-row{min-height:24px;} .risk-compact2 .risk-col .al-name .al-sub{display:none;}
 @media (max-width:699px){ .risk-cols{grid-template-columns:minmax(0,1fr);} }
 .chart-alt .mini-note{font-size:clamp(10px, calc(10px + .2px*var(--vs)), 11.5px);margin:0;flex:0 0 auto;}
 /* 위기 점검·부족 대책: iOS 목록형 — 표 격자·진한 헤더 없이 회색 카드 + 헤어라인 행, 값은 오른쪽 정렬 숫자, 상태는 색 점 */
@@ -824,11 +826,13 @@ select.hir-input.hir-house{width:var(--ctl-w-md)!important;}   /* 주택 유형�
 .al-v .al-sub{display:block;font-weight:600;}
 .al-v{text-align:right;font-size:clamp(11.5px, calc(12px + .2px*var(--vs)), 13.5px);font-weight:700;font-variant-numeric:tabular-nums;color:#1c1c1e;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .al-res{font-weight:600;white-space:normal;line-height:1.25;overflow:visible;}
-.risk-col:not(.need-col) .al-head,.risk-col:not(.need-col) .al-row{grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr) minmax(0,.7fr) minmax(0,.85fr);}
-.need-col .al-head,.need-col .al-row{grid-template-columns:minmax(0,1.25fr) minmax(0,.8fr) minmax(0,1.15fr);}
+.risk-cols{--c1:calc(46px + 1px*var(--vs));--c2:calc(66px + 1px*var(--vs));--c3:calc(66px + 1px*var(--vs));--n1:calc(56px + 1px*var(--vs));}   /* 숫자 열은 고정 폭(행마다 따로 격자라 auto면 열이 어긋남) — 헤더가 두 줄로 꺾이지 않는 폭 */
+.risk-col:not(.need-col) .al-head,.risk-col:not(.need-col) .al-row{grid-template-columns:minmax(0,1fr) var(--c1) var(--c2) var(--c3);}
+.risk-col .al-head > span{white-space:nowrap;}
+.need-col .al-head,.need-col .al-row{grid-template-columns:minmax(0,1.2fr) var(--n1) minmax(0,1.1fr);}
 .need-col .al-name b{white-space:normal;line-height:1.2;word-break:keep-all;}
 .chart-alt .mini-note,.pb-tip,.al-res,.risk-col .al-name .al-sub{text-wrap:balance;word-break:keep-all;}
-.risk-col .al-name .al-sub{white-space:normal;overflow:visible;line-height:1.25;}   /* 긴 조건 설명은 말줄임 대신 ' · ' 기준으로 균형 있게 두 줄 */
+.risk-col .al-name .al-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}   /* 한 줄(말줄임, 전체는 title) — 두 줄 허용은 행 높이가 모자란 실기기에서 옆 행과 겹쳤다 */
 .need-col .al-res{display:flex;align-items:center;justify-content:flex-end;text-align:right;line-height:1.25;word-break:keep-all;}
 .need-col .al-name .al-sub{font-variant-numeric:tabular-nums;}
 .need-col .al-hero{gap:calc(5px + .5px*var(--vs));}
@@ -2676,11 +2680,14 @@ function fitAltView(){
   document.querySelectorAll('.chart-alt').forEach(e=>{ e.style.setProperty('--vs','0'); e.classList.remove('alt-fit'); });
   const pv = document.getElementById('planView');
   if(pv) pv.classList.remove('pv1','pv2','pv3');
+  const av = document.getElementById('altView'); if(av) av.classList.remove('risk-compact1','risk-compact2');
   const el = ['planView','hiView','basisView','altView'].map(id=>document.getElementById(id)).find(e=>e && e.style.display !== 'none' && e.offsetParent !== null);
   if(!el || window.innerWidth <= 480 || el.clientHeight === 0) return;
   // 1px라도 넘치면 .chart-alt(overflow-y:auto)가 실제로 스크롤된다 — 예전엔 +1px 허용이라 904×700 등에서 1px 스크롤이 남았다. 딱 맞으면 .alt-fit으로 스크롤을 잠근다.
   // 요약은 수입원 행 격자가 자기 칸 밖으로 넘쳐 아래 팁 상자와 겹쳐도 요약 전체 scrollHeight는 그대로일 수 있어 칸별 넘침도 본다
-  const cellsFit = () => el !== pv || [...el.querySelectorAll('.pb-phases, .pb-phase > div:last-child')].every(c => c.scrollHeight <= c.clientHeight + 1);
+  // 위기 점검 & 부족 대책은 행이 flex로 나뉘어 내용이 행보다 커도 전체 scrollHeight는 그대로라(→ 글자가 최대로 커진 채 행끼리 겹침) 행별 넘침도 본다
+  const cellsFit = () => el === pv ? [...el.querySelectorAll('.pb-phases, .pb-phase > div:last-child')].every(c => c.scrollHeight <= c.clientHeight + 1)
+    : el.id === 'altView' ? [...el.querySelectorAll('.al-body, .al-row')].every(c => c.scrollHeight <= c.clientHeight + 1) : true;
   const fits = () => el.scrollHeight <= el.clientHeight && cellsFit();
   const set = v => el.style.setProperty('--vs', v.toFixed(2));
   const done = () => { if(fits()) el.classList.add('alt-fit'); };
@@ -2691,6 +2698,10 @@ function fitAltView(){
     if(el === pv) for(const c of ['pv1','pv2','pv3']){
       if(fits()) break;
       pv.classList.add(c); pv.classList.remove(...['pv1','pv2','pv3'].filter(x=>x!==c));
+    }
+    if(el.id === 'altView') for(const c of ['risk-compact1','risk-compact2']){
+      if(fits()) break;
+      el.classList.add(c); el.classList.remove(...['risk-compact1','risk-compact2'].filter(x=>x!==c));
     }
     return done();
   }
@@ -2971,7 +2982,7 @@ function renderStressView(){
     const ok = r.ok;
     const keepCol = r.mc ? (r.successPct >= 80 ? '#248a3d' : r.successPct >= 50 ? '#c77700' : '#ff3b30') : ok ? '#248a3d' : '#ff3b30';
     return '<div class="al-row'+(r.key==='base' ? ' cur' : '')+'">'
-      + '<div class="al-name"><b>'+r.label+'</b>'+(r.note ? '<span class="al-sub">'+r.note+'</span>' : '')+'</div>'
+      + '<div class="al-name"><b>'+r.label+'</b>'+(r.note ? '<span class="al-sub" title="'+r.note+'">'+r.note+'</span>' : '')+'</div>'
       + '<div class="al-v" style="color:'+(r.minNet >= p.exp - 0.5 ? NET_OK : NET_SHORT)+'">'+M(r.minNet)+'</div>'
       + '<div class="al-v al-st">'+dot(!r.shortYears)+(r.mc ? (r.shortYears ? r.shortYears+'년' : '없음')+'<span class="al-sub">중앙값</span>' : r.shortYears ? r.shortYears+'년<span class="al-sub">'+r.firstShortAge+'세~</span>' : '없음')+'</div>'
       + '<div class="al-v" style="color:'+keepCol+'">'+(r.mc ? r.successPct+'% 유지' : (ok ? r.life+'세+' : r.runway+'세 소진'))+'</div>'
