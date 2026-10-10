@@ -1526,6 +1526,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <script src="../shared/dialog.js"></script>
 <script src="../shared/icons.js"></script>
 <script src="../shared/ios-select.js"></script>
+<script src="div-tax.js?v=20261010"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
 /* ════════════════════════════════════════
@@ -2098,7 +2099,7 @@ function buildCands(urls, parse){
     let json; try{ json = JSON.parse(text); }catch(e){ throw new Error('parse'); }
     if(json?.contents) try{ json = JSON.parse(json.contents); }catch(e){}
     try{ return parse(json); }
-    catch(e){ e.definitive = viaWorker; throw e; }
+    catch(e){ e.definitive = viaWorker && e.definitive!==false; throw e; }
   };
   const c = [{label:'worker', delay:0, run:one(WORKER_PROXY, urls[0])}];
   urls.slice(1).forEach(u=>c.push({label:'worker-alt', delay:1200, run:one(WORKER_PROXY, u)}));
@@ -3509,25 +3510,29 @@ function saveTradeLogEdit(id){
   r.market = market || null;
   r.acctType = acctType || null;
   r.assetType = assetType || null;
+  // 기록 당시 환율·평단을 지킨다 — 메모만 고쳐도 오늘 환율·오늘 평단으로 옛 손익이 바뀌던 문제.
+  // 체결가·수량·유형이 바뀐 경우에만 기록 당시 환율(totalKRW÷(체결가×수량))과 당시 평단(기록 손익에서 역산)으로 다시 계산한다.
+  const oldPrice = r.price, oldQty = r.quantity, oldType = r.type;
+  const liveFx = r.currency==='USD'?FX.USD:r.currency==='JPY'?FX.JPY:1;
+  const entryFx = (r.totalKRW>0 && oldPrice>0 && oldQty>0) ? r.totalKRW/(oldPrice*oldQty) : liveFx;
+  const oldAvg = (oldType==='sell' && r.pnl!=null && oldPrice>0 && oldQty>0) ? oldPrice - r.pnl/(oldQty*entryFx) : null;
   r.price = price;
   r.quantity = qty;
   r.reason = reason;
-  const fxRate = r.currency==='USD'?FX.USD:r.currency==='JPY'?FX.JPY:1;
-  r.totalKRW = Math.round(price*qty*fxRate);
-
-  // 매도이면서 평단가를 알 수 있는 경우(자산목록에 같은 이름의 종목이 있으면 그 평단가로 손익 재계산)
-  if(type==='sell'){
-    const asset = assets.find(a=>a.name===name);
-    if(asset){
-      const pnl = (price-asset.avgPrice)*qty*fxRate;
-      const pnlPct = asset.avgPrice>0?((price-asset.avgPrice)/asset.avgPrice)*100:null;
-      r.pnl = Math.round(pnl);
-      r.pnlPct = pnlPct===null?null:Math.round(pnlPct*100)/100;
+  if(price!==oldPrice || qty!==oldQty || type!==oldType){
+    r.totalKRW = Math.round(price*qty*entryFx);
+    if(type==='sell'){
+      const asset = assets.find(a=>a.name===name);
+      const avg = oldAvg!=null ? oldAvg : (asset ? asset.avgPrice : null);
+      if(avg!=null){
+        r.pnl = Math.round((price-avg)*qty*entryFx);
+        r.pnlPct = avg>0 ? Math.round((price-avg)/avg*10000)/100 : null;
+      }
+      // 평단을 알 수 없으면 기존 pnl/pnlPct 값 유지
+    } else {
+      r.pnl = null;
+      r.pnlPct = null;
     }
-    // 자산정보 없으면 기존 pnl/pnlPct 값 유지
-  } else {
-    r.pnl = null;
-    r.pnlPct = null;
   }
 
   saveTradeLog(arr);
@@ -4477,7 +4482,7 @@ function executeTrade(){
       const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
       addTradeLog({
         name: divSource, ticker:'—', type:'dividend', at: Date.now(),
-        acctType: 'cash', assetType: null, company: acct, acct: DIV_SHELTERED.includes(cashAcctTypeVal2) ? cashAcctTypeVal2 : 'general',
+        acctType: 'cash', assetType: null, company: acct, acct: DT.isSheltered(cashAcctTypeVal2) ? DT.normAcct(cashAcctTypeVal2) : 'general',
         price: null, quantity: null, currency: cur,
         totalKRW: Math.round(divAmount*fxRate), pnl: Math.round(divAmount*fxRate), pnlPct: null,
         reason: '', cashAdjusted: null
@@ -5317,13 +5322,68 @@ function addCash(){
    (c319db1에서 추가, 2f7bcb4에서 UX 정리 명목으로 제거됐던 기능을 세금관리 탭으로 복구, 2026-10-10 산정 근거·수동 입력·절세 정보 보강)
 ════════════════════════════════════════ */
 // 해외 거래소 직접 상장 종목(USD/JPY)을 일반계좌에서 판 매매차익은 양도소득세 대상(22%, 연 250만원 기본공제, 종합소득세와 별도 분리과세).
-// 국내 상장(KRW)은 개인 원칙 비과세, ISA·연금계좌 안의 매매는 계좌 규칙(비과세·과세이연)이라 여기서 뺀다.
-// 매매이력의 실현손익(pnl, 원)은 체결 당시 환율로 환산된 값이라 양도차익 계산(취득·양도 시점 환율)에 가깝다.
+// 국내 상장(KRW)은 개인 원칙 비과세(국내 상장 해외 ETF 이익은 배당소득 — 금융소득 쪽), ISA·연금계좌 안의 매매와 가상자산은 대상이 아니다.
+// 양도차익은 매매 이력을 시간순으로 다시 풀어(선입선출 또는 이동평균) 매수·매도 각각의 결제일 환율로 원화 환산한다 — 계산은 div-tax.js realizeGains.
 const CGT_EXEMPT_MAN = 250, CGT_RATE = 0.22;
+const TAX_SET_KEY = 'pf_tax_settings_v1';   // 양도차익 계산 방식(fifo|avg)·기초 보유분 매입 환율 {보유키: 원/외화} — 백업 포함
+function loadTaxSettings(){
+  try{ const m = JSON.parse(localStorage.getItem(TAX_SET_KEY)); if(m && typeof m==='object') return {method: m.method==='avg' ? 'avg' : 'fifo', buyFx: (m.buyFx && typeof m.buyFx==='object' && !Array.isArray(m.buyFx)) ? m.buyFx : {}}; }catch(e){}
+  return {method:'fifo', buyFx:{}};
+}
+function saveTaxSettings(s){ localStorage.setItem(TAX_SET_KEY, JSON.stringify({method:s.method, buyFx:s.buyFx})); }
+const isOverseasTaxable = a => (a.currency==='USD' || a.currency==='JPY') && a.acctType!=='cash' && !isCryptoAsset(a) && DT.normAcct(a.acctType)==='general';
+const isKrOverseasEtf = (a, cache) => a.currency==='KRW' && a.acctType!=='cash' && !!a.market && a.market!=='kr' && !isCryptoAsset(a) && DT.normAcct(a.acctType)==='general' && divKindOf(a.ticker, a.name, cache)==='etf';
+// 세금 계산용 종목 묶음 — 지금 보유 중(평단·수량 있음) + 전량 매도해 이력만 남은 종목. firstSeen = 처음 보인 날(스냅샷·이력)
+function taxGroups(pred){
+  const log = loadTradeLog(), snaps = loadSnaps(), out = [];
+  assets.filter(a=>a.quantity>0 && pred(a)).forEach(a=>{
+    const trades = log.filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a));
+    const seen = snaps.filter(s=>s.byAsset && s.byAsset[a.id]>0).map(s=>s.timestamp).concat(trades.map(r=>r.at));
+    out.push({key:divHoldKey(a), name:a.name, ticker:a.ticker, ccy:a.currency, acct:'general', company:a.company||null, quantity:a.quantity, avgPrice:a.avgPrice,
+      firstSeen: seen.length ? Math.min(...seen) : Date.now(), trades, asset:a});
+  });
+  const sold = new Map();
+  log.forEach(r=>{
+    if(!(r.type==='buy'||r.type==='sell')) return;
+    const pseudo = {ticker: r.ticker && r.ticker!=='—' ? r.ticker : r.name, name:r.name, acctType:r.acctType, company:r.company||null, currency:r.currency||'KRW', market:r.market||null, assetType:r.assetType||null};
+    if(!pred(pseudo) || assets.some(a=>tradeMatchesAsset(r, a))) return;
+    const k = divHoldKey(pseudo);
+    if(!sold.has(k)) sold.set(k, {key:k, name:r.name, ticker:pseudo.ticker, ccy:pseudo.currency, acct:'general', company:pseudo.company, quantity:0, avgPrice:0, firstSeen:r.at, trades:[], asset:null});
+    const g = sold.get(k); g.trades.push(r); g.firstSeen = Math.min(g.firstSeen, r.at);
+  });
+  return out.concat([...sold.values()]);
+}
+// 한 해 해외주식 양도세 — 매도별 원화 손익(환차익 포함)·근거, 수동 입력 합산, 기초 보유분 매입 환율이 필요한 종목
+function cgtData(year){
+  const set = loadTaxSettings(), fxAt = divFxAt();
+  const groups = taxGroups(isOverseasTaxable);
+  const real = DT.realizeGains({groups, method:set.method, fxAt, buyFx:set.buyFx});
+  const sum = DT.cgtSummary(real.sales, loadCgtManual(), year);
+  const needFx = real.needFx.map(k=>groups.find(g=>g.key===k)).filter(g=>g && (g.quantity>0 || sum.sales.some(s=>s.key===g.key)));
+  return {set, groups, real, sum, needFx, fxAt};
+}
+// 지금 보유 중인 해외 종목을 지금 팔면 — 원화 평가손익(남은 로트 원가, 환차익 포함)과 세금 변화
+function cgtCandidates(d){
+  const fxNow = c => c==='USD' ? FX.USD : c==='JPY' ? FX.JPY : 1;
+  return d.groups.filter(g=>g.quantity>0 && g.asset).map(g=>{
+    const rem = d.real.remaining[g.key] || {qty:0, cost:0};
+    const cost = rem.qty > 0 ? rem.cost/rem.qty*g.quantity : costKRW(g.asset);
+    const gain = g.quantity*g.asset.currentPrice*fxNow(g.ccy) - cost;
+    return {name:g.name, key:g.key, gain, delta: DT.cgtTaxOf(d.sum.gain + gain) - d.sum.tax, basis: rem.basis || 'log'};
+  }).filter(c=>Math.abs(c.gain) >= 10000).sort((x,y)=>x.delta-y.delta || y.gain-x.gain);
+}
+// 국내 상장 해외 ETF(일반계좌) 매매차익 → 배당소득 추정(원) — 과표기준가 대신 매매차익, 손실은 통산하지 않음
+function etfDivIncomeOf(year){
+  const cache = loadDivHist(), set = loadTaxSettings();
+  const groups = taxGroups(a=>isKrOverseasEtf(a, cache));
+  const real = DT.realizeGains({groups, method:set.method, fxAt:divFxAt()});
+  const sales = real.sales.filter(s=>s.year===year);
+  return {won: DT.etfDivIncome(real.sales, year), n: sales.filter(s=>s.gain>0).length, sales};
+}
 // 세금관리 연도 — 5월 신고 시즌(1~5월)에는 작년 수치가 기본, 그 외에는 올해. 양도세·금융소득 두 탭이 같은 연도를 본다.
 let taxYearSel = null;
 function taxYear(){ if(taxYearSel!=null) return taxYearSel; const d = new Date(); return d.getMonth()<5 ? d.getFullYear()-1 : d.getFullYear(); }
-function setTaxYear(y){ taxYearSel = parseInt(y,10); renderCapitalGainsTax(); renderFinIncomeThreshold(); }
+function setTaxYear(y){ taxYearSel = parseInt(y,10); renderTaxViews(); }
 function taxYearBar(year, endHtml){
   const cur = new Date().getFullYear();
   const opts = [cur, cur-1, cur-2].map(y=>`<option value="${y}"${y===year?' selected':''}>${y}년</option>`).join('');
@@ -5379,13 +5439,12 @@ function renderCapitalGainsTax(){
   const el = document.getElementById('capGainsTax');
   if(!el) return;
   const year = taxYear(), isCur = year===new Date().getFullYear();
-  const inYear = r => new Date(r.at).getFullYear()===year;
-  const app = loadTradeLog().filter(r => r.type==='sell' && r.currency!=='KRW' && r.acctType!=='cash' && (r.acctType==='general' || !r.acctType) && inYear(r));
-  const manual = loadCgtManual().filter(inYear);
-  const items = app.map(r=>({src:'app', r, id:r.id, name:r.name, at:r.at, pnl:r.pnl||0}))
+  const cg = cgtData(year), log = loadTradeLog();
+  const app = cg.sum.sales, manual = cg.sum.manual;
+  const items = app.map(x=>({src:'app', r:log.find(r=>r.id===x.id), id:x.id, name:x.name, at:x.settle, pnl:x.gain}))
     .concat(manual.map(m=>({src:'manual', id:m.id, name:m.name, at:m.at, pnl:m.pnl}))).sort((a,b)=>b.at-a.at);
-  const gainMan = Math.round(items.reduce((s,x)=>s+x.pnl,0)/10000);
-  const profitMan = Math.round(items.filter(x=>x.pnl>0).reduce((s,x)=>s+x.pnl,0)/10000), lossMan = Math.round(items.filter(x=>x.pnl<0).reduce((s,x)=>s+x.pnl,0)/10000);
+  const gainMan = Math.round(cg.sum.gain/10000);
+  const profitMan = Math.round(cg.sum.profit/10000), lossMan = Math.round(cg.sum.loss/10000);
   const taxableMan = Math.max(0, gainMan - CGT_EXEMPT_MAN);
   const taxMan = Math.round(taxableMan * CGT_RATE);
   const leftMan = Math.max(0, CGT_EXEMPT_MAN - Math.max(0, gainMan));   // 올해 더 실현해도 세금이 없는 이익
@@ -5397,11 +5456,7 @@ function renderCapitalGainsTax(){
   if(isCur){
     if(gainMan < CGT_EXEMPT_MAN) tips.push(`올해 이익을 <b>${man(leftMan)}</b>까지 더 실현해도 세금이 없어요 — 이익 종목을 팔고 바로 다시 사면 매수 단가가 올라 나중 세금이 줄어요.`);
     else tips.push(`기본공제 250만원을 넘었어요 — 과세표준 <b>${man(taxableMan)}</b>에 22%가 붙습니다.`);
-    const taxIf = d => Math.round(Math.max(0, gainMan + Math.round(d/10000) - CGT_EXEMPT_MAN) * CGT_RATE);
-    const cands = assets.filter(a=>!(a.currency==='KRW' || a.acctType==='cash' || (a.acctType && a.acctType!=='general')))
-      .map(a=>{ const d = evKRW(a) - costKRW(a); return {name:a.name, d, delta: taxIf(d) - taxMan}; })
-      .filter(c=>Math.abs(c.d) >= 10000)
-      .sort((x,y)=>x.delta-y.delta || y.d-x.d);
+    const cands = cgtCandidates(cg).map(c=>({name:c.name, d:c.gain, delta:Math.round(c.delta/10000)}));
     if(cands.length){
       const eff = c => c.delta<0 ? `<span class="dn">세금 ${man(-c.delta)} 줄어요</span>` : c.delta>0 ? `<span class="up">세금 ${man(c.delta)} 늘어요</span>` : `<span class="dim">세금 변화 없음</span>`;
       candHtml = `<div class="cand-sub">지금 팔면</div>
@@ -5439,7 +5494,7 @@ function renderCapitalGainsTax(){
       ${tile('세율', '22%')}<span class="cgt-op">=</span>
       ${tile('예상 양도세', man(taxMan), taxMan>0?'dn':'')}
     </div>
-    <div class="notice">💡 일반계좌 해외주식 매도 ${app.length}건${manual.length?` + 수동 입력 ${manual.length}건`:''}의 실현손익을 합산(이익 ${sman(profitMan)} · 손실 ${sman(lossMan)}, 같은 해 손익통산)합니다. 체결 당시 환율로 환산된 원화 손익이며 ISA·연금계좌 매매는 제외돼요.</div>
+    <div class="notice">💡 일반계좌 해외주식 매도 ${app.length}건${manual.length?` + 수동 입력 ${manual.length}건`:''}의 실현손익을 합산(이익 ${sman(profitMan)} · 손실 ${sman(lossMan)}, 같은 해 손익통산)합니다. 매수·매도 결제일 환율로 환산한 원화 손익(환차익 포함)이며 ISA·연금계좌·가상자산 매매는 제외돼요.</div>
     ${tips.map(t=>`<div class="notice">💡 ${t}</div>`).join('')}
     ${candHtml}
     <div class="cand-sub">매도 내역</div>
@@ -5467,19 +5522,26 @@ function loadFinInputs(){
   const legacy = {int:loadNum(OTHER_INTEREST_KEY), div:loadNum(OTHER_FIN_INCOME_KEY), base:loadNum(OTHER_TAXBASE_KEY)};
   return (legacy.int||legacy.div||legacy.base) ? {[new Date().getFullYear()]:legacy} : {};
 }
-const finInput = (year, f) => parseFloat((loadFinInputs()[year]||{})[f]) || 0;
-function saveFinInput(field, v, year){
-  const m = loadFinInputs();
-  m[year] = Object.assign({int:0, div:0, base:0}, m[year]);
-  m[year][field] = Math.max(0, parseFloat(v)||0);
-  localStorage.setItem(FIN_INPUTS_KEY, JSON.stringify(m));
-  renderFinIncomeThreshold();
+// 값: int 이자·div 앱 밖 계좌 배당·base 다른 종합소득 과세표준(만원), cgtNone 앱 밖 해외주식 매도 없음(1). 모두 숫자(백업 검증 규칙).
+const FIN_FIELDS = ['int','div','base','cgtNone'];
+function finInputRaw(year, f){
+  const y = loadFinInputs()[year];
+  if(!y || y[f]==null) return null;
+  const v = parseFloat(y[f]);
+  if(!isFinite(v)) return null;
+  return (!y.v && v===0) ? null : v;
 }
+const finInput = (year, f) => finInputRaw(year, f) || 0;
+function saveFinInput(field, v, year){
+  const m = loadFinInputs(), next = {v:2};
+  FIN_FIELDS.forEach(k=>{ const r = finInputRaw(year, k); if(r!=null) next[k] = r; });
+  if(v==='' || v==null) delete next[field]; else next[field] = Math.max(0, parseFloat(v)||0);
+  m[year] = next;
+  localStorage.setItem(FIN_INPUTS_KEY, JSON.stringify(m));
+  renderTaxViews();
+}
+function renderTaxViews(){ renderCapitalGainsTax(); renderFinIncomeThreshold(); }
 function loadOtherFinIncome(){ return finInput(new Date().getFullYear(), 'div'); }
-// 소득세 세율표(소득세법 55조, 과세표준 만원 기준) — [상한, 세율]
-const INCOME_TAX_BANDS = [[1400,.06],[5000,.15],[8800,.24],[15000,.35],[30000,.38],[50000,.40],[100000,.42],[Infinity,.45]];
-function incomeTaxMan(base){ let t = 0, lo = 0; for(const [hi, r] of INCOME_TAX_BANDS){ if(base > lo) t += (Math.min(base, hi) - lo) * r; lo = hi; } return t; }
-const marginalRate = base => (INCOME_TAX_BANDS.find(([hi])=>base<=hi) || INCOME_TAX_BANDS[INCOME_TAX_BANDS.length-1])[1];
 function renderFinIncomeThreshold(){
   const el = document.getElementById('finIncomeThreshold');
   if(!el) return;
@@ -5492,9 +5554,8 @@ function renderFinIncomeThreshold(){
   // 초과 시 추가 세금 추정: 종합과세 산출세액 = max(합산 누진, 2,000만원×14% + 초과분 누진) — 이미 원천징수(14%)한 금액을 뺀 추가 납부(지방소득세 10% 포함)
   let extraMan = 0, rate = 0;
   if(excess > 0){
-    const A = incomeTaxMan(baseMan + endMan), B = incomeTaxMan(baseMan + excess) + THRESHOLD*0.14;
-    extraMan = Math.max(0, (Math.max(A, B) - incomeTaxMan(baseMan) - endMan*0.14) * 1.1);
-    rate = marginalRate(baseMan + excess);
+    extraMan = DT.finExtraTaxMan(endMan, baseMan);
+    rate = DT.marginalRate(baseMan + excess);
   }
   const scale = THRESHOLD*1.5, pct = Math.min(100, endMan/scale*100), tickHi = HI_LINE/scale*100, tickTh = THRESHOLD/scale*100;
   const col = endMan > THRESHOLD ? '#ff3b30' : endMan > HI_LINE ? '#ff9500' : '#34c759';
@@ -6230,160 +6291,157 @@ SUBPAGE_RENDER_HOOKS['returns_monthly_chart'] = drawPrincipalVsValueChart;
    배당금 관리 / 월별 배당 캘린더 (집계 로직 공유)
 ════════════════════════════════════════ */
 /* ── 배당 엔진: 보유 종목 연동 자동 배당 ──
-   보유 종목(assets)의 야후 배당 이력(배당락일·주당 배당금) × 배당락일 당시 보유 수량 × 환율로 배당을 자동 추정하고,
-   사용자가 적은 확정 기록(매매이력 type:'dividend')과 합쳐 한 장부로 만든다. 배당금관리·세금관리가 같은 장부를 쓴다.
-     확정(confirmed) = 기록 / 자동(auto) = 지급일이 지났는데 기록이 없는 배당 / 예정(proj) = 앞으로 올 배당(known=이미 배당락, 아니면 주기로 추정)
-   금융소득종합과세 기준(2,000만원)은 세전(원천징수 전) 금액이므로 항목마다 세전·원천징수·세후를 따로 들고 있고,
-   ISA·연금계좌 배당은 원천징수·금융소득 합산 대상이 아니다. */
-const DIVHIST_KEY = 'pf_divhist_v1', DIVHIST_TTL = 24*3600000;   // 야후 배당 이력 캐시(백업 제외)
+   계산은 div-tax.js(DivTax.buildLedger, 순수 함수·테스트 있음). 여기서는 재료를 모아 넘긴다:
+     보유 종목(+ 전량 매도한 종목) · 매칭된 매수/매도 이력 · 스냅샷(배당락일 수량 근거) · 야후 배당 이력(배당락일·주당 배당금·ETF 여부) · 야후 과거 환율.
+   확정(confirmed) = 기록 / 자동(auto) = 지급일이 지났는데 기록이 없는 배당 / 예정(proj) = 앞으로 올 배당(known=이미 배당락, 아니면 작년 같은 회차 반복)
+   금융소득종합과세 기준(2,000만원)은 세전 금액이고 ISA·연금계좌 배당은 합산 대상이 아니다. 배당금관리·세금관리가 같은 장부를 쓴다. */
+const DT = window.DivTax;
+const DIVHIST_KEY = 'pf_divhist_v2', DIVHIST_TTL = 24*3600000;   // 야후 배당 이력 캐시(백업 제외) — v2: 5년치 + ETF 여부
+const FXHIST_KEY = 'pf_fxhist_v1';                               // 야후 과거 환율(USD·JPY 일봉 5년, 백업 제외)
 const DIV_DISMISS_KEY = 'pf_div_dismiss_v1';                      // 자동 배당에서 뺀 항목 키 목록
 const DIV_DAY = 86400000;
-const DIV_WHT = {KRW:.154, USD:.15, JPY:.15315};                  // 배당소득세 원천징수율(지방소득세 포함, 미국은 한미 조약 15%)
-const DIV_SHELTERED = ['isa','pension_personal','pension_retirement','irp'];
-const divAcctKey = a => DIV_SHELTERED.includes(a.acctType) ? a.acctType : 'general';
-const divTaxable = acct => !DIV_SHELTERED.includes(acct);
+const DIV_WHT = DT.DIV_WHT;
+const DIV_SHELTERED = DT.SHELTERED;
+const divAcctKey = a => DT.normAcct(a.acctType);
+const divTaxable = acct => !DT.isSheltered(acct);
 const divAssetKey = a => String(a.ticker).trim().toUpperCase();
+const divHoldKey = a => `${divAssetKey(a)}|${divAcctKey(a)}|${a.company||''}`;
+const divLegacyAcct = a => DIV_SHELTERED.includes(a.acctType) ? a.acctType : 'general';   // 옛 화면의 계좌 키(직접 입력 이름은 general로 저장됐다)
 const divEligible = a => !!a && a.acctType!=='cash' && !a.isBond && !isCryptoAsset(a) && a.ticker && a.ticker!=='—' && a.quantity>0;
-const DIV_ETF_RE = /^(KODEX|TIGER|ACE|RISE|HANARO|KOSEF|ARIRANG|KBSTAR|PLUS|TIMEFOLIO|FOCUS|마이티|히어로|SOL(\s|[가-힣]))|ETF/i;
+const DIV_ETF_RE = /^(KODEX|TIGER|ACE|RISE|HANARO|KOSEF|KIWOOM|ARIRANG|KBSTAR|PLUS|SOL|TIMEFOLIO|FOCUS|1Q|WON|BNK|KoAct|TRUSTON|UNICORN|파워|마이티|히어로|에셋플러스|DAISHIN343)(\s|[가-힣A-Z0-9])|ETF/i;
+try{ localStorage.removeItem('pf_divhist_v1'); }catch(e){}           // 옛 캐시(2년치·ETF 여부 없음) 정리
 function loadDivHist(){ try{ return JSON.parse(localStorage.getItem(DIVHIST_KEY)) || {}; }catch(e){ return {}; } }
 function saveDivHist(c){ try{ localStorage.setItem(DIVHIST_KEY, JSON.stringify(c)); }catch(e){} }
+function loadFxHist(){ try{ return JSON.parse(localStorage.getItem(FXHIST_KEY)) || null; }catch(e){ return null; } }
 function loadDivDismiss(){ try{ const a = JSON.parse(localStorage.getItem(DIV_DISMISS_KEY)); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
 const divHistState = {loading:false, failed:0};
 
-// 종목 하나의 최근 2년 배당 이력 — fetchYahooHistory와 같은 경로(워커 프록시)에 events=div, 월봉(날짜는 이벤트의 date = 실제 배당락일)
+// 종목 하나의 최근 5년 배당 이력 — fetchYahooHistory와 같은 경로(워커 프록시)에 events=div, 월봉(이벤트 date = 실제 배당락일)
 async function fetchDividendEvents(ticker){
   const base = toYahooHistTicker(ticker);
   if(!base) return null;
   const tries = /\.KS$/i.test(base) ? [base, base.replace(/\.KS$/i, '.KQ')] : [base];
   const parse = json => {
     const r = json?.chart?.result?.[0];
-    if(!r?.meta) throw new Error('no meta');
+    if(!r?.meta){
+      // 야후가 "그런 종목 없음"이라고 답한 경우만 확정 실패(배당 없는 종목으로 캐시) — 그 밖의 오류(일시 장애·제한)는 다시 시도
+      const err = new Error('no meta'); err.definitive = /not\s*found/i.test(json?.chart?.error?.code || ''); throw err;
+    }
     const ev = Object.values(r.events?.dividends || {}).map(v=>({ex:v.date*1000, dps:v.amount})).filter(e=>e.dps>0).sort((a,b)=>a.ex-b.ex);
-    return {cur:r.meta.currency||null, ev};
+    return {cur:r.meta.currency||null, type:r.meta.instrumentType||null, ev};
   };
-  let notFound = true;   // 모든 시도가 "그런 종목 없음"(404)이면 실패가 아니라 배당 정보가 없는 종목(펀드 등)으로 캐시한다
+  let notFound = true;   // 모든 시도가 "그런 종목 없음"이면 실패가 아니라 배당 정보가 없는 종목(펀드 등)으로 캐시한다
   for(const t of tries){
-    const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1mo&range=2y&events=div`);
+    const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=1mo&range=5y&events=div`);
     try{ return await hedgedFirst(buildCands(urls, parse), 10000); }catch(e){ if(!(e && e.definitive)) notFound = false; }
   }
-  return notFound ? {cur:null, ev:[]} : null;
+  return notFound ? {cur:null, type:null, ev:[]} : null;
 }
-// 보유 종목의 배당 이력을 캐시(24시간)로 채우고 끝나면 배당·세금 화면을 다시 그린다. force=true면 캐시를 무시한다.
+// 과거 환율(원/외화) 일봉 — 지난 배당은 지급일, 해외주식 매매는 결제일 환율로 환산한다
+async function fetchFxSeries(sym){
+  const urls = ['query1','query2'].map(h=>`https://${h}.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5y`);
+  const parse = json => {
+    const r = json?.chart?.result?.[0], ts = r?.timestamp, c = r?.indicators?.quote?.[0]?.close;
+    if(!ts?.length || !c?.length) throw new Error('no data');
+    const out = [];
+    ts.forEach((t, i) => { const v = c[i]; if(v > 0){ const d = new Date(t*1000); out.push([new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), Math.round(v*100)/100]); } });
+    return out;
+  };
+  try{ return await hedgedFirst(buildCands(urls, parse), 10000); }catch(e){ return null; }
+}
+async function ensureFxHistory(force){
+  const c = loadFxHist();
+  if(!force && c && Date.now() - c.at < DIVHIST_TTL) return false;
+  const [usd, jpy] = await Promise.all([fetchFxSeries('KRW=X'), fetchFxSeries('JPYKRW=X')]);
+  if(!usd && !jpy) return false;
+  const next = {at:Date.now(), USD: usd || (c && c.USD) || [], JPY: jpy || (c && c.JPY) || []};
+  try{ localStorage.setItem(FXHIST_KEY, JSON.stringify(next)); }catch(e){}
+  return true;
+}
+function divFxAt(){ const c = loadFxHist(); return DT.makeFxAt(c ? {USD:c.USD, JPY:c.JPY} : null, Date.now(), FX); }
+
+// 전량 매도해 보유 목록에서 사라진 종목 — 그 해 받은 배당이 빠지지 않게 매수/매도 이력으로 "0주 보유"를 만든다
+function divSoldHoldings(log){
+  const out = new Map();
+  log.forEach(r=>{
+    if(!(r.type==='buy' || r.type==='sell') || r.acctType==='cash' || !r.ticker || r.ticker==='—' || /-USD$/i.test(r.ticker) || r.assetType==='가상자산') return;
+    if(assets.some(a=>tradeMatchesAsset(r, a))) return;
+    const pseudo = {ticker:r.ticker, name:r.name, acctType:r.acctType, company:r.company||null, currency:r.currency||'KRW'};
+    const k = divHoldKey(pseudo);
+    if(!out.has(k)) out.set(k, Object.assign(pseudo, {key:k, trades:[]}));
+    out.get(k).trades.push(r);
+  });
+  const cut = Date.now() - 3*365*DIV_DAY;
+  return [...out.values()].filter(g=>g.trades.some(r=>r.type==='sell' && r.at >= cut));
+}
+// 배당 이력을 받아 올 티커(보유 + 전량 매도)
+const divTickers = log => [...new Set(assets.filter(divEligible).map(divAssetKey).concat(divSoldHoldings(log).map(divAssetKey)))];
+// 보유 종목의 배당 이력·과거 환율을 캐시(24시간)로 채우고 끝나면 배당·세금 화면을 다시 그린다. force=true면 캐시를 무시한다.
 async function ensureDividendHistory(force){
   if(divHistState.loading) return;
-  const cache = loadDivHist(), now = Date.now();
-  const todo = [...new Set(assets.filter(divEligible).map(divAssetKey))].filter(k => force || !cache[k] || now - cache[k].at > DIVHIST_TTL);
-  if(!todo.length) return;
+  const cache = loadDivHist(), now = Date.now(), fxc = loadFxHist();
+  const todo = divTickers(loadTradeLog()).filter(k => force || !cache[k] || now - cache[k].at > DIVHIST_TTL);
+  const fxStale = force || !fxc || now - fxc.at > DIVHIST_TTL;
+  if(!todo.length && !fxStale) return;
   divHistState.loading = true; divHistState.failed = 0;
   renderAllDividendViews();
+  const fxJob = fxStale ? ensureFxHistory(force) : Promise.resolve(false);
   const queue = todo.slice();
   const worker = async () => {
     while(queue.length){
       const k = queue.shift();
       const res = await fetchDividendEvents(k);
-      if(res){ cache[k] = {at:Date.now(), cur:res.cur, ev:res.ev}; }
+      if(res){ cache[k] = {at:Date.now(), cur:res.cur, type:res.type, ev:res.ev}; }
       else divHistState.failed++;
     }
   };
-  await Promise.all([worker(), worker()]);
+  await Promise.all([worker(), worker(), fxJob]);
   saveDivHist(cache);
   divHistState.loading = false;
+  divLedgerMemo.clear();
   renderAllDividendViews();
+  if(typeof renderCapitalGainsTax==='function') renderCapitalGainsTax();
 }
-// 배당락일 당시 보유 수량 = 지금 수량 − (그 뒤 매수) + (그 뒤 매도). 매수·매도 기록이 없으면 지금 수량 그대로.
-function divQtyAt(a, ex, tl){
-  let q = a.quantity;
-  tl.forEach(r => { if(r.at > ex){ q += (r.type==='sell' ? 1 : -1) * (r.quantity||0); } });
-  return Math.max(0, q);
-}
-// 지급일 추정(배당락일 + 지연): 미국 5일, 일본 60일, 국내 ETF 4일, 국내 주식은 결산(12월 배당락) 110일·분기 45일
-function divPayLagDays(a, ex){
-  if(a.currency==='USD') return 5;
-  if(a.currency==='JPY') return 60;
-  if(DIV_ETF_RE.test(a.name||'')) return 4;
-  const m = new Date(ex).getMonth();
-  return (m===11 || m===0) ? 110 : 45;
-}
-const divDateStr = ts => { const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-// 기록(r)이 이 보유 항목(a)의 것인지 — 티커·종목명·티커를 이름 칸에 적은 경우까지, 계좌가 적혀 있으면 계좌도 같아야 한다
+const divKindOf = (ticker, name, cache) => { const t = (cache[String(ticker).trim().toUpperCase()]||{}).type; return t ? (t==='ETF' ? 'etf' : 'stock') : (DIV_ETF_RE.test(name||'') ? 'etf' : 'stock'); };
+const divDateStr = ts => DT.dateStr(ts);
+// 기록(r)이 이 보유 항목(a)의 것인지 — 티커·종목명·티커를 이름 칸에 적은 경우까지, 계좌·금융회사가 적혀 있으면 그것도 같아야 한다
 function divRecMatchesAsset(r, a){
   const nt = normalizeTicker(a.ticker);
   const hit = (r.ticker && r.ticker!=='—' && normalizeTicker(r.ticker)===nt) || (r.name && (r.name===a.name || normalizeTicker(r.name)===nt));
   if(!hit) return false;
-  return !r.acct || r.acct===divAcctKey(a);
+  if(r.acct && r.acct!==divAcctKey(a) && r.acct!==divLegacyAcct(a)) return false;
+  return !(r.company && a.company && r.company!==a.company);
 }
 
-// 한 연도(지급일 기준)의 배당 장부 — 지급일 순 항목 배열
-// 항목: {src, id, name, ticker, acct, ccy, ex, pay, qty, dps, gross, wht, net, est, known}  금액은 원(세전 gross, 원천징수 wht, 세후 net)
+// 한 연도(지급일 기준)의 배당 장부 — 지급일 순 항목 배열(DivTax.buildLedger 항목 + 화면용 assetAcct)
+// 한 번 그리는 동안 여러 화면이 같은 연도를 부르므로 그 턴 안에서만 재사용한다.
+const divLedgerMemo = new Map();
 function buildDividendLedger(year){
-  const now = Date.now(), y0 = new Date(year,0,1).getTime(), y1 = new Date(year+1,0,1).getTime();
-  const cache = loadDivHist(), log = loadTradeLog(), dismiss = new Set(loadDivDismiss());
-  const fxOf = c => c==='USD' ? FX.USD : c==='JPY' ? FX.JPY : 1;
-  const held = assets.filter(divEligible);
-  const items = [];
-  // 1) 확정 기록 — 세전/세후를 알면 그대로, 모르면(옛 기록·현금 폼) 입금된 세후 금액으로 보고 세전을 역산(est)
-  const recs = log.filter(r=>r.type==='dividend').map(r=>({r, used:false}));
-  recs.forEach(x=>{
-    const r = x.r;
-    if(r.at < y0 || r.at >= y1) return;
-    const owners = held.filter(a=>divRecMatchesAsset(r, a));
-    const acct = r.acct || (owners.length ? divAcctKey(owners[0]) : 'general');
-    const ccy = r.currency || 'KRW', rate = DIV_WHT[ccy] ?? DIV_WHT.KRW, tax = divTaxable(acct);
-    let gross, net, wht, est = false;
-    if(r.gross!=null){ gross = r.gross; wht = r.wht || 0; net = gross - wht; }
-    else if(r.basis==='gross'){ gross = r.totalKRW||0; wht = tax ? gross*rate : 0; net = gross - wht; }
-    else { net = r.totalKRW||0; gross = tax ? net/(1-rate) : net; wht = gross - net; est = true; }
-    items.push({src:'confirmed', id:r.id, name:r.name||'(미지정)', ticker:r.ticker||'', acct, ccy, ex:null, pay:r.at, qty:r.quantity||null, dps:r.price||null, gross, wht, net, est,
-      akey: owners.length ? divAssetKey(owners[0])+'|'+divAcctKey(owners[0]) : null});
+  if(divLedgerMemo.has(year)) return divLedgerMemo.get(year);
+  const now = Date.now(), cache = loadDivHist(), log = loadTradeLog();
+  const holds = assets.filter(divEligible).map(a=>({a, key:divHoldKey(a), trades: log.filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a))}))
+    .concat(divSoldHoldings(log).map(g=>({a:g, key:g.key, trades:g.trades, sold:true})));
+  const holdings = holds.map(x=>{
+    const a = x.a, h = cache[divAssetKey(a)];
+    return {key:x.key, id: x.sold ? null : a.id, ticker:a.ticker, name:a.name, ccy:a.currency||'KRW', acct:divAcctKey(a), legacyAcct:divLegacyAcct(a), company:a.company||null,
+      quantity: x.sold ? 0 : a.quantity, soldOut: !!x.sold, kind: divKindOf(a.ticker, a.name, cache), trades:x.trades, ev: h ? h.ev : [], assetAcct:a.acctType||null};
   });
-  // 2) 보유 종목의 배당 이력 → 자동(지급 지남)·예정, 이미 기록한 것(배당락~지급+20일 사이에 같은 종목 기록)은 건너뜀
-  held.forEach(a=>{
-    const h = cache[divAssetKey(a)];
-    if(!h || !h.ev.length) return;
-    const acct = divAcctKey(a), tax = divTaxable(acct);
-    const rate = DIV_WHT[a.currency] ?? DIV_WHT.KRW, fx = fxOf(a.currency);
-    const tl = log.filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a));
-    const mk = (ex, pay, dps, qty, known) => {
-      const gross = dps*qty*fx, wht = tax ? gross*rate : 0;
-      return {src:'proj', id:null, name:a.name, ticker:a.ticker, acct, ccy:a.currency, ex, pay, qty, dps, gross, wht, net:gross-wht, est:false, known,
-        akey:`${divAssetKey(a)}|${acct}`, company:a.company||null, assetAcct:a.acctType||null};
-    };
-    h.ev.forEach(e=>{
-      const pay = e.ex + divPayLagDays(a, e.ex)*DIV_DAY;
-      if(pay < y0 || pay >= y1) return;
-      const qty = divQtyAt(a, e.ex, tl);
-      if(!(qty>0)) return;
-      const m = recs.find(x=>!x.used && divRecMatchesAsset(x.r, a) && (x.r.exAt===e.ex || (x.r.at >= e.ex - 3*DIV_DAY && x.r.at <= pay + 20*DIV_DAY)));
-      if(m){ m.used = true; return; }
-      if(dismiss.has(`${divAssetKey(a)}|${acct}|${divDateStr(e.ex)}`)) return;
-      const it = mk(e.ex, pay, e.dps, qty, true);
-      it.src = pay <= now ? 'auto' : 'proj';
-      it.key = `${divAssetKey(a)}|${acct}|${divDateStr(e.ex)}`;
-      items.push(it);
-    });
-    // 3) 앞으로의 배당 — 최근 1년 횟수로 주기(월·분기·반기·연)를 정해 연말까지 같은 간격·평균 금액으로 반복
-    const recent = h.ev.filter(e=>e.ex >= now - 365*DIV_DAY);
-    if(!recent.length) return;
-    const n = recent.length, period = (n>=9 ? 30.4 : n>=3 ? 91.3 : n===2 ? 182.6 : 365.25) * DIV_DAY;
-    const last = h.ev[h.ev.length-1];
-    if(now - last.ex > period*1.6) return;   // 배당이 끊긴 종목은 예상하지 않는다
-    const avg = recent.reduce((s,e)=>s+e.dps,0) / n;
-    for(let k=1, ex=last.ex+period; k<=24; k++, ex+=period){
-      const pay = ex + divPayLagDays(a, ex)*DIV_DAY;
-      if(pay >= y1) break;
-      if(pay <= now || pay < y0) continue;
-      items.push(Object.assign(mk(ex, pay, avg, a.quantity, false), {src:'proj'}));
-    }
-  });
-  return items.sort((a,b)=>a.pay-b.pay);
+  const records = log.filter(r=>r.type==='dividend').map(r=>Object.assign({}, r, {owners: holds.filter(x=>divRecMatchesAsset(r, x.a)).map(x=>x.key)}));
+  const acctOf = new Map(holdings.map(h=>[h.key, h.assetAcct]));
+  const items = DT.buildLedger({year, now, holdings, records, snaps: loadSnaps(), fxAt: divFxAt(), dismiss: new Set(loadDivDismiss())})
+    .map(it=>Object.assign(it, {assetAcct: it.akey ? acctOf.get(it.akey) || null : null}));
+  if(!divLedgerMemo.size) setTimeout(()=>divLedgerMemo.clear(), 0);
+  divLedgerMemo.set(year, items);
+  return items;
 }
 // 금융소득종합과세용 요약(세전, 일반계좌만) — 금융소득 합계 기준은 세전이고 ISA·연금계좌 배당은 합산되지 않는다
 function finIncomeOf(year){
   const items = buildDividendLedger(year);
-  const s = {year, items, got:0, proj:0, shelteredGross:0, nConfirmed:0, nAuto:0, nSheltered:0, nEst:0, monthGot:Array(12).fill(0), monthProj:Array(12).fill(0)};
+  const s = {year, items, got:0, proj:0, shelteredGross:0, nConfirmed:0, nAuto:0, nSheltered:0, nEst:0, nGuess:0, monthGot:Array(12).fill(0), monthProj:Array(12).fill(0)};
   items.forEach(it=>{
     if(!divTaxable(it.acct)){ s.shelteredGross += it.gross; s.nSheltered++; return; }
     const m = new Date(it.pay).getMonth();
+    if(it.guess) s.nGuess++;
     if(it.src==='proj'){ s.proj += it.gross; s.monthProj[m] += it.gross; }
     else{ s.got += it.gross; s.monthGot[m] += it.gross; if(it.src==='auto') s.nAuto++; else s.nConfirmed++; if(it.est) s.nEst++; }
   });
@@ -6419,8 +6477,9 @@ function finTotals(year){
   const fin = finIncomeOf(year);
   const appMan = Math.round(fin.got/10000), projMan = Math.round(fin.proj/10000);
   const intMan = finInput(year,'int'), othDivMan = finInput(year,'div'), baseMan = finInput(year,'base');
-  const totalMan = appMan + intMan + othDivMan;
-  return {fin, appMan, projMan, intMan, othDivMan, baseMan, totalMan, endMan: totalMan + projMan};
+  const etf = etfDivIncomeOf(year), etfMan = Math.round(etf.won/10000);
+  const totalMan = appMan + etfMan + intMan + othDivMan;
+  return {fin, etf, appMan, etfMan, projMan, intMan, othDivMan, baseMan, totalMan, endMan: totalMan + projMan};
 }
 // 세전·세후 계산 — 일반계좌만 원천징수, ISA·연금계좌는 0
 function divCalcAmounts(acct, ccy, amountKRW, basis){
@@ -6471,7 +6530,8 @@ function toggleDivAdd(ctx, btn){ divAddOpen[ctx] = !divAddOpen[ctx]; toggleBanne
 function divItemById(key){ return buildDividendLedger(divYear()).find(it=>(it.src==='confirmed' ? it.id : it.key)===key); }
 function divConfirm(it, over){
   recordDividend({at: over ? over.at : it.pay, name: it.name, ticker: it.ticker, acct: over ? over.acct : it.acct, ccy: it.ccy, qty: it.qty, dps: it.dps,
-    amountKRW: over ? over.amountKRW : it.gross, basis: over ? 'net' : 'gross', company: it.company, ex: it.ex, src:'auto'});
+    amountKRW: over ? over.amountKRW : it.gross, basis: over ? 'net' : 'gross', company: it.company, ex: it.ex,
+    src: over && divDateStr(over.at)!==divDateStr(it.pay) ? 'edited' : 'auto'});
   if(divCashAdd) divAddCash(it.ccy, over ? over.amountKRW : it.net, it.company, it.assetAcct);
 }
 function confirmDivItem(key){
@@ -6612,9 +6672,11 @@ function addDivManual(ctx){
   if(!dateV){ fieldError(`dn_date_${ctx}`,'배당일을 입력해 주세요.'); return; }
   if(!name){ fieldError(sv==='__custom__' ? `dn_name_${ctx}` : `dn_stock_${ctx}`,'종목을 고르거나 입력해 주세요.'); return; }
   if(isNaN(amount) || amount<=0){ fieldError(`dn_amt_${ctx}`,'금액을 입력해 주세요.'); return; }
-  const acct = g('dn_acct').value, ccy = g('dn_cur').value;
-  const c = recordDividend({at:new Date(dateV+'T00:00:00').getTime(), name, ticker:a?a.ticker:'', acct, ccy, qty:isNaN(qty)?null:qty, dps:isNaN(per)?null:per,
-    amountKRW:Math.round(amount), basis:divBasis[ctx], company:a?a.company:null, src:'manual'});
+  const acct = g('dn_acct').value, ccy = g('dn_cur').value, at = new Date(dateV+'T00:00:00').getTime();
+  // 보유 종목의 기록이면 가장 가까운 야후 배당락일(지급 150일 전까지)을 붙여, 같은 회차 자동 항목과 겹쳐 세지 않게 한다
+  const ev = a ? ((loadDivHist()[divAssetKey(a)]||{}).ev || []).filter(e=>e.ex <= at && at - e.ex <= 150*DIV_DAY).pop() : null;
+  const c = recordDividend({at, name, ticker:a?a.ticker:'', acct, ccy, qty:isNaN(qty)?null:qty, dps:isNaN(per)?null:per,
+    amountKRW:Math.round(amount), basis:divBasis[ctx], company:a?a.company:null, ex: ev ? ev.ex : null, src:'manual'});
   if(divCashAdd) divAddCash(ccy, c.net, a?a.company:null, a?a.acctType:acct);
   divAddOpen[ctx] = false; divBasis[ctx] = 'net';
   renderAllDividendViews();
@@ -6645,7 +6707,7 @@ function renderDividendByStock(){
   if(!el) return;
   const year = divYear(), cur = year===new Date().getFullYear(), items = buildDividendLedger(year), cache = loadDivHist();
   const groups = new Map();
-  assets.filter(divEligible).forEach(a=>{ const k = divAssetKey(a)+'|'+divAcctKey(a); if(!groups.has(k)) groups.set(k, {key:k, name:a.name, acct:divAcctKey(a), asset:a, items:[]}); });
+  assets.filter(divEligible).forEach(a=>{ const k = divHoldKey(a); if(!groups.has(k)) groups.set(k, {key:k, name:a.name, acct:divAcctKey(a), asset:a, items:[]}); });
   items.forEach(it=>{ const k = it.akey || 'n:'+it.name; if(!groups.has(k)) groups.set(k, {key:k, name:it.name, acct:it.acct, asset:null, items:[]}); groups.get(k).items.push(it); });
   const rows = [...groups.values()].map(g=>{
     g.got = g.items.filter(it=>it.src!=='proj').reduce((s,it)=>s+it.net,0);
@@ -9361,7 +9423,7 @@ const BACKUP_VERSION = 2;
 const RETIREMENT_KEY = 'retirement_dashboard_v1'; // retirement/index.html의 STORAGE_KEY와 반드시 같아야 함
 // 1회 보정 완료 표시 — 같이 옮겨야 복원한 데이터가 새 기기에서 한 번 더 자동 보정되어 백업과 달라지는 일이 없다
 const BACKUP_FLAG_KEYS = [CRYPTO_FIX_KEY, CRYPTO_LOG_FIX_KEY, TRADELOG_ATTRSYNC_KEY, NAME_FIX_KEY, NAME_LOG_FIX_KEY];
-const BACKUP_STORAGE_KEYS = [ASSETS_KEY, FX_KEY, SNAP_KEY, TRADE_KEY, OTHER_FIN_INCOME_KEY, OTHER_INTEREST_KEY, OTHER_TAXBASE_KEY, FIN_INPUTS_KEY, DIV_DISMISS_KEY, CGT_MANUAL_KEY, RETIREMENT_KEY, ...BACKUP_FLAG_KEYS];
+const BACKUP_STORAGE_KEYS = [ASSETS_KEY, FX_KEY, SNAP_KEY, TRADE_KEY, OTHER_FIN_INCOME_KEY, OTHER_INTEREST_KEY, OTHER_TAXBASE_KEY, FIN_INPUTS_KEY, DIV_DISMISS_KEY, CGT_MANUAL_KEY, TAX_SET_KEY, RETIREMENT_KEY, ...BACKUP_FLAG_KEYS];
 
 function buildBackupData(){
   // assets/fx는 메모리상 전역변수 대신 localStorage에서 직접 다시 읽는다(스냅샷/
@@ -9391,6 +9453,7 @@ function buildBackupData(){
     finInputs: loadFinInputs(),
     divDismiss: loadDivDismiss(),
     cgtManual: loadCgtManual(),
+    taxSettings: loadTaxSettings(),
     retirement,
     flags,
     counts: {
@@ -9443,6 +9506,7 @@ function validateBackupData(d){
   if(d.finInputs!=null && (!isObj(d.finInputs) || !Object.values(d.finInputs).every(y=>isObj(y) && Object.values(y).every(v=>isFinite(parseFloat(v)))))) return '연도별 이자·배당 입력이 올바르지 않습니다.';
   if(d.divDismiss!=null && (!Array.isArray(d.divDismiss) || !d.divDismiss.every(x=>typeof x==='string'))) return '자동 배당 제외 목록이 올바르지 않습니다.';
   if(d.cgtManual!=null && (!Array.isArray(d.cgtManual) || !d.cgtManual.every(x=>isObj(x) && typeof x.at==='number' && isFinite(x.pnl)))) return '양도소득 수동 기록이 올바르지 않습니다.';
+  if(d.taxSettings!=null && (!isObj(d.taxSettings) || !['fifo','avg'].includes(d.taxSettings.method) || !isObj(d.taxSettings.buyFx) || !Object.values(d.taxSettings.buyFx).every(v=>isFinite(parseFloat(v))))) return '세금 설정(양도차익 방식·매입 환율)이 올바르지 않습니다.';
   if(d.retirement!=null && (!isObj(d.retirement) || !Object.values(d.retirement).every(v=>v===null || typeof v==='string' || typeof v==='number'))) return '현금흐름 데이터가 올바르지 않습니다.';
   if(d.flags!=null && !isObj(d.flags)) return '백업 파일의 내부 표식이 올바르지 않습니다.';
   if(isObj(d.counts)){
@@ -9510,6 +9574,11 @@ function applyBackupData(data){
   if(Array.isArray(data.cgtManual)){
     writes[CGT_MANUAL_KEY] = JSON.stringify(data.cgtManual);
     parts.push({label:'양도소득 수동 기록', key:CGT_MANUAL_KEY, origRaw:JSON.stringify(orig.cgtManual)});
+  }
+  if(data.taxSettings && typeof data.taxSettings==='object'){
+    const ts = JSON.stringify({method:data.taxSettings.method, buyFx:data.taxSettings.buyFx});
+    writes[TAX_SET_KEY] = ts;
+    parts.push({label:'세금 설정', key:TAX_SET_KEY, origRaw:JSON.stringify({method:orig.taxSettings.method, buyFx:orig.taxSettings.buyFx})});
   }
   // 백업에 현금흐름 값이 없으면(구버전 파일 등) 기기에 있는 현재 값을 건드리지 않는다
   const retirementInFile = !!data.retirement;
