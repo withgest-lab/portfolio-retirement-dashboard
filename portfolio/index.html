@@ -478,8 +478,11 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .card:has(> #finIncomeThreshold){display:flex;flex-direction:column;}
 #finIncomeThreshold{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
 #finIncomeThreshold > *{flex:0 0 auto;}
-#finIncomeThreshold > .fi-months{flex:1 1 auto;}
-.fi-months{position:relative;display:flex;gap:6px;align-items:stretch;min-height:84px;margin:14px 0 4px;}
+#finIncomeThreshold > .tx-cols{flex:1 1 auto;}
+.fi-wrap{display:flex;flex-direction:column;min-width:0;min-height:0;}
+.fi-wrap .fi-months{flex:1 1 auto;margin:14px 0 4px;}
+.fi-months{position:relative;display:flex;gap:6px;align-items:stretch;min-height:120px;}
+@media(min-width:700px){ .tx-cols.tx3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr);} .fi-months{min-height:84px;gap:4px;} }
 .fi-m{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10px;color:var(--color-tertiary);}
 .fi-m-bars{width:100%;flex:1 1 auto;min-height:0;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
 .fi-m-bars i{display:block;width:100%;flex:0 0 auto;}
@@ -513,6 +516,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .tx-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin:10px 0;}
 @media(min-width:700px){ .tx-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;} }
 .tx-p{margin:0;}
+.tx-ov{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;}
+@media(min-width:700px){ .tx-ov{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start;} .tx-sums .tx-sum:first-child{border-top:0;} }
 .tx-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px;padding:4px 0;border-top:.5px solid var(--color-border);font-size:13px;}
 .tx-row .l{min-width:0;display:flex;flex-direction:column;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;} .tx-row .l small{font-size:11px;color:var(--color-tertiary);}
 .tx-row .v{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;} .tx-row.dim .v{font-weight:500;color:var(--color-tertiary);}
@@ -5531,9 +5536,10 @@ function renderTaxOverview(){
   const todos = taxTodos(year, cg, ft), cnt = todos.filter(t=>t.st!=='note'), done = cnt.filter(t=>t.st==='done').length;
   const todoRows = todos.map(t=>`<div class="tx-todo"><i class="tx-dot ${t.st}"></i><span class="tx-tt">${t.text}</span>${(t.btn||[]).filter(()=>t.st!=='done').map(([l,go])=>`<button type="button" class="btn btn-green dv-btn" onclick="${go}">${l}</button>`).join('')}</div>`).join('');
   taxSetHtml(el, `${taxYearBar(year, '')}
-    <div class="tx-sums">${rows}</div>
-    <div class="tx-h" style="margin-top:14px"><span>할 일</span><span>${done}/${cnt.length}</span></div>
-    <div class="tx-todos">${todoRows}</div>`);
+    <div class="tx-ov">
+      <div class="tx-sums">${rows}</div>
+      <div><div class="tx-h"><span>할 일</span><span>${done}/${cnt.length}</span></div><div class="tx-todos">${todoRows}</div></div>
+    </div>`);
 }
 
 function renderCapitalGainsTax(){
@@ -5665,7 +5671,7 @@ function renderFinIncomeThreshold(){
     return `<div class="fi-m" title="${i+1}월 누적 ${Math.round(tot).toLocaleString()}만원"><div class="fi-m-bars"><i class="b0" style="height:${base/mMax*100}%"></i><i class="b1" style="height:${cumC/mMax*100}%"></i><i class="b2" style="height:${cumP/mMax*100}%"></i></div><span>${i+1}</span></div>`;
   }).join('');
   const guides = [HI_LINE, THRESHOLD].filter(v=>v<=mMax).map(v=>`<div class="fi-guide" style="bottom:calc((100% - 14px) * ${(v/mMax).toFixed(4)} + 14px)"><em>${v.toLocaleString()}</em></div>`).join('');
-  const inp = (field, v, lbl, opt) => fmField(lbl, fmInput('fi_'+field, {type:'number', value: v==null ? '' : v, ph:'없으면 0', attrs:`min="0" step="1" onchange="saveFinInput('${field}',this.value,${year})"`}), {cls:'s12', opt});
+  const inp = (field, v, lbl, opt) => fmField(lbl, fmInput('fi_'+field, {type:'number', value: v==null ? '' : v, ph:'없으면 0', attrs:`min="0" step="1" onchange="saveFinInput('${field}',this.value,${year})"`}), {cls:'s12 fi-f', opt});
   const histNote = divHistState.loading ? '보유 종목 배당 정보를 불러오는 중…' : (divHistState.failed ? `배당 정보를 못 불러온 종목 ${divHistState.failed}개는 기록한 배당만 반영돼요.` : '');
   const tip = '이자·배당(세전)이 연 2,000만원을 넘으면 초과분이 다른 소득과 합산돼 누진세율(6~45%)로 과세돼요. ISA·연금계좌 배당은 합산되지 않아요. 국내 상장 해외 ETF를 일반계좌에서 팔아 번 이익은 배당소득이라 매매차익으로 추정해 더했어요(손실은 통산 안 함). 추가 세금은 입력한 과세표준 위에 초과분을 얹어 지방소득세 10%까지 계산한 참고값이며 배당가산(Gross-up)·세액공제는 반영하지 않아요.';
   const tile = (lbl, val, cls) => `<div class="cgt-t"><div class="cgt-l">${lbl}</div><div class="cgt-v ${cls||''}">${val}</div></div>`;
@@ -5680,12 +5686,12 @@ function renderFinIncomeThreshold(){
     <div class="fi-bar" role="img" aria-label="금융소득 ${Math.round(endMan)}만원, 기준 2,000만원"><i style="width:${pct}%;background:${col}"></i><b style="left:${tickHi}%"></b><b style="left:${tickTh}%"></b></div>
     <div class="fi-bar-cap"><span>0</span><span style="left:${tickHi}%">1,000 건보료 반영</span><span style="left:${tickTh}%">2,000 종합과세</span></div>
     <div class="notice" style="margin:8px 0 10px;">${status}${histNote ? ` <span class="dv-state">${histNote}</span>` : ''}</div>
-    <div class="tx-cols">
+    <div class="tx-cols tx3">
       <div class="fm tx-p">
         <div class="tx-h"><span>앱 기록 · 자동 (세전)</span></div>
-        <div class="tx-row"><span class="l">일반계좌 배당<small>받은 것 · 기록 ${fin.nConfirmed} · 자동 ${fin.nAuto}</small></span><span class="v">${taxMan(appMan)}</span></div>
-        <div class="tx-row"><span class="l">국내상장 해외ETF 매매차익<small>추정</small></span><span class="v">${taxMan(etfMan)}</span></div>
-        <div class="tx-row dim"><span class="l">ISA·연금계좌 배당<small>합산 제외</small></span><span class="v">${taxMan(Math.round(fin.shelteredGross/10000))}</span></div>
+        <div class="tx-row"><span class="l">일반계좌 배당</span><span class="v">${taxMan(appMan)}</span></div>
+        <div class="tx-row"><span class="l">해외ETF 매매차익 (추정)</span><span class="v">${taxMan(etfMan)}</span></div>
+        <div class="tx-row dim"><span class="l">ISA·연금 배당 (제외)</span><span class="v">${taxMan(Math.round(fin.shelteredGross/10000))}</span></div>
       </div>
       <div class="fm tx-p">
         <div class="tx-h"><span>직접 입력 · 앱 밖 (세전)</span></div>
@@ -5695,9 +5701,12 @@ function renderFinIncomeThreshold(){
           ${endMan > THRESHOLD || finInputRaw(year,'base')!=null ? inp('base', finInputRaw(year,'base'), '다른 종합소득 과세표준 (만원)', true) : ''}
         </div>
       </div>
+      <div class="fi-wrap">
+        <div class="tx-h"><span>월별 누적</span></div>
+        <div class="fi-months" aria-label="월별 누적 금융소득">${guides}${monthCols}</div>
+        <div class="notice" style="margin:2px 0 0;"><span class="fi-key"><i class="b0"></i>입력·차익</span><span class="fi-key"><i class="b1"></i>받은 배당</span>${isCur?'<span class="fi-key"><i class="b2"></i>예상</span>':''}</div>
+      </div>
     </div>
-    <div class="fi-months" aria-label="월별 누적 금융소득">${guides}${monthCols}</div>
-    <div class="notice" style="margin:2px 0 0;"><span class="fi-key"><i class="b0"></i>직접 입력·ETF 차익</span><span class="fi-key"><i class="b1"></i>받은 배당 누적</span>${isCur?'<span class="fi-key"><i class="b2"></i>예상 배당 누적</span>':''}</div>
   `);
 }
 
