@@ -21,7 +21,8 @@ const EXTRA = [[904, 850], [1003, 760], [1003, 620]];
 const FOLDED = [390, 800];
 // 긴 화면(세로 스크롤 허용) — 내용이 본질적으로 길거나 사용자 데이터 행 수에 따라 늘어나는 목록. 짧을 때는 마지막 카드가 화면 끝까지 늘어나 빈 공간이 없어야 한다(fillScrollerCard).
 const LONG = new Set(['retirement/tax', 'signals', 'folded',
-  'portfolio/portfolio', 'portfolio/tradelog', 'portfolio/dashboard/alloc', 'portfolio/returns/monthly_table', 'portfolio/dividend/monthly']);
+  'portfolio/portfolio', 'portfolio/tradelog', 'portfolio/dashboard/alloc', 'portfolio/returns/monthly_table', 'portfolio/dividend/monthly',
+  'portfolio/tax/cgt', 'portfolio/returns/principal']);   // 양도세 매도 행·원금기록장 입출금 행은 사용자 데이터 수만큼 늘어남
 
 // 화면 안에서 실제로 보이는 내용의 가장 아래(뷰포트 기준)와 넘침을 잰다
 const IN_PAGE_FIT = () => {
