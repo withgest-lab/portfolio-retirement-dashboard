@@ -164,14 +164,6 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .page.active:has(> .subtabbar) > .subpage.active{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-bottom:48px;}
 
 
-/* ── 월별 배당 캘린더 ── */
-.div-cal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-.div-cal-cell{background:var(--color-section-bg);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px 10px;text-align:center;}
-.div-cal-month{font-size:11px;font-weight:600;color:var(--color-tertiary);margin-bottom:6px;}
-.div-cal-confirmed{font-size:15px;font-weight:800;}
-.div-cal-projected{font-size:10px;margin-top:3px;}
-@media(max-width:480px){ .div-cal-grid{grid-template-columns:repeat(2,1fr);} }
-
 /* ── 글로벌시장: 보유종목 시장별 트리맵 2x2 ── */
 /* 자산군 분포(비중현황 > 트리맵): ①② 2열, ③ 세부 자산 작은 트리맵 2열 — 좁은 화면은 1열 */
 .dist-top-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
@@ -500,35 +492,52 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* ⓘ 안내 풍선(현금흐름 .ibtn/.ipop과 같은 모양) — 누르면 버튼 아래에 작은 풍선, 바깥·ESC로 닫힘 */
 .ibtn{display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:#8e8e93;font:inherit;font-size:1em;font-weight:500;line-height:1;padding:0 2px;cursor:pointer;border-radius:50%;}
 .ibtn:hover,.ibtn.on{color:#007aff;}
-.ipop{position:fixed;z-index:300;max-width:min(300px, calc(100vw - 24px));background:rgba(28,28,30,.94);color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:9px 12px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);}
+.ipop{white-space:pre-line;position:fixed;z-index:300;max-width:min(300px, calc(100vw - 24px));background:rgba(28,28,30,.94);color:#fff;font-size:12px;font-weight:400;line-height:1.5;padding:9px 12px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);}
 .tax-bar{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:nowrap;}
 .tax-bar .sum-chip{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .tax-bar .tax-end{margin-left:auto;display:flex;align-items:center;gap:6px;flex:0 0 auto;}
 .tax-bar select{box-sizing:border-box;height:28px;border:1px solid var(--color-border);border-radius:7px;padding:0 8px;font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);flex-shrink:0;}
 .cand-sub{font-size:11px;font-weight:700;color:var(--color-tertiary);margin:12px 0 4px;}
-/* 배당금관리: 12칸 월 그리드(6열) + 선택한 달의 항목 목록 */
-.div-cal-cell{cursor:pointer;padding:8px 6px;}
-.div-cal-cell.now{border-color:var(--color-accent);}
+/* 배당금관리: 12칸 월 그리드 + 선택한 달·종목의 항목 목록 — 카드는 내용 높이만(월 칸 ≈ 46px) */
+.div-cal-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;}
+@media(min-width:700px){ .div-cal-grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;} }
+.div-cal-cell{cursor:pointer;background:var(--color-section-bg);border-radius:var(--radius-sm);padding:6px 2px 4px;text-align:center;min-width:0;}
+.div-cal-cell.now .div-cal-month{color:var(--color-accent);}
 .div-cal-cell.sel{background:var(--color-card);box-shadow:0 0 0 1.5px var(--color-accent) inset;}
-.div-cal-confirmed{font-size:14px;} .div-cal-month{margin-bottom:3px;}
-@media(min-width:700px){ .div-cal-grid{grid-template-columns:repeat(6,1fr);gap:8px;} }
-.fm-a .fm-seg{flex:0 1 220px;margin-right:auto;}
+.div-cal-month{font-size:10px;font-weight:600;color:var(--color-tertiary);}
+.div-cal-confirmed{font-size:13px;font-weight:700;margin-top:1px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.div-cal-confirmed.dim{font-weight:500;color:var(--color-tertiary);}
+.div-cal-projected{font-size:10px;height:12px;line-height:12px;color:var(--color-tertiary);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .dv-kpi{margin-bottom:12px;} .dv-kpi .dv-link{border:0;font:inherit;text-align:left;cursor:pointer;color:inherit;}
 .dv-state{font-size:11px;color:var(--color-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 .dv-btn{padding:4px 10px;font-size:12px;white-space:nowrap;}
-.dv-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:14px 0 2px;font-size:12px;font-weight:700;color:var(--color-tertiary);}
-.dv-head-r{display:flex;gap:6px;align-items:center;}
-.dv-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;border-top:.5px solid var(--color-border);}
-.dv-l{min-width:0;flex:1 1 auto;} .dv-r{display:flex;align-items:center;gap:6px;flex:0 0 auto;}
+.dv-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 2px;min-height:28px;font-size:12px;font-weight:700;color:var(--color-tertiary);}
+/* 항목 한 줄: 날짜 | 이름·보조 | 금액 | 아이콘 — 열 폭을 고정해 모든 행의 세로줄이 맞는다 */
+.dv-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto 64px;align-items:center;column-gap:8px;padding:7px 2px;border-top:.5px solid var(--color-border);}
+.dv-l{min-width:0;}
+.dv-r{display:flex;justify-content:flex-end;}
 .dv-main{display:flex;align-items:center;gap:6px;font-size:13px;min-width:0;}
-.dv-main .acctType-badge{flex:0 0 auto;background:rgba(142,142,147,.16);color:var(--color-secondary);}
-.dv-date{color:var(--color-tertiary);font-variant-numeric:tabular-nums;flex:0 0 auto;}
+.dv-chip{flex:0 0 auto;font-size:10.5px;}
+.dv-date{font-size:13px;color:var(--color-tertiary);font-variant-numeric:tabular-nums;}
 .dv-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.dv-sub{font-size:11px;color:var(--color-tertiary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dv-amt{font-weight:700;font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.dv-name.dv-plain{font-weight:500;}
+.dv-sub{font-size:11px;color:var(--color-tertiary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dv-amt{font-size:13px;font-weight:700;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.dv-amt.dim{font-weight:500;color:var(--color-tertiary);}
 .dv-empty{padding:16px 0;text-align:center;font-size:12px;color:var(--color-tertiary);}
-.div-tag{flex:0 0 auto;font-size:10px;font-weight:600;border-radius:999px;padding:1px 7px;background:rgba(142,142,147,.16);color:var(--color-secondary);white-space:nowrap;}
-.div-tag.auto{background:rgba(0,122,255,.12);color:var(--color-accent);}
+/* 종목별 표 — 본문 13px 하나, 종목 열이 남는 폭(말줄임), 값 열은 내용 폭 */
+.card .tbl-wrap.tbl-cap.dv-st table.table-auto th,.card .tbl-wrap.tbl-cap.dv-st table.table-auto td{font-size:13px;white-space:nowrap;text-align:right;}
+.card .tbl-wrap.tbl-cap.dv-st table.table-auto th{font-size:10.5px;}
+.card .tbl-wrap.tbl-cap.dv-st table.table-auto th:first-child,.card .tbl-wrap.tbl-cap.dv-st table.table-auto td:first-child{text-align:left;width:100%;max-width:0;}
+@media(max-width:599px){ .card .tbl-wrap.tbl-cap.dv-st table.table-auto th:nth-child(4),.card .tbl-wrap.tbl-cap.dv-st table.table-auto tr:not(.dv-open) td:nth-child(4){display:none;} .dv-row{grid-template-columns:34px minmax(0,1fr) auto 62px;column-gap:6px;} }
+.dv-st-row{cursor:pointer;}
+.dv-st-row td:nth-child(3){font-weight:700;}
+.dv-tn{display:flex;align-items:center;gap:6px;min-width:0;}
+.dv-tn .nm{overflow:hidden;text-overflow:ellipsis;font-weight:600;min-width:0;}
+.dv-chev{flex:0 0 auto;width:6px;height:6px;border-right:1.5px solid var(--color-tertiary);border-bottom:1.5px solid var(--color-tertiary);transform:rotate(-45deg);transition:transform .15s;margin:0 2px 0 1px;}
+.dv-chev.open{transform:rotate(45deg);}
+.card .tbl-wrap.tbl-cap.dv-st table.table-auto tr.dv-open td{padding:0 4px;background:var(--color-section-bg);white-space:normal;text-align:left;max-width:none;}
+.dv-open .dv-row:first-child{border-top:0;}
 /* ── 자산 목록 필터 ── */
 .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
 .filter-bar .tgl-banner{margin-left:auto;flex-shrink:0;}   /* 수동 입력 스위치(·이력 초기화)는 항상 줄 맨 오른쪽 */
@@ -1981,7 +1990,7 @@ let assets = (()=>{
   migrateAssets(defaults); // DEFAULT_ASSETS에도 market 필드를 채워 최초 진입 시부터 일관되게 동작
   return defaults;
 })();
-function saveAssets(){localStorage.setItem(ASSETS_KEY,JSON.stringify(assets));}
+function saveAssets(){localStorage.setItem(ASSETS_KEY,JSON.stringify(assets)); divMemoReset();}
 
 // 확정금리 채권(복리) 평가액 자동 갱신 — 시세 API가 없는 자산이라 렌더링마다(=방문할 때마다)
 // 발행일 대비 경과일수로 복리 계산해 currentPrice를 다시 계산한다. avgPrice(매입원금)는 그대로 두고
@@ -3360,7 +3369,7 @@ function loadTradeLog(){
     return arr;
   }catch(e){return[];}
 }
-function saveTradeLog(arr){ localStorage.setItem(TRADE_KEY, JSON.stringify(arr)); }
+function saveTradeLog(arr){ localStorage.setItem(TRADE_KEY, JSON.stringify(arr)); divMemoReset(); }
 
 // 기존 실현손익 이력(pf_sold_v1)을 매매 이력으로 1회 마이그레이션
 function migrateSoldHistory(){
@@ -5392,10 +5401,10 @@ function taxYearBar(year, endHtml){
 }
 function closeIpop(){
   const o = document.getElementById('ipop'); if(o) o.remove();
-  document.querySelectorAll('.ibtn.on').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.ibtn.on,.ibtn-t.on').forEach(b=>b.classList.remove('on'));
 }
 document.addEventListener('click', e=>{
-  const btn = e.target.closest && e.target.closest('.ibtn');
+  const btn = e.target.closest && e.target.closest('.ibtn,.ibtn-t');
   if(!btn){ if(!e.target.closest || !e.target.closest('#ipop')) closeIpop(); return; }
   e.preventDefault();
   const was = btn.classList.contains('on');
@@ -6398,7 +6407,6 @@ async function ensureDividendHistory(force){
   await Promise.all([worker(), worker(), fxJob]);
   saveDivHist(cache);
   divHistState.loading = false;
-  divLedgerMemo.clear();
   renderAllDividendViews();
   if(typeof renderCapitalGainsTax==='function') renderCapitalGainsTax();
 }
@@ -6415,7 +6423,8 @@ function divRecMatchesAsset(r, a){
 
 // 한 연도(지급일 기준)의 배당 장부 — 지급일 순 항목 배열(DivTax.buildLedger 항목 + 화면용 assetAcct)
 // 한 번 그리는 동안 여러 화면이 같은 연도를 부르므로 그 턴 안에서만 재사용한다.
-const divLedgerMemo = new Map();
+var divLedgerMemo = new Map();   // var: 시작 시 저장 함수가 먼저 불려도 안전(그 전에는 undefined)
+function divMemoReset(){ if(divLedgerMemo) divLedgerMemo.clear(); }
 function buildDividendLedger(year){
   if(divLedgerMemo.has(year)) return divLedgerMemo.get(year);
   const now = Date.now(), cache = loadDivHist(), log = loadTradeLog();
@@ -6512,6 +6521,7 @@ function divSetHtml(el, ctx, html){
 }
 function setDivYear(y){ divYearSel = parseInt(y,10); divSelMonth = null; divSelStock = null; divEditKey = null; renderAllDividendViews(); }
 function renderAllDividendViews(){
+  divMemoReset();
   renderDividendMonthly();
   renderDividendByStock();
   renderFinIncomeThreshold();   // 금융소득종합과세 합계가 같은 장부를 쓰므로 함께 갱신
@@ -6534,20 +6544,14 @@ function divConfirm(it, over){
     src: over && divDateStr(over.at)!==divDateStr(it.pay) ? 'edited' : 'auto'});
   if(divCashAdd) divAddCash(it.ccy, over ? over.amountKRW : it.net, it.company, it.assetAcct);
 }
-function confirmDivItem(key){
-  const it = divItemById(key); if(!it) return;
-  divConfirm(it); renderAllDividendViews();
-}
-function confirmAllDiv(){
-  buildDividendLedger(divYear()).filter(it=>it.src==='auto').forEach(it=>divConfirm(it));
-  renderAllDividendViews();
-}
 function dismissDivItem(key){
+  divMemoReset();
   const list = loadDivDismiss(); if(!list.includes(key)) list.push(key);
   localStorage.setItem(DIV_DISMISS_KEY, JSON.stringify(list));
   renderAllDividendViews();
 }
 async function restoreDivDismissed(){
+  divMemoReset();
   if(!await iosConfirm({title:'제외한 배당 되돌리기', message:'제외한 자동 배당을 모두 다시 보여 드려요.', okText:'되돌리기'})) return;
   localStorage.setItem(DIV_DISMISS_KEY, '[]'); renderAllDividendViews();
 }
@@ -6579,8 +6583,24 @@ async function deleteDividendEntry(id){
   renderAllDividendViews();
 }
 
-// 목록 한 줄(보기/수정) — 월별·종목별 공용
-function renderDivRow(it){
+// 계좌 칩 — 보유종목 표와 같은 계좌유형 색(ACCTTYPE_COLS) 틴트 캡슐. 월별·종목별·펼친 행이 모두 이 하나를 쓴다
+function divAcctChip(acct){
+  const c = ACCTTYPE_COLS[acct] || '#8e8e93';
+  return `<span class="acctType-badge dv-chip" style="background:${c}20;color:${c}">${DIV_ACCT_LABEL[acct]||acct}</span>`;
+}
+const divMan = n => maskAmt(fmt(n));
+// 항목 상태 문구 — 확정·자동은 그대로 받은 것이라 표시하지 않고, 앞으로의 배당과 근거가 약한 것만 적는다
+function divStatus(it){
+  const p = [];
+  if(it.src==='proj') p.push(it.known ? '예정' : '예상');
+  if(it.qtyBasis==='assumed') p.push('수량 추정');
+  if(it.est) p.push('세후 환산');
+  return p;
+}
+
+// 목록 한 줄(보기/수정) — 월별·종목별 공용. opts.noName: 종목별 펼침 행(종목 이름은 위 행에 있으므로 반복하지 않는다)
+function renderDivRow(it, opts){
+  opts = opts || {};
   const key = it.src==='confirmed' ? it.id : it.key;
   const d = new Date(it.pay);
   if(key && divEditKey===key){
@@ -6591,18 +6611,25 @@ function renderDivRow(it){
         ${fmField('계좌', fmSelect('de_acct', DIV_ACCT_OPTS, it.acct, {custom:false}))}
         ${fmField('금액(원, 세후)', fmInput('de_amount',{type:'number',value:Math.round(it.net)}))}
       </div><div class="fm-a">
+        ${it.src!=='confirmed' ? `<button type="button" class="tgl-banner${divCashAdd?' on':''}" role="switch" aria-checked="${divCashAdd}" onclick="toggleDivCash(this)">현금에 더하기<span class="sw"></span></button>` : ''}
         <button class="btn btn-ghost" data-fm-cancel onclick="editDivItem('${divQ(key)}')">취소</button>
-        <button class="btn btn-green" data-fm-primary onclick="saveDivEdit('${divQ(key)}')">${it.src==='confirmed'?'저장':'확인'}</button>
+        <button class="btn btn-green" data-fm-primary onclick="saveDivEdit('${divQ(key)}')">저장</button>
       </div></div>`;
   }
-  const tag = it.src==='confirmed' ? '' : it.src==='auto' ? '<span class="div-tag auto">자동</span>' : `<span class="div-tag">${it.known?'지급 예정':'예상'}</span>`;
-  const sub = [`세전 ${fmt(it.gross)}`, it.wht>0 ? `원천 ${fmt(it.wht)}` : null, (it.qty && it.dps) ? `${it.qty.toLocaleString()}주 × ${CUR_SYM[it.ccy]||''}${+it.dps.toFixed(4)}` : null, it.est ? '세후 기준 환산' : null].filter(Boolean).join(' · ');
-  const acts = it.src==='confirmed'
+  const detail = (it.qty && it.dps) ? `${it.qty.toLocaleString()}주 × ${CUR_SYM[it.ccy]||''}${+it.dps.toFixed(4)}` : '';
+  const taxed = divTaxable(it.acct) && it.wht>0 ? `세전 ${fmt(it.gross)}` : '';
+  const status = divStatus(it);
+  const sub = (opts.noName ? [...status, taxed] : [...status, detail, taxed]).filter(Boolean).join(' · ');
+  const main = opts.noName ? `<span class="dv-name dv-plain">${detail || '기록'}</span>` : `<span class="dv-name">${it.name}</span>${divAcctChip(it.acct)}`;
+  const editable = it.src==='confirmed' || it.src==='auto' || (it.src==='proj' && it.known);
+  const acts = !editable ? '' : it.src==='confirmed'
     ? iconBtn('edit', `editDivItem('${divQ(key)}')`) + iconBtn('del', `deleteDividendEntry('${divQ(key)}')`)
-    : (key ? `<button class="btn btn-green dv-btn" onclick="confirmDivItem('${divQ(key)}')">확인</button>${iconBtn('edit', `editDivItem('${divQ(key)}')`)}<button class="btn btn-ghost dv-btn" onclick="dismissDivItem('${divQ(key)}')">제외</button>` : '');
+    : iconBtn('edit', `editDivItem('${divQ(key)}')`) + iconBtn('del', `dismissDivItem('${divQ(key)}')`);
   return `<div class="dv-row">
-    <div class="dv-l"><div class="dv-main"><span class="dv-date">${d.getMonth()+1}.${String(d.getDate()).padStart(2,'0')}</span><span class="dv-name">${it.name}</span><span class="acctType-badge">${DIV_ACCT_LABEL[it.acct]||it.acct}</span>${tag}</div><div class="dv-sub">${maskAmt(sub)}</div></div>
-    <div class="dv-r"><span class="dv-amt ${it.src==='proj'?'dim':'up'}">${maskAmt('+'+fmt(it.net))}</span>${acts}</div></div>`;
+    <span class="dv-date">${d.getMonth()+1}.${String(d.getDate()).padStart(2,'0')}</span>
+    <div class="dv-l"><div class="dv-main">${main}</div>${sub ? `<div class="dv-sub">${maskAmt(sub)}</div>` : ''}</div>
+    <span class="dv-amt ${it.src==='proj'?'dim':''}">${divMan(it.net)}</span>
+    <div class="dv-r">${acts}</div></div>`;
 }
 
 // 위쪽 공통 줄(연도·새로고침·수동 입력 스위치)과 KPI 타일
@@ -6614,6 +6641,21 @@ function renderDivTop(ctx, year){
     <button type="button" class="btn btn-ghost dv-btn" onclick="divReload()" title="보유 종목 배당 정보 새로고침" aria-label="새로고침">🔄</button>${state}
     <div class="tax-end"><button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" data-target="dnew_wrap_${ctx}" onclick="toggleDivAdd('${ctx}',this)">배당 수동 입력<span class="sw"></span></button></div></div>`;
 }
+// 받은 배당 풍선 — 금융회사 × 계좌 합계(증권사 앱의 배당 내역과 맞춰 볼 때 쓴다)와 근거가 약한 금액
+function divBreakdownTip(items){
+  const by = new Map(); let guess = 0, nGuess = 0;
+  items.filter(it=>it.src!=='proj').forEach(it=>{
+    const co = COMPANY_LABELS[it.company] || it.company || '기타', k = co+'|'+it.acct;
+    if(!by.has(k)) by.set(k, {co, acct:it.acct, net:0});
+    by.get(k).net += it.net;
+    if(it.qtyBasis==='assumed'){ guess += it.net; nGuess++; }
+  });
+  if(!by.size) return '받은 배당이 아직 없어요.';
+  const lines = [...by.values()].sort((a,b)=>b.net-a.net).map(g=>`${g.co} ${DIV_ACCT_LABEL[g.acct]||g.acct}  ${maskAmt(fmt(g.net))}`);
+  if(nGuess) lines.push(`수량 근거가 없어 현재 수량으로 계산한 ${nGuess}건 ${maskAmt(fmt(guess))}`);
+  return lines.join('\n');
+}
+const divAttr = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
 function renderDivKpi(year, items){
   const cur = year===new Date().getFullYear();
   const got = items.filter(it=>it.src!=='proj').reduce((s,it)=>s+it.net,0), proj = items.filter(it=>it.src==='proj').reduce((s,it)=>s+it.net,0);
@@ -6621,8 +6663,9 @@ function renderDivKpi(year, items){
   const cache = loadDivHist(), held = assets.filter(divEligible);
   let ann = 0, ev = 0; held.forEach(a=>{ const p = divProfile(a, cache); if(p){ ann += p.annualGross; ev += evKRW(a); } });
   const tile = (l, v, cls) => `<div class="cgt-t"><div class="cgt-l">${l}</div><div class="cgt-v ${cls||''}">${v}</div></div>`;
-  const link = `<button type="button" class="cgt-t dv-link" onclick="switchPage('tax')"><div class="cgt-l">금융소득 2,000만까지</div><div class="cgt-v ${left<0?'dn':''}">${maskAmt(left<0 ? '초과 '+Math.abs(Math.round(left)).toLocaleString()+'만원' : Math.round(left).toLocaleString()+'만원')} ›</div></button>`;
-  return `<div class="cgt-flow dv-kpi">${tile('받은 배당(세후)', maskAmt(fmt(got)))}${cur ? tile('연말까지 예상', maskAmt('+'+fmt(proj))) + tile('예상 배당률', ev>0 ? maskAmt((ann/ev*100).toFixed(1)+'%') : '—') : ''}${link}</div>`;
+  const gotTile = `<button type="button" class="cgt-t dv-link ibtn-t" data-tip="${divAttr(divBreakdownTip(items))}"><div class="cgt-l">받은 배당(세후) ⓘ</div><div class="cgt-v">${maskAmt(fmt(got))}</div></button>`;
+  const link = `<button type="button" class="cgt-t dv-link" onclick="switchPage('tax');switchSubPage('tax','fit')"><div class="cgt-l">금융소득 2,000만까지</div><div class="cgt-v ${left<0?'dn':''}">${maskAmt(left<0 ? '초과 '+Math.abs(Math.round(left)).toLocaleString()+'만원' : Math.round(left).toLocaleString()+'만원')} ›</div></button>`;
+  return `<div class="cgt-flow dv-kpi">${gotTile}${cur ? tile('연말까지 예상', maskAmt(fmt(proj))) + tile('예상 배당률', ev>0 ? maskAmt((ann/ev*100).toFixed(1)+'%') : '—') : ''}${link}</div>`;
 }
 // 수동 입력 폼 — 보유 종목을 고르면 계좌·통화·수량이 채워지고, 수량×주당 배당금이면 세전 금액이 계산된다
 function renderDivAddForm(ctx){
@@ -6631,7 +6674,7 @@ function renderDivAddForm(ctx){
   const stockOpts = held.map(a=>`<option value="${a.id}">${a.name}${dupT[divAssetKey(a)]>1 ? ' · '+(DIV_ACCT_LABEL[divAcctKey(a)]||'') : ''}</option>`).join('');
   const sid = `dn_stock_${ctx}`, nid = `dn_name_${ctx}`;
   return `<div id="dnew_wrap_${ctx}" style="${on?'':'display:none;'}margin:0 0 12px;">
-    <div class="notice" style="margin:0 0 8px;">타 증권사·과거 배당처럼 자동으로 잡히지 않는 배당을 기록해요 · 기본은 기록 전용(현금 잔액 미반영)</div>
+    <div class="notice" style="margin:0 0 8px;">자동으로 잡히지 않는 과거·직접 받은 배당을 기록해요 · 기본은 기록 전용(현금 잔액 미반영)</div>
     <div class="fm"><div class="fm-grid">
       ${fmField('배당일', fmInput(`dn_date_${ctx}`,{type:'date',value:divDateStr(Date.now())}))}
       ${fmField('종목', `<select class="fm-select" id="${sid}" onchange="toggleCustomInput('${sid}','${nid}');divPickStock('${ctx}')"><option value="">-- 선택 --</option>${stockOpts}<option value="__custom__">+ 직접입력</option></select><input class="fm-input fm-custom" id="${nid}" placeholder="종목/배당처 직접 입력" autocomplete="off" style="display:none">`, {cls:'s6'})}
@@ -6693,12 +6736,12 @@ function renderDividendMonthly(){
   const nowM = new Date().getMonth();
   const cells = byM.map((m,i)=>`<div class="div-cal-cell${i===sel?' sel':''}${cur && i===nowM?' now':''}" onclick="divPick('month',${i})">
       <div class="div-cal-month">${i+1}월</div>
-      <div class="div-cal-confirmed ${m.got?'up':'dim'}">${m.got ? maskAmt(fmt(m.got)) : '—'}</div>
-      <div class="div-cal-projected ${m.proj?'dim':''}">${m.proj ? maskAmt('+'+fmt(m.proj)) : '&nbsp;'}</div></div>`).join('');
-  const allAuto = items.filter(it=>it.src==='auto').length, dismissed = loadDivDismiss().length;
+      <div class="div-cal-confirmed ${m.got?'':'dim'}">${m.got ? maskAmt(fmt(m.got)) : '—'}</div>
+      <div class="div-cal-projected">${m.proj ? maskAmt('+'+fmt(m.proj)) : ''}</div></div>`).join('');
+  const dismissed = loadDivDismiss().length;
   const list = byM[sel].list.slice().sort((a,b)=>a.pay-b.pay);
-  const head = `<div class="dv-head"><span>${list.length}건</span><span class="dv-head-r">${dismissed ? `<button type="button" class="btn btn-ghost dv-btn" onclick="restoreDivDismissed()">제외 ${dismissed}건 되돌리기</button>` : ''}${allAuto ? `<button type="button" class="btn btn-green dv-btn" onclick="confirmAllDiv()">자동 ${allAuto}건 모두 확인</button>` : ''}</span></div>`;
-  const body = list.length ? list.map(renderDivRow).join('') : `<div class="dv-empty">${items.length ? '이 달 배당이 없어요.' : (divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목의 배당 이력이 아직 없어요 — 종목을 추가하거나 배당을 직접 기록하세요.')}</div>`;
+  const head = `<div class="dv-head"><span>${sel+1}월 · ${list.length}건</span>${dismissed ? `<button type="button" class="btn btn-ghost dv-btn" onclick="restoreDivDismissed()">제외 ${dismissed}건 되돌리기</button>` : ''}</div>`;
+  const body = list.length ? list.map(it=>renderDivRow(it)).join('') : `<div class="dv-empty">${items.length ? '이 달 배당이 없어요.' : (divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목의 배당 이력이 아직 없어요 — 종목을 추가하거나 배당을 직접 기록하세요.')}</div>`;
   divSetHtml(el, 'monthly', `${renderDivTop('monthly', year)}${renderDivAddForm('monthly')}${renderDivKpi(year, items)}<div class="div-cal-grid">${cells}</div>${head}<div class="dv-list">${body}</div>`);
 }
 
@@ -6718,14 +6761,14 @@ function renderDividendByStock(){
   const trs = rows.map(g=>{
     const open = divSelStock===g.key;
     const nd = g.next ? new Date(g.next.pay) : null;
-    const nx = nd ? `<span class="dim">${nd.getMonth()+1}.${String(nd.getDate()).padStart(2,'0')} · ${maskAmt(fmt(g.next.net))}</span>` : '—';
+    const nx = nd ? `${nd.getMonth()+1}.${String(nd.getDate()).padStart(2,'0')} · ${maskAmt(fmt(g.next.net))}` : '—';
     const pf = g.prof ? `${g.prof.freq}${g.prof.yieldPct!=null ? ' · '+maskAmt(g.prof.yieldPct.toFixed(1)+'%') : ''}` : '—';
-    let h = `<tr style="cursor:pointer;" onclick="divPick('stock','${divQ(g.key)}')"><td style="text-align:left;font-weight:600;">${open?'▾':'▸'} ${g.name} <span class="acctType-badge">${DIV_ACCT_LABEL[g.acct]||g.acct}</span></td><td>${pf}</td><td class="${g.got?'up':'dim'}" style="font-weight:600;">${g.got ? maskAmt(fmt(g.got)) : '—'}</td><td style="font-size:11px;">${cur ? nx : '—'}</td></tr>`;
-    if(open) h += `<tr><td colspan="4" style="text-align:left;background:var(--color-section-bg);" onclick="event.stopPropagation()"><div class="dv-list">${g.items.length ? g.items.slice().sort((a,b)=>a.pay-b.pay).map(renderDivRow).join('') : '<div class="dv-empty">이 해의 배당이 없어요.</div>'}</div></td></tr>`;
+    let h = `<tr class="dv-st-row" onclick="divPick('stock','${divQ(g.key)}')"><td><div class="dv-tn"><i class="dv-chev${open?' open':''}"></i><span class="nm">${g.name}</span>${divAcctChip(g.acct)}</div></td><td>${pf}</td><td class="${g.got?'':'dim'}">${g.got ? maskAmt(fmt(g.got)) : '—'}</td><td class="dim">${cur ? nx : '—'}</td></tr>`;
+    if(open) h += `<tr class="dv-open"><td colspan="4" onclick="event.stopPropagation()"><div class="dv-list">${g.items.length ? g.items.slice().sort((a,b)=>a.pay-b.pay).map(it=>renderDivRow(it,{noName:true})).join('') : '<div class="dv-empty">이 해의 배당이 없어요.</div>'}</div></td></tr>`;
     return h;
-  }).join('') || `<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--color-tertiary);">${divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목이 없어요 — 배당을 직접 기록해 주세요.'}</td></tr>`;
+  }).join('') || `<tr><td colspan="4" class="dv-empty">${divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목이 없어요 — 배당을 직접 기록해 주세요.'}</td></tr>`;
   divSetHtml(el, 'stock', `${renderDivTop('stock', year)}${renderDivAddForm('stock')}${renderDivKpi(year, items)}
-    <div class="tbl-wrap tbl-cap"><table class="table-auto"><thead><tr><th style="text-align:left">종목</th><th>주기·배당률</th><th>받은 배당</th><th>다음</th></tr></thead><tbody>${trs}</tbody></table></div>`);
+    <div class="tbl-wrap tbl-cap dv-st"><table class="table-auto"><thead><tr><th>종목</th><th>주기 · 배당률</th><th>받은 배당</th><th>다음</th></tr></thead><tbody>${trs}</tbody></table></div>`);
 }
 PAGE_RENDER_HOOKS['dividend'] = function(){ renderAllDividendViews(); ensureDividendHistory(); };
 
