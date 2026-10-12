@@ -570,6 +570,24 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 @media(max-width:599px){ #divStock .tbl-wrap.tbl-cap.dv-st table.table-auto th:nth-child(4),#divStock .tbl-wrap.tbl-cap.dv-st table.table-auto tr:not(.dv-open) td:nth-child(4){display:none;}   /* 종목별 '다음' 열만 — 양도세 표의 수정·삭제 아이콘 열은 접힘에서도 보인다 */
    .dv-row{grid-template-columns:34px minmax(0,1fr) auto 62px;column-gap:6px;} }
 .dv-st-row{cursor:pointer;}
+/* 배당 종목별 표 — 매매 이력과 같은 열 간격 균등(fitEqualCols): 열 이름·값 가운데 정렬, 남는 폭을 열마다 똑같이.
+   보조 정보(주기·배당률, 다음)는 12px 보조색 — 종목명·받은 배당(13px)보다 한 단계 낮춘다(같은 13px 진한 글자라 커 보이던 문제). */
+#divStock table.dv-eq{table-layout:fixed!important;width:100%;}
+#divStock table.dv-eq > thead > tr > th, #divStock table.dv-eq > tbody > tr.dv-st-row > td{text-align:center;width:auto;max-width:none;}
+#divStock table.dv-eq .dv-tn{justify-content:center;}
+#divStock table.dv-eq .dv-tn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+#divStock .dv-st-row td:nth-child(2){font-size:12px;color:var(--color-secondary);}
+#divStock .dv-st-row td:nth-child(4){font-size:12px;}
+/* 펼친 상세 항목은 위 표의 열에 맞춘다: 날짜·내용은 종목+주기 열, 금액은 "받은 배당" 열, 연필·휴지통은 "다음" 열(가운데) */
+#divStock table.dv-eq-on tr.dv-open > td{padding:0;}
+#divStock table.dv-eq-on .dv-row{grid-template-columns:var(--dv-cols);column-gap:0;padding-left:0;padding-right:0;}
+#divStock table.dv-eq-on .dv-row > .dv-date, #divStock table.dv-eq-on .dv-row > .dv-amt{text-align:center;}
+#divStock table.dv-eq-on .dv-row > .dv-r{justify-content:center;gap:var(--dv-gap);}
+/* 월별 목록 — 날짜·내용·금액·연필·휴지통 사이를 모두 같은 간격으로(fitDivRows), 각 칸 가운데 */
+.dv-list.dv-eq-on > .dv-row{grid-template-columns:var(--dv-cols);column-gap:0;padding-left:0;padding-right:0;}
+.dv-list.dv-eq-on > .dv-row > .dv-date, .dv-list.dv-eq-on > .dv-row > .dv-amt, .dv-list.dv-eq-on > .dv-row > .dv-l{text-align:center;}
+.dv-list.dv-eq-on > .dv-row .dv-main{justify-content:center;}
+.dv-list.dv-eq-on > .dv-row > .dv-r{justify-content:center;gap:var(--dv-gap);}
 .dv-st-row td:nth-child(3){font-weight:700;}
 .dv-tn{display:flex;align-items:center;gap:6px;min-width:0;}
 .dv-tn .nm{overflow:hidden;text-overflow:ellipsis;font-weight:600;min-width:0;}
@@ -742,6 +760,18 @@ table.tl-table{width:100%;table-layout:fixed;border-collapse:separate;border-spa
 .tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 8px 4px!important;}
 tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
 .tl-empty{text-align:center!important;padding:20px!important;color:var(--color-tertiary);}
+/* 열 간격 균등(2026-10-12): 열 이름·값을 모두 가운데 정렬하고, 표를 그린 뒤 fitTlCols()가 열마다 내용 폭을 재서
+   남는 폭을 모든 열에 똑같이 나눈다 → 이웃한 열의 보이는 내용 사이 간격이 모두 같다(예전: 종목 열이 남는 폭을 다 가져
+   종목→체결가 180px, 손익→아이콘 16px). 내용이 표보다 넓으면 종목 열만 말줄임으로 줄인다. 칸 안쪽 여백은 좌우 같게. */
+.tl-table > thead > tr > th:nth-child(n), .tl-table > tbody > tr.tl-row > td{text-align:center;}
+.tl-table th:first-child,.tl-table td.tl-date{padding-left:8px;}
+.tl-table .tl-line,.tl-table .tl-badges{justify-content:center;}
+/* 열 간격 균등 공용(fitEqualCols·fitDivRows) — 재는 동안만 붙는 클래스: 열·칸을 내용 폭(max-content)으로 */
+table.eq-measure{table-layout:auto!important;width:max-content!important;}
+table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-measure > tbody > tr > td{width:auto!important;max-width:none!important;}
+.dv-list.eq-measure{width:max-content!important;}
+.dv-list.eq-measure > .dv-row{grid-template-columns:repeat(4,max-content)!important;column-gap:0!important;}
+.dv-list.eq-measure > .dv-row > .dv-r{gap:0!important;}
 /* 수익률분석·배당·세금의 숫자 표: 펼침에서 폭 상한(+iOS 목록 모양) — 열이 남는 폭을 나눠 가져 값 사이가 100~200px 벌어지던 문제 */
 @media(min-width:600px){
   /* 첫 열(월·일시·종목)이 남는 폭을 가지고 값 열은 내용 폭만 — 매매이력과 같은 "제목 | 값 묶음" 목록형 */
@@ -757,6 +787,7 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
   .tl-table col.tl-c-price{width:0;}
   .tl-table col.tl-c-date{width:52px;} .tl-table col.tl-c-pnl{width:30%;} .tl-table col.tl-c-act{width:64px;}
   .tl-table td{font-size:12px;padding:9px 5px;}
+  .tl-table th:first-child,.tl-table td.tl-date{padding-left:5px;}
 }
 @media(max-width:599px){ .snap-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) 30px;column-gap:8px;font-size:12px;} .snap-row .col-hide{display:none;} }
 
@@ -3879,6 +3910,7 @@ function renderSoldHistory(){
   if(!arr.length){
     const filterActive = tradeLogFilter.search||tradeLogFilter.market||tradeLogFilter.acctType||tradeLogFilter.company||tradeLogFilter.assetType;
     el.innerHTML = `<tr><td colspan="5" class="tl-empty">${filterActive?'조건에 맞는 이력이 없습니다':'매수/매도 이력 없음'}</td></tr>`;
+    fitTlCols();
     return;
   }
   el.innerHTML = arr.map(r=>{
@@ -3889,7 +3921,7 @@ function renderSoldHistory(){
     const isBuy = r.type==='buy';
     const isDiv = r.type==='dividend';
     const typePill = `<span class="tl-pill ${isBuy?'buy':isDiv?'div':'sell'}">${isBuy?'매수':isDiv?'배당':'매도'}</span>`;
-    let pnlCell = '<span class="tl-dim">—</span>';
+    let pnlCell = '<span class="tl-dim">-</span>';
     if(isDiv && r.pnl!==null && r.pnl!==undefined){
       pnlCell = `<span class="up tl-pnl">+${fmt(r.pnl)}</span>`;
     } else if(!isBuy && r.pnl!==null && r.pnl!==undefined){
@@ -3928,6 +3960,71 @@ function renderSoldHistory(){
     }
     return rowHtml;
   }).join('');
+  fitTlCols();
+}
+// ── 표 열 간격 균등(공용: 매매 이력·배당 종목별) ──
+// 펼친 행(메모·수정 폼·상세, colspan)을 잠깐 빼고 auto 레이아웃으로 열마다 내용 폭(머리글 포함)을 잰 뒤, 표 폭에서 남는 만큼을
+// 보이는 열 수로 똑같이 나눠 <col> 폭으로 준다 — 칸 안이 가운데 정렬이면 이웃 열의 보이는 내용 사이 간격이 모두 같아진다.
+// 모자라면 flexIdx 열(종목)만 줄인다(말줄임). 숨긴 칸(display:none)은 열을 차지하지 않아 뒤 칸이 당겨지므로 보이는 칸 순서대로 col에 준다.
+// 탭이 숨겨져 있으면(폭 0) 재지 않고, 보이게 되거나 폭이 바뀌면 eqObserve가 다시 맞춘다. 돌려주는 값: {ws:열 폭[], G:열마다 더한 여유}
+function eqObserve(el, fn){
+  el._eqFit = fn;
+  if(!window.ResizeObserver || el._eqObs) return;
+  if(!eqObserve.ro) eqObserve.ro = new ResizeObserver(es=>es.forEach(e=>{ const t = e.target, w = Math.round(e.contentRect.width); if(w && w!==t._eqW){ t._eqW = w; if(t.isConnected && t._eqFit) t._eqFit(); } }));
+  el._eqObs = 1; eqObserve.ro.observe(el);
+}
+function fitEqualCols(t, flexIdx){
+  if(!t) return null;
+  const wrap = t.parentElement, cols = [...t.querySelectorAll(':scope > colgroup > col')];
+  eqObserve(wrap, ()=>fitEqualCols(t, flexIdx));
+  const W = wrap.clientWidth, rows = [...t.tBodies[0].rows];
+  const isSpan = r => [...r.cells].some(c=>c.colSpan>1);
+  if(!W || !rows.some(r=>!isSpan(r))){ cols.forEach(c=>c.style.width=''); return null; }
+  const spans = rows.filter(isSpan);
+  spans.forEach(r=>r.style.display='none');
+  cols.forEach(c=>c.style.width='');
+  t.classList.add('eq-measure');
+  const nat = [...t.tHead.rows[0].cells].filter(th=>getComputedStyle(th).display!=='none').map(th=>th.getBoundingClientRect().width);
+  t.classList.remove('eq-measure');
+  spans.forEach(r=>r.style.display='');
+  const spare = W - nat.reduce((s,v)=>s+v, 0), G = Math.max(0, spare/nat.length);
+  const ws = nat.map((v,i)=> spare>=0 ? v+G : (i===flexIdx ? Math.max(48, v+spare) : v));
+  cols.forEach((c,i)=>{ c.style.width = (i<ws.length ? ws[i] : 0).toFixed(2)+'px'; });
+  return {ws, G};
+}
+function fitTlCols(){ fitEqualCols(document.querySelector('table.tl-table'), 1); }
+// 배당 종목별 표: 열 간격 균등 + 펼친 상세 항목을 표 열에 맞춘다(날짜 56px·내용=종목+주기 열, 금액=받은 배당 열, 아이콘=다음 열)
+function fitDivStockTable(){
+  const t = document.querySelector('#divStock table.dv-eq'); if(!t) return;
+  const r = fitEqualCols(t, 0);
+  if(r && r.ws.length===4){
+    const [a, b, c, d] = r.ws;
+    t.style.setProperty('--dv-cols', `56px ${(a+b-56).toFixed(1)}px ${c.toFixed(1)}px ${d.toFixed(1)}px`);
+    t.style.setProperty('--dv-gap', Math.max(6, Math.min(24, r.G)).toFixed(1)+'px');
+    t.classList.add('dv-eq-on');
+  } else t.classList.remove('dv-eq-on');
+}
+// 배당 월별 목록(grid 4칸: 날짜·내용·금액·연필+휴지통): 칸마다 내용 폭을 재서 남는 폭을 5몫(4칸 + 연필↔휴지통)으로 똑같이 나눈다
+function fitDivRows(list){
+  if(!list) return;
+  eqObserve(list, ()=>fitDivRows(list));
+  const rows = [...list.querySelectorAll(':scope > .dv-row')], W = list.clientWidth;
+  list.classList.remove('dv-eq-on');
+  if(!W || !rows.length) return;
+  list.classList.add('eq-measure');
+  // 날짜·내용·금액은 칸 내용 폭, 아이콘은 버튼이 아니라 보이는 그림(svg) 폭으로 잰다 — 버튼 안 여백(ip)까지 간격으로 보이면 안 되므로
+  const c = [0,0,0];
+  rows.forEach(r=>[...r.children].slice(0,3).forEach((el,i)=>{ c[i] = Math.max(c[i], el.getBoundingClientRect().width); }));
+  const btn = list.querySelector('.dv-r button'), svg = btn && btn.querySelector('svg');
+  list.classList.remove('eq-measure');
+  const bw = btn ? btn.getBoundingClientRect().width : 0, gw = svg ? svg.getBoundingClientRect().width : 0, ip = (bw-gw)/2;
+  let G = (W - c[0] - c[1] - c[2] - 2*gw) / 5, main = c[1];
+  if(G < 12){ G = 12; main = Math.max(60, W - c[0] - c[2] - 2*gw - 5*G); }
+  else main += G;
+  // 아이콘 칸 = 그림 2개 + 2G, 버튼 사이 = G − 2·ip → 금액↔연필, 연필↔휴지통, 휴지통↔끝 모두 보이는 간격 G(끝은 G/2)
+  list.style.setProperty('--dv-cols', `${(c[0]+G).toFixed(1)}px ${main.toFixed(1)}px ${(c[2]+G).toFixed(1)}px ${(2*gw+2*G).toFixed(1)}px`);
+  list.style.setProperty('--dv-gap', Math.max(0, G-2*ip).toFixed(1)+'px');
+  list.classList.add('dv-eq-on');
 }
 
 // 매매 이력 인라인 수정 폼 — "매매 이력" 탭과 "세금관리 > 해외주식 양도소득세" 탭에서 공용으로 사용
@@ -7303,6 +7400,7 @@ function renderDividendMonthly(){
   const head = `<div class="dv-head"><span>${sel+1}월 · ${list.length}건</span>${dismissed ? `<button type="button" class="btn btn-ghost dv-btn" onclick="restoreDivDismissed()">제외 ${dismissed}건 되돌리기</button>` : ''}</div>`;
   const body = list.length ? list.map(it=>renderDivRow(it,{ctx:'monthly'})).join('') : `<div class="dv-empty">${items.length ? '이 달 배당이 없어요.' : (divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목의 배당 이력이 아직 없어요 — 종목을 추가하거나 배당을 직접 기록하세요.')}</div>`;
   divSetHtml(el, 'monthly', `${renderDivTop('monthly', year)}${renderDivAddForm('monthly')}${renderDivKpi(year, items)}<div class="div-cal-grid">${cells}</div>${head}<div class="dv-list">${body}</div>`);
+  fitDivRows(el.querySelector(':scope > .dv-list'));
 }
 
 function renderDividendByStock(){
@@ -7321,14 +7419,15 @@ function renderDividendByStock(){
   const trs = rows.map(g=>{
     const open = divSelStock===g.key;
     const nd = g.next ? new Date(g.next.pay) : null;
-    const nx = nd ? `${nd.getMonth()+1}.${String(nd.getDate()).padStart(2,'0')} · ${maskAmt(fmt(g.next.net))}` : '—';
-    const pf = g.prof ? `${g.prof.freq}${g.prof.yieldPct!=null ? ' · '+maskAmt(g.prof.yieldPct.toFixed(1)+'%') : ''}` : '—';
-    let h = `<tr class="dv-st-row" onclick="divPick('stock','${divQ(g.key)}')"><td><div class="dv-tn"><i class="dv-chev${open?' open':''}"></i><span class="nm">${g.name}</span>${divAcctChip(g.acct)}</div></td><td>${pf}</td><td class="${g.got?'':'dim'}">${g.got ? maskAmt(fmt(g.got)) : '—'}</td><td class="dim">${cur ? nx : '—'}</td></tr>`;
+    const nx = nd ? `${nd.getMonth()+1}.${String(nd.getDate()).padStart(2,'0')} · ${maskAmt(fmt(g.next.net))}` : '-';
+    const pf = g.prof ? `${g.prof.freq}${g.prof.yieldPct!=null ? ' · '+maskAmt(g.prof.yieldPct.toFixed(1)+'%') : ''}` : '-';
+    let h = `<tr class="dv-st-row" onclick="divPick('stock','${divQ(g.key)}')"><td><div class="dv-tn"><i class="dv-chev${open?' open':''}"></i><span class="nm">${g.name}</span>${divAcctChip(g.acct)}</div></td><td>${pf}</td><td class="${g.got?'':'dim'}">${g.got ? maskAmt(fmt(g.got)) : '-'}</td><td class="dim">${cur ? nx : '-'}</td></tr>`;
     if(open) h += `<tr class="dv-open"><td colspan="4" onclick="event.stopPropagation()"><div class="dv-list">${g.items.length ? g.items.slice().sort((a,b)=>a.pay-b.pay).map(it=>renderDivRow(it,{noName:true, ctx:'stock'})).join('') : '<div class="dv-empty">이 해의 배당이 없어요.</div>'}</div></td></tr>`;
     return h;
   }).join('') || `<tr><td colspan="4" class="dv-empty">${divHistState.loading ? '배당 정보를 불러오는 중…' : '보유 종목이 없어요 — 배당을 직접 기록해 주세요.'}</td></tr>`;
   divSetHtml(el, 'stock', `${renderDivTop('stock', year)}${renderDivAddForm('stock')}${renderDivKpi(year, items)}
-    <div class="tbl-wrap tbl-cap dv-st"><table class="table-auto"><thead><tr><th>종목</th><th>주기 · 배당률</th><th>받은 배당</th><th>다음</th></tr></thead><tbody>${trs}</tbody></table></div>`);
+    <div class="tbl-wrap tbl-cap dv-st"><table class="table-auto dv-eq"><colgroup><col><col><col><col></colgroup><thead><tr><th>종목</th><th>주기 · 배당률</th><th>받은 배당</th><th>다음</th></tr></thead><tbody>${trs}</tbody></table></div>`);
+  fitDivStockTable();
 }
 PAGE_RENDER_HOOKS['dividend'] = function(){ renderAllDividendViews(); ensureDividendHistory(); };
 
