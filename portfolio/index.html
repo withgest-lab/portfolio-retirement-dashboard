@@ -4218,7 +4218,7 @@ function renderTable(){
         ${isCash ? na : `${priceDisplay}<div style="font-size:10px;margin-top:1px;">${dayChgCell}</div>`}
       </td>
       <td class="fold-hide fold-hide-narrow" style="font-size:11px;">
-        ${isCash ? na : `${priceStr(a.avgPrice)}<div style="font-size:10px;color:var(--color-tertiary);margin-top:1px;">${maskAmt(a.quantity.toLocaleString())}</div>`}
+        ${isCash ? na : `${priceStr(a.avgPrice)}<div style="font-size:10px;color:var(--color-tertiary);margin-top:1px;">${maskAmt('× '+a.quantity.toLocaleString())}</div>`}
       </td>
       <td style="font-size:11px;">${isCash ? cashEvDisplay : fmt(ev)}</td>
       <td class="${updn(pnl)}" style="font-size:11px;">
