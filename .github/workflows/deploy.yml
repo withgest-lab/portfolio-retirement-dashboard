@@ -67,7 +67,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout portfolio-retirement-dashboard
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Assemble site (home, portfolio, retirement, signals UI, shared)
         run: |
@@ -152,7 +152,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Keep scheduled workflows enabled
         run: |
           set -euo pipefail
