@@ -141,7 +141,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # GitHub는 공개 저장소에 60일 동안 활동이 없으면 스케줄 실행을 끈다. 마지막 커밋이 50일을 넘으면 빈 커밋 하나를 남겨 막는다
   # (GITHUB_TOKEN 푸시는 다른 워크플로를 다시 실행하지 않는다). 쓰기 권한은 이 job에만 둔다.
