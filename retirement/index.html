@@ -473,10 +473,10 @@ button{font-family:inherit;cursor:pointer;}
 .basic-row-action{display:flex;align-items:center;gap:8px;flex-shrink:0;margin:0 0 0 auto;}
 /* "수익률·물가 설정" 스위치: 중간 회색 박스(.limit-gauge-wrap) 안 우측 하단 */
 .rates-anchor{position:relative;}
-.rates-anchor .tgl-banner{padding:3px 7px 3px 10px;font-size:10.5px;gap:5px;}
-.rates-anchor .tgl-banner .sw{width:22px;height:13px;}
-.rates-anchor .tgl-banner .sw::after{width:9px;height:9px;}
-.rates-anchor .tgl-banner.on .sw::after{left:11px;}
+.rates-anchor .tgl-banner{box-sizing:border-box;min-height:24px;padding:0 8px 0 11px;font-size:11px;gap:6px;}   /* 앱의 다른 스위치 배너와 비율을 맞춤(19px·10.5px는 작아 보였다) */
+.rates-anchor .tgl-banner .sw{width:26px;height:15px;}
+.rates-anchor .tgl-banner .sw::after{width:11px;height:11px;}
+.rates-anchor .tgl-banner.on .sw::after{left:13px;}
 /* 설정 창: 스위치 위로 뜨는 iOS 팝오버(레이아웃 높이 불변, 바깥 탭·ESC로 닫힘) */
 .rates-pop{position:absolute;left:0;bottom:calc(100% + 6px);z-index:40;width:max-content;max-width:min(360px,92vw);
   background:#fff;border:.5px solid rgba(60,60,67,.18);border-radius:14px;padding:6px 14px 12px;

@@ -106,7 +106,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
   padding:6px 10px;border-radius:var(--radius-sm);transition:.15s;white-space:nowrap;}
 .tabbar button.active{background:rgba(0,122,255,.14);color:var(--color-accent);}
 /* 평가 금액 숨기기 토글 — 탭이 가로 스크롤돼도 탭바 오른쪽 끝에 고정 */
-.tabbar .hide-amt-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;margin:0 10px 0 2px;padding:5px 9px;
+.tabbar .hide-amt-btn{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;margin:0 10px 0 2px;padding:4px 9px;
   border:1px solid var(--color-border);background:var(--color-card);color:var(--color-secondary);border-radius:999px;font-size:11px;font-weight:600;}
 .hide-amt-btn .sw{width:26px;height:15px;border-radius:999px;background:#c7c7cc;position:relative;transition:.15s;flex-shrink:0;}
 .hide-amt-btn .sw::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#fff;transition:.15s;}
@@ -237,14 +237,20 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .toggle-ctrl{background:var(--color-section-bg);color:var(--color-text);border:none;cursor:pointer;
   border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;font-family:inherit;}
 /* 토글 배너(개인정보 숨기기와 같은 스위치형) — 합계 버튼과 같은 글자/배경, 켜지면 accent */
-.tgl-banner{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;border-radius:20px;
-  padding:3px 8px 3px 10px;background:var(--color-section-bg);color:var(--color-text);
-  font-size:11px;font-weight:600;font-family:inherit;white-space:nowrap;transition:.15s;}
-.tgl-banner .sw{width:24px;height:14px;border-radius:999px;background:#c7c7cc;position:relative;transition:.15s;flex-shrink:0;}
-.tgl-banner .sw::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:.15s;}
+.tgl-banner{display:inline-flex;align-items:center;gap:7px;border:none;cursor:pointer;border-radius:20px;
+  box-sizing:border-box;min-height:28px;padding:0 9px 0 12px;background:var(--color-section-bg);color:var(--color-text);
+  font-size:12px;font-weight:600;font-family:inherit;white-space:nowrap;transition:.15s;}
+/* 높이는 같은 줄 컨트롤(필터 칸·합계 칩 28px)에 맞춘다 — 20px이면 옆 컨트롤보다 납작해 보였다(2026-10-24) */
+.tgl-banner .sw{width:28px;height:16px;border-radius:999px;background:#c7c7cc;position:relative;transition:.15s;flex-shrink:0;}
+.tgl-banner .sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:.15s;}
 .tgl-banner.on{background:var(--color-accent);color:#fff;}
 .tgl-banner.on .sw{background:rgba(255,255,255,.35);}
-.tgl-banner.on .sw::after{left:12px;}
+.tgl-banner.on .sw::after{left:14px;}
+/* 변화추이 그래프 스위치 4개: 같은 줄 기간 탭(26px)에 맞춤 */
+#chartTopRow .tgl-banner{min-height:26px;font-size:11.5px;padding:0 8px 0 11px;gap:6px;}
+#chartTopRow .tgl-banner .sw{width:26px;height:15px;} #chartTopRow .tgl-banner .sw::after{width:11px;height:11px;} #chartTopRow .tgl-banner.on .sw::after{left:13px;}
+/* 배당 수동 입력: 옆 합계·농협·미래 세그먼트(30px)에 맞춤 */
+.tax-end > .tgl-banner{min-height:30px;}
 .tgl-banner-row{display:flex;margin:8px 0 0;}
 /* 변화추이 상단 줄: 펼침 화면에선 항상 한 줄. 넘치면 fitChartTopRow()가 .cmp1→.cmp2 순으로 여백·글자를 줄인다 */
 .chart-head{position:relative;}
