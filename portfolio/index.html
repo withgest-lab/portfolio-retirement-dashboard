@@ -382,7 +382,10 @@ table.table-fit th:nth-child(5),table.table-fit td:nth-child(5){text-align:cente
    tr-full(수정 폼·종목 상세)과 그 안의 미니 표는 건드리지 않도록 자식 결합자로만 고른다. */
 #page_portfolio .tbl-wrap > table.table-fit > thead > tr > th:nth-child(-n+10),
 #page_portfolio .tbl-wrap > table.table-fit > tbody > tr:not(.tr-full) > td:nth-child(-n+10){text-align:center;}
-#page_portfolio .tbl-wrap > table.table-fit .name-main{margin-left:auto;margin-right:auto;}
+/* 단, 종목명(1열)은 왼쪽 맞춤 — 가운데면 이름 길이마다 왼쪽 끝이 들쭉날쭉(2026-10-24 사용자 요청) */
+#page_portfolio .tbl-wrap > table.table-fit > thead > tr > th:nth-child(1),
+#page_portfolio .tbl-wrap > table.table-fit > tbody > tr:not(.tr-full) > td:nth-child(1){text-align:left;}
+#page_portfolio .tbl-wrap > table.table-fit .name-main{margin-left:0;margin-right:auto;}
 /* 상세정보(10) 아이콘 확대 */
 #page_portfolio table.table-fit .btn-chart .ic{width:23px;height:23px;}
 /* 어떤 폭에서도 가로 스크롤 바가 생기지 않게(칼럼 폭은 퍼센트로 배분) */
@@ -601,6 +604,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 /* 월별 표: 아이콘 칸 좌우 여백 0(버튼 안 그림 여백이 칸 여백 역할), 방금 저장한 줄 강조는 칸에(행 배경은 칸에 가려진다) */
 #divMonthly table.dv-eq td.dv-ic{padding-left:0;padding-right:0;}
 #divMonthly table.dv-eq .dv-sub{text-align:center;}
+/* 배당 월별: 종목 열(2열)만 왼쪽 맞춤(2026-10-24) */
+#divMonthly table.dv-eq > thead > tr > th:nth-child(2), #divMonthly table.dv-eq > tbody > tr.dv-mrow > td:nth-child(2){text-align:left;}
+#divMonthly table.dv-eq tr.dv-mrow > td:nth-child(2) .dv-main{justify-content:flex-start;}
+#divMonthly table.dv-eq tr.dv-mrow > td:nth-child(2) .dv-sub{text-align:left;}
 tr.dv-flash > td{animation:dvflash 1.5s ease-out;}
 /* 펼친 상세 항목은 위 표의 열에 맞춘다: 날짜·내용은 종목+주기 열, 금액은 "받은 배당" 열, 연필·휴지통은 "다음" 열(가운데) */
 #divStock table.dv-eq-on tr.dv-open > td{padding:0;}
@@ -789,6 +796,9 @@ tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
 .tl-table > thead > tr > th:nth-child(n), .tl-table > tbody > tr.tl-row > td{text-align:center;}
 .tl-table th:first-child,.tl-table td.tl-date{padding-left:8px;}
 .tl-table .tl-line,.tl-table .tl-badges{justify-content:center;}
+/* 종목 열(캡슐+이름, 아래 배지)만 왼쪽 맞춤 — 이름 시작점이 일직선(2026-10-24) */
+.tl-table > thead > tr > th:nth-child(2), .tl-table > tbody > tr.tl-row > td.tl-main{text-align:left;}
+.tl-table td.tl-main .tl-line,.tl-table td.tl-main .tl-badges{justify-content:flex-start;}
 /* 열 간격 균등 공용(fitEqualCols) — 재는 동안만 붙는 클래스: 열·칸을 내용 폭(max-content)으로 */
 table.eq-measure{table-layout:auto!important;width:max-content!important;}
 /* 열 간격 균등 숫자 표(fitNumTable) — 펼침: 첫 열 width:100%(tbl-cap)를 풀고 col 폭을 따른다 */
