@@ -629,20 +629,25 @@ body.fit-noscroll{overflow-y:hidden;}
   h1{font-size:13px;}
   table{font-size:9px;}
   th,td{padding:4px 2px;}
-  /* 접힘: 계좌를 성격별로 모은다(2026-10-24 사용자 요청) — 일반계좌 → ISA → [개인연금 농협·미래·IRP 개인] 3열 →
-     사적연금 과세분·잔액 구성 게이지(연금 묶음 바로 아래) → 퇴직연금 DC → 국민연금. 3열 행 외에는 전체 폭 */
-  .acct-grid{grid-template-columns:repeat(3,1fr);}
-  .acct-grid .c-gen{grid-column:1 / -1;grid-row:1;}
-  .acct-grid .c-isa{grid-column:1 / -1;grid-row:2;}
-  .acct-grid .c-nh{grid-column:1;grid-row:3;}
-  .acct-grid .c-mf{grid-column:2;grid-row:3;}
-  .acct-grid .c-irp{grid-column:3;grid-row:3;}
+  /* 접힘: 계좌를 성격별로 한 줄씩 나란히 모은다(2026-10-24 사용자 요청, 가로 스크롤 없는 범위) — 6칸 grid로
+     현재 잔액 구성·사적연금 게이지(맨 위) → [일반계좌 | ISA] 2장 → [개인연금 농협 | 미래 | IRP 개인] 3장 → [퇴직연금 DC | 국민연금] 2장.
+     같은 줄 카드는 바깥 테두리 높이를 맞춘다(ISA의 기본 align-self:start를 풀어 일반계좌와 아래 선이 일직선) */
+  .acct-grid{grid-template-columns:repeat(6,minmax(0,1fr));}
+  .acct-grid > .acct-card{align-self:stretch;}
+  .acct-grid .c-gen{grid-column:1 / 4;grid-row:2;}
+  .acct-grid .c-isa{grid-column:4 / 7;grid-row:2;}
+  .acct-grid .c-nh{grid-column:1 / 3;grid-row:3;}
+  .acct-grid .c-mf{grid-column:3 / 5;grid-row:3;}
+  .acct-grid .c-irp{grid-column:5 / 7;grid-row:3;}
   /* 접힘 3열은 칸이 좁아 "IRP 개인 미래"가 두 줄로 접힘 — 세 카드 머리 높이를 두 줄로 맞춰 본문 행이 어긋나지 않게 */
   .acct-grid .c-nh .acct-head,.acct-grid .c-mf .acct-head,.acct-grid .c-irp .acct-head{min-height:42px;box-sizing:border-box;}
   .acct-grid .c-nh .acct-head .name,.acct-grid .c-mf .acct-head .name,.acct-grid .c-irp .acct-head .name{white-space:normal;}
-  .acct-grid .limit-gauge-wrap{grid-column:1 / -1;grid-row:4;}
-  .acct-grid .c-tirp{grid-column:1 / -1;grid-row:5;}
-  .acct-grid .c-np{grid-column:1 / -1;grid-row:6;}
+  .acct-grid .limit-gauge-wrap{grid-column:1 / -1;grid-row:1;}
+  .acct-grid .c-tirp{grid-column:1 / 4;grid-row:4;}
+  .acct-grid .c-np{grid-column:4 / 7;grid-row:4;}
+  /* 3장 행의 좁은 IRP 카드: 연납입 [금액+만 | 월] 두 칸을 내용 폭으로 양끝 배치 — 2등분 칸(≈47px)에 sm 칸+단위가 안 들어가 '만'이 월 선택과 겹쳤다 */
+  .acct-grid .c-irp .acct-body .irow-ymon .irow-ctrl{grid-template-columns:auto auto;justify-content:space-between;}
+  .acct-grid .c-irp .acct-body .irow-ymon .ymon-amt .ival-input{width:36px!important;padding-left:2px;padding-right:2px;}
   .c-isa .irow[aria-hidden]{display:none;}
   .inline-panel{padding:8px 10px 10px;}
 }
