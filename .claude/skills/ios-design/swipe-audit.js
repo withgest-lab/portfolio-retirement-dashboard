@@ -286,7 +286,8 @@ async function cases(browser, o, app, logs) {
 async function main() {
   const args = process.argv.slice(2);
   const val = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-  const which = args.find(a => !a.startsWith('--') && !/^\d+x\d+/.test(a) && a !== val('--base') && a !== val('--vps') && a !== val('--only')) || 'all';
+  const flagVals = new Set(['--base', '--vps', '--only'].map(k => args.indexOf(k)).filter(n => n >= 0).map(n => n + 1));   // 플래그 값 자리(예: --only portfolio)는 앱 이름이 아니다
+  const which = args.find((a, n) => !a.startsWith('--') && !flagVals.has(n)) || 'all';
   const o = { only: val('--only'), base: (val('--base') || 'http://localhost:4173/').replace(/\/?$/, '/'), vps: val('--vps') ? val('--vps').split(',').map(s => s.split('x').map(Number)) : args.includes('--quick') ? QUICK_VPS : FULL_VPS };
   const doGrid = !args.includes('--cases'), doCases = !args.includes('--grid');
   const apps = which === 'all' ? Object.keys(APPS) : [which];

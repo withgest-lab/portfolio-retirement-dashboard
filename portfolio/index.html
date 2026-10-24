@@ -989,34 +989,36 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
    평가손익 44, 상세정보 41, 연필·휴지통 아이콘 30). 종목명(1)은 폭을 주지 않아 남는 폭 전부를 갖고, 좌우 여백 --tg/2
    (말줄임된 긴 이름일 때 다음 칸과의 간격도 --tg). 연필(11)은 오른쪽 정렬이라 30 + --tg/2, 휴지통(12)은 버튼 안 아이콘
    위치 때문에 실측으로 34 + --tg. --tg는 750px에서 11px, 폭에 비례해 832px ≈ 15px(상한 16).
-   481~699px(실기기 없음)는 위 퍼센트 배분 + 평단가 숨김을 그대로 쓴다. 검증: 열 사이 보이는 간격을 Playwright로 실측. */
+   481~699px(실기기 없음)는 위 퍼센트 배분 + 평단가 숨김을 그대로 쓴다. 검증: 열 사이 보이는 간격을 Playwright로 실측.
+   2026-10-24: 연필·휴지통은 매매 이력과 같은 붙은 한 쌍(각 30px·여백 0 — 글리프 간격 15px, 표 끝까지 8px). 예전 폭(30+tg/2, 34+tg)에서
+   줄어든 4px + 1.5×tg는 2~10번째 9칸에 똑같이 나눈다(--ex) — 사용자 요청 '남는 영역은 균등 배분'. */
 @media(min-width:700px) and (max-width:960px){
   .fold-hide-narrow{display:table-cell;}
-  #page_portfolio .tbl-wrap table.table-fit{--tg:clamp(8px, calc(11px + (100vw - 750px) * 0.05), 16px);}
+  #page_portfolio .tbl-wrap table.table-fit{--tg:clamp(8px, calc(11px + (100vw - 750px) * 0.05), 16px);--ex:calc((4px + var(--tg) * 1.5) / 9);}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(1),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(1){width:auto;padding-left:calc(var(--tg) / 2);padding-right:calc(var(--tg) / 2);}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(2),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:calc(33px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(2){width:calc(33px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(3),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:calc(39px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(3){width:calc(39px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(4),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:calc(39px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(4){width:calc(39px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(5),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:calc(39px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(5){width:calc(39px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(6),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(6){width:calc(59px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(6){width:calc(59px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(7),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:calc(50px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(7){width:calc(50px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(8),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:calc(36px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(8){width:calc(36px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(9),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:calc(44px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(9){width:calc(44px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(10),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:calc(41px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(10){width:calc(41px + var(--tg) + var(--ex));}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:calc(30px + var(--tg) / 2);}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:30px;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),
-  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:calc(34px + var(--tg));}
+  #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:30px;}
 }
 }
 }
@@ -1055,6 +1057,12 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(11){width:4.0%;}
   #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),
   #page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:3.4%;}
+}
+/* 보유종목 연필(11)·휴지통(12): 모든 펼침 폭에서 매매 이력과 같은 붙은 한 쌍 — 칸 30px·여백 0·가운데(2026-10-24 사용자 요청).
+   퍼센트 배분 구간(481~699·961+)은 줄어든 폭을 브라우저가 다른 칸에 비율대로 나눈다. 실기기 폭(700~960)은 위 --ex로 똑같이 나눈다. */
+@media(min-width:481px){
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(11),#page_portfolio .tbl-wrap table.table-fit td:nth-child(11),
+  #page_portfolio .tbl-wrap table.table-fit th:nth-child(12),#page_portfolio .tbl-wrap table.table-fit td:nth-child(12){width:30px;padding-left:0;padding-right:0;text-align:center;}
 }
 /* ── Z Fold7 접힘 / 일반 모바일 (~390px) ── */
 @media(max-width:480px){
