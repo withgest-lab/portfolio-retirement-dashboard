@@ -103,6 +103,7 @@ description: 이 저장소(포트폴리오·현금흐름·홈·매매전략)의 
 - **큰 수정(풀 검증)**: 아래 1~6 — 4개 뷰포트 × 영향받는 모든 탭, dup-check, `fit-audit <preset> --boxes`, (push했다면) 배포본 재확인.
 - 어느 쪽이든 항상: **겹침·두 줄 꺾임·단위 글자와 입력 박스 겹침 0**(22절), 줄바꿈 균형, 스크린샷으로 정렬·쏠림 직접 확인. 풀 검증은 `fit-audit <preset> --boxes --folded`(글자 겹침 `measureOverlap` 포함)로, 부분 검증은 모듈의 `measureFit/measureBoxes/measureOverlap`으로.
 - 문구만 바꾸는 수정(색·글자 크기 변경 없음)은 스크린샷 한 장 또는 DOM 텍스트 확인만으로 충분하다.
+- **터치·스와이프·탭 구조·팝업(열린 창)·전체 화면 보기를 바꾸면** `node .claude/skills/ios-design/swipe-audit.js <portfolio|retirement|signals|all> [--quick]` — 실제 터치 이벤트(CDP)로 격자 100% + 특수 상황(열린 창 위·처음/끝·확대 중 이동·세로 스크롤·클릭 새는지·가로 스크롤 영역) 전부 ✓. 자바스크립트 흉내(`_check`)만으로는 실기기 문제가 안 잡힌다. 새 팝업은 `swipe-tabs.js` `OPEN_SEL`에 넣고 이 스크립트 특수 상황에 한 줄 추가(DESIGN_GUIDELINES 스와이프 항목).
 
 ### 풀 검증 절차
 1. `npx --yes serve -l 4173 .` + npx 캐시 playwright(`NODE_PATH`)로 위 뷰포트를 띄운다. 폰트 CDN(cdn.jsdelivr.net)은 막지 말 것(글꼴 폭이 달라짐). **4173이 이미 쓰이면 serve가 다른 포트로 올라간다 — 로그의 포트를 확인할 것.**

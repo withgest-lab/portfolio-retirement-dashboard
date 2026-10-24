@@ -3700,15 +3700,20 @@ async function init() {
 
 init();
 </script>
-<script src="../shared/swipe-tabs.js?v=20261024d"></script>
+<script src="../shared/swipe-tabs.js?v=20261024e"></script>
 <script>
-// 좌우 스와이프: 매수 전략 ⇄ 매도 전략(화면 바로 위 배너 줄) — shared/swipe-tabs.js. 전환 안내는 앱 자체 토스트가 한다
-swipeTabs({
-  steps: ()=> [['buy',''],['sell','']],
-  current: ()=> [document.querySelector('#mode-seg .chip.active')?.dataset.mode || 'buy', ''],
-  go: ([m])=> document.querySelector(`#mode-seg .chip[data-mode="${m}"]`)?.click(),
-  target: ()=> document.querySelector('.wrap'),
-});
+// 좌우 스와이프: 매수 전략 ⇄ 매도 전략(화면 바로 위 배너 줄) — shared/swipe-tabs.js. 전환 안내는 앱 자체 토스트가 한다.
+// 도움말(데이터 읽는 법)이 열리면 목록은 숨겨지고 도움말 바로 위 줄은 도움말의 [매수|매도] — 그 안에서 밀면 도움말 칸을 넘긴다(화면 모드는 그대로)
+{
+  const inHelp = el => !!(el && el.closest && el.closest('#help-overlay.open'));
+  swipeTabs({
+    steps: el=> inHelp(el) ? [['help','buy'],['help','sell']] : [['buy',''],['sell','']],
+    current: el=> inHelp(el) ? ['help', document.querySelector('#help-seg .chip.active')?.dataset.pane || 'buy']
+                             : [document.querySelector('#mode-seg .chip.active')?.dataset.mode || 'buy', ''],
+    go: ([m, pane])=> m==='help' ? setHelpPane(pane) : document.querySelector(`#mode-seg .chip[data-mode="${m}"]`)?.click(),
+    target: el=> inHelp(el) ? document.querySelector('#help-overlay .help-panel') : document.querySelector('.wrap'),
+  });
+}
 </script>
 </body>
 </html>

@@ -193,6 +193,14 @@ const seedTradeLog = () => {
     if (kind === 'dividend') out.push({ id: 't' + i, name: a.name, ticker: '—', type: 'dividend', at, acctType: 'cash', assetType: null, company: a.company, price: null, quantity: null, currency: a.currency, totalKRW: 30000 + 1000 * (i % 9), pnl: 30000 + 1000 * (i % 9), pnlPct: null, reason: '', cashAdjusted: null });
     else out.push({ id: 't' + i, name: a.name, ticker: a.ticker, type: kind, at, acctType: a.acctType, assetType: a.assetType, company: a.company, market: a.market, price, quantity: qty, currency: a.currency, totalKRW: Math.round(price * qty * fx), pnl: kind === 'sell' ? Math.round(price * qty * fx * 0.08) : null, pnlPct: kind === 'sell' ? 8 : null, reason: kind === 'sell' ? '목표 수익 달성' : '', cashAdjusted: null });
   }
+  // 원금기록장 행(입금·출금·배당 자동 입금) — 긴 종목명·억 단위가 접힘 폭에 들어가는지 본다
+  // (2026-10-24: 이 행이 없어 원금기록장이 늘 빈 표로 검사됐고, 실데이터에선 접힘 384에서 103px 가로 스크롤 → 스와이프가 한 번에 안 넘어감)
+  const DIVN = ['가상 미국배당다우존스타겟커버드콜ETF', '가상 미국30년국채액티브(H)', '글로벌ETF 23'];
+  for (let i = 0; i < 12; i++) {
+    const kind = i % 4 === 3 ? 'withdrawal' : 'deposit', div = i % 4 === 1 || i % 4 === 2;
+    out.push({ id: 'p' + i, name: div ? DIVN[i % DIVN.length] : '현금', ticker: '—', type: kind, at: now - (i + 1) * 23 * day, acctType: 'cash', assetType: null, company: '가상증권A', price: null, quantity: null, currency: 'KRW',
+      totalKRW: div ? 30000 : kind === 'withdrawal' ? 20000000 : 100000000, pnl: null, pnlPct: null, reason: '', cashAdjusted: null, ...(div ? { src: 'dividend' } : {}) });
+  }
   return out;
 };
 // 월말 스냅샷 30개 — 자산이 완만히 늘어난 가상 이력
