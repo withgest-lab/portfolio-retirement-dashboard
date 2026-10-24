@@ -152,6 +152,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
   font-size:11px;font-weight:600;font-family:inherit;background:transparent;
   color:var(--color-secondary);transition:.15s;white-space:nowrap;}
 .subtabbar button.active{background:rgba(0,122,255,.14);color:var(--color-accent);}
+.st-s,.nt-s{display:none;}   /* 짧은 이름·짧은 안내는 접힘에서만 */
 
 /* ── 페이지(상위 탭) / 서브페이지(하위 섹션) ── */
 .page{display:none;flex-direction:column;gap:8px;}
@@ -1075,10 +1076,18 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .tabbar button .lbl{display:none;}
   .tabbar-scroll > button{flex:1 1 0;justify-content:center;padding:6px 0;}
   /* 접힘 밸런스: 줄바꿈으로 한 칸만 아랫줄에 남지 않게 균등 격자, 기간 탭은 한 줄 균등 */
-  .subtabbar:has(> button:nth-child(4)){display:grid;grid-template-columns:1fr 1fr;}
-  #chartTopRow{display:grid;grid-template-columns:1fr 1fr;}
-  #chartTopRow .tgl-banner{justify-content:space-between;}
-  #chartTopRow #periodTabs{grid-column:1/-1;margin-left:0!important;}
+  /* 수익률분석 메뉴 4개: 짧은 이름의 캡슐 배너 한 줄(2026-10-24 사용자 선택) — 3개짜리 서브탭은 그대로 */
+  .subtabbar:has(> button:nth-child(4)){background:transparent;padding:0;gap:6px;flex-wrap:nowrap;}
+  .subtabbar:has(> button:nth-child(4)) > button{flex:1 1 0;min-width:0;height:30px;padding:0 4px;border-radius:999px;background:rgba(118,118,128,.12);}
+  .subtabbar:has(> button:nth-child(4)) > button.active{background:rgba(0,122,255,.14);}
+  .st-l{display:none;} .st-s{display:inline;}
+  /* 변화추이 스위치 4개 한 줄(사용자 선택): 손잡이는 숨기고 켜짐은 파란 배경·흰 글자로 */
+  #chartTopRow{display:flex;flex-wrap:wrap;gap:6px;}
+  #chartTopRow .tgl-banner{flex:1 1 auto;justify-content:center;padding:0 8px;font-size:11px;}
+  #chartTopRow .tgl-banner .sw{display:none;}
+  #chartTopRow #periodTabs{flex:1 1 100%;margin-left:0!important;}
+  /* 하단 안내 문구: 접힘은 필수 내용만 짧게 */
+  .nt-l{display:none;} .nt-s{display:inline;}
   :is(#periodTabs,#qvPeriodTabs,#monthlyChartPeriodTabs,[id^="stockChartPeriodTabs_"]){flex-wrap:nowrap;width:100%;box-sizing:border-box;}
   :is(#periodTabs,#qvPeriodTabs,#monthlyChartPeriodTabs,[id^="stockChartPeriodTabs_"]) > button{flex:1 1 0;min-width:0;padding-left:0;padding-right:0;font-size:10px;}
   .stock-dtools .period-tabs{flex:1 1 100%;}
@@ -1480,10 +1489,10 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 <section class="page" id="page_returns">
 <nav class="subtabbar">
-  <button class="active" data-sub="monthly_chart" onclick="switchSubPage('returns','monthly_chart')">원금 vs 자산가치</button>
-  <button data-sub="monthly_table" onclick="switchSubPage('returns','monthly_table')">스냅샷 기반 자산 추이</button>
-  <button data-sub="yearly" onclick="switchSubPage('returns','yearly')">매매이력 기반 손익 추이</button>
-  <button data-sub="principal" onclick="switchSubPage('returns','principal')">원금기록장</button>
+  <button class="active" data-sub="monthly_chart" onclick="switchSubPage('returns','monthly_chart')"><span class="st-l">원금 vs 자산가치</span><span class="st-s">원금vs자산</span></button>
+  <button data-sub="monthly_table" onclick="switchSubPage('returns','monthly_table')"><span class="st-l">스냅샷 기반 자산 추이</span><span class="st-s">스냅샷</span></button>
+  <button data-sub="yearly" onclick="switchSubPage('returns','yearly')"><span class="st-l">매매이력 기반 손익 추이</span><span class="st-s">매매손익</span></button>
+  <button data-sub="principal" onclick="switchSubPage('returns','principal')"><span class="st-l">원금기록장</span><span class="st-s">원금기록</span></button>
 </nav>
 <div class="subpage" data-sub="monthly_table">
   <div class="card">
@@ -1507,7 +1516,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
         <tbody id="monthlyPerfBody"></tbody>
       </table>
     </div>
-    <div class="notice">💡 순입출금은 원금기록장 기록만 반영 · 실제 잔액 변화로 계산해 가장 정확</div>
+    <div class="notice">💡 <span class="nt-l">순입출금은 원금기록장 기록만 반영 · 실제 잔액 변화로 계산해 가장 정확</span><span class="nt-s">순입출금은 원금기록장 기록 기준</span></div>
     <div class="notice" id="monthlySnapStartNotice"></div>
   </div>
 </div>
@@ -1530,7 +1539,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
         <tbody id="yearlyReturnsBody"></tbody>
       </table>
     </div>
-    <div class="notice">💡 미실현손익은 이번 기간 보유 종목만 · 매도 기록 기준이라 실제보다 적을 수 있음</div>
+    <div class="notice">💡 <span class="nt-l">미실현손익은 이번 기간 보유 종목만 · 매도 기록 기준이라 실제보다 적을 수 있음</span><span class="nt-s">미실현손익은 지금 보유 종목만 · 실제보다 적을 수 있음</span></div>
     <div class="notice" id="yearlySnapStartNotice"></div>
   </div>
 </div>
@@ -1555,7 +1564,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <div class="pv-canvas-wrap chart-wrap"><canvas id="pvChart" height="280"></canvas></div>
       <div class="pv-detail" id="pvDetail"><div class="pd-empty">차트에서 지점을 선택하세요</div></div>
     </div>
-    <div class="notice">💡 실선=자산가치, 점선=투입원금(원금기록장 기준), 사이 채움=손익 구간, <span style="color:#34c759;">●</span>입금 <span style="color:#ff3b30;">●</span>출금 시점.</div>
+    <div class="notice">💡 <span class="nt-l">실선=자산가치, 점선=투입원금(원금기록장 기준), 사이 채움=손익 구간, <span style="color:#34c759;">●</span>입금 <span style="color:#ff3b30;">●</span>출금 시점.</span><span class="nt-s">실선 자산가치 · 점선 투입원금 · <span style="color:#34c759;">●</span>입금 <span style="color:#ff3b30;">●</span>출금</span></div>
     <div class="notice" id="chartSnapStartNotice"></div>
   </div>
 </div>
@@ -6292,12 +6301,13 @@ function buildMonthlyPerformance(){
 // 수익률(%) 계산이 가능한 시작 시점(최초 스냅샷 기록일)을 각 수익률 화면에 안내
 function renderSnapStartNotices(){
   const dateStr = firstSnapDateStr();
+  // 펼침은 긴 문구, 접힘은 날짜만 짧게(.nt-l/.nt-s) — dateStr는 앱이 만든 날짜 문자열
   const msg = dateStr
-    ? `💡 최초 스냅샷 기록일(${dateStr})부터 표시 · 소급 입출금은 점선만`
+    ? `💡 <span class="nt-l">최초 스냅샷 기록일(${dateStr})부터 표시 · 소급 입출금은 점선만</span><span class="nt-s">${dateStr}부터 표시</span>`
     : '';
   ['yearlySnapStartNotice','monthlySnapStartNotice','chartSnapStartNotice'].forEach(id=>{
     const el = document.getElementById(id);
-    if(el) el.textContent = msg;
+    if(el) el.innerHTML = msg;
   });
 }
 
