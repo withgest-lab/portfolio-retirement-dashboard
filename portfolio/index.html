@@ -644,6 +644,7 @@ tr.dv-flash > td{animation:dvflash 1.5s ease-out;}
   font-family:inherit;font-size:12px;background:var(--color-card);color:var(--color-text);}
 .filter-bar input{flex:1;min-width:120px;}
 @media(min-width:600px){ .filter-bar{flex-wrap:nowrap;} .filter-bar input{min-width:90px;} .filter-bar select{flex-shrink:0;} }
+@media(min-width:481px){ .filter-bar:has(> :is(#assetFilterSearch,#tradeLogFilterSearch)) > select{flex:0 0 84px;width:84px;} }   /* 풀다운 4개 같은 폭(가장 긴 항목에 따라 74/82로 들쭉날쭉하던 것) — 남는 폭은 검색창 */
 
 /* ── 자동완성 ── */
 .suggest-box{display:none;position:absolute;top:100%;left:0;z-index:200;
@@ -1095,12 +1096,11 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .stock-dtools .period-tabs{flex:1 1 100%;}
   /* 필터 배치(2026-10-24 사용자 요청): 1줄 [검색 | 매매수동입력·이력수동입력 스위치], 2줄 풀다운 4개 같은 폭.
      검색은 50% 기준으로 늘어나 스위치 옆을 채우고, 풀다운(25% 기준)은 1줄에 들어갈 자리가 없어 2줄로 넘어간다.
-     풀다운 첫 항목은 '○○ 전체' → '○○'(syncFilterAllLabels), 스위치 라벨은 띄어쓰기 없이 */
+     풀다운 첫 항목은 '○○'·스위치 라벨 '매매수동입력'·'이력수동입력'(모든 폭 공통) */
   .filter-bar:has(> #assetFilterSearch),.filter-bar:has(> #tradeLogFilterSearch){display:flex;flex-wrap:wrap;gap:6px;}
   .filter-bar > :is(#assetFilterSearch,#tradeLogFilterSearch){order:1;flex:1 1 50%;min-width:0;}
   .filter-bar:has(> :is(#assetFilterSearch,#tradeLogFilterSearch)) > .tgl-banner{order:2;flex:0 0 auto;margin-left:0;}
   .filter-bar:has(> :is(#assetFilterSearch,#tradeLogFilterSearch)) > select{order:3;flex:1 1 calc(25% - 4.5px);min-width:0;width:0;padding-left:7px;padding-right:20px;background-position:right 6px center;}
-  .tgl-sp{display:none;}
   .notice{word-break:keep-all;text-wrap:balance;}
   /* 시장지표 8개 한 줄(사용자 요청) — 숫자끼리 붙지 않게 글자를 한 단계 줄이고 칸 여백 0 */
   .hold-mkt .hm{padding:0;} .hold-mkt .hm-l{font-size:9px;} .hold-mkt .hm-v{font-size:9.5px;letter-spacing:-.2px;}
@@ -1429,11 +1429,11 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
   <div class="hold-mkt" id="holdMktRow" role="group" aria-label="시장지표 전일 대비"></div>
   <div class="filter-bar">
     <input id="assetFilterSearch" placeholder="종목명·티커 검색" oninput="setAssetFilter('search', this.value)">
-    <select id="assetFilterMarket" onchange="setAssetFilter('market', this.value)"><option value="">투자시장 전체</option></select>
-    <select id="assetFilterCompany" onchange="setAssetFilter('company', this.value)"><option value="">금융회사 전체</option></select>
-    <select id="assetFilterAcctType" onchange="setAssetFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
-    <select id="assetFilterAssetType" onchange="setAssetFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addAssetWrap" data-onopen="prefillAssetFormFromFilter" onclick="toggleBanner(this)">매매<span class="tgl-sp"> </span>수동<span class="tgl-sp"> </span>입력<span class="sw"></span></button>
+    <select id="assetFilterMarket" onchange="setAssetFilter('market', this.value)"><option value="">투자시장</option></select>
+    <select id="assetFilterCompany" onchange="setAssetFilter('company', this.value)"><option value="">금융회사</option></select>
+    <select id="assetFilterAcctType" onchange="setAssetFilter('acctType', this.value)"><option value="">계좌유형</option></select>
+    <select id="assetFilterAssetType" onchange="setAssetFilter('assetType', this.value)"><option value="">자산유형</option></select>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addAssetWrap" data-onopen="prefillAssetFormFromFilter" onclick="toggleBanner(this)">매매수동입력<span class="sw"></span></button>
   </div>
   <!-- 매수/매도/현금 수동 입력 — 필터 줄 오른쪽 끝 스위치 "매매 수동 입력"으로 열고 닫는다(스위치 바로 아래에 펼쳐 스크롤 없이 보임) -->
   <div id="addAssetWrap" style="display:none;margin:0 0 14px;">
@@ -1473,11 +1473,11 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <div class="card">
   <div class="filter-bar">
     <input id="tradeLogFilterSearch" placeholder="종목명·티커 검색" oninput="setTradeLogFilter('search', this.value)">
-    <select id="tradeLogFilterMarket" onchange="setTradeLogFilter('market', this.value)"><option value="">투자시장 전체</option></select>
-    <select id="tradeLogFilterCompany" onchange="setTradeLogFilter('company', this.value)"><option value="">금융회사 전체</option></select>
-    <select id="tradeLogFilterAcctType" onchange="setTradeLogFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
-    <select id="tradeLogFilterAssetType" onchange="setTradeLogFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addTradeLogWrap" data-onopen="prefillTradeLogFormFromFilter" onclick="toggleBanner(this)">이력<span class="tgl-sp"> </span>수동<span class="tgl-sp"> </span>입력<span class="sw"></span></button>
+    <select id="tradeLogFilterMarket" onchange="setTradeLogFilter('market', this.value)"><option value="">투자시장</option></select>
+    <select id="tradeLogFilterCompany" onchange="setTradeLogFilter('company', this.value)"><option value="">금융회사</option></select>
+    <select id="tradeLogFilterAcctType" onchange="setTradeLogFilter('acctType', this.value)"><option value="">계좌유형</option></select>
+    <select id="tradeLogFilterAssetType" onchange="setTradeLogFilter('assetType', this.value)"><option value="">자산유형</option></select>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addTradeLogWrap" data-onopen="prefillTradeLogFormFromFilter" onclick="toggleBanner(this)">이력수동입력<span class="sw"></span></button>
   </div>
   <!-- 이력 수동 입력: 위 스위치로 열고 닫는다. 기록 전용 — 자산·현금 잔액에는 반영되지 않는다 -->
   <div id="addTradeLogWrap" style="display:none;margin:0 0 14px;">
@@ -3972,30 +3972,29 @@ function prefillTradeLogFormFromFilter(){
 function renderTradeLogFilterOptions(arr){
   const marketSel=document.getElementById('tradeLogFilterMarket');
   if(marketSel && !marketSel.dataset.built){
-    marketSel.innerHTML='<option value="">투자시장 전체</option>'+
+    marketSel.innerHTML='<option value="">투자시장</option>'+
       MARKET_OPTIONS.map(k=>`<option value="${k}">${MARKET_LABELS[k]}</option>`).join('');
     marketSel.dataset.built='1';
   }
   const acctTypeSel=document.getElementById('tradeLogFilterAcctType');
   if(acctTypeSel && !acctTypeSel.dataset.built){
-    acctTypeSel.innerHTML='<option value="">계좌유형 전체</option>'+
+    acctTypeSel.innerHTML='<option value="">계좌유형</option>'+
       Object.keys(ACCTTYPE_LABELS).map(k=>`<option value="${k}">${ACCTTYPE_LABELS[k]}</option>`).join('');
     acctTypeSel.dataset.built='1';
   }
   const assetTypeSel=document.getElementById('tradeLogFilterAssetType');
   if(assetTypeSel && !assetTypeSel.dataset.built){
-    assetTypeSel.innerHTML='<option value="">자산유형 전체</option>'+
+    assetTypeSel.innerHTML='<option value="">자산유형</option>'+
       ASSETTYPE_OPTIONS.map(a=>`<option value="${a}">${a}</option>`).join('');
     assetTypeSel.dataset.built='1';
   }
   const subSel=document.getElementById('tradeLogFilterCompany');
   if(subSel){
     const names=[...new Set(arr.filter(r=>r.company).map(r=>r.company))];
-    subSel.innerHTML='<option value="">금융회사 전체</option>'+
+    subSel.innerHTML='<option value="">금융회사</option>'+
       names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${COMPANY_LABELS[n]||n}</option>`).join('');
     subSel.value=tradeLogFilter.company;
   }
-  syncFilterAllLabels();
 }
 function renderSoldHistory(){
   privDictReset();
@@ -4287,13 +4286,13 @@ function setAssetSort(field){
 function renderAssetFilterOptions(){
   const acctTypeSel=document.getElementById('assetFilterAcctType');
   if(acctTypeSel && !acctTypeSel.dataset.built){
-    acctTypeSel.innerHTML='<option value="">계좌유형 전체</option>'+
+    acctTypeSel.innerHTML='<option value="">계좌유형</option>'+
       Object.keys(ACCTTYPE_LABELS).map(k=>`<option value="${k}">${ACCTTYPE_LABELS[k]}</option>`).join('');
     acctTypeSel.dataset.built='1';
   }
   const assetTypeSel=document.getElementById('assetFilterAssetType');
   if(assetTypeSel && !assetTypeSel.dataset.built){
-    assetTypeSel.innerHTML='<option value="">자산유형 전체</option>'+
+    assetTypeSel.innerHTML='<option value="">자산유형</option>'+
       ASSETTYPE_OPTIONS.map(a=>`<option value="${a}">${a}</option>`).join('');
     assetTypeSel.dataset.built='1';
   }
@@ -4301,7 +4300,7 @@ function renderAssetFilterOptions(){
   if(marketSel){
     // 기본 4개 + 사용자가 직접입력한 값(자산에 실제로 존재하는 것만) 추가
     const extra=[...new Set(assets.map(a=>a.market).filter(m=>m && !MARKET_OPTIONS.includes(m)))];
-    marketSel.innerHTML='<option value="">투자시장 전체</option>'+
+    marketSel.innerHTML='<option value="">투자시장</option>'+
       MARKET_OPTIONS.map(k=>`<option value="${k}">${MARKET_LABELS[k]}</option>`).join('')+
       extra.map(m=>`<option value="${m.replace(/"/g,'&quot;')}">${m}</option>`).join('');
     marketSel.value=assetFilter.market;
@@ -4309,22 +4308,11 @@ function renderAssetFilterOptions(){
   const subSel=document.getElementById('assetFilterCompany');
   if(subSel){
     const names=[...new Set(assets.filter(a=>a.company).map(a=>a.company))];
-    subSel.innerHTML='<option value="">금융회사 전체</option>'+
+    subSel.innerHTML='<option value="">금융회사</option>'+
       names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${COMPANY_LABELS[n]||n}</option>`).join('');
     subSel.value=assetFilter.company;
   }
-  syncFilterAllLabels();
 }
-// 접힘(≤480px): 필터 풀다운 4개를 한 줄에 넣으려고 첫 항목 '○○ 전체'를 '○○'로 짧게(펼침이면 원래대로)
-function syncFilterAllLabels(){
-  const fold = window.matchMedia('(max-width:480px)').matches;
-  document.querySelectorAll('.filter-bar select option[value=""]').forEach(o=>{
-    if(!o.dataset.base) o.dataset.base = o.textContent.replace(/ 전체$/,'');
-    o.textContent = fold ? o.dataset.base : o.dataset.base + ' 전체';
-  });
-}
-{ const mq = window.matchMedia('(max-width:480px)'); (mq.addEventListener ? mq.addEventListener('change', syncFilterAllLabels) : mq.addListener(syncFilterAllLabels)); }
-
 function renderTable(){
   const tb=document.getElementById('assetTbody');
   renderAssetFilterOptions();
