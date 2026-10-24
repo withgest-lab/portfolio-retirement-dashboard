@@ -9139,8 +9139,9 @@ function renderHoldMktRow(){
     let chg=null;
     const idx=indices.find(i=>i.sym===m.sym); if(idx && idx.chg!=null) chg=idx.chg;
     if(chg!=null) chg=Math.round(chg*100)/100;
-    const has=chg!=null && chg!==0;                                    // 미조회·0%는 회색 "—"
-    const v=has ? `${chg>0?'+':'−'}${Math.abs(chg).toFixed(2)}%` : '—';
+    // 미조회만 "—". 조회됐는데 변동이 0.00%(예: 나스닥100이 −0.004%로 마감한 날)이면 회색 "0.00%" — 예전엔 0%도 "—"라 갱신이 안 된 것처럼 보였다
+    const has=chg!=null && chg!==0;
+    const v=chg==null ? '—' : has ? `${chg>0?'+':'−'}${Math.abs(chg).toFixed(2)}%` : '0.00%';
     const lbl=m.short===m.label ? `<span>${m.label}</span>` : `<span class="hm-f">${m.label}</span><span class="hm-s">${m.short}</span>`;
     return `<div class="hm" title="${m.label} 전일 대비"><span class="hm-l">${lbl}</span><span class="hm-v${has?' '+updn(chg):''}">${v}</span></div>`;
   }).join('');
