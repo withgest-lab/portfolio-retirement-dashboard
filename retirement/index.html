@@ -652,11 +652,11 @@ body.fit-noscroll{overflow-y:hidden;}
   /* 기본 정보 5칸(현재 나이·은퇴 나이·기대 수명·월 생활비·저율과세 기준)을 한 줄 5등분 — 입력 박스는 단위를 뺀 칸 폭,
      '2단계 설계로 가기'는 그 아래 한 줄 전체 */
   .basic-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 4px;}
-  .basic-row .irow-top{align-items:stretch;}
-  .basic-row .ilabel{width:auto;}
-  .basic-row .irow-ctrl{display:flex;flex-wrap:nowrap;gap:2px;min-width:0;}
-  .basic-row .ival-input{flex:1 1 0;width:0!important;min-width:0;padding-left:2px;padding-right:2px;}
-  .basic-row .unit-tag{width:auto;flex:0 0 auto;}
+  .basic-row > .irow .irow-top{align-items:stretch;}
+  .basic-row > .irow .ilabel{width:auto;}
+  .basic-row > .irow .irow-ctrl{display:flex;flex-wrap:nowrap;gap:2px;min-width:0;}
+  .basic-row > .irow .ival-input{flex:1 1 0;width:0!important;min-width:0;padding-left:2px;padding-right:2px;}
+  .basic-row > .irow .unit-tag{width:auto;flex:0 0 auto;}
   /* 그 아래 줄: [수익률·물가 설정 스위치 | 2단계 설계로 가기] 반반·같은 높이(placePenGauge가 스위치를 잔액 구성 박스에서 옮겨 옴).
      설정 창은 이 줄 아래로, 줄 폭 전체로 열린다(위로 열면 화면 밖) */
   .basic-row-action{grid-column:1 / -1;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;}
@@ -667,6 +667,20 @@ body.fit-noscroll{overflow-y:hidden;}
   .basic-row-action .rates-anchor .tgl-banner .sw::after{width:11px;height:11px;}
   .basic-row-action .rates-anchor .tgl-banner.on .sw::after{left:13px;}
   .basic-row-action .rates-pop{left:0;right:0;top:calc(100% + 6px);bottom:auto;width:auto;max-width:none;}
+  /* 설정 창: 계좌 6칸은 접힘 카드 순서(일반계좌·ISA·개인연금 농협 / 미래·IRP·퇴직연금) 3열, 변동폭·물가는 2열 —
+     라벨 위·입력 박스는 칸 폭을 꽉 채우고 단위는 같은 줄(기본 정보 줄 규칙이 새지 않게 여기서 다시 정한다) */
+  .basic-row-action .rates-fields{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 10px;}
+  .basic-row-action .rates-fields:has(.irow.exp){grid-template-columns:repeat(2,minmax(0,1fr));}
+  .basic-row-action .rates-fields .irow{display:block;min-width:0;}
+  .basic-row-action .rates-fields .irow.gen{order:1;} .basic-row-action .rates-fields .irow.isa{order:2;}
+  .basic-row-action .rates-fields .irow.nh{order:3;} .basic-row-action .rates-fields .irow.mf{order:4;}
+  .basic-row-action .rates-fields .irow.irp{order:5;} .basic-row-action .rates-fields .irow.dc{order:6;}
+  .basic-row-action .rates-fields .irow-top{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:0;}
+  .basic-row-action .rates-fields .ilabel{width:auto;display:block;font-size:11px;font-weight:600;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .basic-row-action .rates-fields .irow-ctrl{display:flex;flex-wrap:nowrap;align-items:center;gap:3px;min-width:0;}
+  .basic-row-action .rates-fields .ival-input{flex:1 1 0;width:0!important;min-width:0;height:30px;font-size:13px;}
+  .basic-row-action .rates-fields .unit-tag{width:auto;flex:0 0 auto;font-size:11px;}
+  .basic-row-action .rates-fields input[type=range]{display:none;}
   .acct-grid .c-tirp{grid-column:1 / 4;grid-row:5;}
   .acct-grid .c-np{grid-column:4 / 7;grid-row:5;}
   /* 3장 행의 좁은 IRP 카드: 연납입 [금액+만 | 월] 두 칸을 내용 폭으로 양끝 배치 — 2등분 칸(≈47px)에 sm 칸+단위가 안 들어가 '만'이 월 선택과 겹쳤다 */
