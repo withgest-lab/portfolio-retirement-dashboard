@@ -1024,15 +1024,16 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
 }
 /* ── Z Fold7 접힘 / 일반 모바일 (~390px) ── */
 @media(max-width:480px){
-  /* 접힘: 가로 공간 확보 — 제목·다크 아이콘·숨기기 배너는 숨기고, 버튼·탭은 아이콘만.
-     환율(USD/KRW·값·변화량)은 한 줄 전체 — 바 여백 12·버튼 30px·간격 4·글자 10px로 384px에서도 상태 점까지 22px 남는다(실측) */
-  .topbar{padding:0 12px;}
+  /* 접힘: 가로 공간 확보 — 제목·숨기기 배너는 숨기고, 버튼·탭은 아이콘만.
+     환율(USD/KRW·값·변화량) 한 줄 전체 + 다크 모드 아이콘(24px) — 바 여백 12·바 간격 6·버튼 29px·버튼 간격 3·글자 10px로
+     384px에서 버튼 줄 넘침 0, 환율↔상태 점 6px(실측) */
+  .topbar{padding:0 12px;gap:6px;}
   .topbar-left .logo{display:none;}
   .logo-fx{font-size:10px;}
   .logo-fx .fx-lbl{display:inline;} .logo-fx::before{content:none;}
-  .topbar-actions{gap:4px;}
+  .topbar-actions{gap:3px;}
   .topbar-actions .btn .lbl{display:none;}
-  .topbar-actions .btn{width:30px;height:30px;padding:0;justify-content:center;}
+  .topbar-actions .btn{width:29px;height:29px;padding:0;justify-content:center;}
   .tabbar .hide-amt-btn{display:none;}
   .tabbar button .lbl{display:none;}
   .tabbar-scroll > button{flex:1 1 0;justify-content:center;padding:6px 0;}

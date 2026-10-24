@@ -27,8 +27,8 @@
     '.kis-theme-sw.on{color:#fff;}' +
     '.kis-theme-sw.on svg{fill:none;}' +
     'html[data-theme="dark"]:not([data-native-dark]) .kis-theme-sw{filter:invert(1) hue-rotate(180deg);}' +
-    /* 접힘(≤480px): 상단 바 가로 공간 확보를 위해 다크 모드 아이콘을 숨긴다(설정은 펼침에서) */
-    '@media(max-width:480px){.kis-theme-sw{display:none!important;}}';
+    /* 접힘(≤480px): 상단 바 한 줄에 들어가게 아이콘 칸만 좁힌다(24px, 왼쪽 여백 0) */
+    '@media(max-width:480px){.kis-theme-sw,.top-bar .kis-theme-sw{margin-left:0;width:24px;}}';
   (document.head || root).appendChild(css);
 
   var buttons = [];
