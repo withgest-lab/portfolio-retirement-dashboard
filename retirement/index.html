@@ -33,6 +33,13 @@ body{font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFo
   border-bottom:.5px solid rgba(60,60,67,.22);flex-wrap:wrap;
   position:fixed;top:0;left:0;right:0;z-index:30;}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){ .top-bar{background:#fff;} }
+/* 접힘: 상단 바 가로 공간 확보 — 제목 숨김, 이동 버튼은 아이콘만(32px 원) */
+@media (max-width:480px){
+  .top-bar .tb-title{display:none;}
+  .top-bar > div:last-child{margin-left:auto;}
+  .top-bar a.tax-guide-btn .lbl{display:none;}
+  .top-bar a.tax-guide-btn{width:32px;padding:0;justify-content:center;}
+}
 h1{font-size:16px;font-weight:700;color:#1c1c1e;}
 .subtitle{font-size:11px;color:#8e8e93;}
 /* ── 토글 배너(개인정보 숨기기와 같은 스위치형) ── */
@@ -961,13 +968,13 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
 
 <!-- 상단 헤더 -->
 <div class="top-bar">
-  <div>
+  <div class="tb-title">
     <h1>현금흐름</h1>
   </div>
   <div style="display:flex;align-items:center;gap:7px;flex-wrap:nowrap;">
     <a href="../" class="tax-guide-btn" aria-label="홈" title="홈" style="text-decoration:none;width:32px;padding:0;justify-content:center;">🏠</a>
-    <a href="../portfolio/" class="tax-guide-btn" style="text-decoration:none;"><span class="t-e">📊 </span>포트폴리오</a>
-    <a href="../signals/" class="tax-guide-btn" style="text-decoration:none;">📈 매매전략</a>
+    <a href="../portfolio/" class="tax-guide-btn" title="포트폴리오" style="text-decoration:none;"><span class="t-e">📊 </span><span class="lbl">포트폴리오</span></a>
+    <a href="../signals/" class="tax-guide-btn" title="매매전략" style="text-decoration:none;">📈 <span class="lbl">매매전략</span></a>
     <button type="button" class="tax-guide-btn" style="height:28px;padding:0 10px;font-size:11px;color:#ff3b30;" onclick="resetStateClick()">초기화</button>
     <span id="themeMountRt" style="display:contents"></span>
   </div>

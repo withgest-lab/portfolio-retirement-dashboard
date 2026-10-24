@@ -209,6 +209,7 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 /* 종목 차트의 "트리맵으로 가기" — 기간 탭과 겹쳐 누르기 어렵지 않게 넉넉한 높이의 틴트 캡슐 */
 .stock-trades thead th{position:sticky;top:0;z-index:1;background:var(--color-card);}
 .btn-return{background:rgba(0,122,255,.12);color:var(--color-accent);min-height:34px;padding:7px 14px;font-size:12px;font-weight:600;border-radius:999px;}
+.btn-return.btn-close-detail{background:rgba(118,118,128,.12);color:var(--color-text);}
 
 /* ── 레이아웃 ── */
 .main{width:100%;max-width:1280px;margin:0 auto;padding:8px 12px 0;display:flex;flex-direction:column;gap:16px;flex:1 1 auto;min-height:0;overflow:hidden;}
@@ -1023,6 +1024,14 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
 }
 /* ── Z Fold7 접힘 / 일반 모바일 (~390px) ── */
 @media(max-width:480px){
+  /* 접힘: 가로 공간 확보 — 제목·다크 아이콘·숨기기 배너는 숨기고, 환율은 변화량만, 버튼·탭은 아이콘만 */
+  .topbar-left .logo{display:none;}
+  .logo-fx .fx-val{display:none;} .logo-fx::before{content:none;}
+  .topbar-actions .btn .lbl{display:none;}
+  .topbar-actions .btn{width:32px;padding:0;justify-content:center;}
+  .tabbar .hide-amt-btn{display:none;}
+  .tabbar button .lbl{display:none;}
+  .tabbar-scroll > button{flex:1 1 0;justify-content:center;padding:6px 0;}
   .summary-grid{grid-template-columns:repeat(2,1fr);}
   .col-hide{display:none;}
   .fold-hide{display:none;}
@@ -1098,6 +1107,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 @media(max-width:480px){
   .stock-dhead .btn-return{display:none;}
   .stock-dtools .btn-return{display:inline-flex;}
+  .stock-dtools{justify-content:flex-start;}   /* 돌아가기 바로 오른쪽에 세부 정보 닫기(사이를 벌리지 않음) */
   .cmp-bar{gap:6px;padding:7px 10px;}
   .cmp-seg .seg-split,.cmp-title span{display:none;}
   .cmp-seg button{padding:5px 10px;}
@@ -1117,12 +1127,12 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <span id="statusText">준비 중...</span>
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
-    <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)">🔄 업데이트</button>
+    <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)" title="업데이트">🔄 <span class="lbl">업데이트</span></button>
     <button class="btn btn-ghost btn-snap" id="btnSaveSnap" aria-label="스냅샷" title="스냅샷" onclick="onSaveSnapClick(this)">📸</button>
     <a href="../" class="btn btn-ghost btn-home" aria-label="홈" title="홈" style="text-decoration:none;display:inline-flex;align-items:center;">🏠</a>
-    <a href="../signals/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">📈 매매전략</a>
-    <a href="../retirement/" class="btn btn-ghost" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 현금흐름</a>
-    <button class="btn btn-ghost btn-backup" id="btnBackup" onclick="openBackupModal()">💾 백업 / 복원<i class="bk-dot" id="bkDot" hidden aria-hidden="true"></i></button>
+    <a href="../signals/" class="btn btn-ghost" title="매매전략" style="text-decoration:none;display:inline-flex;align-items:center;">📈 <span class="lbl">매매전략</span></a>
+    <a href="../retirement/" class="btn btn-ghost" title="현금흐름" style="text-decoration:none;display:inline-flex;align-items:center;">🧮 <span class="lbl">현금흐름</span></a>
+    <button class="btn btn-ghost btn-backup" id="btnBackup" onclick="openBackupModal()" title="백업 / 복원">💾 <span class="lbl">백업 / 복원</span><i class="bk-dot" id="bkDot" hidden aria-hidden="true"></i></button>
   </div>
   <span id="themeMountPf" style="display:contents"></span>
 </div>
@@ -1130,12 +1140,12 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 <nav class="tabbar" id="tabbar">
   <div class="tabbar-scroll">
-  <button data-page="dashboard" onclick="switchPage('dashboard')">📊 대시보드</button>
-  <button data-page="portfolio" onclick="switchPage('portfolio')">💼 보유종목</button>
-  <button data-page="tradelog" onclick="switchPage('tradelog')">🔁 매매 이력</button>
-  <button data-page="returns" onclick="switchPage('returns')">📈 수익률분석</button>
-  <button data-page="dividend" onclick="switchPage('dividend')">💰 배당금관리</button>
-  <button data-page="tax" onclick="switchPage('tax')">🧾 세금관리</button>
+  <button data-page="dashboard" onclick="switchPage('dashboard')" title="대시보드" aria-label="대시보드">📊 <span class="lbl">대시보드</span></button>
+  <button data-page="portfolio" onclick="switchPage('portfolio')" title="보유종목" aria-label="보유종목">💼 <span class="lbl">보유종목</span></button>
+  <button data-page="tradelog" onclick="switchPage('tradelog')" title="매매 이력" aria-label="매매 이력">🔁 <span class="lbl">매매 이력</span></button>
+  <button data-page="returns" onclick="switchPage('returns')" title="수익률분석" aria-label="수익률분석">📈 <span class="lbl">수익률분석</span></button>
+  <button data-page="dividend" onclick="switchPage('dividend')" title="배당금관리" aria-label="배당금관리">💰 <span class="lbl">배당금관리</span></button>
+  <button data-page="tax" onclick="switchPage('tax')" title="세금관리" aria-label="세금관리">🧾 <span class="lbl">세금관리</span></button>
   </div>
   <button type="button" class="hide-amt-btn" id="hideAmtBtn" role="switch" aria-checked="false" onclick="setHideAmounts(!hideAmounts)" title="금액·%·종목명·티커·금융회사·메모를 가리고 손익 색을 회색으로 바꿉니다"><span class="hide-amt-ico">👁</span>개인정보 숨기기<span class="sw"></span></button>
 </nav>
@@ -1364,9 +1374,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 </div>
 
-<div class="notice" style="text-align:center;padding-bottom:8px;">
-  ※ 시세 조회·자산 추적 전용입니다. 실제 매수·매도는 MTS 앱에서 진행하세요.
-</div>
 
 </section>
 
@@ -3058,7 +3065,7 @@ function renderLogoFx(){
   const el = document.getElementById('logoFx'); if(!el) return;
   const v = liveFx.val!=null ? liveFx.val : FX.USD;
   const chg = liveFx.chg!=null ? ` <span class="${updn(liveFx.chg)}">${liveFx.chg>=0?'▲':'▼'}${Math.abs(liveFx.chg).toFixed(2)}%</span>` : '';
-  el.innerHTML = `<span class="fx-lbl">USD/KRW</span> <b>${v.toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1})}</b>${chg}`;
+  el.innerHTML = `<span class="fx-lbl">USD/KRW</span> <b class="fx-val">${v.toLocaleString('ko-KR',{minimumFractionDigits:1,maximumFractionDigits:1})}</b>${chg}`;
   el.style.opacity = liveFx.ok ? '' : '.5';
   el.title = liveFx.at ? `USD/KRW 실시간 · ${new Date(liveFx.at).toLocaleTimeString('ko-KR')} 기준${liveFx.ok?'':' (갱신 실패 — 마지막 값)'}` : 'USD/KRW (저장된 값 — 실시간 조회 중)';
 }
@@ -3100,10 +3107,10 @@ async function onRefreshPricesClick(btn){
   if(!btn) return;
   const original = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '⏳ 갱신 중...';
+  btn.innerHTML = '⏳ <span class="lbl">갱신 중...</span>';
   try{
     await fetchAllPrices(false);
-    btn.innerHTML = '✅ 완료';
+    btn.innerHTML = '✅ <span class="lbl">완료</span>';
   } finally {
     setTimeout(()=>{ btn.innerHTML = original; btn.disabled = false; }, 900);
   }
@@ -4502,6 +4509,8 @@ function stockDetailPanelHtml(a, SL, inCmp){
   const rt = a.avgPrice>0 ? (a.currentPrice-a.avgPrice)/a.avgPrice*100 : null;
   // 돌아가기 버튼: 펼침·90도는 제목 줄 오른쪽, 접힘은 제목이 길어 잘리므로 아래 도구 줄(매매전략 비교 옆) — CSS가 한쪽만 보인다
   const retBtn = `<button class="btn btn-return" style="flex-shrink:0;" onclick="returnToTreemap('${a.id}')">${stockDetailOrigin&&stockDetailOrigin.type==='alloc'?'← 비중현황으로 가기':'← 트리맵으로 가기'}</button>`;
+  // 세부 정보 닫기: 돌아가기 버튼 바로 오른쪽, 같은 크기·글자(회색 틴트) — 돌아가기와 같은 CSS 규칙으로 한쪽 줄에만 보인다
+  const closeBtn = `<button class="btn btn-return btn-close-detail" style="flex-shrink:0;" onclick="closeStockDetail();renderTable();">✕ 세부 정보 닫기</button>`;
   // 종목 이름은 비교 화면 바(또는 표의 종목 행)에 이미 있으므로 여기서는 다시 쓰지 않는다
   const head = inCmp
     ? `<div class="cmp-dhead">
@@ -4509,17 +4518,13 @@ function stockDetailPanelHtml(a, SL, inCmp){
        <div class="stock-dtools"><div style="font-size:12px;font-weight:700;">${legend}</div>${tabs}</div>`
     : `<div class="stock-dhead" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
             <div style="font-size:12px;font-weight:700;">가격 추이 ${legend}</div>
-            ${retBtn}
+            <div style="display:flex;gap:8px;flex-shrink:0;">${retBtn}${closeBtn}</div>
           </div>
           <div class="stock-dtools">
-            ${retBtn}
+            ${retBtn}${closeBtn}
             <button class="btn btn-green cmp-open-btn" id="cmpBtn_${a.id}" onclick="cmpOpen('${a.id}')" title="같은 종목의 매수·매도 전략과 나란히 비교 (S)">나란히 비교</button>
             ${tabs}
           </div>`;
-  const memoHead = inCmp ? '메모' : `<div style="display:flex;justify-content:space-between;align-items:center;">
-                  <span>메모</span>
-                  <button class="btn btn-ghost" style="padding:3px 8px;font-size:11px;font-weight:400;" onclick="closeStockDetail();renderTable();">✕ 세부 정보 닫기</button>
-                </div>`;
   return `${head}
           <div class="chart-wrap" style="position:relative;">
             <canvas id="stockChart_${a.id}" height="${SL.chartH}" data-h="${SL.chartH}"></canvas>
@@ -4528,7 +4533,7 @@ function stockDetailPanelHtml(a, SL, inCmp){
           <div id="stockChartStats_${a.id}" style="font-size:11px;color:var(--color-secondary);margin-top:6px;${inCmp?"min-height:17px;":""}"></div>
           <div class="tbl-wrap stock-trades" style="margin-top:12px;max-height:${SL.tradeH}px;overflow-y:auto;">
             <table class="table-auto">
-              <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">${memoHead}</th></tr></thead>
+              <thead><tr><th style="text-align:left">날짜</th><th>구분</th><th>단가</th><th>수량</th><th style="text-align:left">메모</th></tr></thead>
               <tbody id="stockChartTradeBody_${a.id}"></tbody>
             </table>
           </div>`;

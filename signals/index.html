@@ -215,6 +215,10 @@
     .topbar .btn { width: 32px; padding: 0; }
     .topbar .btn .lbl { display: none; }
   }
+  /* 접힘: 상단 바 가로 공간 확보 — 제목·다크 아이콘 숨김(아이콘 버튼만) */
+  @media (max-width: 480px) {
+    .topbar .logo, .topbar .theme-sw { display: none; }
+  }
 
   /* 도움말: 페이지 안에 펼쳐지는 인라인 패널(모달 아님). 열려 있는 동안은 종목 목록을 숨겨 가이드만 보이게 한다. */
   .help-overlay { display: none; margin: 4px 0 14px; scroll-margin-top: 64px; }
