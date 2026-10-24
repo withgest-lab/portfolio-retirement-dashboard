@@ -796,7 +796,8 @@ table.tl-table{width:100%;table-layout:fixed;border-collapse:separate;border-spa
 .tl-icon .ic{width:15px;height:15px;vertical-align:middle;}
 .tl-icon:hover{background:rgba(118,118,128,.12);color:var(--color-text);}
 .tl-icon.del:hover{background:rgba(255,59,48,.10);color:#ff3b30;}
-.tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 8px 4px!important;}
+.tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 8px 8px!important;}
+.tl-reason-row > td.tl-reason-pad{padding:0!important;}
 tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
 .tl-empty{text-align:center!important;padding:20px!important;color:var(--color-tertiary);}
 /* 열 간격 균등(2026-10-12): 열 이름·값을 모두 가운데 정렬하고, 표를 그린 뒤 fitTlCols()가 열마다 내용 폭을 재서
@@ -833,6 +834,7 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .tl-table col.tl-c-date{width:52px;} .tl-table col.tl-c-pnl{width:30%;} .tl-table col.tl-c-ic{width:32px;}
   .tl-table td{font-size:12px;padding:9px 5px;}
   .tl-table th:first-child,.tl-table td.tl-date{padding-left:5px;}
+  .tl-table td.tl-reason{padding-left:5px!important;}   /* 사유 시작 = 이 폭의 종목 칸 여백(5px) → 매수/매도 캡슐과 수직 정렬 */
 }
 @media(max-width:599px){ .snap-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) 30px;column-gap:8px;font-size:12px;} .snap-row .col-hide{display:none;} }
 
@@ -4046,10 +4048,10 @@ function renderSoldHistory(){
     </tr>`;
 
     if(reasonStr){
-      rowHtml += `<tr class="tr-full">
-        <td colspan="6" class="tl-reason">
-          💬 ${reasonStr.replace(/</g,'&lt;')}
-        </td>
+      // 사유는 종목 열부터 시작 — 매수/매도 캡슐 시작점과 수직 정렬(첫 칸 = 날짜 열은 비움)
+      rowHtml += `<tr class="tr-full tl-reason-row">
+        <td class="tl-reason-pad"></td>
+        <td colspan="5" class="tl-reason">💬 ${reasonStr.replace(/</g,'&lt;')}</td>
       </tr>`;
     }
 
