@@ -684,6 +684,7 @@ tr.dv-flash > td{animation:dvflash 1.5s ease-out;}
 .alloc-detail-cell{width:100%;}
 .alloc-detail-row{flex-direction:column;gap:6px;width:100%;}
 .alloc-detail-cell .type-chips{width:100%;}
+@media(min-width:481px){ .alloc-detail-cell .type-chips{display:none;} }   /* 펼침: 오른쪽 목록의 그룹 이름·비율과 같은 내용(중복) — 4+1로 꺾이기도 해 숨김 */
 .alloc-detail-legend{width:100%;max-width:460px;flex:none;}
 .alloc-detail-legend .lg-head{height:24px;margin-top:6px;border-bottom:1px solid var(--color-border);}
 .alloc-detail-legend .lg-head .lg-name{font-size:12px;}
@@ -1082,6 +1083,11 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .filter-bar:has(> #tradeLogFilterSearch) > .tgl-banner{grid-column:1/-1;grid-row:3;justify-self:end;width:auto;margin-right:34px;}
   .filter-bar:has(> #tradeLogFilterSearch) > .tl-clear-btn{grid-column:3;grid-row:3;justify-self:end;width:28px;}   /* 스위치 바로 오른쪽 28px 아이콘 */
   .notice{word-break:keep-all;text-wrap:balance;}
+  .hold-mkt{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:6px;}   /* 시장지표 8개: 한 줄이면 숫자끼리 붙음 → 4개씩 2줄 */
+  /* 요약 타일 4개(배당·금융소득)는 2×2 — 3+1로 한 칸만 아랫줄에 남지 않게 */
+  .cgt-flow:has(> .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t):not(:has(> .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t)) > .cgt-t{flex:1 1 calc(50% - 6px);}
+  .pl-tm{display:none;}   /* 원금기록장: 시각은 숨겨 연필·휴지통 칸 확보 */
+  .card .tbl-wrap.tbl-cap.c6 table.table-auto th:not(:first-child),.card .tbl-wrap.tbl-cap.c6 table.table-auto td:not(:first-child){padding-left:6px;padding-right:6px;}
   .summary-grid{grid-template-columns:repeat(2,1fr);}
   .col-hide{display:none;}
   .fold-hide{display:none;}
@@ -1476,10 +1482,8 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
       <div class="section-label" style="margin:0" id="snapPerfLabel">월별</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn-icon" id="monthlyPerfGranBtn" onclick="toggleMonthlyPerfGranularity()"
-          style="border:1px solid var(--color-border);border-radius:8px;">📅 연도별로 보기</button>
-        <button class="btn-icon" id="monthlyPerfViewBtn" onclick="toggleMonthlyPerfView()"
-          style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
+        <button class="btn btn-ghost dv-btn" id="monthlyPerfGranBtn" onclick="toggleMonthlyPerfGranularity()">📅 연도별로 보기</button>
+        <button class="btn btn-ghost dv-btn" id="monthlyPerfViewBtn" onclick="toggleMonthlyPerfView()">📊 그래프로 보기</button>
       </div>
     </div>
     <div class="vbar-scroll" style="margin-bottom:4px;">
@@ -1504,10 +1508,8 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:2px;">
       <div class="section-label" style="margin:0" id="yearlyReturnsLabel">연도별</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn-icon" id="yearlyReturnsGranBtn" onclick="toggleTradeReturnsGranularity()"
-          style="border:1px solid var(--color-border);border-radius:8px;">🗓 월별로 보기</button>
-        <button class="btn-icon" id="yearlyReturnsViewBtn" onclick="toggleTradeReturnsView()"
-          style="border:1px solid var(--color-border);border-radius:8px;">📊 그래프로 보기</button>
+        <button class="btn btn-ghost dv-btn" id="yearlyReturnsGranBtn" onclick="toggleTradeReturnsGranularity()">🗓 월별로 보기</button>
+        <button class="btn btn-ghost dv-btn" id="yearlyReturnsViewBtn" onclick="toggleTradeReturnsView()">📊 그래프로 보기</button>
       </div>
     </div>
     <div class="vbar-scroll" style="margin-bottom:16px;">
@@ -6096,7 +6098,7 @@ function renderPrincipalLedger(){
     const isIn = r.type==='deposit';
     running += isIn ? (r.totalKRW||0) : -(r.totalKRW||0);
     const dt = new Date(r.at);
-    const dtStr = `${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    const dtStr = `${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()}<span class="pl-tm"> ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}</span>`;
     const badge = isIn
       ? `<span class="acctType-badge" style="background:#34c75920;color:#34c759;">${r.src==='dividend' ? '배당' : '입금'}</span>`
       : `<span class="acctType-badge" style="background:#ff3b3020;color:var(--color-up);">출금</span>`;
