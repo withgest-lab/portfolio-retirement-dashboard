@@ -765,54 +765,51 @@ tr.dv-flash > td{animation:dvflash 1.5s ease-out;}
 .snap-del:hover{background:rgba(255,59,48,.10);color:#ff3b30;}
 .snap-empty{text-align:center;padding:28px;color:var(--color-tertiary);font-size:12px;}
 
-/* 매매 이력 — iOS 목록형 표(열 폭 고정 배분·헤어라인·두 줄 셀 정렬) */
+/* 매매 이력 — 보유종목 표와 같은 형식(2026-10-24 사용자 요청: 듬성듬성·밸런스가 안 좋음 → 보유종목처럼):
+   날짜 | 종목(이름/티커) | 구분 | 투자시장·금융회사·계좌유형·자산유형 | 체결가/수량 | 거래금액 | 실현손익/수익률 | 연필 | 휴지통.
+   글자·여백은 보유종목 실측과 같게(값 11px·이름 12px 굵게·머리글 9px·배지 9px·칸 위아래 7px). 열 폭은 fitTlCols()가
+   '내용 폭 + 간격(750px 11px → 832px 15px)'으로 주고 남는 폭은 종목 열이 가진다 — 남는 폭을 모든 열에 나누면 넓은 폭에서 칸 사이가 벌어졌다.
+   700px 미만은 구분·배지 열을 숨기고 구분 캡슐을 이름 앞에(.tl-pill-f), 접힘(≤480)은 휴지통도 숨긴다(.fold-hide — 보유종목과 같음). */
 table.tl-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;}
-.tl-table col.tl-c-date{width:72px;} .tl-table col.tl-c-price{width:27%;} .tl-table col.tl-c-pnl{width:20%;} .tl-table col.tl-c-ic{width:38px;}
-/* 펼침: 체결가·손익 열은 내용 폭만(남는 폭은 종목 열이 가져 "제목 | 값 묶음"으로 읽힘 — 값 사이가 100px씩 벌어지던 문제) */
-@media(min-width:600px){ .tl-table col.tl-c-price{width:136px;} .tl-table col.tl-c-pnl{width:92px;} }
-.tl-table th{font-size:10.5px;font-weight:600;color:var(--color-tertiary);text-transform:none;letter-spacing:0;text-align:right;padding:10px 8px 7px;border-bottom:.5px solid rgba(60,60,67,.18);background:var(--color-card);}
-.tl-table th:nth-child(1),.tl-table th:nth-child(2){text-align:left;}
-.tl-table td{padding:10px 8px;border-bottom:.5px solid rgba(60,60,67,.12);vertical-align:middle;background:var(--color-card);white-space:nowrap;font-size:13px;}
-.tl-table th:first-child,.tl-table td:first-child{position:static;min-width:0;padding-left:4px;}
-.tl-date{text-align:left;color:var(--color-text);font-weight:600;}
+.tl-table th{font-size:9px;font-weight:600;line-height:1.35;color:var(--color-tertiary);text-transform:none;letter-spacing:0;text-align:center;white-space:nowrap;padding:7px 0 6px;border-bottom:.5px solid rgba(60,60,67,.18);background:var(--color-card);}
+.tl-table th .th-s{font-weight:400;}
+.tl-table td{font-size:11px;text-align:center;white-space:nowrap;padding:7px 0;border-bottom:.5px solid rgba(60,60,67,.12);vertical-align:middle;background:var(--color-card);}
+.tl-table th:first-child,.tl-table td:first-child{position:static;min-width:0;}   /* 전역 첫 열 sticky·min-width:70px 해제 — 날짜 칸이 내용(10.13)보다 40px 넓어져 종목 칸을 뺏었다 */
+.tl-table th:first-child,.tl-table td.tl-date{padding-left:4px;}
+/* 종목 열만 왼쪽 맞춤 — 이름 시작점이 일직선(보유종목 종목명과 같음) */
+.tl-table th:nth-child(2),.tl-table td.tl-main{text-align:left;padding-left:6px;}
+.tl-date{color:var(--color-text);font-weight:600;}
 .tl-sub{font-size:10.5px;font-weight:500;color:var(--color-tertiary);margin-top:2px;}
 .tl-sub.up{color:var(--color-up);} .tl-sub.dn{color:var(--color-down);}
+.tl-table .tl-sub{font-size:10px;font-weight:400;margin-top:1px;}
 /* 원금기록장 종목명(배당 자동 입금 등): 펼침은 구분 배지 아래(아주 긴 이름은 말줄임), 접힘은 날짜 아래 둘째 줄.
    접힘에서 구분 칸에 두면 긴 종목명이 칸을 176px로 늘려 384에서 103px 가로 스크롤 — 스와이프가 표 스크롤에 먼저 쓰여 한 번에 안 넘어갔다 */
 .pl-nm-f{display:none;}
 .pl-nm-w{max-width:16em;margin:2px auto 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.tl-main{text-align:left;overflow:hidden;}
-.tl-line{display:flex;align-items:center;gap:7px;min-width:0;}
-.tl-name{font-weight:600;color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-.tl-pill{flex-shrink:0;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;}
+.tl-main{overflow:hidden;}
+.tl-main .tl-sub{overflow:hidden;text-overflow:ellipsis;}
+.tl-line{display:flex;align-items:center;gap:5px;min-width:0;}
+.tl-name{font-size:12px;font-weight:700;color:var(--color-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.tl-pill{display:inline-block;flex-shrink:0;font-size:9px;font-weight:700;line-height:14px;padding:1px 6px;border-radius:999px;}
 .tl-pill.buy{background:rgba(255,59,48,.12);color:#ff3b30;}
 .tl-pill.sell{background:rgba(10,132,255,.12);color:#0a84ff;}
 .tl-pill.div{background:rgba(255,149,0,.14);color:#c76a00;}
-.tl-badges{display:flex;gap:4px;margin-top:4px;overflow:hidden;}
-.tl-badge{font-size:9.5px;font-weight:600;padding:1px 6px;border-radius:999px;white-space:nowrap;}
-.tl-price{text-align:right;color:var(--color-text);}
-.tl-pnlc{text-align:right;}
-.tl-pnl{font-weight:700;}
+.tl-pill-f{display:none;}
+.tl-table .acctType-badge{font-size:9px;padding:1px 4px;}
+.tl-pct{font-size:10px;font-weight:700;margin-top:1px;}
 .tl-dim{color:var(--color-tertiary);}
-.tl-act{text-align:right;}
-.tl-table td.tl-act{padding-left:0;padding-right:0;}
+.tl-table td.tl-act{padding:0;}
 .tl-icon{border:none;background:transparent;color:var(--color-tertiary);width:30px;height:30px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;}
 .tl-icon .ic{width:15px;height:15px;vertical-align:middle;}
 .tl-icon:hover{background:rgba(118,118,128,.12);color:var(--color-text);}
 .tl-icon.del:hover{background:rgba(255,59,48,.10);color:#ff3b30;}
-.tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 8px 8px!important;}
+/* 사유 줄: 날짜 칸은 비우고 종목 칸 여백(6px)에서 시작 → 종목 이름 시작점과 수직 정렬 */
+.tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 7px 6px!important;}
 .tl-reason-row > td.tl-reason-pad{padding:0!important;}
 tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
 .tl-empty{text-align:center!important;padding:20px!important;color:var(--color-tertiary);}
-/* 열 간격 균등(2026-10-12): 열 이름·값을 모두 가운데 정렬하고, 표를 그린 뒤 fitTlCols()가 열마다 내용 폭을 재서
-   남는 폭을 모든 열에 똑같이 나눈다 → 이웃한 열의 보이는 내용 사이 간격이 모두 같다(예전: 종목 열이 남는 폭을 다 가져
-   종목→체결가 180px, 손익→아이콘 16px). 내용이 표보다 넓으면 종목 열만 말줄임으로 줄인다. 칸 안쪽 여백은 좌우 같게. */
-.tl-table > thead > tr > th:nth-child(n), .tl-table > tbody > tr.tl-row > td{text-align:center;}
-.tl-table th:first-child,.tl-table td.tl-date{padding-left:8px;}
-.tl-table .tl-line,.tl-table .tl-badges{justify-content:center;}
-/* 종목 열(캡슐+이름, 아래 배지)만 왼쪽 맞춤 — 이름 시작점이 일직선(2026-10-24) */
-.tl-table > thead > tr > th:nth-child(2), .tl-table > tbody > tr.tl-row > td.tl-main{text-align:left;}
-.tl-table td.tl-main .tl-line,.tl-table td.tl-main .tl-badges{justify-content:flex-start;}
+@media(max-width:699px){ .tl-table .tl-w{display:none;} .tl-pill-f{display:inline-block;} }
+@media(max-width:480px){ .tl-table th{font-size:10px;padding-top:6px;} .tl-table td{padding:6px 0;} .tl-name{font-size:11px;} }
 /* 열 간격 균등 공용(fitEqualCols) — 재는 동안만 붙는 클래스: 열·칸을 내용 폭(max-content)으로 */
 table.eq-measure{table-layout:auto!important;width:max-content!important;}
 /* 열 간격 균등 숫자 표(fitNumTable) — 펼침: 첫 열 width:100%(tbl-cap)를 풀고 col 폭을 따른다 */
@@ -831,14 +828,6 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .card .tbl-wrap.tbl-cap table.table-auto th{font-size:10.5px;font-weight:600;color:var(--color-tertiary);text-transform:none;letter-spacing:0;padding:10px 8px 7px;border-bottom:.5px solid rgba(60,60,67,.18);}
   .card .tbl-wrap.tbl-cap table.table-auto td{font-size:13px;padding:10px 8px;border-bottom:.5px solid rgba(60,60,67,.12);}
   .card .tbl-wrap.tbl-cap table.table-auto th:first-child,.card .tbl-wrap.tbl-cap table.table-auto td:first-child{padding-left:4px;}
-}
-@media(max-width:599px){
-  .tl-table .tl-price{display:none;}
-  .tl-table col.tl-c-price{width:0;}
-  .tl-table col.tl-c-date{width:52px;} .tl-table col.tl-c-pnl{width:30%;} .tl-table col.tl-c-ic{width:32px;}
-  .tl-table td{font-size:12px;padding:9px 5px;}
-  .tl-table th:first-child,.tl-table td.tl-date{padding-left:5px;}
-  .tl-table td.tl-reason{padding-left:5px!important;}   /* 사유 시작 = 이 폭의 종목 칸 여백(5px) → 매수/매도 캡슐과 수직 정렬 */
 }
 @media(max-width:599px){ .snap-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) 30px;column-gap:8px;font-size:12px;} .snap-row .col-hide{display:none;} }
 
@@ -1494,16 +1483,20 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <div class="notice" style="margin:0 0 8px;">자산·현금 잔액에는 반영되지 않는 기록 전용 입력입니다.</div>
     <div class="fm" id="form_tl"></div>
   </div>
-  <!-- iOS 목록형 표: 날짜(두 줄) · 종목(매수/매도 캡슐+이름, 아래 배지) · 체결가×수량(아래 총액) · 실현손익 · 작은 아이콘 -->
+  <!-- 보유종목 표와 같은 형식: 날짜 | 종목(이름/티커) | 구분 | 배지 4열 | 체결가/수량 | 거래금액 | 실현손익/수익률 | 연필 | 휴지통.
+       좁은 폭(<700)은 구분·배지 열을 숨기고 구분 캡슐을 이름 앞에, 접힘(≤480)은 휴지통도 숨김(보유종목과 같음). 사유는 행 아래 줄 -->
   <div class="tbl-wrap">
     <table class="tl-table">
-      <colgroup><col class="tl-c-date"><col><col class="tl-c-price"><col class="tl-c-pnl"><col class="tl-c-ic"><col class="tl-c-ic"></colgroup>
+      <colgroup><col><col><col><col><col><col><col><col><col><col><col><col></colgroup>
       <thead><tr>
         <th>날짜</th>
         <th>종목</th>
-        <th class="tl-price">체결가 × 수량</th>
-        <th>실현손익</th>
-        <th></th><th></th>
+        <th class="tl-w">구분</th>
+        <th class="tl-w">투자시장</th><th class="tl-w">금융회사</th><th class="tl-w">계좌유형</th><th class="tl-w">자산유형</th>
+        <th>체결가<br><span class="th-s">수량</span></th>
+        <th>거래금액</th>
+        <th>실현손익<br><span class="th-s">수익률</span></th>
+        <th class="tl-tight"></th><th class="tl-tight fold-hide"></th>
       </tr></thead>
       <tbody id="soldTbody"></tbody>
     </table>
@@ -4018,53 +4011,58 @@ function renderSoldHistory(){
   arr = arr.filter(tradeLogPassesFilter);
   if(!arr.length){
     const filterActive = tradeLogFilter.search||tradeLogFilter.market||tradeLogFilter.acctType||tradeLogFilter.company||tradeLogFilter.assetType;
-    el.innerHTML = `<tr><td colspan="6" class="tl-empty">${filterActive?'조건에 맞는 이력이 없습니다':'매수/매도 이력 없음'}</td></tr>`;
+    el.innerHTML = `<tr><td colspan="12" class="tl-empty">${filterActive?'조건에 맞는 이력이 없습니다':'매수/매도 이력 없음'}</td></tr>`;
     fitTlCols();
     return;
   }
+  // 보유종목 표와 같은 칸 구성·배지(acctType-badge)·숫자 두 줄 칸 — 값이 없는 칸은 보유종목처럼 '-'
+  const na = '<span class="tl-dim">-</span>';
+  const badge = (label,col)=>`<span class="acctType-badge" style="background:${col}20;color:${col}">${label}</span>`;
   el.innerHTML = arr.map(r=>{
     const dt = new Date(r.at);
     const dDate = `${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
     const dTime = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-    const sym = r.currency==='USD'?'$':r.currency==='JPY'?'¥':'₩';
     const isBuy = r.type==='buy';
     const isDiv = r.type==='dividend';
-    const typePill = `<span class="tl-pill ${isBuy?'buy':isDiv?'div':'sell'}">${isBuy?'매수':isDiv?'배당':'매도'}</span>`;
-    let pnlCell = '<span class="tl-dim">-</span>';
+    const pillCls = isBuy?'buy':isDiv?'div':'sell', pillTxt = isBuy?'매수':isDiv?'배당':'매도';
+    const price = hideAmounts ? AMOUNT_MASK
+      : r.currency==='USD' ? '$'+(r.price||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})
+      : (r.currency==='JPY' ? '¥' : '₩')+Math.round(r.price||0).toLocaleString('ko-KR');
+    let pnlCls = '', pnlCell = na;   // 보유종목 평가손익 칸처럼 칸 전체에 상승/하락 색, 수익률은 아래 줄 굵게
     if(isDiv && r.pnl!==null && r.pnl!==undefined){
-      pnlCell = `<span class="up tl-pnl">+${fmt(r.pnl)}</span>`;
+      pnlCls = 'up'; pnlCell = `+${fmt(r.pnl)}`;
     } else if(!isBuy && r.pnl!==null && r.pnl!==undefined){
-      const pctStr = (r.pnlPct===null||r.pnlPct===undefined) ? '' : `<div class="tl-sub ${r.pnl>=0?'up':'dn'}">${maskAmt((r.pnlPct>=0?'+':'')+r.pnlPct.toFixed(2)+'%')}</div>`;
-      pnlCell = `<span class="${r.pnl>=0?'up':'dn'} tl-pnl">${r.pnl>=0?'+':''}${fmt(r.pnl)}</span>${pctStr}`;
+      const pctStr = (r.pnlPct===null||r.pnlPct===undefined) ? '' : `<div class="tl-pct">${maskAmt((r.pnlPct>=0?'+':'')+r.pnlPct.toFixed(2)+'%')}</div>`;
+      pnlCls = r.pnl>=0?'up':'dn'; pnlCell = `${r.pnl>=0?'+':''}${fmt(r.pnl)}${pctStr}`;
     }
     const reasonStr = r.reason ? r.reason : '';
-    const badge = (label,col)=>`<span class="tl-badge" style="background:${col}1f;color:${col};">${label}</span>`;
     const sacIdx = r.company ? subAcctNames.indexOf(r.company) : -1;
     const sacCol = sacIdx>=0 ? LINE_COLS[sacIdx%LINE_COLS.length] : '#8e8e93';
-    const badges = [
-      r.company ? badge(COMPANY_LABELS[r.company]||r.company, sacCol) : '',
-      r.acctType ? badge(ACCTTYPE_LABELS[r.acctType]||r.acctType, ACCTTYPE_COLS[r.acctType]||'#8e8e93') : '',
-      r.assetType ? badge(r.assetType, ASSETTYPE_COLS[r.assetType]||'#8e8e93') : ''
-    ].join('');
     let rowHtml = `<tr class="tl-row">
       <td class="tl-date">${dDate}<div class="tl-sub">${dTime}</div></td>
-      <td class="tl-main"><div class="tl-line">${typePill}<span class="tl-name">${r.name}</span></div>${badges?`<div class="tl-badges">${badges}</div>`:''}</td>
-      <td class="tl-price">${isDiv ? '' : maskAmt(sym+(r.price||0).toLocaleString()+' × '+(r.quantity||0).toLocaleString())}<div class="tl-sub">${fmt(r.totalKRW||0)}</div></td>
-      <td class="tl-pnlc">${pnlCell}</td>
+      <td class="tl-main"><div class="tl-line"><span class="tl-pill tl-pill-f ${pillCls}">${pillTxt}</span><span class="tl-name">${r.name}</span></div>${r.ticker && r.ticker!=='—' ? `<div class="tl-sub">${r.ticker}</div>` : ''}</td>
+      <td class="tl-w"><span class="tl-pill ${pillCls}">${pillTxt}</span></td>
+      <td class="tl-w">${r.market ? badge(MARKET_LABELS[r.market]||r.market, MARKET_COLS[r.market]||'#8e8e93') : na}</td>
+      <td class="tl-w">${r.company ? badge(COMPANY_LABELS[r.company]||r.company, sacCol) : na}</td>
+      <td class="tl-w">${r.acctType ? badge(ACCTTYPE_LABELS[r.acctType]||r.acctType, ACCTTYPE_COLS[r.acctType]||'#8e8e93') : na}</td>
+      <td class="tl-w">${r.assetType ? badge(r.assetType, ASSETTYPE_COLS[r.assetType]||'#8e8e93') : na}</td>
+      <td>${isDiv ? na : `${price}<div class="tl-sub">${maskAmt('× '+(r.quantity||0).toLocaleString())}</div>`}</td>
+      <td>${fmt(r.totalKRW||0)}</td>
+      <td class="${pnlCls}">${pnlCell}</td>
       <td class="tl-act">${iconBtn('edit', `toggleTradeLogEdit('${r.id}')`)}</td>
-      <td class="tl-act">${iconBtn('del', `deleteSoldHistory('${r.id}')`)}</td>
+      <td class="tl-act fold-hide">${iconBtn('del', `deleteSoldHistory('${r.id}')`)}</td>
     </tr>`;
 
     if(reasonStr){
-      // 사유는 종목 열부터 시작 — 매수/매도 캡슐 시작점과 수직 정렬(첫 칸 = 날짜 열은 비움)
+      // 사유는 종목 열부터 시작 — 종목 이름 시작점과 수직 정렬(첫 칸 = 날짜 열은 비움)
       rowHtml += `<tr class="tr-full tl-reason-row">
         <td class="tl-reason-pad"></td>
-        <td colspan="5" class="tl-reason">💬 ${reasonStr.replace(/</g,'&lt;')}</td>
+        <td colspan="11" class="tl-reason">💬 ${reasonStr.replace(/</g,'&lt;')}</td>
       </tr>`;
     }
 
     if(editingTradeLogId===r.id){
-      rowHtml += renderTradeLogEditForm(r, 6);
+      rowHtml += renderTradeLogEditForm(r, 12);
     }
     return rowHtml;
   }).join('');
@@ -4081,10 +4079,10 @@ function eqObserve(el, fn){
   if(!eqObserve.ro) eqObserve.ro = new ResizeObserver(es=>es.forEach(e=>{ const t = e.target, w = Math.round(e.contentRect.width); if(w && w!==t._eqW){ t._eqW = w; if(t.isConnected && t._eqFit) t._eqFit(); } }));
   el._eqObs = 1; eqObserve.ro.observe(el);
 }
-function fitEqualCols(t, flexIdx){
+function fitEqualCols(t, flexIdx, opt){
   if(!t) return null;
   const wrap = t.parentElement, cols = [...t.querySelectorAll(':scope > colgroup > col')];
-  eqObserve(wrap, ()=>fitEqualCols(t, flexIdx));
+  eqObserve(wrap, ()=>fitEqualCols(t, flexIdx, opt));
   const W = wrap.clientWidth, rows = [...t.tBodies[0].rows];
   const isSpan = r => [...r.cells].some(c=>c.colSpan>1);
   if(!W || !rows.some(r=>!isSpan(r))){ cols.forEach(c=>c.style.width=''); return null; }
@@ -4092,11 +4090,27 @@ function fitEqualCols(t, flexIdx){
   spans.forEach(r=>r.style.display='none');
   cols.forEach(c=>c.style.width='');
   t.classList.add('eq-measure');
-  const nat = [...t.tHead.rows[0].cells].filter(th=>getComputedStyle(th).display!=='none').map(th=>th.getBoundingClientRect().width);
+  const ths = [...t.tHead.rows[0].cells].filter(th=>getComputedStyle(th).display!=='none');
+  const nat = ths.map(th=>th.getBoundingClientRect().width);
   t.classList.remove('eq-measure');
   spans.forEach(r=>r.style.display='');
-  const spare = W - nat.reduce((s,v)=>s+v, 0), G = Math.max(0, spare/nat.length);
-  const ws = nat.map((v,i)=> spare>=0 ? v+G : (i===flexIdx ? Math.max(48, v+spare) : v));
+  let ws, G;
+  if(opt){
+    // 보유종목 방식(opt): 열마다 내용 폭 + 간격 gap — 남는 폭을 모든 열에 나누면 폭이 넓을수록 칸 사이가 벌어져 듬성듬성해진다.
+    // opt.tight(선택자) 열(연필·휴지통)은 내용 폭만 줘 한 쌍으로 붙이고, 남거나 모자란 폭은 flexIdx 열(종목)이 가진다.
+    // 종목이 opt.nameMin보다 좁아지면 간격부터 줄인다(최소 2px).
+    const tight = ths.map(th=>!!(opt.tight && th.matches(opt.tight)));
+    const nGap = tight.filter(x=>!x).length;
+    const others = nat.reduce((s,v,i)=> i===flexIdx ? s : s+v, 0);
+    const nameMin = Math.min(nat[flexIdx], opt.nameMin||96);
+    G = Math.max(2, Math.min(typeof opt.gap==='function' ? opt.gap() : opt.gap, (W - others - nameMin) / nGap));
+    ws = nat.map((v,i)=> tight[i] ? v : v+G);
+    ws[flexIdx] = Math.max(48, W - ws.reduce((s,v,i)=> i===flexIdx ? s : s+v, 0));
+  } else {
+    const spare = W - nat.reduce((s,v)=>s+v, 0);
+    G = Math.max(0, spare/nat.length);
+    ws = nat.map((v,i)=> spare>=0 ? v+G : (i===flexIdx ? Math.max(48, v+spare) : v));
+  }
   cols.forEach((c,i)=>{ c.style.width = (i<ws.length ? ws[i] : 0).toFixed(2)+'px'; });
   return {ws, G};
 }
@@ -4107,7 +4121,13 @@ function fitNumTable(t){
   else t.querySelectorAll(':scope > colgroup > col').forEach(c=>c.style.width='');
   eqObserve(t.parentElement, ()=>fitNumTable(t));
 }
-function fitTlCols(){ fitEqualCols(document.querySelector('table.tl-table'), 1); }
+// 매매 이력: 보유종목 표와 같은 간격(--tg: 750px 11px → 832px 15px, 접힘 8px), 연필·휴지통은 붙은 한 쌍, 종목 열이 남는 폭
+function fitTlCols(){
+  fitEqualCols(document.querySelector('table.tl-table'), 1, {
+    gap: ()=> window.innerWidth <= 480 ? 8 : Math.min(16, Math.max(8, 11 + (window.innerWidth - 750) * 0.05)),
+    tight: '.tl-tight', nameMin: 96,
+  });
+}
 // 배당 종목별 표: 열 간격 균등 + 펼친 상세 항목을 표 열에 맞춘다(날짜 56px·내용 = 종목~주기 열, 금액 = 받은 배당 열, 아이콘 = 다음 열).
 // '다음' 열이 숨겨진 폭(접힘)에서는 상세 항목을 기본 grid로 둔다.
 function fitDivStockTable(){

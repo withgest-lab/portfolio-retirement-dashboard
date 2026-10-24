@@ -9,7 +9,7 @@
 //      매매전략 도움말 안에서 밀면 도움말 칸만 바뀜
 // 사용(playwright가 NODE_PATH에 있어야 함, 정적 서버는 fit-audit과 같게 http://localhost:4173/):
 //   node .claude/skills/ios-design/swipe-audit.js <portfolio|retirement|signals|all> [--grid|--cases] [--quick] [--base URL] [--vps 384x800,750x700]
-//   --quick: 격자 뷰포트를 384×800·750×700·832×620 3개로. 매매전략 데이터(scores.json·detail)는 로컬에 없으면 배포본에서 받아 쓴다.
+//   --quick: 격자 뷰포트를 384×800·750×700·832×620 3개로. --only tradelog: 그 이름으로 시작하는 화면만 격자(작은 수정 = 부분 검증). 매매전략 데이터(scores.json·detail)는 로컬에 없으면 배포본에서 받아 쓴다.
 // 실패가 있으면 종료 코드 1.
 const path = require('path');
 const { chromium } = require('playwright');
@@ -90,6 +90,7 @@ async function grid(browser, o, app, logs) {
     let t0 = 0, k0 = 0;
     for (let si = 0; si < steps.length; si++) {
       const st = steps[si], name = st.filter(Boolean).join('/');
+      if (o.only && !name.startsWith(o.only)) continue;   // --only: 바꾼 화면만(부분 검증)
       await goStep(page, st); await sleep(app === 'retirement' && st[1] === 'tb-risk' ? 2500 : 500);
       // 가로로 밀리는 영역(표 감싸개 등)이 있으면 그 위의 스와이프는 영역 스크롤에 먼저 쓰여 한 번에 안 넘어간다 → 모든 폭에서 0이어야 한다
       const hsAreas = await page.evaluate(() => [...document.querySelectorAll('body *')].filter(e => {
@@ -285,8 +286,8 @@ async function cases(browser, o, app, logs) {
 async function main() {
   const args = process.argv.slice(2);
   const val = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-  const which = args.find(a => !a.startsWith('--') && !/^\d+x\d+/.test(a) && a !== val('--base') && a !== val('--vps')) || 'all';
-  const o = { base: (val('--base') || 'http://localhost:4173/').replace(/\/?$/, '/'), vps: val('--vps') ? val('--vps').split(',').map(s => s.split('x').map(Number)) : args.includes('--quick') ? QUICK_VPS : FULL_VPS };
+  const which = args.find(a => !a.startsWith('--') && !/^\d+x\d+/.test(a) && a !== val('--base') && a !== val('--vps') && a !== val('--only')) || 'all';
+  const o = { only: val('--only'), base: (val('--base') || 'http://localhost:4173/').replace(/\/?$/, '/'), vps: val('--vps') ? val('--vps').split(',').map(s => s.split('x').map(Number)) : args.includes('--quick') ? QUICK_VPS : FULL_VPS };
   const doGrid = !args.includes('--cases'), doCases = !args.includes('--grid');
   const apps = which === 'all' ? Object.keys(APPS) : [which];
   const browser = await chromium.launch();
