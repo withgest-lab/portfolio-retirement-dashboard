@@ -630,7 +630,7 @@ tr.dv-flash > td{animation:dvflash 1.5s ease-out;}
 /* ── 자산 목록 필터 ── */
 .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;}
 .filter-bar .tgl-banner{margin-left:auto;flex-shrink:0;}
-.filter-bar .tl-clear-btn{flex-shrink:0;width:28px;height:28px;padding:0;justify-content:center;}   /* 이력 초기화: 필터 박스와 같은 높이의 빨강 틴트 아이콘(검색칸이 남는 폭을 쓰게) */   /* 수동 입력 스위치(·이력 초기화)는 항상 줄 맨 오른쪽 */
+/* 수동 입력 스위치는 항상 줄 맨 오른쪽 */
 /* 원금 기록장 상단 줄: 합계 칩(내용 폭만) + 오른쪽 끝 스위치. 줄 아래는 표와 12px */
 .filter-bar.pl-bar{margin-bottom:12px;}
 /* 변화추이(트리맵) 조작 줄: 펼침은 모드 탭 왼쪽·기간 탭 오른쪽(오른쪽에 몰려 왼쪽이 비지 않게) */
@@ -1082,15 +1082,17 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   :is(#periodTabs,#qvPeriodTabs,#monthlyChartPeriodTabs,[id^="stockChartPeriodTabs_"]){flex-wrap:nowrap;width:100%;box-sizing:border-box;}
   :is(#periodTabs,#qvPeriodTabs,#monthlyChartPeriodTabs,[id^="stockChartPeriodTabs_"]) > button{flex:1 1 0;min-width:0;padding-left:0;padding-right:0;font-size:10px;}
   .stock-dtools .period-tabs{flex:1 1 100%;}
-  .filter-bar:has(> #assetFilterSearch),.filter-bar:has(> #tradeLogFilterSearch){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));}
-  .filter-bar:has(> #assetFilterSearch) > *,.filter-bar:has(> #tradeLogFilterSearch) > *{min-width:0;width:100%;}
-  /* 필터 배치(2026-10-24 사용자 선택 A안): 검색 한 줄 전체 → 풀다운 3개 같은 폭 → [자산유형 | 스위치 2칸 폭(매매 이력은 + 휴지통)] */
-  .filter-bar > :is(#assetFilterSearch,#tradeLogFilterSearch){grid-column:1/-1;}
-  .filter-bar:has(> #assetFilterSearch) > .tgl-banner{grid-column:2/-1;justify-self:stretch;justify-content:space-between;width:auto;margin-left:0;}
-  .filter-bar:has(> #tradeLogFilterSearch) > .tgl-banner{grid-column:2/-1;grid-row:3;justify-self:stretch;justify-content:space-between;width:auto;margin-left:0;margin-right:34px;}
-  .filter-bar:has(> #tradeLogFilterSearch) > .tl-clear-btn{grid-column:3;grid-row:3;justify-self:end;width:28px;}   /* 스위치 바로 오른쪽 28px 아이콘 */
+  /* 필터 배치(2026-10-24 사용자 요청): 1줄 [검색 | 매매수동입력·이력수동입력 스위치], 2줄 풀다운 4개 같은 폭.
+     검색은 50% 기준으로 늘어나 스위치 옆을 채우고, 풀다운(25% 기준)은 1줄에 들어갈 자리가 없어 2줄로 넘어간다.
+     풀다운 첫 항목은 '○○ 전체' → '○○'(syncFilterAllLabels), 스위치 라벨은 띄어쓰기 없이 */
+  .filter-bar:has(> #assetFilterSearch),.filter-bar:has(> #tradeLogFilterSearch){display:flex;flex-wrap:wrap;gap:6px;}
+  .filter-bar > :is(#assetFilterSearch,#tradeLogFilterSearch){order:1;flex:1 1 50%;min-width:0;}
+  .filter-bar:has(> :is(#assetFilterSearch,#tradeLogFilterSearch)) > .tgl-banner{order:2;flex:0 0 auto;margin-left:0;}
+  .filter-bar:has(> :is(#assetFilterSearch,#tradeLogFilterSearch)) > select{order:3;flex:1 1 calc(25% - 4.5px);min-width:0;width:0;padding-left:7px;padding-right:20px;background-position:right 6px center;}
+  .tgl-sp{display:none;}
   .notice{word-break:keep-all;text-wrap:balance;}
-  .hold-mkt{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:6px;}   /* 시장지표 8개: 한 줄이면 숫자끼리 붙음 → 4개씩 2줄 */
+  /* 시장지표 8개 한 줄(사용자 요청) — 숫자끼리 붙지 않게 글자를 한 단계 줄이고 칸 여백 0 */
+  .hold-mkt .hm{padding:0;} .hold-mkt .hm-l{font-size:9px;} .hold-mkt .hm-v{font-size:9.5px;letter-spacing:-.2px;}
   /* 요약 타일 4개(배당·금융소득)는 2×2 — 3+1로 한 칸만 아랫줄에 남지 않게 */
   .cgt-flow:has(> .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t):not(:has(> .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t)) > .cgt-t{flex:1 1 calc(50% - 6px);}
   .pl-tm{display:none;}   /* 원금기록장: 시각은 숨겨 연필·휴지통 칸 확보 */
@@ -1407,7 +1409,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <select id="assetFilterCompany" onchange="setAssetFilter('company', this.value)"><option value="">금융회사 전체</option></select>
     <select id="assetFilterAcctType" onchange="setAssetFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
     <select id="assetFilterAssetType" onchange="setAssetFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addAssetWrap" data-onopen="prefillAssetFormFromFilter" onclick="toggleBanner(this)">매매 수동 입력<span class="sw"></span></button>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addAssetWrap" data-onopen="prefillAssetFormFromFilter" onclick="toggleBanner(this)">매매<span class="tgl-sp"> </span>수동<span class="tgl-sp"> </span>입력<span class="sw"></span></button>
   </div>
   <!-- 매수/매도/현금 수동 입력 — 필터 줄 오른쪽 끝 스위치 "매매 수동 입력"으로 열고 닫는다(스위치 바로 아래에 펼쳐 스크롤 없이 보임) -->
   <div id="addAssetWrap" style="display:none;margin:0 0 14px;">
@@ -1451,8 +1453,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <select id="tradeLogFilterCompany" onchange="setTradeLogFilter('company', this.value)"><option value="">금융회사 전체</option></select>
     <select id="tradeLogFilterAcctType" onchange="setTradeLogFilter('acctType', this.value)"><option value="">계좌유형 전체</option></select>
     <select id="tradeLogFilterAssetType" onchange="setTradeLogFilter('assetType', this.value)"><option value="">자산유형 전체</option></select>
-    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addTradeLogWrap" data-onopen="prefillTradeLogFormFromFilter" onclick="toggleBanner(this)">이력 수동 입력<span class="sw"></span></button>
-    <button type="button" class="btn btn-red tl-clear-btn" onclick="clearTradeLog()" title="이력 초기화" aria-label="이력 초기화">🗑</button>
+    <button type="button" class="tgl-banner" role="switch" aria-checked="false" data-target="addTradeLogWrap" data-onopen="prefillTradeLogFormFromFilter" onclick="toggleBanner(this)">이력<span class="tgl-sp"> </span>수동<span class="tgl-sp"> </span>입력<span class="sw"></span></button>
   </div>
   <!-- 이력 수동 입력: 위 스위치로 열고 닫는다. 기록 전용 — 자산·현금 잔액에는 반영되지 않는다 -->
   <div id="addTradeLogWrap" style="display:none;margin:0 0 14px;">
@@ -3595,14 +3596,12 @@ function findCashRow(currency, company, cashAcctType){
 // 그 계좌·구분·통화의 현금 행을 새로 만든다(보유종목 표에서는 같은 계좌 현금 줄 안에 통화 한 줄로 보인다)
 function createCashRow(currency, company, cashAcctType){
   const acct = company||null, wantAcctType = cashAcctType||null;
-  const acctLabel = acct ? (COMPANY_LABELS[acct]||acct) : null;
-  const acctTypeLabel = wantAcctType ? (ACCTTYPE_LABELS[wantAcctType]||wantAcctType) : null;
-  const labelParts = [acctLabel, acctTypeLabel].filter(Boolean).join('·');
   // 같은 계좌·구분의 다른 통화 현금이 있으면 그 속성(안전자산 등)을 이어받는다
   const sibling = assets.find(a=>a.acctType==='cash' && (a.company||null)===acct && (a.cashAcctType||null)===wantAcctType && a.assetType);
-  const created = {id:uid(), ticker:'—', name: labelParts?`현금(${labelParts}·${currency})`:`현금(${currency})`,
+  // 이름은 '현금' — 금융회사·계좌유형은 같은 줄 배지, 통화는 줄 안에 이미 보인다(예전 '현금(회사·계좌·통화)'는 너무 길었다)
+  const created = {id:uid(), ticker:'—', name:'현금',
     acctType:'cash', quantity:1, avgPrice:0, currentPrice:0, prevPrice:0, currency, company:acct, cashAcctType:wantAcctType,
-    assetType: sibling ? sibling.assetType : null,
+    assetType: sibling ? sibling.assetType : '안전자산',   // 현금이므로 기본 안전자산
     market: currency==='USD'?'us':currency==='JPY'?'jp':'kr'};
   assets.push(created);
   return created;
@@ -3972,6 +3971,7 @@ function renderTradeLogFilterOptions(arr){
       names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${COMPANY_LABELS[n]||n}</option>`).join('');
     subSel.value=tradeLogFilter.company;
   }
+  syncFilterAllLabels();
 }
 function renderSoldHistory(){
   privDictReset();
@@ -4289,7 +4289,17 @@ function renderAssetFilterOptions(){
       names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${COMPANY_LABELS[n]||n}</option>`).join('');
     subSel.value=assetFilter.company;
   }
+  syncFilterAllLabels();
 }
+// 접힘(≤480px): 필터 풀다운 4개를 한 줄에 넣으려고 첫 항목 '○○ 전체'를 '○○'로 짧게(펼침이면 원래대로)
+function syncFilterAllLabels(){
+  const fold = window.matchMedia('(max-width:480px)').matches;
+  document.querySelectorAll('.filter-bar select option[value=""]').forEach(o=>{
+    if(!o.dataset.base) o.dataset.base = o.textContent.replace(/ 전체$/,'');
+    o.textContent = fold ? o.dataset.base : o.dataset.base + ' 전체';
+  });
+}
+{ const mq = window.matchMedia('(max-width:480px)'); (mq.addEventListener ? mq.addEventListener('change', syncFilterAllLabels) : mq.addListener(syncFilterAllLabels)); }
 
 function renderTable(){
   const tb=document.getElementById('assetTbody');
@@ -4450,11 +4460,11 @@ function renderTable(){
             <div class="fm-h"><b>현금 수정</b></div>
             <div class="fm-sec">분류</div>
             <div class="fm-grid">${fmClassFields({market:[`ep_market_${a.id}`,`ep_market_custom_${a.id}`],company:[`ep_company_${a.id}`,`ep_company_custom_${a.id}`],acct:[`ep_cashaccttype_${a.id}`,`ep_cashaccttype_custom_${a.id}`],asset:[`ep_assettype_${a.id}`,`ep_assettype_custom_${a.id}`]},
-              {market:a.market,company:a.company,acct:a.cashAcctType,asset:a.assetType},{blank:BL_NONE})}</div>
+              {market:a.market,company:a.company,acct:a.cashAcctType,asset:a.assetType||'안전자산'},{blank:BL_NONE})}</div>
             <div class="fm-sec">금액</div>
             <div class="fm-grid">
               <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${a.id}`,k=>`setEditCashMode('${a.id}','${k}')`)}</div>
-              ${fmField(cmLabel, fmInput(`ep_cash_amt_${a.id}`,{type:'number',ph:'0',attrs:'min="0"'}), {id:`ep_amt_label_${a.id}`})}
+              ${fmField(cmLabel, fmInput(`ep_cash_amt_${a.id}`,{type:'number',ph:'0',value:cm==='set'?(a.avgPrice||0):undefined,attrs:'min="0"'}), {id:`ep_amt_label_${a.id}`})}
             </div>
             <div class="fm-a">
               <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
@@ -4515,7 +4525,7 @@ function cashGroupRowsHtml(group, sac){
   const g = group.slice().sort((x,y)=>(CASH_CCY_ORDER[x.currency]??9)-(CASH_CCY_ORDER[y.currency]??9));
   const lead = g[0], na = `<span style="color:var(--color-tertiary);font-size:11px;">-</span>`;
   const named = g.find(a=>!/^현금(\(|$)/.test(a.name));
-  const name = g.length===1 ? lead.name : (named ? named.name : '현금');
+  const name = g.length===1 ? (/^현금\(.*\)$/.test(lead.name) ? '현금' : lead.name) : (named ? named.name : '현금');   // 자동으로 붙은 '현금(회사·계좌·통화)'는 '현금'으로
   const same = f => g.every(a=>(a[f]||null)===(lead[f]||null)) ? lead[f] : null;
   const market = same('market'), assetType = same('assetType');
   const badge = (txt, col) => `<span class="acctType-badge" style="background:${col}20;color:${col}">${txt}</span>`;
@@ -4544,12 +4554,12 @@ function cashGroupRowsHtml(group, sac){
         <div class="fm-h"><b>현금 수정</b></div>
         <div class="fm-sec">분류</div>
         <div class="fm-grid">${fmClassFields({market:[`ep_market_${id}`,`ep_market_custom_${id}`],company:[`ep_company_${id}`,`ep_company_custom_${id}`],acct:[`ep_cashaccttype_${id}`,`ep_cashaccttype_custom_${id}`],asset:[`ep_assettype_${id}`,`ep_assettype_custom_${id}`]},
-          {market:lead.market,company:lead.company,acct:lead.cashAcctType,asset:assetType},{blank:BL_NONE})}</div>
+          {market:lead.market,company:lead.company,acct:lead.cashAcctType,asset:assetType||'안전자산'},{blank:BL_NONE})}</div>
         <div class="fm-sec">금액</div>
         <div class="fm-grid">
           <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${id}`,k=>`setEditCashMode('${id}','${k}')`)}</div>
           ${fmField('통화', fmSelect(`ep_ccy_${id}`, FM_CUR, lead.currency, {custom:false}))}
-          ${fmField('금액', fmInput(`ep_cash_amt_${id}`,{type:'number',ph:'0',attrs:'min="0"'}), {id:`ep_amt_label_${id}`})}
+          ${fmField('금액', fmInput(`ep_cash_amt_${id}`,{type:'number',ph:'0',value:cm==='set'?(lead.avgPrice||0):undefined,attrs:'min="0"'}), {id:`ep_amt_label_${id}`})}
         </div>
         <div class="fm-a">
           <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
@@ -5588,7 +5598,18 @@ function setEditCashMode(id, mode){
   });
   const lbl=document.getElementById(`ep_amt_label_${id}`);
   if(lbl) lbl.childNodes[0].textContent = labels[mode];
+  prefillCashAmt(id);
 }
+// 현금 수정 폼 금액 칸: '잔액 설정'이면 고른 통화의 현재 잔액을 미리 채우고, 입금·출금이면 비운다
+function prefillCashAmt(id){
+  const inp = document.getElementById(`ep_cash_amt_${id}`), lead = assets.find(x=>x.id===id);
+  if(!inp || !lead) return;
+  if((editCashModes[id]||'set')!=='set'){ inp.value=''; return; }
+  const ccy = document.getElementById(`ep_ccy_${id}`)?.value || lead.currency;
+  const row = assets.find(x=>x.acctType==='cash' && cashGroupKey(x)===cashGroupKey(lead) && x.currency===ccy);
+  inp.value = row ? (row.avgPrice||0) : 0;
+}
+document.addEventListener('change', e=>{ const m = e.target && e.target.id && e.target.id.match(/^ep_ccy_(.+)$/); if(m) prefillCashAmt(m[1]); });
 
 function confirmEditCash(id){
   const lead=assets.find(x=>x.id===id); if(!lead) return;
