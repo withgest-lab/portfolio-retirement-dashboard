@@ -4071,5 +4071,20 @@ function placePenGauge(){
 placePenGauge();
 { const mq = window.matchMedia('(max-width:480px)'); (mq.addEventListener ? mq.addEventListener('change', placePenGauge) : mq.addListener(placePenGauge)); }
 </script>
+<script src="../shared/swipe-tabs.js"></script>
+<script>
+// 좌우 스와이프: 1단계 → 2단계 → 시뮬레이션(결과 보기 5개) → 세금 상식 — shared/swipe-tabs.js
+{
+  const VIEWS = ['tb-flow','tb-asset','tb-plan','tb-hi','tb-risk'];
+  const NAMES = {design:'1단계 설계', step2:'2단계 설계', result:'시뮬레이션 결과', tax:'세금 상식'};
+  swipeTabs({
+    steps: ()=> [['design',''],['step2',''], ...VIEWS.filter(id=>document.getElementById(id)).map(id=>['result',id]), ['tax','']],
+    current: ()=> [mainTab, mainTab==='result' ? (document.querySelector('.chart-main .chart-head .tabs .tab-btn.on')?.id || 'tb-flow') : ''],
+    go: ([t, view])=>{ if(mainTab!==t) setMainTab(t); if(view){ const b = document.getElementById(view); if(b && !b.classList.contains('on')) b.click(); } },
+    label: ([t])=> NAMES[t],
+    target: ()=> ['#designTab','#step2Panel','#resultTab','#taxGuidePanel'].map(s=>document.querySelector(s)).find(e=>e && e.offsetParent),
+  });
+}
+</script>
 </body>
 </html>

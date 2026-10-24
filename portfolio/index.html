@@ -11106,5 +11106,23 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refresh
     <div class="cmp-pane cmp-right" id="cmpRight"><div class="cmp-msg" id="cmpRightMsg"></div></div>
   </div>
 </div>
+<script src="../shared/swipe-tabs.js"></script>
+<script>
+// 좌우 스와이프: 화면 바로 위 배너 줄(서브탭 → 끝에서 위 탭) — shared/swipe-tabs.js
+swipeTabs({
+  steps: ()=> PAGE_IDS.flatMap(pg=>{
+    const subs = [...document.querySelectorAll(`#page_${pg} > .subtabbar [data-sub], #page_${pg} > nav [data-sub]`)].map(b=>b.dataset.sub);
+    return subs.length ? subs.map(s=>[pg, s]) : [[pg, '']];
+  }),
+  current: ()=>{
+    const pg = document.querySelector('#tabbar [data-page].active')?.dataset.page || PAGE_IDS[0];
+    const sb = document.querySelector(`#page_${pg} > .subtabbar button.active, #page_${pg} > nav button.active`);
+    return [pg, sb ? sb.dataset.sub : ''];
+  },
+  go: ([pg, sub])=>{ switchPage(pg); if(sub) switchSubPage(pg, sub); },
+  label: ([pg])=> document.querySelector(`#tabbar [data-page="${pg}"]`)?.title || pg,
+  target: ()=> document.querySelector('section.page.active'),
+});
+</script>
 </body>
 </html>
