@@ -357,6 +357,13 @@ hr.div{border:none;border-top:.5px solid rgba(60,60,67,.12);margin:6px 0;}
 .main-tabs #mtb-tax{flex:0 0 auto;margin-left:auto;padding:4px 10px;font-size:11px;font-weight:600;}
 @media (max-width:480px){ .main-tabs .tab-btn .t-x{display:none;} }
 @media (max-width:480px){ .main-tabs .tab-btn .t-e{display:none;} }
+/* 접힘 밸런스: 세금 탭 높이를 다른 탭과 맞추고, 결과 보기 탭 5개는 3+2 균등 격자(4+1로 한 칸만 아랫줄에 남지 않게) */
+@media (max-width:480px){
+  .main-tabs #mtb-tax{padding:6px 10px;font-size:12px;align-self:stretch;}
+  .chart-main .chart-head .tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:100%;}
+  .chart-main .chart-head .tabs > .tab-btn{grid-column:span 2;}
+  .chart-main .chart-head .tabs > .tab-btn:nth-child(n+4){grid-column:span 3;}
+}
 .phase-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;}
 /* 차트 나이 구간에 맞춰 정렬된 상태(alignPhaseCards): 열 폭을 px로 주고 카드 사이 틈은
    각 카드 안쪽 여백으로 만들어 카드 외곽선이 정확히 경계에 오게 함 */
