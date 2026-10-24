@@ -648,6 +648,11 @@ body.fit-noscroll{overflow-y:hidden;}
   /* 3장 행의 좁은 IRP 카드: 연납입 [금액+만 | 월] 두 칸을 내용 폭으로 양끝 배치 — 2등분 칸(≈47px)에 sm 칸+단위가 안 들어가 '만'이 월 선택과 겹쳤다 */
   .acct-grid .c-irp .acct-body .irow-ymon .irow-ctrl{grid-template-columns:auto auto;justify-content:space-between;}
   .acct-grid .c-irp .acct-body .irow-ymon .ymon-amt .ival-input{width:36px!important;padding-left:2px;padding-right:2px;}
+  /* 3장 행 카드의 짝 칸(납입 시작/종료·수령 시작/월 수령액): 입력 박스가 칸 폭을 다 써서 '세'·'만'이 아래 줄로 떨어졌다 —
+     박스는 단위를 뺀 나머지 폭만 쓰고 단위는 같은 줄 오른쪽에 */
+  .acct-grid :is(.c-nh,.c-mf,.c-irp) .fv-row .irow-ctrl{flex-wrap:nowrap;gap:2px;min-width:0;}
+  .acct-grid :is(.c-nh,.c-mf,.c-irp) .fv-row .irow-ctrl .ival-input{flex:1 1 0;width:0!important;min-width:0;padding-left:2px;padding-right:2px;}
+  .acct-grid :is(.c-nh,.c-mf,.c-irp) .fv-row .irow-ctrl .unit-tag{flex:0 0 auto;}
   .c-isa .irow[aria-hidden]{display:none;}
   .inline-panel{padding:8px 10px 10px;}
 }
