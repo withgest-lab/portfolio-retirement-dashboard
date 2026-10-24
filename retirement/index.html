@@ -657,8 +657,16 @@ body.fit-noscroll{overflow-y:hidden;}
   .basic-row .irow-ctrl{display:flex;flex-wrap:nowrap;gap:2px;min-width:0;}
   .basic-row .ival-input{flex:1 1 0;width:0!important;min-width:0;padding-left:2px;padding-right:2px;}
   .basic-row .unit-tag{width:auto;flex:0 0 auto;}
-  .basic-row-action{grid-column:1 / -1;margin:0;}
-  .basic-row-action .suggest-btn{width:100%;min-height:34px;}
+  /* 그 아래 줄: [수익률·물가 설정 스위치 | 2단계 설계로 가기] 반반·같은 높이(placePenGauge가 스위치를 잔액 구성 박스에서 옮겨 옴).
+     설정 창은 이 줄 아래로, 줄 폭 전체로 열린다(위로 열면 화면 밖) */
+  .basic-row-action{grid-column:1 / -1;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative;}
+  .basic-row-action .suggest-btn{width:100%;min-width:0;min-height:34px;padding:6px 10px;}
+  .basic-row-action .rates-anchor{position:static;display:flex;}
+  .basic-row-action .rates-anchor .tgl-banner{width:100%;min-height:34px;justify-content:space-between;padding:4px 10px 4px 14px;font-size:12px;box-sizing:border-box;}
+  .basic-row-action .rates-anchor .tgl-banner .sw{width:26px;height:15px;}
+  .basic-row-action .rates-anchor .tgl-banner .sw::after{width:11px;height:11px;}
+  .basic-row-action .rates-anchor .tgl-banner.on .sw::after{left:13px;}
+  .basic-row-action .rates-pop{left:0;right:0;top:calc(100% + 6px);bottom:auto;width:auto;max-width:none;}
   .acct-grid .c-tirp{grid-column:1 / 4;grid-row:5;}
   .acct-grid .c-np{grid-column:4 / 7;grid-row:5;}
   /* 3장 행의 좁은 IRP 카드: 연납입 [금액+만 | 월] 두 칸을 내용 폭으로 양끝 배치 — 2등분 칸(≈47px)에 sm 칸+단위가 안 들어가 '만'이 월 선택과 겹쳤다 */
@@ -4029,15 +4037,22 @@ function toggleBanner(btn){
   const t=document.getElementById(btn.dataset.target);
   if(t) t.style.display=on?'':'none';
 }
-// 접힘(≤480px): '사적연금 과세분' 막대(글자+막대)를 연금 3장 아래 박스(#penGauge)로 옮기고, 펼침이면 원래 박스(현재 잔액 구성 위)로 되돌린다.
+// 접힘(≤480px): '사적연금 과세분' 막대(글자+막대)를 연금 3장 아래 박스(#penGauge)로, '수익률·물가 설정' 스위치를 2단계 버튼 왼쪽으로 옮기고,
+// 펼침이면 둘 다 원래 박스(현재 잔액 구성)로 되돌린다.
 // 요소 자체를 옮기므로 id(gauge-text·gauge-fill)는 그대로 — 계산·표시 코드는 바뀌지 않는다.
 function placePenGauge(){
   const pg = document.getElementById('penGauge'), wrap = document.querySelector('.acct-grid .limit-gauge-wrap');
   if(!pg || !wrap) return;
   const info = document.querySelector('.limit-gauge-info'), bar = document.querySelector('.limit-gauge');
   if(!info || !bar) return;
-  if(window.matchMedia('(max-width:480px)').matches){ if(info.parentElement!==pg) pg.append(info, bar); }
-  else if(info.parentElement!==wrap){ wrap.insertBefore(bar, wrap.firstChild); wrap.insertBefore(info, bar); }
+  const rates = document.querySelector('.rates-anchor'), act = document.querySelector('.basic-row-action');
+  if(window.matchMedia('(max-width:480px)').matches){
+    if(info.parentElement!==pg) pg.append(info, bar);
+    if(rates && act && rates.parentElement!==act) act.insertBefore(rates, act.firstChild);   // 수익률·물가 설정: 2단계 버튼 왼쪽
+  } else {
+    if(info.parentElement!==wrap){ wrap.insertBefore(bar, wrap.firstChild); wrap.insertBefore(info, bar); }
+    if(rates && rates.parentElement!==wrap) wrap.appendChild(rates);   // 펼침: 잔액 구성 박스 우측 하단(원래 자리)
+  }
 }
 placePenGauge();
 { const mq = window.matchMedia('(max-width:480px)'); (mq.addEventListener ? mq.addEventListener('change', placePenGauge) : mq.addListener(placePenGauge)); }
