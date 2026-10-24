@@ -1081,10 +1081,11 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .subtabbar:has(> button:nth-child(4)) > button{flex:1 1 0;min-width:0;height:30px;padding:0 4px;border-radius:999px;background:rgba(118,118,128,.12);}
   .subtabbar:has(> button:nth-child(4)) > button.active{background:rgba(0,122,255,.14);}
   .st-l{display:none;} .st-s{display:inline;}
-  /* 변화추이 스위치 4개 한 줄(사용자 선택): 손잡이는 숨기고 켜짐은 파란 배경·흰 글자로 */
+  /* 변화추이 위 줄('전체 보기'는 종목 선택 창 맨 앞으로 옮김) */
   #chartTopRow{display:flex;flex-wrap:wrap;gap:6px;}
-  #chartTopRow .tgl-banner{flex:1 1 auto;justify-content:center;padding:0 8px;font-size:11px;}
-  #chartTopRow .tgl-banner .sw{display:none;}
+  /* 스위치 3개(종목 선택·종목별 수익률·스냅샷 이력) 손잡이 포함 한 줄 — 글자·스위치를 한 단계 줄임 */
+  #chartTopRow .tgl-banner{flex:1 1 auto;justify-content:space-between;padding:0 7px 0 9px;gap:5px;font-size:11px;}
+  #chartTopRow .tgl-banner .sw{width:24px;height:14px;} #chartTopRow .tgl-banner .sw::after{width:10px;height:10px;} #chartTopRow .tgl-banner.on .sw::after{left:12px;}
   #chartTopRow #periodTabs{flex:1 1 100%;margin-left:0!important;}
   /* 하단 안내 문구: 접힘은 필수 내용만 짧게 */
   .nt-l{display:none;} .nt-s{display:inline;}
@@ -1273,7 +1274,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
        자체의 margin-bottom을 카드 padding(12px)과 맞춰 위/아래 공백이 같아지게 한다. -->
   <div class="chart-head">
   <div class="chart-top-row" id="chartTopRow">
-    <button type="button" class="tgl-banner" id="allViewToggleBtn" role="switch" aria-checked="false" onclick="toggleAll()">전체 보기<span class="sw"></span></button>
     <button type="button" class="tgl-banner" id="stockDetailToggleBtn" role="switch" aria-checked="false" data-target="assetTogglesDetail" onclick="toggleChartPop(this)">종목 선택<span class="sw"></span></button>
     <button type="button" class="tgl-banner" id="statToggleBtn" role="switch" aria-checked="false" data-target="statBar" onclick="toggleChartPop(this)">종목별 수익률<span class="sw"></span></button>
     <button type="button" class="tgl-banner" id="snapToggleBtn" role="switch" aria-checked="false" data-target="snapHistWrap" onclick="toggleSnapMode(this)">스냅샷 이력<span class="sw"></span></button>
@@ -10117,11 +10117,10 @@ function toggleBanner(btn){
 }
 
 function renderToggles(){
-  // "전체 보기" 스위치: 켜짐 = 전 종목+합계 표시 상태. 누르면 toggleAll()(켜기=전부 선택, 끄기=전부 해제)
+  // 종목 선택 팝오버: 맨 앞 '전체 보기'(켜짐 = 전 종목+합계 표시, 누르면 toggleAll — 예전 위 줄 배너를 옮김),
+  // 그다음 합계, 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시
   const allSelected = assets.every(a=>selectedAssets.has(a.id)) && showSum;
-  const allBtn = document.getElementById('allViewToggleBtn');
-  if(allBtn){ allBtn.classList.toggle('on', allSelected); allBtn.setAttribute('aria-checked', allSelected?'true':'false'); }
-  // 종목 선택 팝오버: 합계가 맨 앞, 계좌별로 나뉜 동일 종목명은 하나의 토글로 병합 표시
+  const allPill = `<button class="toggle-pill all-pill ${allSelected?'on':''}" onclick="toggleAll()"><span class="dot" style="background:#636366"></span>전체 보기</button>`;
   const sumPill = `<button class="toggle-pill sum-pill ${showSum?'on':''}" onclick="toggleSum()"><span class="dot"></span>합계</button>`;
   const groupPills = groupAssetsByName().map((g,i)=>{
       const col = LINE_COLS[i%LINE_COLS.length];
@@ -10134,7 +10133,7 @@ function renderToggles(){
       return`<button class="toggle-pill ${on?'on':''}" onclick="toggleAsset('${a.id}')">
         <span class="dot" style="background:#8e8e93"></span>${a.name}</button>`;
     }).join('');
-  document.getElementById('assetTogglesDetail').innerHTML = sumPill + groupPills + cashPills;
+  document.getElementById('assetTogglesDetail').innerHTML = allPill + sumPill + groupPills + cashPills;
   fitChartTopRow();
 }
 
