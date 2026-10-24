@@ -629,18 +629,19 @@ body.fit-noscroll{overflow-y:hidden;}
   h1{font-size:13px;}
   table{font-size:9px;}
   th,td{padding:4px 2px;}
-  /* 접힘: 1행만 3열(농협·미래에셋·IRP), 그 아래는 전체 폭 — 게이지 → 퇴직연금 → ISA → 국민연금 → 설정 스위치 */
+  /* 접힘: 계좌를 성격별로 모은다(2026-10-24 사용자 요청) — 일반계좌 → ISA → [개인연금 농협·미래·IRP 개인] 3열 →
+     사적연금 과세분·잔액 구성 게이지(연금 묶음 바로 아래) → 퇴직연금 DC → 국민연금. 3열 행 외에는 전체 폭 */
   .acct-grid{grid-template-columns:repeat(3,1fr);}
-  .acct-grid .c-nh{grid-column:1;grid-row:1;}
-  .acct-grid .c-mf{grid-column:2;grid-row:1;}
-  .acct-grid .c-irp{grid-column:3;grid-row:1;}
+  .acct-grid .c-gen{grid-column:1 / -1;grid-row:1;}
+  .acct-grid .c-isa{grid-column:1 / -1;grid-row:2;}
+  .acct-grid .c-nh{grid-column:1;grid-row:3;}
+  .acct-grid .c-mf{grid-column:2;grid-row:3;}
+  .acct-grid .c-irp{grid-column:3;grid-row:3;}
   /* 접힘 3열은 칸이 좁아 "IRP 개인 미래"가 두 줄로 접힘 — 세 카드 머리 높이를 두 줄로 맞춰 본문 행이 어긋나지 않게 */
   .acct-grid .c-nh .acct-head,.acct-grid .c-mf .acct-head,.acct-grid .c-irp .acct-head{min-height:42px;box-sizing:border-box;}
   .acct-grid .c-nh .acct-head .name,.acct-grid .c-mf .acct-head .name,.acct-grid .c-irp .acct-head .name{white-space:normal;}
-  .acct-grid .limit-gauge-wrap{grid-column:1 / -1;grid-row:2;}
-  .acct-grid .c-tirp{grid-column:1 / -1;grid-row:3;}
-  .acct-grid .c-gen{grid-column:1 / -1;grid-row:4;}
-  .acct-grid .c-isa{grid-column:1 / -1;grid-row:5;}
+  .acct-grid .limit-gauge-wrap{grid-column:1 / -1;grid-row:4;}
+  .acct-grid .c-tirp{grid-column:1 / -1;grid-row:5;}
   .acct-grid .c-np{grid-column:1 / -1;grid-row:6;}
   .c-isa .irow[aria-hidden]{display:none;}
   .inline-panel{padding:8px 10px 10px;}
