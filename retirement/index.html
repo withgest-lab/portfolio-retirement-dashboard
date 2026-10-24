@@ -648,6 +648,17 @@ body.fit-noscroll{overflow-y:hidden;}
   .acct-grid .pen-gauge{display:block;grid-column:1 / -1;grid-row:4;background:rgba(118,118,128,.08);border-radius:10px;padding:6px 8px;}
   .acct-grid .pen-gauge:empty{display:none;}
   .acct-grid .limit-gauge-wrap > .bal-mix:first-child{margin-top:0;padding-top:0;border-top:0;}
+  .acct-grid .limit-gauge-wrap .bal-head > span{display:none;}   /* '현재 잔액 구성' 글자 숨김(합계 금액만) — 2026-10-24 사용자 요청 */
+  /* 기본 정보 5칸(현재 나이·은퇴 나이·기대 수명·월 생활비·저율과세 기준)을 한 줄 5등분 — 입력 박스는 단위를 뺀 칸 폭,
+     '2단계 설계로 가기'는 그 아래 한 줄 전체 */
+  .basic-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 4px;}
+  .basic-row .irow-top{align-items:stretch;}
+  .basic-row .ilabel{width:auto;}
+  .basic-row .irow-ctrl{display:flex;flex-wrap:nowrap;gap:2px;min-width:0;}
+  .basic-row .ival-input{flex:1 1 0;width:0!important;min-width:0;padding-left:2px;padding-right:2px;}
+  .basic-row .unit-tag{width:auto;flex:0 0 auto;}
+  .basic-row-action{grid-column:1 / -1;margin:0;}
+  .basic-row-action .suggest-btn{width:100%;min-height:34px;}
   .acct-grid .c-tirp{grid-column:1 / 4;grid-row:5;}
   .acct-grid .c-np{grid-column:4 / 7;grid-row:5;}
   /* 3장 행의 좁은 IRP 카드: 연납입 [금액+만 | 월] 두 칸을 내용 폭으로 양끝 배치 — 2등분 칸(≈47px)에 sm 칸+단위가 안 들어가 '만'이 월 선택과 겹쳤다 */
