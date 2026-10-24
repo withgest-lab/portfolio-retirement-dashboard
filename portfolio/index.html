@@ -75,6 +75,15 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 /* 폭이 모자란 펼침 화면(≈900~1100px): 상태 문구를 숨겨 버튼이 잘리지 않게 한다. 환율은 보여 준다(768~1120 실측: 환율↔상태 점 ≥39px,
    버튼 줄 넘침 0) — 숨기면 제목과 버튼 사이가 비어 버튼 묶음이 가운데에 떠 보였다 */
 @media(min-width:768px) and (max-width:1120px){ .topbar-actions .status-wrap span{display:none;} .topbar-actions .btn{padding:0 10px;} }
+/* 펼침(750)·펼침+90도(832): 업데이트는 아이콘만(스냅샷·홈과 같은 32px), 줄어든 폭만큼 스냅샷↔홈 사이를 넓혀 홈·매매전략·현금흐름·백업
+   위치는 그대로(2026-10-24 사용자 요청). 줄어든 폭 = 아이콘+글자 버튼 실측 폭 − 32px: 750 86.6→54.6px, 832(여백 10px 구간) 82.6→50.6px(+기존 22px).
+   갱신 중(⏳)·완료(✅)도 글자만 숨겨져 아이콘으로 보인다 */
+@media(min-width:700px) and (max-width:960px){
+  .topbar-actions #btnRefreshPrices{width:32px;padding:0;justify-content:center;}
+  .topbar-actions #btnRefreshPrices .lbl{display:none;}
+  .topbar-actions .btn-home{margin-left:54.6px;}
+}
+@media(min-width:768px) and (max-width:960px){ .topbar-actions .btn-home{margin-left:72.6px;} }
 .status-wrap{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-secondary);
   flex-shrink:1;min-width:0;overflow:hidden;}
 .status-wrap .dot{flex-shrink:0;}
@@ -1227,7 +1236,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <span id="statusText">준비 중...</span>
       <span id="fxDisplay" style="font-size:10px;color:var(--color-tertiary);margin-left:6px;flex-shrink:0;white-space:nowrap;"></span>
     </div>
-    <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)" title="업데이트">🔄 <span class="lbl">업데이트</span></button>
+    <button class="btn btn-ghost" id="btnRefreshPrices" onclick="onRefreshPricesClick(this)" title="업데이트" aria-label="업데이트">🔄 <span class="lbl">업데이트</span></button>
     <button class="btn btn-ghost btn-snap" id="btnSaveSnap" aria-label="스냅샷" title="스냅샷" onclick="onSaveSnapClick(this)">📸</button>
     <a href="../" class="btn btn-ghost btn-home" aria-label="홈" title="홈" style="text-decoration:none;display:inline-flex;align-items:center;">🏠</a>
     <a href="../signals/" class="btn btn-ghost" title="매매전략" style="text-decoration:none;display:inline-flex;align-items:center;">📈 <span class="lbl">매매전략</span></a>
