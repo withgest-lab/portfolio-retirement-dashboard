@@ -1082,7 +1082,8 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .subtabbar:has(> button:nth-child(4)) > button.active{background:rgba(0,122,255,.14);}
   .st-l{display:none;} .st-s{display:inline;}
   /* 변화추이 위 줄('전체 보기'는 종목 선택 창 맨 앞으로 옮김) */
-  #chartTopRow{display:flex;flex-wrap:wrap;gap:6px;}
+  #chartTopRow{display:flex;flex-wrap:wrap;gap:12px 6px;}   /* 줄 사이 12px = 카드 위 여백·기간 탭 아래 간격과 같게 */
+  .qv-ctl{row-gap:12px;}   /* 트리맵: 모드 탭 줄 ↔ 기간 탭 줄도 12px */
   /* 스위치 3개(종목 선택·종목별 수익률·스냅샷 이력) 손잡이 포함 한 줄 — 글자·스위치를 한 단계 줄임 */
   #chartTopRow .tgl-banner{flex:1 1 auto;justify-content:space-between;padding:0 7px 0 9px;gap:5px;font-size:11px;}
   #chartTopRow .tgl-banner .sw{width:24px;height:14px;} #chartTopRow .tgl-banner .sw::after{width:10px;height:10px;} #chartTopRow .tgl-banner.on .sw::after{left:12px;}
@@ -1175,6 +1176,20 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 .cmp-dhead{display:flex;align-items:baseline;gap:8px 12px;flex-wrap:wrap;margin-bottom:10px;}
 .cmp-dsum{font-size:12px;color:var(--color-secondary);display:flex;gap:4px 12px;flex-wrap:wrap;font-variant-numeric:tabular-nums;}
 .cmp-dsum b{color:var(--color-text);font-weight:600;}
+/* 보유종목 상세 정보 보기: 표 안의 옅은 회색 박스로 위아래 종목 줄과 구분(2026-10-24 사용자 요청).
+   선택된 종목 줄은 옅은 파란 틴트로 박스와 이어 보이게 */
+#page_portfolio tr.tr-detail{background:transparent;}
+#page_portfolio tr.tr-detail > td{padding:6px 0 12px!important;border-bottom:none;}
+.stock-detail-box{background:var(--color-section-bg);border:.5px solid rgba(60,60,67,.14);border-radius:14px;padding:12px;}
+#page_portfolio tr:has(+ tr.tr-detail) > td{background:rgba(0,122,255,.06);border-bottom:none;}
+.stock-detail-box .stock-trades{background:var(--color-card);border-radius:10px;}
+@media(min-width:481px){ .stock-detail-box .stock-dhead{margin-bottom:12px!important;} }   /* '트리맵으로 가기' 줄 위·아래 12/12 */
+@media(max-width:480px){ .stock-detail-box{padding:10px;} }
+/* 나란히 보기 왼쪽 칸(종목 상세): 펼침에서 기간 탭이 2줄로 꺾이지 않게 한 줄 균등(1D~ALL) */
+@media(min-width:481px){
+  #cmpView .stock-dtools [id^="stockChartPeriodTabs_"]{flex:1 1 100%;flex-wrap:nowrap;margin-left:0;box-sizing:border-box;}
+  #cmpView .stock-dtools [id^="stockChartPeriodTabs_"] > button{flex:1 1 0;min-width:0;padding-left:0;padding-right:0;font-size:10.5px;}
+}
 .stock-dtools{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
 .stock-dtools .period-tabs{margin-left:auto;}
 .cmp-open-btn:disabled{background:rgba(118,118,128,.12);color:var(--color-tertiary);cursor:default;}
@@ -1241,7 +1256,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <!-- 변화추이 (트리맵): 종목 트리맵만 표시 (요약카드는 비중현황 탭 트리맵 뷰로 이동) -->
 <div class="subpage" data-sub="summary" id="qvSubpage">
   <div class="card">
-    <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:18px;">
+    <div style="display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
       <div class="qv-ctl" style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
         <div class="period-tabs" id="qvModeTabs">
           <button data-mode="market" class="active" onclick="setQuickViewMode('market')">기간별 주가 변화율</button>
@@ -4516,8 +4531,8 @@ function renderTable(){
     // 종목별 가격 차트 (기능 A: 매수/매도 마커 오버레이) — 행 확장, 캔버스는 renderTable() 이후 비동기로 그려짐
     if(chartDetailId===a.id && !cmp.open){   // 비교 화면이 열려 있으면 상세는 그쪽 왼쪽 칸에(같은 id 중복 방지)
       const SL = stockChartLayout();
-      rows+=`<tr class="tr-full" style="background:var(--color-card);">
-        <td colspan="12" style="padding:14px 16px;" onclick="event.stopPropagation()">${stockDetailPanelHtml(a, SL, false)}</td>
+      rows+=`<tr class="tr-full tr-detail">
+        <td colspan="12" onclick="event.stopPropagation()"><div class="stock-detail-box">${stockDetailPanelHtml(a, SL, false)}</div></td>
       </tr>`;
     }
     return rows;
