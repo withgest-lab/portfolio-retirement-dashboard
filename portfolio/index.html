@@ -3269,7 +3269,11 @@ let isFetching=false;
 // "시세 갱신" 버튼을 백그라운드 자동갱신과 겹치는 타이밍에 눌러도 조용히 무시되지 않고
 // 항상 응답한다(호출부는 onRefreshPricesClick 참고).
 let fetchAllPricesPromise=null;
+// 스냅샷을 원하는 호출이 하나라도 있었는지 — 예약 시각 스냅샷(saveSnapshot=true)이 마침 진행 중인 5분 자동 갱신(false)에
+// 올라타면 예전엔 스냅샷 없이 '찍음' 표시만 남아 그 시각 기록이 빠졌다 → 진행 중인 요청이 끝날 때 대신 한 번 저장한다
+let fetchWantsSnap=false;
 function fetchAllPrices(saveSnapshot=false){
+  if(saveSnapshot) fetchWantsSnap=true;
   if(isFetching) return fetchAllPricesPromise;
   isFetching=true;
   fetchAllPricesPromise=(async()=>{
@@ -3333,13 +3337,13 @@ function fetchAllPrices(saveSnapshot=false){
         if(updated){ saveAssets(); renderAll(); }
       });
     }
-    // ★ 자동 스냅샷: 시세 성공 여부와 무관하게 저장 (환율만 갱신돼도 의미 있음)
-    if(saveSnapshot) saveSnap();
+    // ★ 자동 스냅샷: 시세 성공 여부와 무관하게 저장 (환율만 갱신돼도 의미 있음) — 이 요청이든 올라탄 요청이든 원했으면 한 번
+    if(fetchWantsSnap){ fetchWantsSnap=false; saveSnap(); }
   }catch(e){
     setStatus('err','오류: '+e.message);
     try{ saveAssets(); renderAll(); }catch(e3){} // 일부라도 갱신된 값은 화면에 반영
     // ★ 에러여도 스냅샷 요청이면 현재 값으로 저장 시도
-    if(saveSnapshot) try{ saveSnap(); }catch(e2){}
+    if(fetchWantsSnap){ fetchWantsSnap=false; try{ saveSnap(); }catch(e2){} }
   }
   finally{isFetching=false;fetchAllPricesPromise=null;}
   })();
@@ -3508,7 +3512,13 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function updn(n){return n>=0?'up':'dn';}
 
 /* ════════════════════════════════════════
-   스냅샷
+   스냅샷 — 규칙 요약(2026-10-24 정리, 이 브라우저 localStorage pf_snaps_v5, 페이지가 열려 있을 때만 저장)
+   · 공통: 총자산 100만원 미만이면 저장 안 함. 한 장 = 시각·총액·종목별 금액(원화)·수량
+   · 자동: ① 페이지 열 때 시세 받은 뒤(30분 안에 없으면) ② 열어 둔 동안 1시간마다(50분 안에 없으면)
+           ③ 예약 시각(AUTO_SNAP_TIMES, 하루 한 번씩) ④ 놓친 예약 시각 보완은 열 때 1장(30분 안에 있으면 생략)
+   · 수동(오래 보존): 📸·매수 후·매도 직전·종목/현금 삭제 직전 — 직전 스냅샷과 내용이 같으면 새로 안 남기고 직전 장을 수동으로 표시
+   · 압축(저장할 때마다, compressSnaps): 자동은 나이별 구간(2일 1시간·14일 6시간·90일 하루·1년 7일·3년 15일·그 뒤 30일)마다
+     마지막 1장, 수동은 3년 전부 → 그 뒤 30일에 1장. 혼자 튀는 값은 지우지 않고 계산에서만 뺀다(snapSpikes)
 ════════════════════════════════════════ */
 function loadSnaps(){
   try{
@@ -3895,40 +3905,28 @@ function compressSnaps(snaps) {
     { maxAge: 10*365*DAY, keepEvery: 30*DAY   },
   ];
 
-  const sorted = [...snaps].sort((a,b) => a.timestamp - b.timestamp);
+  // 구간마다 "마지막(가장 늦은)" 1장을 남긴다(2026-10-24 사용자 확정) — 하루 구간이면 한국·미국 장 마감 후(아침) 값, 1시간 구간이면
+  // 15:30 한국장 마감 값이 남는다. 예전엔 "처음" 1장이라 15:30 마감은 늘 지워지고 15:00(마감 전)·오전 9시 값이 남았다.
+  // 이미 압축돼 구간마다 1장뿐인 옛 기록은 그대로다. 최신 스냅샷은 첫 순회에서 늘 남는다.
+  const latestFirst = [...snaps].sort((a,b) => b.timestamp - a.timestamp);
   const kept = [];
   const buckets = new Set();
 
-  for (const snap of sorted) {
+  for (const snap of latestFirst) {
+    const age = now - snap.timestamp;
     if(snap.manual){
-      // 수동 스냅샷(매수/매도/삭제): 중요 이벤트 → 오래돼도 보존
-      // 단, 3년 이후엔 30일 간격으로 압축 (무한 누적 방지)
-      const age = now - snap.timestamp;
-      if(age <= 3*365*DAY){
-        kept.push(snap); // 3년 이내: 항상 보존
-      } else {
-        const bucketKey = 'manual_' + Math.floor(snap.timestamp / (30*DAY));
-        if(!buckets.has(bucketKey)){
-          buckets.add(bucketKey);
-          kept.push(snap);
-        }
-      }
+      // 수동 스냅샷(매수/매도/삭제/📸): 중요 이벤트 → 3년 이내 전부 보존, 그 뒤엔 30일에 1장(무한 누적 방지)
+      if(age <= 3*365*DAY){ kept.push(snap); continue; }
+      const bucketKey = 'm:' + Math.floor(snap.timestamp / (30*DAY));
+      if(!buckets.has(bucketKey)){ buckets.add(bucketKey); kept.push(snap); }
       continue;
     }
-    const age = now - snap.timestamp;
     const rule = rules.find(r => age <= r.maxAge) || rules[rules.length-1];
-    const bucketKey = Math.floor(snap.timestamp / rule.keepEvery);
+    const bucketKey = rule.keepEvery + ':' + Math.floor(snap.timestamp / rule.keepEvery);
     if (!buckets.has(bucketKey)) {
       buckets.add(bucketKey);
       kept.push(snap);
     }
-  }
-
-  // 최신 스냅샷은 항상 보존
-  const latestKeptId = kept.length ? kept[kept.length-1].id : null;
-  const latestSnap   = sorted[sorted.length-1];
-  if (latestSnap && latestKeptId !== latestSnap.id) {
-    kept.push(latestSnap);
   }
 
   return kept.sort((a,b) => a.timestamp - b.timestamp);
@@ -3941,6 +3939,17 @@ function saveSnap(isManual=false){
   // 수량도 함께 저장 → 단가 역산용 (수량변화 시 정확한 % 계산)
   const byQty = Object.fromEntries(assets.map(a=>[a.id, a.quantity||1]));
   let snaps = loadSnaps();
+  // 수동 스냅샷(매수·매도·삭제·📸)이 직전 스냅샷과 총액·종목별 금액·수량까지 같으면 새로 남기지 않는다(📸 연타, 변화 없는 연속 이벤트) —
+  // 직전이 자동이면 그 장을 수동으로 표시해 오래 보존한다(중요 시점은 그대로 남음). 매매로 상태가 바뀐 스냅샷은 모두 남는다(2026-10-24 사용자 확정)
+  if(isManual){
+    const last = snaps.reduce((m,s)=> !m || s.timestamp > m.timestamp ? s : m, null);
+    const same = (a, b) => { const ka = Object.keys(a||{}); return ka.length === Object.keys(b||{}).length && ka.every(k => a[k] === b[k]); };
+    if(last && last.totalValue === Math.round(total) && same(last.byAsset, byAsset) && same(last.byQty, byQty)){
+      if(!last.manual){ last.manual = true; saveSnaps(snaps); }
+      renderSnaps();
+      return;
+    }
+  }
   snaps.push({id:uid(), timestamp:Date.now(), totalValue:Math.round(total), byAsset, byQty, manual:isManual});
   snaps = compressSnaps(snaps);
   saveSnaps(snaps);
@@ -10642,7 +10651,6 @@ function getAutoSnapTimes(){
       {h: 9,m: 0, days:[1,2,3,4,5]},   // 한국장 시작
       {h:10,m: 0, days:[1,2,3,4,5]},   // 한국장 오전
       {h:12,m: 0, days:[1,2,3,4,5]},   // 한국장 점심
-      {h:15,m: 0, days:[1,2,3,4,5]},   // 한국장 마감 전
       {h:15,m:30, days:[1,2,3,4,5]},   // 한국장 마감
     ];
   } else {
@@ -10657,14 +10665,13 @@ function getAutoSnapTimes(){
       {h: 9,m: 0, days:[1,2,3,4,5]},   // 한국장 시작
       {h:10,m: 0, days:[1,2,3,4,5]},   // 한국장 오전
       {h:12,m: 0, days:[1,2,3,4,5]},   // 한국장 점심
-      {h:15,m: 0, days:[1,2,3,4,5]},   // 한국장 마감 전
       {h:15,m:30, days:[1,2,3,4,5]},   // 한국장 마감
     ];
   }
 }
 // 동적으로 현재 스케줄 사용
 const AUTO_SNAP_TIMES = getAutoSnapTimes();
-// 매시 정각 자동 저장 (하루 24회)
+// 예약 시각(한국 시간, 미국 서머타임 여부로 바뀜) 자동 저장 — 15:00은 15:30 마감과 같은 1시간 구간이라 뺐다(구간마다 1장만 남음, 2026-10-24)
 // snapFiredDate를 localStorage에 저장 → 페이지 새로고침 후에도 중복 저장 방지
 
 function getSnapFiredKey(h, m) {
@@ -10699,8 +10706,12 @@ async function catchUpSnaps(){
   });
 
   if(missed.length > 0){
-    console.log(`누락 스냅샷 ${missed.length}개 보완 → 현재 시세로 1회 저장`);
     missed.forEach(t => markSnapFired(t.h,t.m));
+    // 페이지를 열 때 이미 1장 저장했으면(30분 안) 더 남기지 않는다 — 예전엔 '열 때 저장' + 3초 뒤 '보완 저장'으로 몇 초 간격 2장이 생겼다.
+    // 열 때 시세 조회가 아직 진행 중이면 fetchAllPrices(true)가 그 요청에 올라타 끝날 때 1장만 저장되고, 열 때 저장은 30분 규칙으로 건너뛴다.
+    const last = loadSnaps().reduce((m,s)=> Math.max(m, s.timestamp), 0);
+    if(Date.now() - last <= 30*60*1000) return;
+    console.log(`누락 스냅샷 ${missed.length}개 보완 → 현재 시세로 1회 저장`);
     try{ await fetchAllPrices(true); }
     catch(e){ try{ saveSnap(); }catch(e2){} }
   }
