@@ -1084,9 +1084,10 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .stock-dtools .period-tabs{flex:1 1 100%;}
   .filter-bar:has(> #assetFilterSearch),.filter-bar:has(> #tradeLogFilterSearch){display:grid;grid-template-columns:repeat(3,minmax(0,1fr));}
   .filter-bar:has(> #assetFilterSearch) > *,.filter-bar:has(> #tradeLogFilterSearch) > *{min-width:0;width:100%;}
-  .filter-bar > :is(#assetFilterSearch,#tradeLogFilterSearch){grid-column:span 2;}
-  .filter-bar:has(> #assetFilterSearch) > .tgl-banner{grid-column:1/-1;justify-self:end;width:auto;}
-  .filter-bar:has(> #tradeLogFilterSearch) > .tgl-banner{grid-column:1/-1;grid-row:3;justify-self:end;width:auto;margin-right:34px;}
+  /* 필터 배치(2026-10-24 사용자 선택 A안): 검색 한 줄 전체 → 풀다운 3개 같은 폭 → [자산유형 | 스위치 2칸 폭(매매 이력은 + 휴지통)] */
+  .filter-bar > :is(#assetFilterSearch,#tradeLogFilterSearch){grid-column:1/-1;}
+  .filter-bar:has(> #assetFilterSearch) > .tgl-banner{grid-column:2/-1;justify-self:stretch;justify-content:space-between;width:auto;margin-left:0;}
+  .filter-bar:has(> #tradeLogFilterSearch) > .tgl-banner{grid-column:2/-1;grid-row:3;justify-self:stretch;justify-content:space-between;width:auto;margin-left:0;margin-right:34px;}
   .filter-bar:has(> #tradeLogFilterSearch) > .tl-clear-btn{grid-column:3;grid-row:3;justify-self:end;width:28px;}   /* 스위치 바로 오른쪽 28px 아이콘 */
   .notice{word-break:keep-all;text-wrap:balance;}
   .hold-mkt{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:6px;}   /* 시장지표 8개: 한 줄이면 숫자끼리 붙음 → 4개씩 2줄 */
