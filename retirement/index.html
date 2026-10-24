@@ -405,6 +405,9 @@ hr.div{border:none;border-top:.5px solid rgba(60,60,67,.12);margin:6px 0;}
 @media (min-width:481px){
   .chart-head{gap:10px 8px;margin-bottom:12px;}
   .chart-head .tab-btn{padding:5px 12px;font-size:11.5px;}
+  /* 결과 보기 탭 5개는 한 줄 전체를 균등하게(왼쪽에만 몰리고 오른쪽 1/3이 비던 문제) */
+  .chart-main .chart-head .tabs{flex:1 1 100%;flex-wrap:nowrap;}
+  .chart-main .chart-head .tabs > .tab-btn{flex:1 1 0;min-width:0;white-space:nowrap;}
   .chart-head .legend{gap:6px 9px;}
   .phase-cards{margin-top:10px;}
 }
