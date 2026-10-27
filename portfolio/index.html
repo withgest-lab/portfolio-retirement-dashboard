@@ -1437,7 +1437,6 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <div class="dist-detail">
     <div class="dist-detail-head">
       <div class="section-label" style="margin:0;">자산유형별 세부 종목 비중</div>
-      <div id="distDetailChips" class="type-chips"></div>
     </div>
     <div class="dist-canvas-wrap"><canvas id="distDetailCanvas" height="400"></canvas></div>
     </div>
@@ -8869,7 +8868,7 @@ function remainingHeight(el, bottomGap){
 /* ── 자산군 분포 (비중현황 > 트리맵) ─────────────────────────────────
    투자시장 분포 · 자산유형 분포 · 자산유형별 세부 종목 분포(예: Core 안의 S&P500·나스닥·코스피200 점유)
    도넛 = 구성(카테고리색), 트리맵 = 구성 + 수익: 크기=평가금액, 색=평단 대비 수익률 손익색(±50%, treemapColor),
-   표시 %=총 자산 대비. 세부 종목 트리맵은 자산유형 블록 헤더 띠·틈만 자산유형색으로 남겨 묶음을 구분한다.
+   표시 %=총 자산 대비. 세부 종목 트리맵은 묶음을 블록 사이 여백과 헤더 글자로 나누고, 자산유형색은 헤더 앞 점에만 쓴다.
    현금·채권·가상자산도 모두 포함하므로 세 단계의 합계는 도넛의 총 자산과 같다(현금은 손익 0 → 회색). */
 const distAssetTypeKey = a => a.assetType || (a.acctType==='cash' ? '현금' : '미지정');
 const distMarketKey    = a => a.market || '미지정';
@@ -9054,11 +9053,9 @@ function detailTreemapHeight(W){
 function drawDetailTreemap(){
   const canvas = document.getElementById('distDetailCanvas');
   if(!canvas || canvas.offsetParent===null) return;
-  const chipsEl = document.getElementById('distDetailChips');
   const positive = assets.filter(a=>evKRW(a)>0);
   const tree = buildAssetClassTree(positive);
   const total = tree.reduce((s,t)=>s+t.value,0);
-  if(chipsEl) chipsEl.innerHTML = assetTypeChipsHtml(tree,total);
   const wrap = canvas.parentElement;
   const W = Math.max(200, wrap.clientWidth||300), H = detailTreemapHeight(W);
   const dpr = window.devicePixelRatio||1;
@@ -9081,34 +9078,37 @@ function drawDetailTreemap(){
   };
   const blocks = computeTreemapLayout(tree.map(t=>({t, value:t.value})), 0, 0, W, H);
   blocks.forEach(b=>{
-    const t=b.t, bx=b.x+1.5, by=b.y+1.5, bw=b.w-3, bh=b.h-3;
+    // 묶음은 색 대신 여백으로 나눈다(블록 간 6px, 셀 간 2px) — 색은 셀 손익색 + 헤더 앞 자산유형 점 하나만
+    const t=b.t, bx=b.x+3, by=b.y+3, bw=b.w-6, bh=b.h-6;
     if(bw<=0||bh<=0) return;
-    // 블록 바탕 = 자산유형 색(셀 사이 틈이 같은 색이라 "한 묶음"으로 보임)
-    rr(bx,by,bw,bh,6); ctx.fillStyle=t.color; ctx.fill();
     const hasHead = bw>=60 && bh>=44, HEAD = hasHead?20:0;
     if(hasHead){
-      const fg=treemapTextColor(t.color);
-      ctx.fillStyle=fg; ctx.textAlign='left'; ctx.textBaseline='middle';
-      // 헤더: "안전자산 36.6%" (왼쪽) + "2.75억 (+3.1%, +500만)" (오른쪽). 폭이 모자라면 금액 → 수익금 순으로 줄이되 수익률은 끝까지 남기고, 그래도 안 되면 "…"
+      // 헤더: "● 안전자산 36.6%" (왼쪽, 본문색) + "2.75억 (+3.1%, +500만)" (오른쪽, 회색). 폭이 모자라면 금액 → 수익금 순으로 줄이되 수익률은 끝까지 남기고, 그래도 안 되면 "…"
+      // 다크 모드는 페이지 전체를 반전하되 이 캔버스만 되돌려(shared/theme.js) 원래 색으로 보인다 — CSS 변수 대신 테마로 직접 고른다
+      const dark = document.documentElement.dataset.theme==='dark';
+      const fgL = dark ? '#f2f2f7' : '#1c1c1e', fgR = dark ? '#aeaeb2' : '#636366';
       const pct0=maskAmt((total>0?t.value/total*100:0).toFixed(1)+'%');
-      ctx.font='800 11.5px Pretendard,-apple-system,sans-serif';
+      const fontL='700 11.5px Pretendard,-apple-system,sans-serif', fontR='500 11px Pretendard,-apple-system,sans-serif';
       const rets = returnText(t.agg), amt = fmt(t.value), shortRets = rets.replace(/^\(([^,)]*).*$/, '($1)');
-      const wOf = str=>ctx.measureText(str).width;
-      // 왼쪽 "유형 xx%"는 항상 유지하고, 폭이 모자라면 오른쪽(금액+수익 → 수익 → 짧은 수익 → 없음)부터 줄인다
+      const wOf = (str,f)=>{ ctx.font=f; return ctx.measureText(str).width; };
+      const DOT = 12, my = by+HEAD/2;
+      // 왼쪽 "● 유형 xx%"는 항상 유지하고, 폭이 모자라면 오른쪽(금액+수익 → 수익 → 짧은 수익 → 없음)부터 줄인다
       const L1 = t.key+' '+pct0, rights = [amt+' '+rets, rets, shortRets, ''];
-      let L = L1, R = rights.find(r=> wOf(L1) + (r ? wOf(r)+24 : 14) <= bw);
-      if(R===undefined){ R=''; L = fitCanvasText(ctx, t.key, Math.max(10, bw-14-wOf(' '+pct0))) + ' ' + pct0; }
+      let L = L1, R = rights.find(r=> DOT + wOf(L1,fontL) + (r ? wOf(r,fontR)+10 : 2) <= bw);
+      if(R===undefined){ R=''; ctx.font=fontL; L = fitCanvasText(ctx, t.key, Math.max(10, bw-DOT-4-wOf(' '+pct0,fontL))) + ' ' + pct0; }
       const trunc = R!==rights[0];
-      ctx.textAlign='left'; ctx.fillText(L, bx+7, by+HEAD/2+1);
-      if(R){ ctx.textAlign='right'; ctx.fillText(R, bx+bw-7, by+HEAD/2+1); }
+      ctx.beginPath(); ctx.arc(bx+4, my, 4, 0, Math.PI*2); ctx.fillStyle=t.color; ctx.fill();
+      ctx.textBaseline='middle';
+      ctx.font=fontL; ctx.fillStyle=fgL; ctx.textAlign='left'; ctx.fillText(L, bx+DOT, my+1);
+      if(R){ ctx.font=fontR; ctx.fillStyle=fgR; ctx.textAlign='right'; ctx.fillText(R, bx+bw-1, my+1); }
       detailHeads.push({x:bx,y:by,w:bw,h:HEAD,t,pct:pct0,trunc});
     }
-    const ix=bx+2, iy=by+HEAD+2, iw=bw-4, ih=bh-HEAD-4;
+    const ix=bx-1, iy=by+HEAD-1, iw=bw+2, ih=bh-HEAD+2;   // 셀 rect가 1px씩 안쪽으로 들어가므로 셀 바깥선이 블록 경계에 맞게
     if(iw<=0||ih<=0) return;
     computeTreemapLayout(t.children.map(c=>({c, value:c.value})), ix, iy, iw, ih).forEach(cell=>{
       const cx=cell.x+1, cy=cell.y+1, cw=cell.w-2, ch=cell.h-2;
       if(cw<2||ch<2){ tinyCells.push(cell.c); return; }
-      const col=treemapColor(cell.c.agg.rtn, TM_RANGE_CUM), key=t.key+'|'+cell.c.key;   // 셀=손익색, 블록 바탕·헤더 띠=자산유형색
+      const col=treemapColor(cell.c.agg.rtn, TM_RANGE_CUM), key=t.key+'|'+cell.c.key;   // 셀=손익색(자산유형색은 헤더 앞 점에만)
       rr(cx,cy,cw,ch,4); ctx.fillStyle=col; ctx.fill();
       const pctStr=sharePctText(cell.c.value,total);
       const trunc = drawTreemapCellLabel(ctx, cell.c.label, pctStr, fmt(cell.c.value), cx, cy, cw, ch, treemapTextColor(col), returnText(cell.c.agg));
@@ -9150,6 +9150,8 @@ function drawDetailTreemap(){
   canvas.onpointermove = e=>{ if(e.pointerType==='mouse') { const c=hit(e); tmHoverPick(e, c, c&&c.key, detailTmSel, c=>{ select(c); cellBubble(c); }); } };
   canvas.onpointerleave = ()=>clearTimeout(tmHoverTimer);
 }
+// 세부 종목 헤더 글자색이 테마를 따르므로 테마를 바꾸면 다시 그린다(shared/theme.js가 호출, 숨겨져 있으면 drawDetailTreemap이 건너뜀)
+window.onThemeChange = ()=>drawDetailTreemap();
 function drawAssetClassDistribution(){
   const positive = assets.filter(a=>evKRW(a)>0);
   const total = positive.reduce((s,a)=>s+evKRW(a),0);
