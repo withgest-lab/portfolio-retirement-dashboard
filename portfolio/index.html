@@ -5147,7 +5147,7 @@ const PAGE_RENDER_HOOKS = {};
 function switchPage(pageId){
   if(!PAGE_IDS.includes(pageId)) return;
   if(pageId!=='dashboard'){ qvHighlightId = null; qvTmSel = null; }
-  hideTmBubble();   // 트리맵 말풍선(position:fixed)은 화면을 바꾸면 닫는다 — 안 닫으면 다음 화면 위에 남아 서브탭을 덮었다
+  dismissTmBubble();   // 트리맵 말풍선(position:fixed)은 화면을 바꾸면 닫고 선택도 푼다 — 안 닫으면 다음 화면 위에 남아 서브탭을 덮었고, 말풍선만 닫으면 선택 테두리가 남았다
   closeIpop();      // ⓘ 풍선도 같다 — 바깥 '클릭'으로만 닫혀서, 스와이프로 넘기면(클릭 없음) 새 화면 위에 남았다
   PAGE_IDS.forEach(id=>{
     const sec=document.getElementById('page_'+id);
@@ -5191,7 +5191,7 @@ function switchSubPage(pageId, subId){
   const container=document.getElementById('page_'+pageId);
   if(!container) return;
   if(pageId==='dashboard' && subId!=='summary'){ qvHighlightId = null; qvTmSel = null; } // 트리맵 종목 강조·선택은 그 화면을 벗어나면 해제
-  hideTmBubble(); closeIpop();   // 떠 있는 트리맵 말풍선·ⓘ 풍선도 함께 닫는다
+  dismissTmBubble(); closeIpop();   // 떠 있는 트리맵 말풍선(선택도 해제)·ⓘ 풍선도 함께 닫는다
   container.querySelectorAll(':scope > .subpage').forEach(sec=>{
     sec.classList.toggle('active', sec.dataset.sub===subId);
   });
@@ -8458,19 +8458,26 @@ function computeTreemapLayout(items, x, y, w, h){
   return [...computeTreemapLayout(left, x, y, w, splitH), ...computeTreemapLayout(right, x, y+splitH, w, h-splitH)];
 }
 
-// 트리맵 손익색: 이익=초록(#34c759), 손실=빨강(#ff3b30), 0% 근처=회색. 수익률을 ±range%에서 클램프해 보간한다.
+// 트리맵 손익색(Finviz·TradingView 관행): 이익=초록, 손실=빨강, 거의 변화 없음=회색. range%에서 가장 진하다.
 // range는 기간이 길수록 넓다(하루 ±3% … 누적 ±50%) — 고정 ±30이면 1D의 ±2% 등락이 거의 회색이라 색으로 안 읽혔다.
 // 평단 대비 누적(변화추이 '보유 수익률'·비중현황 트리맵)은 ALL과 같은 ±50.
 const TM_COLOR_RANGE = {'1D':3,'5D':5,'1M':10,'3M':15,'6M':20,'YTD':30,'1Y':30,'3Y':50,'5Y':50,'10Y':50,'ALL':50};
 const TM_RANGE_CUM = 50;
+// 2026-10-27 재점검으로 보정한 세 가지:
+//  ① 보합 구간 + 최소 진하기 — |r| < range의 3%는 회색(보합), 그 밖은 22%부터 시작(Finviz 첫 단계 색처럼). 예전 순수 선형은
+//     누적 ±50에서 +5%가 10% 진하기라 회색과 구분이 안 됐다(비중현황 투자시장·자산유형이 거의 회색).
+//  ② 끝 색 = iOS 고대비 초록 #248A3D / 빨강 #D70015 — 밝기가 비슷해(0.19·0.15) 이익·손실의 시각 무게가 같고 흰 글씨 대비도 충분.
+//     예전 #34c759(밝기 0.43)·#ff3b30(0.25)은 손실이 훨씬 무겁게 보였고, 밝은 초록 위 흰 글씨 대비가 2.2:1이었다.
+//  ③ 글자색은 treemapTextColor가 대비가 큰 쪽(검정/흰색)을 고른다.
+const TM_NEUTRAL = [199,199,204], TM_UP = [36,138,61], TM_DOWN = [215,0,21], TM_FLAT = 0.03, TM_KMIN = 0.22;
 function treemapColor(returnPct, range=30){
   if(hideAmounts) return 'rgb(199,199,204)'; // 숨김 중에는 수익률 색을 쓰지 않는다(전부 중립 회색)
-  const t = Math.max(-1, Math.min(1, returnPct/range));
-  const neutral=[199,199,204];
-  const base = t>=0 ? [52,199,89] : [255,59,48];
-  const k = Math.abs(t);
-  const mix=(a,b,f)=>Math.round(a+(b-a)*f);
-  return `rgb(${mix(neutral[0],base[0],k)},${mix(neutral[1],base[1],k)},${mix(neutral[2],base[2],k)})`;
+  const a = Math.abs(returnPct)/range;
+  if(!(a >= TM_FLAT)) return `rgb(${TM_NEUTRAL.join(',')})`;   // 보합(NaN 포함)
+  const k = TM_KMIN + (1-TM_KMIN)*Math.min(1, a);
+  const base = returnPct > 0 ? TM_UP : TM_DOWN;
+  const mix = i=>Math.round(TM_NEUTRAL[i] + (base[i]-TM_NEUTRAL[i])*k);
+  return `rgb(${mix(0)},${mix(1)},${mix(2)})`;
 }
 
 // 매매이력 항목 r이 asset과 같은 보유분인지 판정 — 종목명/티커 일치 + (필요한 경우만) 계좌·구분 일치.
@@ -8759,17 +8766,22 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
     canvas.onpointerleave = ()=>clearTimeout(tmHoverTimer);
     return;
   }
+  // 분포 트리맵(비중현황 투자시장·자산유형): 세부 종목 트리맵과 같은 단계 — 터치는 1탭=말풍선, 말풍선이 떠 있는 셀을 다시 누르면
+  // 종목 하나짜리 칸은 상세로, 여러 종목 묶음 칸은 말풍선 닫기. 마우스는 종목 하나짜리면 바로 상세, 묶음이면 말풍선.
+  // 예전엔 묶음 칸(한국·주도주 등)을 누르면 아무 반응이 없었다(id 없음 → 상세 없음, 안 잘린 칸은 말풍선도 없음).
   canvas.onclick = (e)=>{
     const hit = hitAt(e);
-    if(!hit) return;
-    // 내용이 잘린("…") 셀은 첫 클릭에 말풍선으로 전체 내용을 보여주고, 같은 셀을 다시 누르면 상세로 이동
-    const key = canvasId+'|'+hit.name;
-    if(hit.trunc && hit.amtParts && tmBubbleKey!==key){
-      showTmBubble(canvas, hit, [hit.name, '비중 '+hit.sub, hit.amtParts.join(' ')], key);
+    if(!hit){ hideTmBubble(); return; }
+    const key = canvasId+'|'+hit.name, shown = tmBubbleKey===key;
+    if(hit.id && (e.pointerType==='mouse' || shown)){
+      hideTmBubble();
+      if(typeof onCellClick==='function') onCellClick(hit.id);
       return;
     }
-    hideTmBubble();
-    if(typeof onCellClick==='function') onCellClick(hit.id);
+    if(shown){ hideTmBubble(); return; }
+    const lines = [hit.name, '비중 '+hit.sub].concat(hit.amtParts ? [hit.amtParts.join(' ')] : []);
+    if(hit.id && e.pointerType!=='mouse') lines.push('<span style="opacity:.7;font-size:11px;white-space:nowrap;">한 번 더 누르면 상세</span>');
+    showTmBubble(canvas, hit, lines, key);
   };
 }
 
@@ -8779,7 +8791,11 @@ function treemapTextColor(bg){
   const m = /^#([0-9a-f]{6})$/i.exec(bg);
   if(m){ r=parseInt(m[1].slice(0,2),16); g=parseInt(m[1].slice(2,4),16); b=parseInt(m[1].slice(4,6),16); }
   else { const n=(bg.match(/\d+/g)||[]).map(Number); [r,g,b]=n.length>=3?n:[0,0,0]; }
-  return (0.299*r+0.587*g+0.114*b) > 175 ? '#1c1c1e' : '#fff';
+  // WCAG 상대 밝기로 검정(#1c1c1e)·흰색 중 대비가 큰 쪽 — 예전 YIQ 고정 문턱은 밝은 초록 위에 흰 글씨(2.2:1)를 골랐다
+  const lin = v=>{ v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+  const L = 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+  const Ld = 0.2126*lin(28)+0.7152*lin(28)+0.0722*lin(30);
+  return (L+0.05)/(Ld+0.05) >= 1.05/(L+0.05) ? '#1c1c1e' : '#fff';
 }
 
 // 트리맵 셀 클릭 시 공통 동작: 포트폴리오 탭의 해당 종목 상세 차트로 이동
