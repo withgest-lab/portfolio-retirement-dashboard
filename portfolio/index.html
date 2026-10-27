@@ -8864,7 +8864,7 @@ function remainingHeight(el, bottomGap){
 /* ── 자산군 분포 (비중현황 > 트리맵) ─────────────────────────────────
    투자시장 분포 · 자산유형 분포 · 자산유형별 세부 종목 분포(예: Core 안의 S&P500·나스닥·코스피200 점유)
    도넛 = 구성(카테고리색), 트리맵 = 구성 + 수익: 크기=평가금액, 색=평단 대비 수익률 손익색(±50%, treemapColor),
-   표시 %=총 자산 대비. 세부 종목 트리맵도 투자시장·자산유형처럼 옅은 회색 칸 안에 그리고, 묶음은 블록 사이 여백과 헤더 글자로만 나눈다(자산유형색 없음).
+   표시 %=총 자산 대비. 세부 종목 트리맵도 투자시장·자산유형처럼 옅은 회색 칸 안에 그리고, 묶음마다 옅은 헤어라인 테두리 + 소제목 행(모든 묶음, 좁으면 말줄임) + 그 아래 셀(자산유형색 없음).
    현금·채권·가상자산도 모두 포함하므로 세 단계의 합계는 도넛의 총 자산과 같다(현금은 손익 0 → 회색). */
 const distAssetTypeKey = a => a.assetType || (a.acctType==='cash' ? '현금' : '미지정');
 const distMarketKey    = a => a.market || '미지정';
@@ -9073,33 +9073,42 @@ function drawDetailTreemap(){
     ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
   };
   const blocks = computeTreemapLayout(tree.map(t=>({t, value:t.value})), 0, 0, W, H);
+  // 다크 모드는 페이지 전체를 반전하되 이 캔버스만 되돌려(shared/theme.js) 원래 색으로 보인다 — CSS 변수 대신 테마로 직접 고른다
+  const dark = document.documentElement.dataset.theme==='dark';
+  const fgL = dark ? '#f2f2f7' : '#1c1c1e', fgR = dark ? '#aeaeb2' : '#636366', hair = dark ? 'rgba(235,235,245,.22)' : 'rgba(60,60,67,.22)';
+  const fontL='700 11.5px Pretendard,-apple-system,sans-serif', fontR='500 11px Pretendard,-apple-system,sans-serif';
+  const wOf = (str,f)=>{ ctx.font=f; return ctx.measureText(str).width; };
+  const HEAD = 18, PADX = 6, IN = 3;   // 소제목 행 높이, 소제목 글자·셀 영역의 테두리 안쪽 여백
   blocks.forEach(b=>{
-    // 묶음은 색 대신 여백으로 나눈다(블록 간 6px, 셀 간 2px) — 색은 셀 손익색 하나만
+    // 묶음 = 옅은 헤어라인 둥근 테두리 + 소제목 행 + 그 아래 셀(묶음 간 6px). 색은 셀 손익색 하나만
     const t=b.t, bx=b.x+3, by=b.y+3, bw=b.w-6, bh=b.h-6;
     if(bw<=0||bh<=0) return;
-    const hasHead = bw>=60 && bh>=44, HEAD = hasHead?20:0;
-    if(hasHead){
-      // 헤더: "안전자산 36.6%" (왼쪽, 본문색) + "2.75억 (+3.1%, +500만)" (오른쪽, 회색). 폭이 모자라면 금액 → 수익금 순으로 줄이되 수익률은 끝까지 남기고, 그래도 안 되면 "…"
-      // 다크 모드는 페이지 전체를 반전하되 이 캔버스만 되돌려(shared/theme.js) 원래 색으로 보인다 — CSS 변수 대신 테마로 직접 고른다
-      const dark = document.documentElement.dataset.theme==='dark';
-      const fgL = dark ? '#f2f2f7' : '#1c1c1e', fgR = dark ? '#aeaeb2' : '#636366';
-      const pct0=maskAmt((total>0?t.value/total*100:0).toFixed(1)+'%');
-      const fontL='700 11.5px Pretendard,-apple-system,sans-serif', fontR='500 11px Pretendard,-apple-system,sans-serif';
-      const rets = returnText(t.agg), amt = fmt(t.value), shortRets = rets.replace(/^\(([^,)]*).*$/, '($1)');
-      const wOf = (str,f)=>{ ctx.font=f; return ctx.measureText(str).width; };
-      const DOT = 1, my = by+HEAD/2;
-      // 왼쪽 "유형 xx%"는 항상 유지하고, 폭이 모자라면 오른쪽(금액+수익 → 수익 → 짧은 수익 → 없음)부터 줄인다
-      const L1 = t.key+' '+pct0, rights = [amt+' '+rets, rets, shortRets, ''];
-      let L = L1, R = rights.find(r=> DOT + wOf(L1,fontL) + (r ? wOf(r,fontR)+10 : 2) <= bw);
-      if(R===undefined){ R=''; ctx.font=fontL; L = fitCanvasText(ctx, t.key, Math.max(10, bw-DOT-4-wOf(' '+pct0,fontL))) + ' ' + pct0; }
-      const trunc = R!==rights[0];
-      ctx.textBaseline='middle';
-      ctx.font=fontL; ctx.fillStyle=fgL; ctx.textAlign='left'; ctx.fillText(L, bx+DOT, my+1);
-      if(R){ ctx.font=fontR; ctx.fillStyle=fgR; ctx.textAlign='right'; ctx.fillText(R, bx+bw-1, my+1); }
-      detailHeads.push({x:bx,y:by,w:bw,h:HEAD,t,pct:pct0,trunc});
+    rr(bx+.5,by+.5,bw-1,bh-1,8); ctx.lineWidth=1; ctx.strokeStyle=hair; ctx.stroke();
+    // 소제목은 모든 묶음에 — 예전엔 폭<60·높이<44 묶음은 건너뛰어 셀이 옆 묶음 소제목 행보다 위로 튀어나오고 소제목도 없었다.
+    // "안전자산 36.6%" (왼쪽, 본문색) + "2.75억 (+3.1%, +500만)" (오른쪽, 회색). 폭이 모자라면 오른쪽(금액+수익 → 수익 → 짧은 수익 → 없음),
+    // 그다음 왼쪽(유형… xx% → 유형…) 순으로 줄인다. 잘린 내용은 소제목을 누르면 말풍선으로.
+    const pct0=maskAmt((total>0?t.value/total*100:0).toFixed(1)+'%');
+    const rets = returnText(t.agg), amt = fmt(t.value), shortRets = rets.replace(/^\(([^,)]*).*$/, '($1)');
+    const tw = bw - PADX*2, L1 = t.key+' '+pct0, rights = [amt+' '+rets, rets, shortRets, ''];
+    let L = L1, R = rights.find(r=> wOf(L1,fontL) + (r ? wOf(r,fontR)+10 : 0) <= tw);
+    if(R===undefined){
+      R = '';
+      const keyW = tw - wOf(' '+pct0,fontL);
+      ctx.font=fontL;
+      if(keyW >= wOf('가…',fontL)) L = fitCanvasText(ctx, t.key, keyW)+' '+pct0;
+      else L = fitCanvasText(ctx, t.key, tw);   // 아주 좁으면 비중보다 이름("유망…")을 남긴다 — 어느 묶음인지가 먼저
     }
-    const ix=bx-1, iy=by+HEAD-1, iw=bw+2, ih=bh-HEAD+2;   // 셀 rect가 1px씩 안쪽으로 들어가므로 셀 바깥선이 블록 경계에 맞게
-    if(iw<=0||ih<=0) return;
+    const trunc = L!==L1 || R!==rights[0], my = by+HEAD/2+1;
+    ctx.save(); ctx.beginPath(); ctx.rect(bx,by,bw,HEAD); ctx.clip();
+    ctx.textBaseline='middle';
+    ctx.font=fontL; ctx.fillStyle=fgL; ctx.textAlign='left'; ctx.fillText(L, bx+PADX, my);
+    if(R){ ctx.font=fontR; ctx.fillStyle=fgR; ctx.textAlign='right'; ctx.fillText(R, bx+bw-PADX, my); }
+    ctx.restore();
+    detailHeads.push({x:bx,y:by,w:bw,h:HEAD,t,pct:pct0,trunc});
+    // 셀은 항상 소제목 행 아래부터(테두리 안쪽 3px; 셀 rect가 1px씩 안쪽으로 들어가는 만큼 보정).
+    // 남은 높이가 너무 낮으면 셀을 그리지 않고 소제목 말풍선의 "작아서 못 그린 종목"으로 넘긴다
+    const ix=bx+IN-1, iy=by+HEAD-1, iw=bw-IN*2+2, ih=bh-HEAD-IN+2;
+    if(iw<4 || ih<16){ tinyCells.push(...t.children); return; }
     computeTreemapLayout(t.children.map(c=>({c, value:c.value})), ix, iy, iw, ih).forEach(cell=>{
       const cx=cell.x+1, cy=cell.y+1, cw=cell.w-2, ch=cell.h-2;
       if(cw<2||ch<2){ tinyCells.push(cell.c); return; }
