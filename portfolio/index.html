@@ -176,13 +176,13 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 
 
 /* ── 글로벌시장: 보유종목 시장별 트리맵 2x2 ── */
-/* 자산군 분포(비중현황 > 트리맵): ①② 2열, ③ 세부 자산 작은 트리맵 2열 — 좁은 화면은 1열 */
+/* 자산군 분포(비중현황 > 트리맵): 투자시장·자산유형 2열, 아래 세부 종목 트리맵 — 좁은 화면은 1열 */
 .dist-top-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
 .type-chips{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center;margin:0 0 10px;}
 .type-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--color-text);white-space:nowrap;}
 .type-chip i{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
 .type-chip b{font-weight:800;color:var(--color-secondary);}
-/* ③ 제목과 자산유형 % 칩을 한 줄로(세로 공간 절약) — 좁으면 줄바꿈 */
+/* 세부 종목 제목과 자산유형 % 칩을 한 줄로(세로 공간 절약) — 좁으면 줄바꿈 */
 .dist-detail-head{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px;margin:10px 0 8px;}
 .dist-detail-head .type-chips{margin:0;justify-content:flex-start;}
 .dist-info{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-height:34px;margin-top:8px;padding:6px 10px;background:var(--color-section-bg);border-radius:var(--radius-sm);font-size:12px;}
@@ -208,6 +208,12 @@ body{background:var(--color-section-bg);color:var(--color-text);font-size:14px;l
 .dist-cell .mt-label{font-size:10px;font-weight:700;color:var(--color-tertiary);text-align:center;margin-bottom:4px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 @media(max-width:700px){ .dist-top-grid{grid-template-columns:minmax(0,1fr);} }
+/* 접힘(<600px, computeAllocTmHeights와 같은 경계): 세부 종목 비중을 맨 위로, 투자시장·자산유형은 그 아래 */
+@media(max-width:599px){
+  #allocTreemapView{display:flex;flex-direction:column;}
+  #allocTreemapView .dist-detail{order:-1;margin-bottom:10px;}
+  #allocTreemapView .dist-detail-head{margin-top:0;}
+}
 
 /* ── 버튼 ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;cursor:pointer;border-radius:999px;font-family:inherit;
@@ -711,6 +717,7 @@ tr.dv-flash > td{animation:dvflash 1.5s ease-out;}
 .alloc-detail-legend .lg-amt{font-size:10px;min-width:44px;}
 /* 좁은 화면(접힘·반분할, JS가 폭<600px일 때 data-mode=narrow 지정): 범례는 도넛 아래, 막대는 금액 숨김 */
 .alloc-grid[data-mode="narrow"]{grid-template-columns:minmax(0,1fr);}
+.alloc-grid[data-mode="narrow"] .alloc-right{order:-1;}   /* 접힘: 세부 종목 도넛을 맨 위로, 나머지는 원래 순서 */
 .alloc-grid[data-mode="narrow"] .alloc-donut-row{flex-wrap:nowrap;width:100%;}
 .alloc-grid[data-mode="narrow"] .alloc-legend{max-width:none;}
 .alloc-grid[data-mode="wide"] .alloc-detail-row{flex-direction:row;align-items:flex-start;flex-wrap:nowrap;}
@@ -1419,19 +1426,21 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
   <div id="allocTreemapView" style="display:none;">
     <div class="dist-top-grid">
       <div class="dist-cell">
-        <div class="mt-label">① 투자시장</div>
+        <div class="mt-label">투자시장</div>
         <div class="dist-canvas-wrap"><canvas id="distMarketCanvas" height="220"></canvas></div>
       </div>
       <div class="dist-cell">
-        <div class="mt-label">② 자산유형</div>
+        <div class="mt-label">자산유형</div>
         <div class="dist-canvas-wrap"><canvas id="distAssetTypeCanvas" height="220"></canvas></div>
       </div>
     </div>
+    <div class="dist-detail">
     <div class="dist-detail-head">
-      <div class="section-label" style="margin:0;">③ 자산유형별 세부 종목 비중</div>
+      <div class="section-label" style="margin:0;">자산유형별 세부 종목 비중</div>
       <div id="distDetailChips" class="type-chips"></div>
     </div>
     <div class="dist-canvas-wrap"><canvas id="distDetailCanvas" height="400"></canvas></div>
+    </div>
   </div>
 </div>
 </div>
@@ -3229,7 +3238,7 @@ function onSaveSnapClick(btn){
   if(!btn) return;
   const original = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = '✅ 저장됨';
+  btn.innerHTML = '✅ <span class="lbl">저장됨</span>'; // 접힘은 .lbl을 숨겨 업데이트 버튼처럼 아이콘만
   setTimeout(()=>{ btn.innerHTML = original; btn.disabled = false; }, 900);
 }
 
@@ -6828,7 +6837,7 @@ function renderPvDetail(idx, series){
   }
   const p = series[idx];
   const d = new Date(p.ts);
-  const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`+(p.live?' (현재 · 저장 전)':'');
+  const dateStr = `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}`+(p.live?' (현재)':'');
   if(p.value==null){
     panel.innerHTML = `
       <div class="pd-title">📅 ${dateStr}</div>
