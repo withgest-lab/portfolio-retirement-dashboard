@@ -8463,11 +8463,14 @@ function computeTreemapLayout(items, x, y, w, h){
   return [...computeTreemapLayout(left, x, y, w, splitH), ...computeTreemapLayout(right, x, y+splitH, w, h-splitH)];
 }
 
-// 수익률 -30%~+30%를 클램프해 회색(중립)→빨강(상승)/파랑(하락)으로 보간 — 앱 기존 상승/하락 색만 사용
-// 미국식: 이익=초록(앱 기존 #34c759), 손실=빨강(앱 기존 #ff3b30) — 중립(0% 근처)은 회색
-function treemapColor(returnPct){
+// 트리맵 손익색: 이익=초록(#34c759), 손실=빨강(#ff3b30), 0% 근처=회색. 수익률을 ±range%에서 클램프해 보간한다.
+// range는 기간이 길수록 넓다(하루 ±3% … 누적 ±50%) — 고정 ±30이면 1D의 ±2% 등락이 거의 회색이라 색으로 안 읽혔다.
+// 평단 대비 누적(변화추이 '보유 수익률'·비중현황 트리맵)은 ALL과 같은 ±50.
+const TM_COLOR_RANGE = {'1D':3,'5D':5,'1M':10,'3M':15,'6M':20,'YTD':30,'1Y':30,'3Y':50,'5Y':50,'10Y':50,'ALL':50};
+const TM_RANGE_CUM = 50;
+function treemapColor(returnPct, range=30){
   if(hideAmounts) return 'rgb(199,199,204)'; // 숨김 중에는 수익률 색을 쓰지 않는다(전부 중립 회색)
-  const t = Math.max(-1, Math.min(1, returnPct/30));
+  const t = Math.max(-1, Math.min(1, returnPct/range));
   const neutral=[199,199,204];
   const base = t>=0 ? [52,199,89] : [255,59,48];
   const k = Math.abs(t);
@@ -8601,7 +8604,8 @@ function buildTreemapItems(assetList, mode, period){
   return assetList.filter(a=>a.acctType!=='cash').map(a=>{
     const d = assetReturnDetail(a,mode,period);
     // pnlParen: 주가 변화율 모드는 % 뒤에 괄호로, 총수익률 모드는 % 뒤에 그대로 손익 금액을 붙인다
-    return {id:a.id, name:dispName(a.name), value:evKRW(a), rtn:d.rtn, pnl:d.pnl, pnlParen: mode!=='holding'};
+    return {id:a.id, name:dispName(a.name), value:evKRW(a), rtn:d.rtn, pnl:d.pnl, pnlParen: mode!=='holding',
+      colorRange: mode==='holding' ? TM_RANGE_CUM : (TM_COLOR_RANGE[period]||30)};
   }).filter(i=>i.value>0).sort((a,b)=>b.value-a.value);
 }
 
@@ -8688,7 +8692,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
     ctx.arcTo(cx,cy+ch,cx,cy,r);
     ctx.arcTo(cx,cy,cx+cw,cy,r);
     ctx.closePath();
-    ctx.fillStyle = cell.color || treemapColor(cell.rtn); // color가 있으면 구성비용 카테고리색, 없으면 수익률 색
+    ctx.fillStyle = cell.color || treemapColor(cell.rtn, cell.colorRange); // color가 있으면 카테고리색, 없으면 수익률 색
     ctx.fill();
     if(highlightId && cell.id===highlightId){ ctx.lineWidth=2.5; ctx.strokeStyle='#1c1c1e'; ctx.stroke(); } // "트리맵으로 가기"로 돌아온 종목 강조
 
@@ -8697,7 +8701,7 @@ function renderTreemapCanvas(canvasId, items, cssH, onCellClick, emptyMsg, highl
       const pctStr = maskAmt(cell.sub!==undefined ? cell.sub : (cell.rtn>=0?'+':'')+cell.rtn.toFixed(1)+'%'); // 기본은 손익률, 분포 트리맵은 sub(비중 %)
       ctx.save();
       ctx.beginPath(); ctx.rect(cx+4,cy+4,cw-8,ch-8); ctx.clip();
-      ctx.fillStyle = cell.color ? treemapTextColor(cell.color) : (hideAmounts ? '#3a3a3c' : treemapTextColor(treemapColor(cell.rtn))); ctx.textAlign='left'; ctx.textBaseline='top';   // 0%에 가까운 연회색 셀에 흰 글씨(대비 1.7:1)가 되지 않게 배경에 맞춰 고른다
+      ctx.fillStyle = cell.color ? treemapTextColor(cell.color) : (hideAmounts ? '#3a3a3c' : treemapTextColor(treemapColor(cell.rtn, cell.colorRange))); ctx.textAlign='left'; ctx.textBaseline='top';   // 0%에 가까운 연회색 셀에 흰 글씨(대비 1.7:1)가 되지 않게 배경에 맞춰 고른다
       const fontSize = (cw>90 && ch>60) ? 12 : 10;
       ctx.font=`700 ${fontSize}px Pretendard`;
       // 글자 수 추정(폭/(글자크기×0.62))은 영문 대문자·숫자가 많은 이름("TIGER 미국나스닥100")에서 실제 폭보다 작게 잡혀 마지막 글자가 셀 가장자리에서 잘렸다 — 실측으로 줄인다
@@ -8863,15 +8867,14 @@ function remainingHeight(el, bottomGap){
 }
 
 /* ── 자산군 분포 (비중현황 > 트리맵) ─────────────────────────────────
-   ① 투자시장 분포 → ② 자산유형 분포 → ③ 자산유형별 세부 자산 분포(예: Core 안의 S&P500·나스닥·코스피200 점유)
-   전부 "구성비"를 보는 트리맵이다: 크기=평가금액, 색=카테고리 고유색, 표시 %=총 자산 대비
-   (③은 해당 자산유형 대비). 수익률 색·기간 탭은 변화추이(트리맵) 탭의 종목 트리맵이 담당한다.
-   현금·채권·가상자산도 모두 포함하므로 세 단계의 합계는 도넛의 총 자산과 같다. */
+   투자시장 분포 · 자산유형 분포 · 자산유형별 세부 종목 분포(예: Core 안의 S&P500·나스닥·코스피200 점유)
+   도넛 = 구성(카테고리색), 트리맵 = 구성 + 수익: 크기=평가금액, 색=평단 대비 수익률 손익색(±50%, treemapColor),
+   표시 %=총 자산 대비. 세부 종목 트리맵은 자산유형 블록 헤더 띠·틈만 자산유형색으로 남겨 묶음을 구분한다.
+   현금·채권·가상자산도 모두 포함하므로 세 단계의 합계는 도넛의 총 자산과 같다(현금은 손익 0 → 회색). */
 const distAssetTypeKey = a => a.assetType || (a.acctType==='cash' ? '현금' : '미지정');
 const distMarketKey    = a => a.market || '미지정';
 const distMarketLabel  = k => MARKET_LABELS[k] || k;
-const distMarketColor  = (k,i) => k==='미지정' ? '#9a9aa0' : (MARKET_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
-const distTypeColor    = (k,i) => k==='미지정' ? '#9a9aa0' : (ASSETTYPE_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
+const distTypeColor   = (k,i) => k==='미지정' ? '#9a9aa0' : (ASSETTYPE_COLS[k] || ASSET_COLS[i%ASSET_COLS.length]);
 // 그룹 합산 → 트리맵 아이템(크기 내림차순). 그룹이 자산 1개면 클릭 시 그 종목 상세로 이동한다.
 // 자산 묶음의 총수익(평단 대비): 수익금 = 평가액 − 매입원가, 수익률 = 수익금 / 매입원가.
 // 묶음은 원가·평가액을 각각 합산해 계산한다(종목별 수익률의 단순 평균이 아님). 현금은 손익 0으로 본다.
@@ -8886,19 +8889,23 @@ function returnText(g){
   if(hideAmounts) return '('+AMOUNT_MASK+')';
   return `(${g.rtn>=0?'+':''}${g.rtn.toFixed(1)}%, ${fmtCompactSigned(g.pnl)})`;
 }
-function distBuildItems(assetList, keyFn, labelFn, colorFn, denom){
+// 셀 색 = 그 묶음의 평단 대비 수익률(손익색 ±50%) — 이름은 셀 안 글자로 구분된다
+function distBuildItems(assetList, keyFn, labelFn, denom){
   const sums = new Map();
   assetList.forEach(a=>{
     const v = evKRW(a); if(!(v>0)) return;
     const k = keyFn(a), e = sums.get(k) || {value:0, ids:[], list:[]};
     e.value += v; e.ids.push(a.id); e.list.push(a); sums.set(k, e);
   });
-  return [...sums.entries()].sort((x,y)=>y[1].value-x[1].value).map(([k,e],i)=>({
-    id: e.ids.length===1 ? e.ids[0] : null,
-    name: labelFn(k), value: e.value, color: colorFn(k,i),
-    sub: (denom>0 ? e.value/denom*100 : 0).toFixed(1)+'%', rtn: 0,
-    amtParts: [fmt(e.value), returnText(returnAgg(e.list))],
-  }));
+  return [...sums.entries()].sort((x,y)=>y[1].value-x[1].value).map(([k,e])=>{
+    const g = returnAgg(e.list);
+    return {
+      id: e.ids.length===1 ? e.ids[0] : null,
+      name: labelFn(k), value: e.value, rtn: g.rtn, colorRange: TM_RANGE_CUM,
+      sub: (denom>0 ? e.value/denom*100 : 0).toFixed(1)+'%',
+      amtParts: [fmt(e.value), returnText(g)],
+    };
+  });
 }
 // 운용사 브랜드 접두어 — 국내 상장 ETF 종목명 앞에 붙는 운용사 이름들
 const ETF_ISSUER_PREFIX_RE = /^(TIGER|KODEX|ACE|RISE|SOL|HANARO|KIWOOM|TIME|PLUS|KINDEX|ARIRANG|KBSTAR|TIMEFOLIO)\s+/i;
@@ -9098,12 +9105,10 @@ function drawDetailTreemap(){
     }
     const ix=bx+2, iy=by+HEAD+2, iw=bw-4, ih=bh-HEAD-4;
     if(iw<=0||ih<=0) return;
-    const n=t.children.length;
     computeTreemapLayout(t.children.map(c=>({c, value:c.value})), ix, iy, iw, ih).forEach(cell=>{
-      const j=t.children.indexOf(cell.c);
       const cx=cell.x+1, cy=cell.y+1, cw=cell.w-2, ch=cell.h-2;
       if(cw<2||ch<2){ tinyCells.push(cell.c); return; }
-      const col=donutShade(t.color,j,n), key=t.key+'|'+cell.c.key;
+      const col=treemapColor(cell.c.agg.rtn, TM_RANGE_CUM), key=t.key+'|'+cell.c.key;   // 셀=손익색, 블록 바탕·헤더 띠=자산유형색
       rr(cx,cy,cw,ch,4); ctx.fillStyle=col; ctx.fill();
       const pctStr=sharePctText(cell.c.value,total);
       const trunc = drawTreemapCellLabel(ctx, cell.c.label, pctStr, fmt(cell.c.value), cx, cy, cw, ch, treemapTextColor(col), returnText(cell.c.agg));
@@ -9152,10 +9157,10 @@ function drawAssetClassDistribution(){
   const empty = '표시할 자산이 없습니다';
   const draw = ()=>{
     const topH = allocTmHeights ? allocTmHeights.top : 220;
-    // ① 투자시장 ② 자산유형
-    renderTreemapCanvas('distMarketCanvas',    distBuildItems(positive, distMarketKey,    distMarketLabel, distMarketColor, total), topH, onClick, empty);
-    renderTreemapCanvas('distAssetTypeCanvas', distBuildItems(positive, distAssetTypeKey, k=>k,            distTypeColor,   total), topH, onClick, empty);
-    // ③ 자산유형별 세부 종목 비중
+    // 투자시장 · 자산유형
+    renderTreemapCanvas('distMarketCanvas',    distBuildItems(positive, distMarketKey,    distMarketLabel, total), topH, onClick, empty);
+    renderTreemapCanvas('distAssetTypeCanvas', distBuildItems(positive, distAssetTypeKey, k=>k,            total), topH, onClick, empty);
+    // 자산유형별 세부 종목 비중
     drawDetailTreemap();
   };
   allocTmHeights = null; draw();
