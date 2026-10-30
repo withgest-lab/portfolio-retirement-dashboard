@@ -5275,7 +5275,7 @@ let STOCK_DB=[],stocksLoaded=false;
 // stocks.csv를 고칠 때마다 이 값을 올려서 캐시 문제(특히 일부 모바일 브라우저의 완고한 fetch
 // 캐시)로 갱신된 파일을 못 받아오는 경우를 원천 차단한다 — 쿼리스트링이 다르면 완전히 다른
 // URL로 취급되어 새로 받아온다.
-const STOCKS_CSV_VERSION='20261031a';
+const STOCKS_CSV_VERSION='20261031b';
 async function loadStocksCSV(){
   if(stocksLoaded) return;
   const paths=['./stocks.csv','stocks.csv',location.pathname.replace(/\/[^/]*$/,'/')+('stocks.csv')]
@@ -5381,8 +5381,8 @@ function searchTicker(query){
   searchTimer=setTimeout(()=>{
     const results=rankStockMatches(q, 10, BOND_TEMPLATES);
     if(!results.length){box.style.display='none';return;}
-    const acctTypeColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30',bond_kr:'#5ac8fa'};
-    const acctTypeLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인',bond_kr:'채권'};
+    const acctTypeColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30',bond_kr:'#5ac8fa',safe_kr:'#5ac8fa'};
+    const acctTypeLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인',bond_kr:'채권',safe_kr:'안전'};
     const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
     box.innerHTML=results.map(s=>{
       const cc=acctTypeColor[s.c]||'#8e8e93';
@@ -5397,14 +5397,17 @@ function searchTicker(query){
     box.style.display='block';
   },150);
 }
-// stocks.csv의 category(stock_kr/stock_us/stock_jp/crypto)는 "종목 성격"이라 계좌유형에 그대로 넣지 않는다.
+// stocks.csv의 category(stock_kr/safe_kr/stock_us/stock_jp/crypto)는 "종목 성격"이라 계좌유형에 그대로 넣지 않는다.
 // 계좌유형은 일반계좌로, 성격은 투자시장(market)/자산유형(assetType)으로 옮겨 채운다.
+// safe_kr = 퇴직연금에서 안전자산으로 인정되는 ETF(머니마켓·채권·채권혼합) → 자산유형을 '안전자산'으로 채운다.
+//   스왑을 쓰는 합성 ETF(CD금리·KOFR·SOFR 합성)·선물·커버드콜은 안전자산으로 인정되지 않아 stock_kr로 두어 채우지 않는다.
 // (그 외 값 — 이미 보유 중인 자산에서 온 계좌유형 — 은 그대로 채운다)
 function applyTickerPick(prefix, sym, name, c, cur){
   let acct = c, market = null, assetType = null;
   if(c==='stock_us'){ acct='general'; market='us'; }
   else if(c==='stock_jp'){ acct='general'; market='jp'; }
   else if(c==='stock_kr'){ acct='general'; market=inferMarket({ticker:sym, name, currency:cur, acctType:'stock_kr'}); }
+  else if(c==='safe_kr'){ acct='general'; market=inferMarket({ticker:sym, name, currency:cur, acctType:'stock_kr'}); assetType='안전자산'; }
   else if(c==='crypto'){ acct='general'; market='global'; assetType='가상자산'; }
   fillSelectOrCustom(prefix+'_accttype', prefix+'_accttype_custom', acct);
   if(market) fillSelectOrCustom(prefix+'_market', prefix+'_market_custom', market);
@@ -5430,8 +5433,8 @@ function searchTickerTL(query){
   searchTimerTL=setTimeout(()=>{
     const results=rankStockMatches(q);
     if(!results.length){box.style.display='none';return;}
-    const acctTypeColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30'};
-    const acctTypeLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인'};
+    const acctTypeColor={stock_kr:'#007aff',stock_us:'#ff9500',stock_jp:'#30b0c7',crypto:'#ff3b30',safe_kr:'#5ac8fa'};
+    const acctTypeLabel={stock_kr:'KR',stock_us:'US',stock_jp:'JP',crypto:'코인',safe_kr:'안전'};
     const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
     box.innerHTML=results.map(s=>{
       const cc=acctTypeColor[s.c]||'#8e8e93';
@@ -7562,7 +7565,7 @@ function divSearchStock(p, q){
     let h = '';
     if(mine.length) h += (others.length ? '<div class="suggest-head">보유 종목</div>' : '') + mine.map(a=>row(`divPickHeld('${p}','${a.id}')`, chip(DIV_ACCT_LABEL[divAcctKey(a)]||'', divAcctColor(a)), a.name + (dup[a.name]>1 && a.company ? ' · '+(COMPANY_LABELS[a.company]||a.company) : ''), a.ticker)).join('');
     if(others.length){
-      const kind = {stock_kr:['KR','#007aff'], stock_us:['US','#ff9500'], stock_jp:['JP','#30b0c7'], crypto:['코인','#ff3b30']};
+      const kind = {stock_kr:['KR','#007aff'], stock_us:['US','#ff9500'], stock_jp:['JP','#30b0c7'], crypto:['코인','#ff3b30'], safe_kr:['안전','#5ac8fa']};
       h += (mine.length ? '<div class="suggest-head">종목 목록</div>' : '') + others.map((s,i)=>{ const k = kind[s.c] || [ACCTTYPE_LABELS[s.c]||s.c||'', '#8e8e93']; return row(`divPickOther('${p}',${i})`, chip(k[0], k[1]), s.n, s.t); }).join('');
     }
     box.innerHTML = h || '<div style="padding:10px 14px;font-size:12px;color:var(--color-tertiary)">목록에 없어요 — 입력한 이름 그대로 기록해요</div>';
