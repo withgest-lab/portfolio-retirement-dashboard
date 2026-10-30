@@ -48,7 +48,7 @@
     if (!cur) return; var c = cur; cur = null;
     document.removeEventListener('pointerdown', c.onDoc, true);
     document.removeEventListener('keydown', c.onKey, true);
-    window.removeEventListener('resize', c.onClose); window.removeEventListener('scroll', c.onScroll, true);
+    window.removeEventListener('resize', c.onResize); window.removeEventListener('scroll', c.onScroll, true);
     c.menu.classList.remove('in'); if (c.dim) c.dim.classList.remove('in');
     setTimeout(function () { c.menu.remove(); if (c.dim) c.dim.remove(); }, 200);
     c.sel.removeAttribute('aria-expanded');
@@ -57,6 +57,9 @@
   function open(sel) {
     if (cur) { var same = cur.sel === sel; close(); if (same) return; }
     if (sel.disabled) return;
+    // 글자 입력 중(키보드가 올라온 상태)에 풀다운을 누르면 키보드를 먼저 내린다 — 시트·팝오버가 키보드에 가려지지 않게(2026-10-31)
+    var ae = document.activeElement;
+    if (ae && ae !== sel && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) { try { ae.blur(); } catch (e) {} }
     var menu = document.createElement('div'); menu.className = 'ios-menu'; menu.setAttribute('role', 'listbox');
     var items = [], selIdx = sel.selectedIndex;
     function add(o, i) {
@@ -76,8 +79,11 @@
     var dim = null, sheet = isNarrow();
     if (sheet) { dim = document.createElement('div'); dim.className = 'ios-menu-dim'; document.body.appendChild(dim); menu.classList.add('sheet'); }
     document.body.appendChild(menu);
-    var r = sel.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
-    if (!sheet) {
+    // 팝오버 위치 계산 — 열 때, 그리고 키보드·주소창으로 높이만 바뀌거나 스크롤될 때 다시 부른다(시트는 화면 아래에 고정이라 불필요)
+    function place() {
+      if (sheet) return;
+      var r = sel.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+      menu.style.maxHeight = '';
       var w = Math.max(r.width, 132); menu.style.minWidth = w + 'px';
       var bd = menu.offsetHeight - menu.clientHeight;      // 테두리(border-box maxHeight엔 포함, scrollHeight엔 제외) — 빼먹으면 1px 넘쳐 스크롤바가 생김
       var mw = menu.offsetWidth, mh = Math.min(menu.scrollHeight + bd + 1, Math.min(vh * 0.6, 360)); menu.style.maxHeight = mh + 'px';
@@ -87,11 +93,19 @@
       if (mh <= below || below >= above) { top = r.bottom + 6; menu.style.maxHeight = Math.min(mh, below) + 'px'; menu.style.setProperty('--oy', '0'); }
       else { var h2 = Math.min(mh, above); top = r.top - h2 - 6; menu.style.maxHeight = h2 + 'px'; menu.style.setProperty('--oy', '100%'); }
       menu.style.left = left + 'px'; menu.style.top = top + 'px'; menu.style.setProperty('--ox', Math.max(0, Math.min(100, (r.left + r.width / 2 - left) / mw * 100)) + '%');
+      menu.style.overflowY = menu.scrollHeight > menu.clientHeight + 1 ? 'auto' : 'hidden';
     }
+    place();
     menu.style.overflowY = menu.scrollHeight > menu.clientHeight + 1 ? 'auto' : 'hidden';   // 실제로 넘칠 때만 스크롤바(팝오버·시트 공통)
-    var c = { sel: sel, dim: dim, menu: menu, items: items, idx: Math.max(0, selIdx) };
-    c.onClose = function () { close(false); };
-    c.onScroll = function (e) { if (!menu.contains(e.target)) close(false); };
+    var c = { sel: sel, dim: dim, menu: menu, items: items, idx: Math.max(0, selIdx), w0: window.innerWidth };
+    // 폭이 바뀔 때(회전·접기/펼치기)만 닫는다. 높이만 바뀌는 건 키보드가 올라오고 내려가는 것 — 예전엔 이때 방금 연 메뉴가 바로 닫혀
+    // 종목 자동완성 직후(수량 칸에 키보드가 떠 있을 때) 풀다운이 안 열리는 것처럼 보였다(2026-10-31)
+    c.onResize = function () { if (window.innerWidth !== c.w0) close(false); else place(); };
+    c.onScroll = function (e) {
+      if (menu.contains(e.target) || sheet) return;
+      var r = sel.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) close(false); else place();
+    };
     c.onDoc = function (e) { if (!menu.contains(e.target) && e.target !== sel) close(false); };
     c.onKey = function (e) {
       var k = e.key, n = items.length; if (!n) return;
@@ -105,7 +119,7 @@
     };
     cur = c;
     document.addEventListener('pointerdown', c.onDoc, true); document.addEventListener('keydown', c.onKey, true);
-    window.addEventListener('resize', c.onClose); window.addEventListener('scroll', c.onScroll, true);
+    window.addEventListener('resize', c.onResize); window.addEventListener('scroll', c.onScroll, true);
     sel.setAttribute('aria-expanded', 'true');
     items[c.idx] && items[c.idx].classList.add('act');
     requestAnimationFrame(function () { menu.classList.add('in'); if (dim) dim.classList.add('in'); var a = items[c.idx]; if (a) a.scrollIntoView({ block: 'nearest' }); });

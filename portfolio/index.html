@@ -451,16 +451,23 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 
 /* ── 공용 폼 .fm — iOS 그룹 폼. 추가·수정 폼이 모두 이 구조(헤더·섹션·12칸 grid·액션 행)를 쓴다 ── */
 .fm{background:rgba(118,118,128,.07);border-radius:14px;padding:14px 16px 12px;max-width:900px;text-align:left;font-size:13px;}
-.fm-h{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;white-space:nowrap;min-width:0;}
-.fm-h b{font-size:14px;font-weight:700;color:var(--color-text);flex-shrink:0;}
-.fm-h span{font-size:11.5px;color:var(--color-tertiary);overflow:hidden;text-overflow:ellipsis;min-width:0;}
-.fm-sec{font-size:11px;font-weight:600;color:var(--color-tertiary);margin:14px 0 6px;letter-spacing:.02em;}
-.fm>.fm-sec:first-child,.fm-h+.fm-sec{margin-top:0;}
 .fm-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;align-items:start;}
+.fm-grid + .fm-grid{margin-top:10px;}
 .fm-f{display:flex;flex-direction:column;gap:4px;min-width:0;grid-column:span 3;position:relative;}
 .fm-f.s4{grid-column:span 4;} .fm-f.s6{grid-column:span 6;} .fm-f.s8{grid-column:span 8;} .fm-f.s12{grid-column:span 12;}
+.fm-f.w2{grid-column:span 2;} .fm-f.w6{grid-column:span 6;} .fm-f.w9{grid-column:span 9;}   /* w = 넓은 화면에서만 이 칸 수(접힘에서는 n 클래스 또는 기본 2열) */
 .fm-l{font-size:11px;font-weight:600;color:var(--color-secondary);white-space:nowrap;}
 .fm-l em{font-style:normal;font-weight:400;color:var(--color-tertiary);margin-left:3px;}
+/* 입력 폼 압축(2026-10-31, 사용자 요청): 소제목을 없애고 라벨을 칸 안쪽 왼쪽(같은 행)에 둔다 — 키보드가 올라와도 폼이 덜 가려지게 세로 공간을 절반으로.
+   입력·선택칸의 왼쪽 여백(--lw)은 fmFitLabels()가 라벨 글자 폭으로 채운다. 세금 패널(.tx-p)은 좁은 다열이라 예전처럼 위 라벨 */
+.fm:not(.tx-p) .fm-f{gap:0;}
+.fm:not(.tx-p) .fm-f>.fm-l{position:absolute;left:12px;top:0;height:36px;line-height:36px;font-size:12.5px;color:var(--color-secondary);pointer-events:none;z-index:1;}
+.fm:not(.tx-p) .fm-f>.fm-l em{display:none;}
+.fm:not(.tx-p) .fm-f:has(.fm-seg)>.fm-l{display:none;}
+.fm:not(.tx-p) .fm-f .fm-input,.fm:not(.tx-p) .fm-f .fm-select{padding-left:calc(var(--lw,-8px) + 20px);}
+.fm:not(.tx-p) .fm-f .fm-custom{padding-left:12px;margin-top:6px;}
+.fm-f.fm-act.r{grid-column:7 / span 3;}
+.fm-act{justify-content:flex-end;} .fm-act .btn{width:100%;height:36px;padding:0;min-width:0;}
 .fm-input,.fm-select{width:100%;min-width:0;height:36px;box-sizing:border-box;border:.5px solid rgba(60,60,67,.22);border-radius:10px;
   padding:0 11px;font-family:inherit;font-size:14px;color:var(--color-text);background:var(--color-card);outline:none;
   transition:box-shadow .12s,border-color .12s;}
@@ -494,6 +501,8 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 @media (max-width:640px){
   .fm{padding:12px;}
   .fm-f,.fm-f.s4{grid-column:span 6;} .fm-f.s6,.fm-f.s8,.fm-f.s9,.fm-f.s12{grid-column:span 12;}
+  .fm-f.fm-act.r{grid-column:span 6;}
+  .fm-f.n4{grid-column:span 4;} .fm-f.n5{grid-column:span 5;} .fm-f.n7{grid-column:span 7;} .fm-f.n8{grid-column:span 8;} .fm-f.n12{grid-column:span 12;}   /* 접힘 전용 칸 수 — 위 규칙 뒤에 둬서 이긴다 */
   .fm-a .btn{flex:1 1 0;}
 }
 .form-status{font-size:12px;color:var(--color-secondary);padding-top:8px;min-height:18px;}
@@ -1826,6 +1835,25 @@ function fmInput(id, o={}){
 function fmField(label, inner, o={}){
   return `<label class="fm-f${o.cls?' '+o.cls:''}"${o.id?` id="${o.id}"`:''}><span class="fm-l">${label}${o.opt?'<em>(선택)</em>':''}</span>${inner}</label>`;
 }
+// 라벨이 칸 안쪽에 들어가므로 입력칸 왼쪽 여백을 라벨 글자 폭만큼 둔다(--lw). 캔버스로 글자 폭을 재어 숨겨진 폼(display:none)도 정확하다.
+// 폼은 여기저기(표 안 수정 패널 등)에서 다시 그려지므로 DOM이 바뀔 때마다 아직 안 채운 칸만 채운다. 글꼴이 늦게 로드되면 한 번 다시 잰다.
+const _fmCtx = document.createElement('canvas').getContext('2d');
+function fmLabelWidth(txt){ _fmCtx.font = '600 12.5px ' + (getComputedStyle(document.body).fontFamily || 'sans-serif'); return Math.ceil(_fmCtx.measureText(txt).width); }
+function fmFitLabels(root){
+  (root && root.querySelectorAll ? root : document).querySelectorAll('.fm:not(.tx-p) .fm-f:not([data-lw])').forEach(f=>{
+    const l = f.querySelector(':scope > .fm-l'); f.dataset.lw = '1';
+    if(!l || f.querySelector('.fm-seg')) return;
+    const t = l.firstChild && l.firstChild.nodeType===3 ? l.firstChild.textContent : '';
+    const txt = t.replace(/ /g,' ').trim(); if(!txt) return;
+    f.style.setProperty('--lw', fmLabelWidth(txt) + 'px');
+    if(l.querySelector('em')) f.querySelectorAll('.fm-input:not(.fm-custom)').forEach(i=>{ if(!i.getAttribute('placeholder')) i.setAttribute('placeholder','선택'); });   // "(선택)" 표시는 칸 안 안내로
+  });
+}
+// 수정 패널의 취소·저장 같은 버튼 — 마지막 입력과 같은 행(칸은 36px 그대로). r: 새 줄에서 오른쪽(7열)부터
+function fmAct(cls, label, onclick, o={}){ return `<div class="fm-f fm-act${o.r?' r':''} ${o.cls||''}"><button class="btn ${cls}"${o.attr?' '+o.attr:''} onclick="${onclick}">${label}</button></div>`; }
+let _fmRaf = 0;
+new MutationObserver(()=>{ if(!_fmRaf) _fmRaf = requestAnimationFrame(()=>{ _fmRaf = 0; fmFitLabels(); }); }).observe(document.documentElement, {childList:true, subtree:true});
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ document.querySelectorAll('.fm-f[data-lw]').forEach(f=>{ delete f.dataset.lw; }); fmFitLabels(); });
 // 분류 4칸(투자시장·금융회사·계좌유형·자산유형) — 옵션 목록은 상수에서 만들어 모든 폼이 같다
 function fmClassFields(ids, v={}, o={}){
   const bl=o.blank||{}, op={opt:!!o.optional};
@@ -1842,25 +1870,19 @@ function iconBtn(kind, onclick){
   const del = kind==='del';
   return `<button class="tl-icon${del?' del':''}" onclick="${onclick}" title="${del?'삭제':'수정'}" aria-label="${del?'삭제':'수정'}">${del?ICON_TRASH:ICON_EDIT}</button>`;
 }
-const BL_NONE = {market:'-- 없음 --', company:'-- 없음 --', acct:'-- 없음 --', asset:'-- 없음 --'};
-const BL_PICK = {market:'-- 선택 --', company:'-- 없음 --', acct:'-- 선택 --', asset:'-- 없음 --'};
+const BL_NONE = {market:'없음', company:'없음', acct:'없음', asset:'없음'};   // 라벨이 칸 안에 붙어 "투자시장 없음"으로 읽힌다
+const BL_PICK = {market:'선택', company:'없음', acct:'선택', asset:'없음'};
 
 function fmBuildBuy(){
   const ids={market:['af_market','af_market_custom'],company:['af_company','af_company_custom'],acct:['af_accttype','af_accttype_custom'],asset:['af_assettype','af_assettype_custom']};
-  return `
-    <div class="fm-sec">종목</div>
-    <div class="fm-grid">
-      ${fmField('종목명', `<input class="fm-input" id="af_name" placeholder="종목명 또는 티커 검색" oninput="searchTicker(this.value)" autocomplete="off"><div class="suggest-box" id="af_suggestions"></div>`, {cls:'s6'})}
+  return `<div class="fm-grid">
+      ${fmField('종목명', `<input class="fm-input" id="af_name" placeholder="이름·티커 검색" oninput="searchTicker(this.value)" autocomplete="off"><div class="suggest-box" id="af_suggestions"></div>`, {cls:'w6 n12'})}
       ${fmField('티커', fmInput('af_ticker',{ph:'예: 005930'}), {opt:true})}
-    </div>
-    <div class="fm-sec">분류</div>
-    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_PICK})}</div>
-    <div class="fm-sec">거래</div>
-    <div class="fm-grid">
+      ${fmClassFields(ids,{},{blank:BL_PICK})}
       ${fmField('수량', fmInput('af_qty',{type:'number',ph:'0'}), {id:'af_qty_label'})}
       ${fmField('단가', fmInput('af_price',{type:'number',ph:'0'}), {id:'af_price_label'})}
       ${fmField('통화', fmSelect('af_cur',FM_CUR,'KRW',{custom:false}))}
-      <div class="fm-f"><span class="fm-l">&nbsp;</span><button type="button" class="tgl-banner fm-sw" id="af_bond_sw" role="switch" aria-checked="false" onclick="toggleBondSwitch()">확정금리 채권(복리)<span class="sw"></span></button><input type="checkbox" id="af_bond_toggle" hidden></div>
+      <div class="fm-f w6 n12"><button type="button" class="tgl-banner fm-sw" id="af_bond_sw" role="switch" aria-checked="false" onclick="toggleBondSwitch()">확정금리 채권(복리)<span class="sw"></span></button><input type="checkbox" id="af_bond_toggle" hidden></div>
       <div id="af_bond_fields" class="fm-grid" style="display:none;grid-column:1 / -1;">
         ${fmField('매입원금', fmInput('af_bond_principal',{type:'number'}))}
         ${fmField('표면금리(%)', fmInput('af_bond_coupon',{type:'number',ph:'4.415',attrs:'step="0.001"'}))}
@@ -1868,69 +1890,48 @@ function fmBuildBuy(){
         ${fmField('발행일', fmInput('af_bond_issue',{type:'date',attrs:'onchange="bondIssueChanged()"'}))}
         ${fmField('만기일', fmInput('af_bond_maturity',{type:'date',attrs:'oninput="this.dataset.auto=\'\'"'}))}
       </div>
-    </div>
-    <div class="fm-sec">메모</div>
-    <div class="fm-grid">${fmField('사유', fmInput('af_reason',{ph:'매수 사유'}), {opt:true, cls:'s12'})}</div>
-    <div class="fm-a"><button class="btn btn-red" data-fm-primary onclick="addAsset()">+ 매수</button></div>`;
+      ${fmField('사유', fmInput('af_reason'), {opt:true, cls:'w9 n8'})}
+      <div class="fm-f fm-act n4"><button class="btn btn-red" data-fm-primary onclick="addAsset()">확인</button></div>
+    </div>`;
 }
 function fmBuildSell(){
   const ids={market:['sf_market','sf_market_custom'],company:['sf_company','sf_company_custom'],acct:['sf_accttype','sf_accttype_custom'],asset:['sf_assettype','sf_assettype_custom']};
-  return `
-    <div class="fm-sec">종목</div>
-    <div class="fm-grid">
-      ${fmField('종목명', `<input class="fm-input" id="sf_name" placeholder="보유 종목 검색" oninput="searchSell(this.value)" autocomplete="off"><div class="suggest-box" id="sf_suggestions"></div>`, {cls:'s6'})}
+  return `<div class="fm-grid">
+      ${fmField('종목명', `<input class="fm-input" id="sf_name" placeholder="보유 종목 검색" oninput="searchSell(this.value)" autocomplete="off"><div class="suggest-box" id="sf_suggestions"></div>`, {cls:'w6 n12'})}
       ${fmField('보유수량', fmInput('sf_held',{readonly:true}))}
-    </div>
-    <div class="fm-sec">분류</div>
-    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_PICK})}</div>
-    <div class="fm-sec">거래</div>
-    <div class="fm-grid">
+      ${fmClassFields(ids,{},{blank:BL_PICK})}
       ${fmField('매도수량', fmInput('sf_qty',{type:'number',ph:'0'}))}
       ${fmField('매도단가', fmInput('sf_price',{type:'number',ph:'0'}))}
-    </div>
-    <div class="fm-sec">메모</div>
-    <div class="fm-grid">${fmField('사유', fmInput('sf_reason',{ph:'매도 사유'}), {opt:true, cls:'s12'})}</div>
-    <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="sellAsset()">− 매도</button></div>`;
+      ${fmField('사유', fmInput('sf_reason'), {opt:true, cls:'w6'})}
+      <div class="fm-f fm-act n12"><button class="btn btn-green" data-fm-primary onclick="sellAsset()">확인</button></div>
+    </div>`;
 }
 function fmBuildCash(){
   const ids={market:['cf_market','cf_market_custom'],company:['cf_company','cf_company_custom'],acct:['cf_cashaccttype','cf_cashaccttype_custom'],asset:['cf_assettype','cf_assettype_custom']};
-  return `
-    <div class="fm-sec">구분</div>
-    <div class="fm-grid">
+  return `<div class="fm-grid">
       ${fmField('이름', fmSelect('cf_name',[['현금','현금'],['예금','예금']],'현금',{customId:'cf_name_custom'}))}
       ${fmField('통화', fmSelect('cf_cur',FM_CUR,'KRW',{custom:false}))}
-    </div>
-    <div class="fm-sec">분류</div>
-    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_NONE,optional:true})}</div>
-    <div class="fm-sec">거래</div>
-    <div class="fm-grid">
-      <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금'],['div','배당']],'set',k=>'cf_mode_'+k,k=>`setCashMode('${k}')`)}</div>
-      ${fmField('금액', fmInput('cf_amount',{type:'number',ph:'0',attrs:'min="0"'}), {id:'cf_amount_label'})}
+      ${fmClassFields(ids,{},{blank:BL_NONE,optional:true})}
+      <div class="fm-f w6 n12"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금'],['div','배당']],'set',k=>'cf_mode_'+k,k=>`setCashMode('${k}')`)}</div>
+      ${fmField('금액', fmInput('cf_amount',{type:'number',ph:'0',attrs:'min="0"'}), {id:'cf_amount_label', cls:'w9 n8'})}
+      <div class="fm-f fm-act n4"><button class="btn btn-green" data-fm-primary onclick="addCash()">확인</button></div>
       <div id="cf_div_row" style="display:none;grid-column:span 12;">${fmField('배당 지급 종목', fmInput('cf_div_source',{ph:'예: SCHD'}), {opt:true, cls:'s6'})}</div>
-    </div>
-    <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addCash()">확인</button></div>`;
+    </div>`;
 }
 function fmBuildTL(){
   const ids={market:['tl_market','tl_market_custom'],company:['tl_company','tl_company_custom'],acct:['tl_accttype','tl_accttype_custom'],asset:['tl_assettype','tl_assettype_custom']};
-  return `
-    <div class="fm-sec">종목</div>
-    <div class="fm-grid">
-      ${fmField('종목명', `<input class="fm-input" id="tl_name" placeholder="종목명 또는 티커 검색" autocomplete="off" oninput="searchTickerTL(this.value)"><div class="suggest-box" id="tl_suggestions"></div>`, {cls:'s6'})}
+  return `<div class="fm-grid">
+      ${fmField('종목명', `<input class="fm-input" id="tl_name" placeholder="이름·티커 검색" autocomplete="off" oninput="searchTickerTL(this.value)"><div class="suggest-box" id="tl_suggestions"></div>`, {cls:'w6 n12'})}
       ${fmField('티커', fmInput('tl_ticker',{ph:'예: 005930'}))}
-    </div>
-    <div class="fm-sec">분류</div>
-    <div class="fm-grid">${fmClassFields(ids,{},{blank:BL_PICK, acctOpts:[...FM_ACCT,['cash','현금']]})}</div>
-    <div class="fm-sec">거래</div>
-    <div class="fm-grid">
+      ${fmClassFields(ids,{},{blank:BL_PICK, acctOpts:[...FM_ACCT,['cash','현금']]})}
       ${fmField('날짜', fmInput('tl_date',{type:'date'}))}
       ${fmField('유형', fmSelect('tl_type',[['buy','매수'],['sell','매도']],'buy',{custom:false}))}
       ${fmField('수량', fmInput('tl_qty',{type:'number',ph:'0'}))}
       ${fmField('체결단가', fmInput('tl_price',{type:'number',ph:'0'}))}
       ${fmField('통화', fmSelect('tl_cur',FM_CUR,'KRW',{custom:false}))}
-    </div>
-    <div class="fm-sec">메모</div>
-    <div class="fm-grid">${fmField('사유', fmInput('tl_reason',{ph:'매수·매도 사유'}), {opt:true, cls:'s12'})}</div>
-    <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addTradeLog_manual()">기록 추가</button></div>`;
+      ${fmField('사유', fmInput('tl_reason'), {opt:true, cls:'w9 n8'})}
+      <div class="fm-f fm-act n4"><button class="btn btn-green" data-fm-primary onclick="addTradeLog_manual()">확인</button></div>
+    </div>`;
 }
 document.getElementById('form_buy').innerHTML  = fmBuildBuy();
 document.getElementById('form_sell').innerHTML = fmBuildSell();
@@ -4204,27 +4205,18 @@ function renderTradeLogEditForm(r, colspan){
   const id = r.id;
   return `<tr class="tr-full fm-row"><td colspan="${colspan}" onclick="event.stopPropagation()">
     <div class="fm">
-      <div class="fm-h"><b>매매 이력 수정</b></div>
-      <div class="fm-sec">거래</div>
       <div class="fm-grid">
         ${fmField('날짜', fmInput(`tle_date_${id}`,{type:'date',value:dateVal}))}
         ${fmField('유형', fmSelect(`tle_type_${id}`,[['buy','매수'],['sell','매도']],r.type,{custom:false}))}
         ${fmField('수량', fmInput(`tle_qty_${id}`,{type:'number',value:r.quantity}))}
         ${fmField(`체결단가 (${r.currency})`, fmInput(`tle_price_${id}`,{type:'number',value:r.price}))}
-      </div>
-      <div class="fm-sec">종목</div>
-      <div class="fm-grid">
-        ${fmField('종목명', fmInput(`tle_name_${id}`,{value:r.name}), {cls:'s6'})}
+        ${fmField('종목명', fmInput(`tle_name_${id}`,{value:r.name}), {cls:'w6 n12'})}
         ${fmField('티커', fmInput(`tle_ticker_${id}`,{value:(r.ticker&&r.ticker!=='—'?r.ticker:''),ph:'예: 005930'}))}
-      </div>
-      <div class="fm-sec">분류</div>
-      <div class="fm-grid">${fmClassFields({market:[`tle_market_${id}`,`tle_market_custom_${id}`],company:[`tle_company_${id}`,`tle_company_custom_${id}`],acct:[`tle_accttype_${id}`,`tle_accttype_custom_${id}`],asset:[`tle_assettype_${id}`,`tle_assettype_custom_${id}`]},
-        {market:r.market,company:r.company,acct:r.acctType,asset:r.assetType},{blank:BL_PICK, acctOpts:[...FM_ACCT,['cash','현금']]})}</div>
-      <div class="fm-sec">메모</div>
-      <div class="fm-grid">${fmField('사유', fmInput(`tle_reason_${id}`,{value:r.reason||''}), {opt:true, cls:'s12'})}</div>
-      <div class="fm-a">
-        <button class="btn btn-ghost" data-fm-cancel onclick="closeTradeLogEdit()">취소</button>
-        <button class="btn btn-green" data-fm-primary onclick="saveTradeLogEdit('${id}')">저장</button>
+        ${fmClassFields({market:[`tle_market_${id}`,`tle_market_custom_${id}`],company:[`tle_company_${id}`,`tle_company_custom_${id}`],acct:[`tle_accttype_${id}`,`tle_accttype_custom_${id}`],asset:[`tle_assettype_${id}`,`tle_assettype_custom_${id}`]},
+          {market:r.market,company:r.company,acct:r.acctType,asset:r.assetType},{blank:BL_PICK, acctOpts:[...FM_ACCT,['cash','현금']]})}
+        ${fmField('사유', fmInput(`tle_reason_${id}`,{value:r.reason||''}), {opt:true})}
+        ${fmAct('btn-ghost','취소','closeTradeLogEdit()',{r:1,attr:'data-fm-cancel'})}
+        ${fmAct('btn-green','저장',`saveTradeLogEdit('${id}')`,{attr:'data-fm-primary'})}
       </div>
     </div>
   </td></tr>`;
@@ -4506,15 +4498,12 @@ function renderTable(){
     if(quickTradeId===a.id){
       rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
         <div class="fm">
-          <div class="fm-h"><b>빠른 거래</b></div>
           <div class="fm-grid">
             ${fmField('수량', fmInput(`tp_qty_${a.id}`,{type:'number',ph:'0',attrs:'min="0"'}))}
             ${fmField(`단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.currentPrice}))}
-          </div>
-          <div class="fm-a">
-            <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">닫기</button>
-            <button class="btn btn-green" onclick="confirmTrade('${a.id}','sell')">− 매도</button>
-            <button class="btn btn-red" onclick="confirmTrade('${a.id}','buy')">+ 매수</button>
+            ${fmAct('btn-ghost','닫기','closeTradePanel()',{cls:'w2 n4',attr:'data-fm-cancel'})}
+            ${fmAct('btn-green','− 매도',`confirmTrade('${a.id}','sell')`,{cls:'w2 n4'})}
+            ${fmAct('btn-red','+ 매수',`confirmTrade('${a.id}','buy')`,{cls:'w2 n4'})}
           </div>
         </div>
       </td></tr>`;
@@ -4529,47 +4518,34 @@ function renderTable(){
         const cmLabel='금액';   // 모드(잔액 설정/입금/출금)는 위 세그먼트 한 곳에서만 보여준다
         rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
           <div class="fm">
-            <div class="fm-h"><b>현금 수정</b></div>
-            <div class="fm-sec">분류</div>
-            <div class="fm-grid">${fmClassFields({market:[`ep_market_${a.id}`,`ep_market_custom_${a.id}`],company:[`ep_company_${a.id}`,`ep_company_custom_${a.id}`],acct:[`ep_cashaccttype_${a.id}`,`ep_cashaccttype_custom_${a.id}`],asset:[`ep_assettype_${a.id}`,`ep_assettype_custom_${a.id}`]},
-              {market:a.market,company:a.company,acct:a.cashAcctType,asset:a.assetType||'안전자산'},{blank:BL_NONE})}</div>
-            <div class="fm-sec">금액</div>
             <div class="fm-grid">
-              <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${a.id}`,k=>`setEditCashMode('${a.id}','${k}')`)}</div>
-              ${fmField(cmLabel, fmInput(`ep_cash_amt_${a.id}`,{type:'number',ph:'0',value:cm==='set'?(a.avgPrice||0):undefined,attrs:'min="0"'}), {id:`ep_amt_label_${a.id}`})}
-            </div>
-            <div class="fm-a">
-              <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
-              <button class="btn btn-green" data-fm-primary onclick="confirmEditCash('${a.id}')">저장</button>
+              ${fmClassFields({market:[`ep_market_${a.id}`,`ep_market_custom_${a.id}`],company:[`ep_company_${a.id}`,`ep_company_custom_${a.id}`],acct:[`ep_cashaccttype_${a.id}`,`ep_cashaccttype_custom_${a.id}`],asset:[`ep_assettype_${a.id}`,`ep_assettype_custom_${a.id}`]},
+                {market:a.market,company:a.company,acct:a.cashAcctType,asset:a.assetType||'안전자산'},{blank:BL_NONE})}
+              <div class="fm-f w6 n12"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${a.id}`,k=>`setEditCashMode('${a.id}','${k}')`)}</div>
+              ${fmField(cmLabel, fmInput(`ep_cash_amt_${a.id}`,{type:'number',ph:'0',value:cm==='set'?(a.avgPrice||0):undefined,attrs:'min="0"'}), {id:`ep_amt_label_${a.id}`, cls:'n12'})}
+              ${fmAct('btn-ghost','취소','closeTradePanel()',{r:1,attr:'data-fm-cancel'})}
+              ${fmAct('btn-green','저장',`confirmEditCash('${a.id}')`,{attr:'data-fm-primary'})}
             </div>
           </div>
         </td></tr>`;
       } else {
         // ── 일반 종목: 수량 / 평균단가 / 분류 (확정금리 채권은 원금·금리·발행/만기일로 대체) ──
         const holdFields = a.isBond ? `
-            <div class="fm-sec">채권 정보</div>
-            <div class="fm-grid">
               ${fmField(`매입원금 (${a.currency})`, fmInput(`tp_bond_principal_${a.id}`,{type:'number',value:a.bondPrincipal||0}))}
               ${fmField('표면금리(%)', fmInput(`tp_bond_coupon_${a.id}`,{type:'number',value:((a.bondCouponRate||0)*100).toFixed(3),attrs:'step="0.001"'}))}
               ${fmField('가산금리(%)', fmInput(`tp_bond_spread_${a.id}`,{type:'number',value:((a.bondSpreadRate||0)*100).toFixed(3),attrs:'step="0.001"'}))}
               ${fmField('발행일', fmInput(`tp_bond_issue_${a.id}`,{type:'date',value:a.bondIssueDate||''}))}
-              ${fmField('만기일', fmInput(`tp_bond_maturity_${a.id}`,{type:'date',value:a.bondMaturityDate||''}))}
-            </div>` : `
-            <div class="fm-sec">보유 정보</div>
-            <div class="fm-grid">
+              ${fmField('만기일', fmInput(`tp_bond_maturity_${a.id}`,{type:'date',value:a.bondMaturityDate||''}))}` : `
               ${fmField('수량', fmInput(`tp_qty_${a.id}`,{type:'number',value:a.quantity}))}
-              ${fmField(`평균단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.avgPrice}))}
-            </div>`;
+              ${fmField(`평균단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.avgPrice}))}`;
         rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
           <div class="fm">
-            <div class="fm-h"><b>종목 수정</b></div>
-            ${holdFields}
-            <div class="fm-sec">분류</div>
-            <div class="fm-grid">${fmClassFields({market:[`tp_market_${a.id}`,`tp_market_custom_${a.id}`],company:[`tp_company_${a.id}`,`tp_company_custom_${a.id}`],acct:[`tp_accttype_${a.id}`,`tp_accttype_custom_${a.id}`],asset:[`tp_assettype_${a.id}`,`tp_assettype_custom_${a.id}`]},
-              {market:a.market,company:a.company,acct:a.acctType,asset:a.assetType},{blank:{market:'-- 선택 --',company:'-- 없음 --',asset:'-- 없음 --'}})}</div>
-            <div class="fm-a">
-              <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
-              <button class="btn btn-green" data-fm-primary onclick="confirmSaveEdit('${a.id}')">저장</button>
+            <div class="fm-grid">
+              ${holdFields}
+              ${fmClassFields({market:[`tp_market_${a.id}`,`tp_market_custom_${a.id}`],company:[`tp_company_${a.id}`,`tp_company_custom_${a.id}`],acct:[`tp_accttype_${a.id}`,`tp_accttype_custom_${a.id}`],asset:[`tp_assettype_${a.id}`,`tp_assettype_custom_${a.id}`]},
+                {market:a.market,company:a.company,acct:a.acctType,asset:a.assetType},{blank:{market:'선택',company:'없음',asset:'없음'}})}
+              ${fmAct('btn-ghost','취소','closeTradePanel()',{attr:'data-fm-cancel'})}
+              ${fmAct('btn-green','저장',`confirmSaveEdit('${a.id}')`,{attr:'data-fm-primary'})}
             </div>
           </div>
         </td></tr>`;
@@ -4623,19 +4599,14 @@ function cashGroupRowsHtml(group, sac){
     const id = lead.id, cm = editCashModes[id]||'set';
     rows += `<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
       <div class="fm">
-        <div class="fm-h"><b>현금 수정</b></div>
-        <div class="fm-sec">분류</div>
-        <div class="fm-grid">${fmClassFields({market:[`ep_market_${id}`,`ep_market_custom_${id}`],company:[`ep_company_${id}`,`ep_company_custom_${id}`],acct:[`ep_cashaccttype_${id}`,`ep_cashaccttype_custom_${id}`],asset:[`ep_assettype_${id}`,`ep_assettype_custom_${id}`]},
-          {market:lead.market,company:lead.company,acct:lead.cashAcctType,asset:assetType||'안전자산'},{blank:BL_NONE})}</div>
-        <div class="fm-sec">금액</div>
         <div class="fm-grid">
-          <div class="fm-f s6"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${id}`,k=>`setEditCashMode('${id}','${k}')`)}</div>
+          ${fmClassFields({market:[`ep_market_${id}`,`ep_market_custom_${id}`],company:[`ep_company_${id}`,`ep_company_custom_${id}`],acct:[`ep_cashaccttype_${id}`,`ep_cashaccttype_custom_${id}`],asset:[`ep_assettype_${id}`,`ep_assettype_custom_${id}`]},
+            {market:lead.market,company:lead.company,acct:lead.cashAcctType,asset:assetType||'안전자산'},{blank:BL_NONE})}
+          <div class="fm-f w6 n12"><span class="fm-l">종류</span>${fmSeg([['set','잔액 설정'],['in','+ 입금'],['out','− 출금']],cm,k=>`ep_mode_${k}_${id}`,k=>`setEditCashMode('${id}','${k}')`)}</div>
           ${fmField('통화', fmSelect(`ep_ccy_${id}`, FM_CUR, lead.currency, {custom:false}))}
           ${fmField('금액', fmInput(`ep_cash_amt_${id}`,{type:'number',ph:'0',value:cm==='set'?(lead.avgPrice||0):undefined,attrs:'min="0"'}), {id:`ep_amt_label_${id}`})}
-        </div>
-        <div class="fm-a">
-          <button class="btn btn-ghost" data-fm-cancel onclick="closeTradePanel()">취소</button>
-          <button class="btn btn-green" data-fm-primary onclick="confirmEditCash('${id}')">저장</button>
+          ${fmAct('btn-ghost','취소','closeTradePanel()',{r:1,attr:'data-fm-cancel'})}
+          ${fmAct('btn-green','저장',`confirmEditCash('${id}')`,{attr:'data-fm-primary'})}
         </div>
       </div>
     </td></tr>`;
@@ -6266,7 +6237,6 @@ function renderPrincipalLedgerEditForm(r){
   const amountVal = r.currency==='KRW' ? (r.totalKRW||0) : Math.round((r.totalKRW||0)/fxRate);
   return `<tr class="tr-full fm-row"><td colspan="5" onclick="event.stopPropagation()">
     <div class="fm">
-      <div class="fm-h"><b>원금 기록 수정</b></div>
       <div class="fm-grid">
         ${fmField('날짜', fmInput(`ple_date_${r.id}`,{type:'date',value:dateVal}))}
         ${fmField('구분', fmSelect(`ple_type_${r.id}`,[['deposit','입금'],['withdrawal','출금']],r.type,{custom:false}))}
@@ -7487,14 +7457,14 @@ const DIV_BASIS_TIP = '세후(입금액): 세금을 떼고 계좌에 실제 들�
 function divFormHtml(p, ctx, v, o){
   const add = o.mode==='add', lock = !!o.locked, basis = divBasis[p] || 'net', on = !!divPr[p];
   const lockSel = h => lock ? h.replace('<select ', '<select disabled ') : h;
-  const nameIn = `<input class="fm-input" id="${p}_name" placeholder="종목명 또는 티커 검색" value="${fmEsc(v.name)}"${lock ? ' readonly' : ` oninput="divSearchStock('${p}',this.value)"`} autocomplete="off" data-asset-id="${fmEsc(v.assetId||'')}" data-ticker="${fmEsc(v.ticker||'')}"><div class="suggest-box" id="${p}_sugg" data-for="${p}_name"></div>`;
+  const nameIn = `<input class="fm-input" id="${p}_name" placeholder="이름·티커 검색" value="${fmEsc(v.name)}"${lock ? ' readonly' : ` oninput="divSearchStock('${p}',this.value)"`} autocomplete="off" data-asset-id="${fmEsc(v.assetId||'')}" data-ticker="${fmEsc(v.ticker||'')}"><div class="suggest-box" id="${p}_sugg" data-for="${p}_name"></div>`;
   const acts = add
     ? `<button class="btn btn-green" data-fm-primary onclick="addDivManual('${ctx}')">추가</button>`
     : `<button class="btn btn-ghost" data-fm-cancel onclick="editDivItem('${divQ(o.key)}','${ctx}')">취소</button><button class="btn btn-green" data-fm-primary onclick="saveDivEdit('${divQ(o.key)}','${ctx}')">저장</button>`;
   return `<div class="fm dv-form" data-p="${p}" data-k="${add ? 'add' : divAttr(o.key)}"${o.style ? ` style="${o.style}"` : ''}><div class="fm-grid">
-      ${fmField('배당일', fmInput(`${p}_date`,{type:'date',value:v.date}))}
+      ${fmField('배당일', fmInput(`${p}_date`,{type:'date',value:v.date}), {cls:'n12'})}
       ${fmField('종목', nameIn, {cls:'s6'})}
-      ${fmField('금융회사', lockSel(fmSelect(`${p}_co`, FM_COMPANY, v.company, {blank:'-- 없음 --', customId:`${p}_co_custom`})).replace('<input class="fm-input fm-custom"', lock ? '<input readonly class="fm-input fm-custom"' : '<input class="fm-input fm-custom"'))}
+      ${fmField('금융회사', lockSel(fmSelect(`${p}_co`, FM_COMPANY, v.company, {blank:'없음', customId:`${p}_co_custom`})).replace('<input class="fm-input fm-custom"', lock ? '<input readonly class="fm-input fm-custom"' : '<input class="fm-input fm-custom"'))}
       ${fmField('계좌', lockSel(fmSelect(`${p}_acct`, DIV_ACCT_OPTS, v.acct, {custom:false})))}
       ${fmField('통화', lockSel(fmSelect(`${p}_cur`, FM_CUR, v.ccy, {custom:false})).replace('<select ', `<select onchange="divCalcAmount('${p}')" `))}
       ${fmField('수량', fmInput(`${p}_qty`,{type:'number',value:v.qty,ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${p}')"`}))}
