@@ -847,6 +847,7 @@ table.tl-table{width:100%;table-layout:fixed;border-collapse:separate;border-spa
 .tl-reason{text-align:left!important;white-space:normal!important;font-size:11px!important;color:var(--color-tertiary);padding:0 8px 7px 6px!important;}
 .tl-reason-row > td.tl-reason-pad{padding:0!important;}
 tr.tl-row:has(+ tr.tr-full) td{border-bottom:none;}
+tr.pl-main td{border-bottom:none;}   /* 원금기록장: 사유 줄이 붙은 본 줄은 아래 선 없이 사유 줄과 한 덩어리로 */
 .tl-empty{text-align:center!important;padding:20px!important;color:var(--color-tertiary);}
 @media(max-width:699px){ .tl-table .tl-w{display:none;} .tl-pill-f{display:inline-block;} }
 @media(max-width:480px){ .tl-table th{font-size:10px;padding-top:6px;} .tl-table td{padding:6px 0;} .tl-name{font-size:11px;} }
@@ -1149,7 +1150,6 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
   .hold-mkt .hm{padding:0;} .hold-mkt .hm-l{font-size:9px;} .hold-mkt .hm-v{font-size:9.5px;letter-spacing:-.2px;}
   /* 요약 타일 4개(배당·금융소득)는 2×2 — 3+1로 한 칸만 아랫줄에 남지 않게 */
   .cgt-flow:has(> .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t):not(:has(> .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t ~ .cgt-t)) > .cgt-t{flex:1 1 calc(50% - 6px);}
-  .pl-tm{display:none;}   /* 원금기록장: 시각은 숨겨 연필·휴지통 칸 확보 */
   /* 원금기록장 종목명은 날짜 아래로 — 일시 칸이 남는 폭을 갖고 이름은 그 폭에서 말줄임(width:0+min-width:100%라 칸 폭을 늘리지 않음) */
   .pl-nm-w{display:none;}
   .pl-nm-f{display:block;width:0;min-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -1656,7 +1656,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
     <div class="tbl-wrap tbl-cap c6 eqn pl-tbl">
       <table class="table-auto"><colgroup><col><col><col><col><col></colgroup>
         <thead><tr>
-          <th style="text-align:left;">일시</th>
+          <th style="text-align:left;">날짜</th>
           <th style="text-align:center;">구분</th>
           <th>금액</th>
           <th>누적 잔액</th>
@@ -6227,14 +6227,15 @@ function renderPrincipalLedger(){
     const isIn = r.type==='deposit';
     running += isIn ? (r.totalKRW||0) : -(r.totalKRW||0);
     const dt = new Date(r.at);
-    const dtStr = `${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()}<span class="pl-tm"> ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}</span>`;
+    const dtStr = `${dt.getFullYear()}.${dt.getMonth()+1}.${dt.getDate()}`;   // 입출금은 날짜만 적는다(시각 없음)
     const badge = isIn
       ? `<span class="acctType-badge" style="background:#34c75920;color:#34c759;">${r.src==='dividend' ? '배당' : '입금'}</span>`
       : `<span class="acctType-badge" style="background:#ff3b3020;color:var(--color-up);">출금</span>`;
     // 배당 종목명 등: 펼침은 구분 배지 아래, 접힘은 날짜 아래 둘째 줄(남는 폭에서 말줄임) — 둘 중 하나만 보인다(CSS .pl-nm-w/.pl-nm-f)
-    const sub = [r.name && r.name!=='현금' ? r.name : '', (r.reason||'').trim()].filter(Boolean).join(' · ');   // 배당 종목명 · 입출금 사유
+    const sub = r.name && r.name!=='현금' ? r.name : '';   // 배당 종목명 — 사유는 아래 전체 폭 줄(매매이력과 같은 방식)
+    const reason = (r.reason||'').trim().replace(/&/g,'&amp;').replace(/</g,'&lt;');
     const subTip = String(sub).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-    const mainRow = `<tr>
+    const mainRow = `<tr${reason?' class="pl-main"':''}>
       <td style="text-align:left;font-size:12px;color:var(--color-tertiary);">${dtStr}${sub ? `<div class="tl-sub pl-nm-f" title="${subTip}">${sub}</div>` : ''}</td>
       <td style="text-align:center;">${badge}${sub ? `<div class="tl-sub pl-nm-w" title="${subTip}">${sub}</div>` : ''}</td>
       <td class="${isIn?'up':'dn'}" style="font-weight:600;">${isIn?'+':'-'}${fmt(r.totalKRW||0)}</td>
@@ -6243,7 +6244,8 @@ function renderPrincipalLedger(){
         ${iconBtn('edit', `togglePrincipalLedgerEdit('${r.id}')`)}${iconBtn('del', `deletePrincipalLedgerEntry('${r.id}')`)}
       </td>
     </tr>`;
-    return mainRow + (editingPrincipalLedgerId===r.id ? renderPrincipalLedgerEditForm(r) : '');
+    const reasonRow = reason ? `<tr class="tr-full tl-reason-row"><td colspan="5" class="tl-reason">💬 ${reason}</td></tr>` : '';
+    return mainRow + reasonRow + (editingPrincipalLedgerId===r.id ? renderPrincipalLedgerEditForm(r) : '');
   });
   el.innerHTML = rows.slice().reverse().join(''); // 최신순으로 표시(누적 잔액은 시간순으로 미리 계산해둔 값 그대로 사용)
   if(totalEl) totalEl.textContent = fmt(running);
