@@ -37,6 +37,29 @@
   // 스크립트가 값을 직접 바꿔도(.value=…) 메뉴의 선택 표시가 맞도록 — 열 때마다 select의 현재 값을 읽으므로 별도 동기화 불필요
 
   var cur = null; // {sel, dim, menu, items, idx, onDoc, onKey, onScroll}
+  var vv = window.visualViewport;
+  // 키보드를 뺀 "실제로 보이는 영역"(레이아웃 뷰포트 좌표) — 크롬은 키보드가 떠도 innerHeight를 안 줄이고 visualViewport만 줄인다.
+  // 풍선·자동완성처럼 다른 팝업도 window.visBox()로 같은 값을 써서 키보드 밑에 숨지 않게 한다(2026-10-31).
+  function visBox() { var top = vv ? vv.offsetTop : 0, h = vv ? vv.height : window.innerHeight; return { top: top, bottom: top + h, height: h }; }
+  window.visBox = visBox;
+  // 모달 오버레이가 키보드 위에만 그려지도록 CSS 변수로 알린다(키보드가 떠 있을 때만 — 평소에는 기존 inset:0 그대로)
+  function syncVV() {
+    var s = document.documentElement.style, b = visBox();
+    if (window.innerHeight - b.height > 80) { s.setProperty('--vvh', b.height + 'px'); s.setProperty('--vvt', b.top + 'px'); }
+    else { s.removeProperty('--vvh'); s.removeProperty('--vvt'); }
+  }
+  if (vv) { vv.addEventListener('resize', syncVV); vv.addEventListener('scroll', syncVV); }
+  function coarse() { return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); }
+  // 키보드가 내려가는 동안 높이가 계속 바뀐다 — 값이 안정될 때까지(최소 200ms·최대 450ms) 기다렸다 콜백
+  function settle(cb) {
+    var t0 = Date.now(), last = '', still = 0;
+    (function tick() {
+      var k = window.innerHeight + '/' + Math.round(vv ? vv.height : 0); still = k === last ? still + 1 : 0; last = k;
+      var el = Date.now() - t0;
+      if ((el >= 200 && still >= 2) || el >= 450) cb(); else setTimeout(tick, 60);
+    })();
+  }
+  var pending = false;
   function isNarrow() { return window.innerWidth <= 480 && window.parent === window; }   // 나란히 비교의 iframe(폭 좁음)은 시트 대신 팝오버
   function setVal(sel, v) {
     var d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
@@ -49,6 +72,7 @@
     document.removeEventListener('pointerdown', c.onDoc, true);
     document.removeEventListener('keydown', c.onKey, true);
     window.removeEventListener('resize', c.onResize); window.removeEventListener('scroll', c.onScroll, true);
+    if (vv) { vv.removeEventListener('resize', c.onResize); vv.removeEventListener('scroll', c.onResize); }
     c.menu.classList.remove('in'); if (c.dim) c.dim.classList.remove('in');
     setTimeout(function () { c.menu.remove(); if (c.dim) c.dim.remove(); }, 200);
     c.sel.removeAttribute('aria-expanded');
@@ -56,10 +80,17 @@
   }
   function open(sel) {
     if (cur) { var same = cur.sel === sel; close(); if (same) return; }
-    if (sel.disabled) return;
-    // 글자 입력 중(키보드가 올라온 상태)에 풀다운을 누르면 키보드를 먼저 내린다 — 시트·팝오버가 키보드에 가려지지 않게(2026-10-31)
+    if (sel.disabled || pending) return;
+    // 글자 입력 중(키보드가 올라온 상태)에 풀다운을 누르면 키보드를 먼저 내리고, 터치 기기는 화면 높이가 안정된 뒤 연다
+    // — 시트·팝오버가 키보드(또는 내려가는 중간 크기)에 가려지지 않게(2026-10-31)
     var ae = document.activeElement;
-    if (ae && ae !== sel && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) { try { ae.blur(); } catch (e) {} }
+    if (ae && ae !== sel && (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && /^(text|search|number|tel|email|url|password|date|)$/i.test(ae.type || '')))) {
+      try { ae.blur(); } catch (e) {}
+      if (coarse()) { pending = true; settle(function () { pending = false; if (!cur) doOpen(sel); }); return; }
+    }
+    doOpen(sel);
+  }
+  function doOpen(sel) {
     var menu = document.createElement('div'); menu.className = 'ios-menu'; menu.setAttribute('role', 'listbox');
     var items = [], selIdx = sel.selectedIndex;
     function add(o, i) {
@@ -76,20 +107,29 @@
       if (g && g !== lastGrp) { var gl = document.createElement('div'); gl.className = 'ios-menu-grp'; gl.textContent = g.label; menu.appendChild(gl); }
       lastGrp = g; add(opts[i], i);
     }
-    var dim = null, sheet = isNarrow();
+    // 접힘(≤480)은 늘 시트. 키보드가 남아 보이는 영역이 좁으면(<420) 폭과 무관하게 시트로 바꿔 키보드 바로 위에 붙인다
+    var dim = null, sheet = isNarrow() || (window.parent === window && visBox().height < 420);
     if (sheet) { dim = document.createElement('div'); dim.className = 'ios-menu-dim'; document.body.appendChild(dim); menu.classList.add('sheet'); }
     document.body.appendChild(menu);
+    // 폼 칸처럼 라벨이 든 상자(.fm-bx) 안의 select는 상자 전체를 기준으로 메뉴를 붙인다(select만 기준이면 라벨 폭만큼 오른쪽으로 밀림)
+    function anchor() { return (sel.closest && sel.closest('.fm-bx')) || sel; }
     // 팝오버 위치 계산 — 열 때, 그리고 키보드·주소창으로 높이만 바뀌거나 스크롤될 때 다시 부른다(시트는 화면 아래에 고정이라 불필요)
     function place() {
-      if (sheet) return;
-      var r = sel.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+      var vb = visBox();
+      if (sheet) {   // 시트: 보이는 영역 맨 아래(키보드 바로 위)에 붙이고, 높이는 보이는 영역 안으로
+        menu.style.bottom = Math.max(0, window.innerHeight - vb.bottom) + 'px';
+        menu.style.setProperty('max-height', Math.min(window.innerHeight * 0.62, vb.height - 16) + 'px', 'important');
+        menu.style.overflowY = menu.scrollHeight > menu.clientHeight + 1 ? 'auto' : 'hidden';
+        return;
+      }
+      var r = anchor().getBoundingClientRect(), vw = window.innerWidth, vh = vb.height;
       menu.style.maxHeight = '';
       var w = Math.max(r.width, 132); menu.style.minWidth = w + 'px';
       var bd = menu.offsetHeight - menu.clientHeight;      // 테두리(border-box maxHeight엔 포함, scrollHeight엔 제외) — 빼먹으면 1px 넘쳐 스크롤바가 생김
       var mw = menu.offsetWidth, mh = Math.min(menu.scrollHeight + bd + 1, Math.min(vh * 0.6, 360)); menu.style.maxHeight = mh + 'px';
       var left = Math.min(Math.max(8, r.left), vw - mw - 8);
       if (r.right - mw >= 8 && r.left + mw > vw - 8) left = r.right - mw;        // 오른쪽 끝 select는 오른쪽 맞춤
-      var below = vh - r.bottom - 8, above = r.top - 8, top;
+      var below = vb.bottom - r.bottom - 8, above = r.top - vb.top - 8, top;
       if (mh <= below || below >= above) { top = r.bottom + 6; menu.style.maxHeight = Math.min(mh, below) + 'px'; menu.style.setProperty('--oy', '0'); }
       else { var h2 = Math.min(mh, above); top = r.top - h2 - 6; menu.style.maxHeight = h2 + 'px'; menu.style.setProperty('--oy', '100%'); }
       menu.style.left = left + 'px'; menu.style.top = top + 'px'; menu.style.setProperty('--ox', Math.max(0, Math.min(100, (r.left + r.width / 2 - left) / mw * 100)) + '%');
@@ -103,8 +143,8 @@
     c.onResize = function () { if (window.innerWidth !== c.w0) close(false); else place(); };
     c.onScroll = function (e) {
       if (menu.contains(e.target) || sheet) return;
-      var r = sel.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > window.innerHeight) close(false); else place();
+      var r = anchor().getBoundingClientRect(), vb = visBox();
+      if (r.bottom < vb.top || r.top > vb.bottom) close(false); else place();
     };
     c.onDoc = function (e) { if (!menu.contains(e.target) && e.target !== sel) close(false); };
     c.onKey = function (e) {
@@ -120,6 +160,7 @@
     cur = c;
     document.addEventListener('pointerdown', c.onDoc, true); document.addEventListener('keydown', c.onKey, true);
     window.addEventListener('resize', c.onResize); window.addEventListener('scroll', c.onScroll, true);
+    if (vv) { vv.addEventListener('resize', c.onResize); vv.addEventListener('scroll', c.onResize); }   // 키보드가 뒤늦게 올라오거나 내려가도 따라간다
     sel.setAttribute('aria-expanded', 'true');
     items[c.idx] && items[c.idx].classList.add('act');
     requestAnimationFrame(function () { menu.classList.add('in'); if (dim) dim.classList.add('in'); var a = items[c.idx]; if (a) a.scrollIntoView({ block: 'nearest' }); });

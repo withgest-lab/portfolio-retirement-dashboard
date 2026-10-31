@@ -455,18 +455,31 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .fm-grid + .fm-grid{margin-top:10px;}
 .fm-f{display:flex;flex-direction:column;gap:4px;min-width:0;grid-column:span 3;position:relative;}
 .fm-f.s4{grid-column:span 4;} .fm-f.s6{grid-column:span 6;} .fm-f.s8{grid-column:span 8;} .fm-f.s12{grid-column:span 12;}
-.fm-f.w2{grid-column:span 2;} .fm-f.w6{grid-column:span 6;} .fm-f.w9{grid-column:span 9;}   /* w = 넓은 화면에서만 이 칸 수(접힘에서는 n 클래스 또는 기본 2열) */
+.fm-f.w2{grid-column:span 2;} .fm-f.w3{grid-column:span 3;} .fm-f.w4{grid-column:span 4;} .fm-f.w5{grid-column:span 5;} .fm-f.w6{grid-column:span 6;} .fm-f.w9{grid-column:span 9;}   /* w = 넓은 화면에서만 이 칸 수(접힘에서는 n 클래스 또는 기본 2열) */
 .fm-l{font-size:11px;font-weight:600;color:var(--color-secondary);white-space:nowrap;}
 .fm-l em{font-style:normal;font-weight:400;color:var(--color-tertiary);margin-left:3px;}
 /* 입력 폼 압축(2026-10-31, 사용자 요청): 소제목을 없애고 라벨을 칸 안쪽 왼쪽(같은 행)에 둔다 — 키보드가 올라와도 폼이 덜 가려지게 세로 공간을 절반으로.
-   입력·선택칸의 왼쪽 여백(--lw)은 fmFitLabels()가 라벨 글자 폭으로 채운다. 세금 패널(.tx-p)은 좁은 다열이라 예전처럼 위 라벨 */
-.fm:not(.tx-p) .fm-f{gap:0;}
-.fm:not(.tx-p) .fm-f>.fm-l{position:absolute;left:12px;top:0;height:36px;line-height:36px;font-size:12.5px;color:var(--color-secondary);pointer-events:none;z-index:1;}
-.fm:not(.tx-p) .fm-f>.fm-l em{display:none;}
-.fm:not(.tx-p) .fm-f:has(.fm-seg)>.fm-l{display:none;}
-.fm:not(.tx-p) .fm-f .fm-input,.fm:not(.tx-p) .fm-f .fm-select{padding-left:calc(var(--lw,-8px) + 20px);}
-.fm:not(.tx-p) .fm-f .fm-custom{padding-left:12px;margin-top:6px;}
-.fm-f.fm-act.r{grid-column:7 / span 3;}
+   라벨은 .fm-bx(테두리 있는 36px 상자) 안에서 흐름(flex)으로 자리를 차지한다 — 값 위에 겹쳐 놓고 폭을 재던 방식은 글꼴이 늦게 로드되거나 기기별 날짜 위젯 여백이 다르면 라벨이 값을 가렸다.
+   .tx-st(금융소득 입력처럼 라벨이 긴 좁은 다열)만 예전 위 라벨을 쓴다(.fm-bx는 display:contents) */
+.fm-bx{display:contents;}
+.fm:not(.tx-st) .fm-f{gap:0;}
+.fm:not(.tx-st) .fm-bx{display:flex;align-items:stretch;height:36px;box-sizing:border-box;border:.5px solid rgba(60,60,67,.22);border-radius:10px;background:var(--color-card);transition:box-shadow .12s,border-color .12s;}
+.fm:not(.tx-st) .fm-bx:focus-within{border-color:var(--color-accent);box-shadow:0 0 0 3px rgba(0,122,255,.18);}
+.fm:not(.tx-st) .fm-bx:has(.fm-input[readonly]){background:rgba(118,118,128,.1);}
+.fm:not(.tx-st) .fm-bx:has(.field-err-on){border-color:#ff3b30;}
+.fm:not(.tx-st) .fm-bx>.fm-l{flex:none;display:flex;align-items:center;padding-left:10px;margin-right:5px;font-size:12.5px;}
+.fm:not(.tx-st) .fm-bx>.fm-l em{display:none;}
+.fm:not(.tx-st) .fm-bx>.fm-input,.fm:not(.tx-st) .fm-bx>.fm-select{flex:1 1 0;width:auto;min-width:0;height:auto;border:0;border-radius:0;background:transparent;box-shadow:none;padding-left:0;}
+.fm:not(.tx-st) .fm-bx>.fm-input:focus,.fm:not(.tx-st) .fm-bx>.fm-select:focus{border:0;box-shadow:none;}
+.fm:not(.tx-st) .fm-f>.fm-l{display:none;}   /* 상자 밖 라벨(세그먼트 줄·빈 라벨)은 쓰지 않는다 */
+.fm:not(.tx-st) .fm-f>.fm-custom{padding-left:12px;margin-top:6px;}
+/* 날짜 칸: 기기마다 다른 안쪽 여백을 없애고, 터치 기기는 달력 아이콘을 숨겨(칸 어디를 눌러도 선택창이 열린다) 날짜 글자에 폭을 몰아준다 */
+.fm-input[type=date]{text-align:left;}
+.fm-bx>.fm-input[type=date]{font-size:12.5px;}   /* 좁은 칸(양도세 패널 2열 약 156px)에서도 yyyy-mm-dd가 안 잘리게 한 단계 작게 */
+.fm-input[type=date]::-webkit-datetime-edit{padding:0;}
+.fm-input[type=date]::-webkit-calendar-picker-indicator{margin:0 0 0 1px;padding:0;width:14px;}
+@media (pointer:coarse){ .fm-input[type=date]::-webkit-calendar-picker-indicator{display:none;} }
+.fm-f.fm-act.r{grid-column:7 / span 3;} .fm-f.fm-act.r10{grid-column:10 / span 3;}
 .fm-act{justify-content:flex-end;} .fm-act .btn{width:100%;height:36px;padding:0;min-width:0;}
 .fm-input,.fm-select{width:100%;min-width:0;height:36px;box-sizing:border-box;border:.5px solid rgba(60,60,67,.22);border-radius:10px;
   padding:0 11px;font-family:inherit;font-size:14px;color:var(--color-text);background:var(--color-card);outline:none;
@@ -501,7 +514,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 @media (max-width:640px){
   .fm{padding:12px;}
   .fm-f,.fm-f.s4{grid-column:span 6;} .fm-f.s6,.fm-f.s8,.fm-f.s9,.fm-f.s12{grid-column:span 12;}
-  .fm-f.fm-act.r{grid-column:span 6;}
+  .fm-f.fm-act.r{grid-column:span 6;} .fm-f.fm-act.r10{grid-column:span 12;}
   .fm-f.n4{grid-column:span 4;} .fm-f.n5{grid-column:span 5;} .fm-f.n7{grid-column:span 7;} .fm-f.n8{grid-column:span 8;} .fm-f.n12{grid-column:span 12;}   /* 접힘 전용 칸 수 — 위 규칙 뒤에 둬서 이긴다 */
   .fm-a .btn{flex:1 1 0;}
 }
@@ -530,9 +543,10 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 @media(min-width:700px){ .tx-cols.tx3{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr);} .fi-months{min-height:84px;gap:4px;} }
 /* 금융소득 3칸: 차트 높이에 맞춰 늘어난 회색 상자의 아래 절반이 비지 않게 — 앱 기록 행·직접 입력 칸을 상자 높이에 고르게 나눈다(쌓으면 짧은 화면에서 넘침) */
 @media(min-width:700px){
-  .tx-cols.tx3 > .tx-p{display:flex;flex-direction:column;}
-  .tx-cols.tx3 > .tx-p > .tx-row{flex:1 1 auto;max-height:64px;}
-  .tx-cols.tx3 > .tx-p > .fm-grid{flex:1 1 auto;align-content:space-evenly;}
+  .tx-cols.tx3 > .tx-p{display:flex;flex-direction:column;align-self:start;}   /* 내용 높이만큼만 — 차트 칸 높이로 늘리면 두 회색 상자 아래가 비어 보인다 */
+  .tx-cols.tx3 > .tx-p > .tx-row{flex:0 0 auto;min-height:64px;}
+  .tx-cols.tx3 > .tx-p > .fm-grid{flex:0 0 auto;align-content:start;row-gap:0;}
+  .tx-cols.tx3 > .tx-p > .fm-grid > .fi-f{min-height:64px;justify-content:center;border-top:.5px solid var(--color-border);padding:4px 0;}   /* 직접 입력 행을 왼쪽 앱 기록 행(.tx-row)과 같은 높이(64px)·같은 줄에 */
 }
 .fi-m{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:10px;color:var(--color-tertiary);}
 .fi-m-bars{width:100%;flex:1 1 auto;min-height:0;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden;}
@@ -556,6 +570,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .tx-h{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--color-tertiary);margin:0 0 4px;min-height:18px;}
 .tx-sub{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:28px;font-size:12px;font-weight:600;color:var(--color-secondary);margin:2px 0;}
 .tx-add{justify-content:flex-end;} .tx-add .btn{width:100%;height:36px;padding:0;}
+.tx-h-lg{min-height:28px;}   /* 양도세 두 카드(앱 기록 · 직접 입력)의 머리글 높이를 같게 — 오른쪽에 "없어요" 칩이 들어가도 줄이 어긋나지 않는다 */
 .tx-sum{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:10px;width:100%;padding:12px 4px;border:0;border-top:.5px solid var(--color-border);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;}
 .tx-sums .tx-sum:first-child{border-top:0;}
 .tx-sl{display:flex;flex-direction:column;gap:2px;min-width:0;} .tx-sl b{font-size:14px;} .tx-sl small{font-size:11px;color:var(--color-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -871,7 +886,7 @@ table.eq-measure > colgroup > col, table.eq-measure > thead > tr > th, table.eq-
 .pv-detail .pd-note{font-size:10px;color:var(--color-tertiary);line-height:1.4;flex-basis:100%;}
 
 /* ── 모달 ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
+.modal-bg{display:none;position:fixed;inset:auto;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);background:rgba(0,0,0,.5);z-index:1000;
   align-items:center;justify-content:center;}
 .modal-bg.open{display:flex;}
 .modal-box{background:#fff;border-radius:16px;padding:24px;max-width:360px;width:90%;margin:0 auto;}
@@ -1626,10 +1641,10 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
       <div class="notice" style="margin:0 0 12px;">💡 아래 폼으로 과거 월별 입출금을 직접 추가하면 2025년 이후 월별 원금을 소급 기록할 수 있습니다.</div>
       <div class="fm">
         <div class="fm-grid">
-          <label class="fm-f"><span class="fm-l">날짜</span><input class="fm-input" id="pl_date" type="date"></label>
-          <label class="fm-f"><span class="fm-l">구분</span><select class="fm-select" id="pl_type"><option value="deposit">입금</option><option value="withdrawal">출금</option></select></label>
-          <label class="fm-f"><span class="fm-l">금액</span><input class="fm-input" id="pl_amount" type="number" inputmode="decimal" placeholder="0" min="0" autocomplete="off"></label>
-          <label class="fm-f"><span class="fm-l">통화</span><select class="fm-select" id="pl_cur"><option value="KRW">KRW ₩</option><option value="USD">USD $</option><option value="JPY">JPY ¥</option></select></label>
+          <label class="fm-f"><div class="fm-bx"><span class="fm-l">날짜</span><input class="fm-input" id="pl_date" type="date"></div></label>
+          <label class="fm-f"><div class="fm-bx"><span class="fm-l">구분</span><select class="fm-select" id="pl_type"><option value="deposit">입금</option><option value="withdrawal">출금</option></select></div></label>
+          <label class="fm-f"><div class="fm-bx"><span class="fm-l">금액</span><input class="fm-input" id="pl_amount" type="number" inputmode="decimal" placeholder="0" min="0" autocomplete="off"></div></label>
+          <label class="fm-f"><div class="fm-bx"><span class="fm-l">통화</span><select class="fm-select" id="pl_cur"><option value="KRW">KRW ₩</option><option value="USD">USD $</option><option value="JPY">JPY ¥</option></select></div></label>
         </div>
         <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addPrincipalLedgerEntry()">추가</button></div>
       </div>
@@ -1760,9 +1775,9 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
   </div>
 </div>
 
-<script src="../shared/dialog.js"></script>
-<script src="../shared/icons.js"></script>
-<script src="../shared/ios-select.js"></script>
+<script src="../shared/dialog.js?v=20261031b"></script>
+<script src="../shared/icons.js?v=20261031b"></script>
+<script src="../shared/ios-select.js?v=20261031b"></script>
 <script src="div-tax.js?v=20261012"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
@@ -1832,28 +1847,36 @@ function fmInput(id, o={}){
   const t = o.type||'text';
   return `<input class="fm-input" id="${id}" type="${t}"${o.value!==undefined&&o.value!==null?` value="${fmEsc(o.value)}"`:''}${o.ph?` placeholder="${fmEsc(o.ph)}"`:''}${t==='number'?' inputmode="decimal"':''}${o.readonly?' readonly':''}${o.attrs?' '+o.attrs:''} autocomplete="off">`;
 }
+// 라벨은 테두리 있는 상자(.fm-bx) 안에서 컨트롤과 한 줄 — 값 위에 겹치지 않는다. 직접입력 칸(fm-custom)은 상자 밖(아래)에 둔다.
+// "(선택)"은 라벨 대신 입력 안 안내(placeholder "선택")로 보여 준다(placeholder를 따로 준 칸은 그대로).
 function fmField(label, inner, o={}){
-  return `<label class="fm-f${o.cls?' '+o.cls:''}"${o.id?` id="${o.id}"`:''}><span class="fm-l">${label}${o.opt?'<em>(선택)</em>':''}</span>${inner}</label>`;
+  let main = inner, extra = '';
+  const k = inner.search(/<input\b[^>]*\bfm-custom\b/);
+  if(k >= 0){ main = inner.slice(0, k); extra = inner.slice(k); }
+  if(o.opt) main = main.replace(/<input class="fm-input"(?![^>]*placeholder)/, '<input class="fm-input" placeholder="선택"');
+  return `<label class="fm-f${o.cls?' '+o.cls:''}"${o.id?` id="${o.id}"`:''}><div class="fm-bx"><span class="fm-l">${label}${o.opt?'<em>(선택)</em>':''}</span>${main}</div>${extra}</label>`;
 }
-// 라벨이 칸 안쪽에 들어가므로 입력칸 왼쪽 여백을 라벨 글자 폭만큼 둔다(--lw). 캔버스로 글자 폭을 재어 숨겨진 폼(display:none)도 정확하다.
-// 폼은 여기저기(표 안 수정 패널 등)에서 다시 그려지므로 DOM이 바뀔 때마다 아직 안 채운 칸만 채운다. 글꼴이 늦게 로드되면 한 번 다시 잰다.
-const _fmCtx = document.createElement('canvas').getContext('2d');
-function fmLabelWidth(txt){ _fmCtx.font = '600 12.5px ' + (getComputedStyle(document.body).fontFamily || 'sans-serif'); return Math.ceil(_fmCtx.measureText(txt).width); }
-function fmFitLabels(root){
-  (root && root.querySelectorAll ? root : document).querySelectorAll('.fm:not(.tx-p) .fm-f:not([data-lw])').forEach(f=>{
-    const l = f.querySelector(':scope > .fm-l'); f.dataset.lw = '1';
-    if(!l || f.querySelector('.fm-seg')) return;
-    const t = l.firstChild && l.firstChild.nodeType===3 ? l.firstChild.textContent : '';
-    const txt = t.replace(/ /g,' ').trim(); if(!txt) return;
-    f.style.setProperty('--lw', fmLabelWidth(txt) + 'px');
-    if(l.querySelector('em')) f.querySelectorAll('.fm-input:not(.fm-custom)').forEach(i=>{ if(!i.getAttribute('placeholder')) i.setAttribute('placeholder','선택'); });   // "(선택)" 표시는 칸 안 안내로
-  });
+// 자동완성 목록(.suggest-box)이 키보드 밑으로 안 내려가게 — 입력칸 아래 보이는 영역(visBox)이 모자라면 입력칸을 위로 올리고(스크롤),
+// 그래도 모자라면 목록 높이를 남은 만큼으로 줄인다(안쪽 스크롤). 키보드가 뜨거나 내려갈 때도 다시 맞춘다.
+function fmFitSuggest(box){
+  if(!box || box.style.display==='none') return;
+  const inp = box.parentNode && box.parentNode.querySelector('input'); if(!inp) return;
+  const vb = window.visBox ? window.visBox() : {top:0, bottom:window.innerHeight};
+  box.style.maxHeight = ''; box.style.top = ''; box.style.bottom = ''; box.style.marginTop = '';
+  const need = Math.min(box.scrollHeight, 220) + 8;
+  let r = inp.getBoundingClientRect();
+  if(r.bottom + 4 + need > vb.bottom){
+    const sc = typeof getScroller==='function' ? getScroller() : document.scrollingElement;
+    const delta = r.top - (vb.top + 64);   // 위 고정 막대(52px) 아래로
+    if(sc && delta > 0){ sc.scrollTop += delta; r = inp.getBoundingClientRect(); }
+  }
+  const below = vb.bottom - r.bottom - 12, above = r.top - vb.top - 12;
+  if(below >= Math.min(need, 120) || below >= above){ box.style.maxHeight = Math.max(80, Math.min(220, below)) + 'px'; }   // 아래에 들어가면 그대로
+  else { box.style.top = 'auto'; box.style.bottom = '100%'; box.style.marginTop = '0'; box.style.maxHeight = Math.max(80, Math.min(220, above)) + 'px'; }   // 키보드 때문에 아래가 좁고 위가 넓으면 입력칸 위로
 }
+if(window.visualViewport) window.visualViewport.addEventListener('resize', ()=>document.querySelectorAll('.suggest-box').forEach(b=>{ if(b.style.display==='block') fmFitSuggest(b); }));
 // 수정 패널의 취소·저장 같은 버튼 — 마지막 입력과 같은 행(칸은 36px 그대로). r: 새 줄에서 오른쪽(7열)부터
-function fmAct(cls, label, onclick, o={}){ return `<div class="fm-f fm-act${o.r?' r':''} ${o.cls||''}"><button class="btn ${cls}"${o.attr?' '+o.attr:''} onclick="${onclick}">${label}</button></div>`; }
-let _fmRaf = 0;
-new MutationObserver(()=>{ if(!_fmRaf) _fmRaf = requestAnimationFrame(()=>{ _fmRaf = 0; fmFitLabels(); }); }).observe(document.documentElement, {childList:true, subtree:true});
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{ document.querySelectorAll('.fm-f[data-lw]').forEach(f=>{ delete f.dataset.lw; }); fmFitLabels(); });
+function fmAct(cls, label, onclick, o={}){ return `<div class="fm-f fm-act${o.r?(o.r===10?' r10':' r'):''} ${o.cls||''}"><button class="btn ${cls}"${o.attr?' '+o.attr:''} onclick="${onclick}">${label}</button></div>`; }
 // 분류 4칸(투자시장·금융회사·계좌유형·자산유형) — 옵션 목록은 상수에서 만들어 모든 폼이 같다
 function fmClassFields(ids, v={}, o={}){
   const bl=o.blank||{}, op={opt:!!o.optional};
@@ -5365,7 +5388,7 @@ function searchTicker(query){
         <span style="font-size:11px;color:var(--color-tertiary);flex-shrink:0;">${s.t}</span>
       </div>`;
     }).join('');
-    box.style.display='block';
+    box.style.display='block'; fmFitSuggest(box);
   },150);
 }
 // stocks.csv의 category(stock_kr/safe_kr/stock_us/stock_jp/crypto)는 "종목 성격"이라 계좌유형에 그대로 넣지 않는다.
@@ -5417,7 +5440,7 @@ function searchTickerTL(query){
         <span style="font-size:11px;color:var(--color-tertiary);flex-shrink:0;">${s.t}</span>
       </div>`;
     }).join('');
-    box.style.display='block';
+    box.style.display='block'; fmFitSuggest(box);
   },150);
 }
 function selectTickerTL(sym,name,acctType,cur){
@@ -5446,7 +5469,7 @@ function searchSell(query){
         <div style="font-size:11px;color:var(--color-tertiary)">${a.ticker} · 보유 ${maskAmt(a.quantity.toLocaleString()+'주')} · 평균 ${maskAmt(CUR_SYM[a.currency]+a.avgPrice.toLocaleString())}</div>
       </div>
     </div>`).join('');
-  box.style.display='block';
+  box.style.display='block'; fmFitSuggest(box);
 }
 // select+커스텀 입력 쌍에 기존 값을 되돌려 채움(값이 프리셋 옵션에 없으면 직접입력으로 전환)
 function fillSelectOrCustom(selectId, customInputId, value){
@@ -5672,13 +5695,10 @@ function sellAsset(){
 const editCashModes = {};
 function setEditCashMode(id, mode){
   editCashModes[id] = mode;
-  const labels = {set:'금액', in:'금액', out:'금액'};
   ['set','in','out'].forEach(k=>{
     const btn=document.getElementById(`ep_mode_${k}_${id}`);
     if(btn) btn.classList.toggle('active', k===mode);
   });
-  const lbl=document.getElementById(`ep_amt_label_${id}`);
-  if(lbl) lbl.childNodes[0].textContent = labels[mode];
   prefillCashAmt(id);
 }
 // 현금 수정 폼 금액 칸: '잔액 설정'이면 고른 통화의 현재 잔액을 미리 채우고, 입금·출금이면 비운다
@@ -5755,10 +5775,7 @@ function setCashMode(mode){
     out: document.getElementById('cf_mode_out'),
     div: document.getElementById('cf_mode_div'),
   };
-  const labels = {set:'금액', in:'금액', out:'금액', div:'금액'};
   Object.entries(btns).forEach(([k,btn])=>{ if(btn) btn.classList.toggle('active', k===mode); });
-  const lbl = document.getElementById('cf_amount_label');
-  if(lbl) lbl.childNodes[0].textContent = labels[mode];
   const divRow = document.getElementById('cf_div_row');
   if(divRow) divRow.style.display = mode==='div' ? 'block' : 'none';
 }
@@ -5923,7 +5940,8 @@ document.addEventListener('click', e=>{
   btn.classList.add('on');
   const r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
   const x = Math.min(Math.max(8, r.left + r.width/2 - w/2), window.innerWidth - w - 8);
-  let y = r.bottom + 6; if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
+  const vb = window.visBox ? window.visBox() : {top:0, bottom:window.innerHeight};   // 키보드가 떠 있으면 그 위 보이는 영역 안에서
+  let y = r.bottom + 6; if(y + h > vb.bottom - 8) y = Math.max(vb.top + 8, r.top - h - 6);
   pop.style.left = x + 'px'; pop.style.top = y + 'px';
 });
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeIpop(); });
@@ -6066,21 +6084,20 @@ function renderCapitalGainsTax(){
       ${tile('예상 양도세', taxMan(taxM), taxM>0?'dn':'')}
     </div>${notes}
     <div class="tx-cols">
-      <div>
-        <div class="tx-h"><span>앱 기록 · 자동</span></div>
+      <div class="fm tx-p">
+        <div class="tx-h tx-h-lg"><span>앱 기록 · 자동</span></div>
         <div class="tbl-wrap tbl-cap dv-st"><table class="table-auto"><thead><tr><th>종목</th><th>결제일</th><th>실현손익</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
         ${candHtml}
       </div>
       <div class="fm tx-p">
-        <div class="tx-h"><span>직접 입력 · 앱 밖</span></div>
-        <div class="tx-sub"><span>앱에 없는 증권사의 해외주식 매도</span>${!manualRows && !none ? `<button type="button" class="btn btn-ghost dv-btn" onclick="saveFinInput('cgtNone',1,${year})">없어요</button>` : ''}</div>
+        <div class="tx-h tx-h-lg"><span>직접 입력 · 앱에 없는 증권사 매도</span>${!manualRows && !none ? `<button type="button" class="btn btn-ghost dv-btn" onclick="saveFinInput('cgtNone',1,${year})">없어요</button>` : ''}</div>
         ${manualRows}
         ${none && !manualRows ? `<div class="tx-row"><span class="l">없음으로 기록했어요</span><button type="button" class="btn btn-ghost dv-btn" onclick="saveFinInput('cgtNone','',${year})">되돌리기</button></div>` : ''}
         <div class="fm-grid" style="margin-top:6px">
-          ${fmField('매도일', fmInput('cgt_date',{type:'date'}), {cls:'s6'})}
+          ${fmField('날짜', fmInput('cgt_date',{type:'date'}), {cls:'s6'})}
           ${fmField('종목', fmInput('cgt_name',{ph:'예: 가상종목'}), {cls:'s6'})}
-          ${fmField('실현손익(만원)', fmInput('cgt_pnl',{type:'number',ph:'손실은 −'}), {cls:'s6'})}
-          <div class="fm-f s6 tx-add"><button class="btn btn-green" data-fm-primary onclick="addCgtManual()">추가</button></div>
+          ${fmField('손익(만원)', fmInput('cgt_pnl',{type:'number',ph:'손실은 −'}), {cls:'s6 n8'})}
+          <div class="fm-f s6 tx-add n4"><button class="btn btn-green" data-fm-primary onclick="addCgtManual()">추가</button></div>
         </div>
         ${open.length ? `<div class="tx-sub" style="margin-top:14px">이력 전부터 보유한 몫의 매입 환율</div>${fxRows}` : ''}
       </div>
@@ -6167,7 +6184,7 @@ function renderFinIncomeThreshold(){
         <div class="tx-row"><span class="l">해외ETF 매매차익 (추정)</span><span class="v">${taxMan(etfMan)}</span></div>
         <div class="tx-row dim"><span class="l">ISA·연금 배당 (제외)</span><span class="v">${taxMan(Math.round(fin.shelteredGross/10000))}</span></div>
       </div>
-      <div class="fm tx-p">
+      <div class="fm tx-p tx-st">
         <div class="tx-h"><span>직접 입력 · 앱 밖 (세전)</span></div>
         <div class="fm-grid">
           ${inp('int', finInputRaw(year,'int'), '은행·채권 이자 (만원)')}
@@ -7458,21 +7475,23 @@ function divFormHtml(p, ctx, v, o){
   const add = o.mode==='add', lock = !!o.locked, basis = divBasis[p] || 'net', on = !!divPr[p];
   const lockSel = h => lock ? h.replace('<select ', '<select disabled ') : h;
   const nameIn = `<input class="fm-input" id="${p}_name" placeholder="이름·티커 검색" value="${fmEsc(v.name)}"${lock ? ' readonly' : ` oninput="divSearchStock('${p}',this.value)"`} autocomplete="off" data-asset-id="${fmEsc(v.assetId||'')}" data-ticker="${fmEsc(v.ticker||'')}"><div class="suggest-box" id="${p}_sugg" data-for="${p}_name"></div>`;
+  const sw = o.showPr ? `<div class="fm-f w6 n12"><button type="button" class="tgl-banner fm-sw${on?' on':''}" role="switch" aria-checked="${on}" title="이 배당을 원금기록장 입금으로 남겨 둔 기록이에요 — 끄면 그 입금을 지워요" onclick="toggleDivPr('${p}',this)">원금기록장에 추가<span class="sw"></span></button></div>` : '';
+  // 버튼은 마지막 입력과 같은 줄 — 스위치가 없으면 금액·세후/세전 줄 끝에, 있으면 스위치 줄 끝에(새 줄에서는 오른쪽 열부터)
+  const bw = add ? 'w3 n12' : sw ? 'w3 n6' : 'w2 n6';
   const acts = add
-    ? `<button class="btn btn-green" data-fm-primary onclick="addDivManual('${ctx}')">추가</button>`
-    : `<button class="btn btn-ghost" data-fm-cancel onclick="editDivItem('${divQ(o.key)}','${ctx}')">취소</button><button class="btn btn-green" data-fm-primary onclick="saveDivEdit('${divQ(o.key)}','${ctx}')">저장</button>`;
+    ? fmAct('btn-green','추가',`addDivManual('${ctx}')`,{cls:bw, r:sw?10:0, attr:'data-fm-primary'})
+    : fmAct('btn-ghost','취소',`editDivItem('${divQ(o.key)}','${ctx}')`,{cls:bw, r:sw?7:0, attr:'data-fm-cancel'}) + fmAct('btn-green','저장',`saveDivEdit('${divQ(o.key)}','${ctx}')`,{cls:bw, attr:'data-fm-primary'});
   return `<div class="fm dv-form" data-p="${p}" data-k="${add ? 'add' : divAttr(o.key)}"${o.style ? ` style="${o.style}"` : ''}><div class="fm-grid">
-      ${fmField('배당일', fmInput(`${p}_date`,{type:'date',value:v.date}), {cls:'n12'})}
-      ${fmField('종목', nameIn, {cls:'s6'})}
+      ${fmField('배당일', fmInput(`${p}_date`,{type:'date',value:v.date}), {cls:'w4 n12'})}
+      ${fmField('종목', nameIn, {cls:'w5 n12'})}
       ${fmField('금융회사', lockSel(fmSelect(`${p}_co`, FM_COMPANY, v.company, {blank:'없음', customId:`${p}_co_custom`})).replace('<input class="fm-input fm-custom"', lock ? '<input readonly class="fm-input fm-custom"' : '<input class="fm-input fm-custom"'))}
       ${fmField('계좌', lockSel(fmSelect(`${p}_acct`, DIV_ACCT_OPTS, v.acct, {custom:false})))}
       ${fmField('통화', lockSel(fmSelect(`${p}_cur`, FM_CUR, v.ccy, {custom:false})).replace('<select ', `<select onchange="divCalcAmount('${p}')" `))}
       ${fmField('수량', fmInput(`${p}_qty`,{type:'number',value:v.qty,ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${p}')"`}))}
       ${fmField('주당 배당금', fmInput(`${p}_per`,{type:'number',value:v.dps,ph:'0',attrs:`min="0" step="0.0001" oninput="divCalcAmount('${p}')"`}))}
       ${fmField('금액(원)', fmInput(`${p}_amt`,{type:'number',value:v.amount,ph:'0',attrs:'min="0"'}))}
-      <div class="fm-f s9 dv-basis"><span class="fm-l" aria-hidden="true">&nbsp;</span><span class="dv-segg">${fmSeg([['net','세후(입금액)'],['gross','세전']], basis, k=>`${p}_basis_${k}`, k=>`setDivBasis('${p}','${k}')`)}<button type="button" class="ibtn" data-tip="${divAttr(DIV_BASIS_TIP)}" aria-label="세후·세전 안내">ⓘ</button></span></div>
-    </div><div class="fm-a">
-      ${o.showPr ? `<button type="button" class="tgl-banner${on?' on':''}" role="switch" aria-checked="${on}" title="이 배당을 원금기록장 입금으로 남겨 둔 기록이에요 — 끄면 그 입금을 지워요" onclick="toggleDivPr('${p}',this)">원금기록장에 추가<span class="sw"></span></button>` : ''}
+      <div class="fm-f dv-basis ${sw ? 'w9' : add ? 'w6' : 'w5'} n12"><span class="dv-segg">${fmSeg([['net','세후(입금액)'],['gross','세전']], basis, k=>`${p}_basis_${k}`, k=>`setDivBasis('${p}','${k}')`)}<button type="button" class="ibtn" data-tip="${divAttr(DIV_BASIS_TIP)}" aria-label="세후·세전 안내">ⓘ</button></span></div>
+      ${sw}
       ${acts}
     </div></div>`;
 }
@@ -7539,7 +7558,7 @@ function divSearchStock(p, q){
       h += (mine.length ? '<div class="suggest-head">종목 목록</div>' : '') + others.map((s,i)=>{ const k = kind[s.c] || [ACCTTYPE_LABELS[s.c]||s.c||'', '#8e8e93']; return row(`divPickOther('${p}',${i})`, chip(k[0], k[1]), s.n, s.t); }).join('');
     }
     box.innerHTML = h || '<div style="padding:10px 14px;font-size:12px;color:var(--color-tertiary)">목록에 없어요 — 입력한 이름 그대로 기록해요</div>';
-    box.style.display = 'block';
+    box.style.display = 'block'; fmFitSuggest(box);
   }, 120);
 }
 function divPickHeld(p, id){

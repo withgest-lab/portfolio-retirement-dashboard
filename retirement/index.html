@@ -1972,9 +1972,9 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
 
 </div><!-- main-layout -->
 
-<script src="../shared/dialog.js"></script>
-<script src="../shared/icons.js"></script>
-<script src="../shared/ios-select.js"></script>
+<script src="../shared/dialog.js?v=20261031b"></script>
+<script src="../shared/icons.js?v=20261031b"></script>
+<script src="../shared/ios-select.js?v=20261031b"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountRt").parentNode);}</script>
 <script>
 // 생활비 여유/부족 색 축 — 월 현금흐름 차트의 세후 합계 선·지표 카드·배너·툴팁 공통(생활비 기준선은 C.exp 검정 점선).
@@ -3320,7 +3320,8 @@ document.addEventListener('click', e=>{
   btn.classList.add('on');
   const r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
   let x = Math.min(Math.max(8, r.left + r.width/2 - w/2), window.innerWidth - w - 8);
-  let y = r.bottom + 6; if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
+  const vb = window.visBox ? window.visBox() : {top:0, bottom:window.innerHeight};   // 키보드가 떠 있으면 그 위 보이는 영역 안에서
+  let y = r.bottom + 6; if(y + h > vb.bottom - 8) y = Math.max(vb.top + 8, r.top - h - 6);
   pop.style.left = x + 'px'; pop.style.top = y + 'px';
 });
 document.addEventListener('keydown', e=>{ if(e.key === 'Escape') closeIpop(); });

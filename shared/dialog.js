@@ -12,7 +12,7 @@
 
   var css = document.createElement('style');
   css.textContent =
-    '.ios-dlg-back{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;padding:24px;' +
+    '.ios-dlg-back{position:fixed;inset:auto;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:100000;background:rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;padding:24px;' +
       'opacity:0;transition:opacity .16s;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}' +
     '.ios-dlg-back.show{opacity:1;}' +
     '.ios-dlg{width:270px;max-width:100%;background:rgba(250,250,252,.96);border-radius:14px;overflow:hidden;text-align:center;' +

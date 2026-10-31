@@ -51,7 +51,7 @@ const IN_PAGE_FIT = () => {
 const IN_PAGE_BOXES = () => {
   const vis = e => e.offsetParent !== null && !['hidden', 'range', 'checkbox', 'radio', 'file'].includes(e.type) && e.getBoundingClientRect().height > 8 && e.getBoundingClientRect().width > 8;
   const els = [...document.querySelectorAll('input, select')].filter(vis);
-  const box = e => { const r = e.getBoundingClientRect(); return { id: e.id || e.name || e.className.toString().slice(0, 14) || e.tagName, top: r.top, left: r.left, h: Math.round(r.height), w: Math.round(r.width) }; };
+  const box = e => { const r = (e.closest('.fm-bx') || e).getBoundingClientRect(); /* 라벨이 든 폼 칸(.fm-bx)은 상자 전체가 입력 박스 */ return { id: e.id || e.name || e.className.toString().slice(0, 14) || e.tagName, top: r.top, left: r.left, h: Math.round(r.height), w: Math.round(r.width) }; };
   const items = els.map(box);
   const kinds = (arr, key, tol) => { const out = []; arr.map(i => i[key]).sort((a, b) => a - b).forEach(v => { if (!out.length || v - out[out.length - 1] > tol) out.push(v); }); return out; };
   // ① 같은 줄(top 차 ≤ 4px) 컨트롤의 높이 차
