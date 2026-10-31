@@ -1782,6 +1782,7 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 <script src="../shared/icons.js?v=20261031b"></script>
 <script src="../shared/ios-select.js?v=20261031b"></script>
 <script src="div-tax.js?v=20261012"></script>
+<script src="pf-calc.js?v=20261031"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
 /* ════════════════════════════════════════
@@ -1976,6 +1977,7 @@ const ASSETS_KEY  = 'pf_assets_v1';
 const SOLD_KEY    = 'pf_sold_v1';
 const TRADE_KEY   = 'pf_tradelog_v1';
 const FX_KEY      = 'pf_fx_v1';
+const PC = window.PfCalc;   // 보유 종목 평가·수익률 순수 계산(pf-calc.js)
 // Google Sheets 동기화 제거됨 - 드라이브 직접 백업으로 대체
 
 
@@ -2246,13 +2248,10 @@ function recalcBondValuations(){
   const now = Date.now();
   assets.forEach(a=>{
     if(!a.isBond || !a.bondIssueDate) return;
-    const issueTs = new Date(a.bondIssueDate+'T00:00:00').getTime();
-    const elapsedDays = Math.max(0, (now - issueTs) / 86400000);
-    const rate = (a.bondCouponRate||0) + (a.bondSpreadRate||0);
-    const newVal = Math.round((a.bondPrincipal||0) * Math.pow(1+rate, elapsedDays/365) * 100) / 100;
-    if(a.currentPrice !== newVal){
-      if(!a.prevPrice) a.prevPrice = a.bondPrincipal;
-      a.currentPrice = newVal;
+    const {value, prev} = PC.bondValues(a, now);
+    if(a.currentPrice !== value || a.prevPrice !== prev){
+      a.currentPrice = value;
+      a.prevPrice = prev;
       changed = true;
     }
   });
@@ -3667,16 +3666,9 @@ function migrateSoldHistory(){
 // 반환: 조정된 현금 자산 이름 또는 null(같은 통화 현금 행이 2개 이상이라 모호한 경우만)
 // cashAcctType: 매매 종목의 구분(개인연금/퇴직연금/IRP 등) — 계좌 안에 구분별로 현금이 나뉘어
 // 있으면(예: 농협 개인연금 현금 vs 농협 퇴직연금 현금) 정확히 그 구분의 현금만 조정한다.
-// 구분이 일치하는 현금이 없지만 그 계좌·통화에 현금이 하나뿐이면(기존 방식) 하위호환으로 그걸 사용.
-// 현금 행 찾기 — 같은 금융회사·통화에서 계좌구분이 같은 행, 없으면 그 계좌 현금이 하나뿐일 때 그 행. 없으면 null, 여러 개라 모호하면 'amb'
+// 현금 행 찾기 — 같은 금융회사·통화에서 구분이 같은 행, 없으면 구분 없는 옛 행(하위호환). 구분이 다른 행은 쓰지 않는다. 없으면 null, 여러 개라 모호하면 'amb'(pf-calc.js pickCashRow)
 function findCashRow(currency, company, cashAcctType){
-  const acct = company||null, wantAcctType = cashAcctType||null;
-  const pool = assets.filter(a=>a.acctType==='cash' && a.currency===currency && (a.company||null)===acct);
-  const exactMatches = pool.filter(a=>(a.cashAcctType||null)===wantAcctType);
-  if(exactMatches.length===1) return exactMatches[0];
-  if(exactMatches.length===0 && pool.length===1) return pool[0];
-  if(exactMatches.length===0 && pool.length===0) return null;
-  return 'amb';
+  return PC.pickCashRow(assets, currency, company, cashAcctType, window.DivTax.normAcct);
 }
 // 그 계좌·구분·통화의 현금 행을 새로 만든다(보유종목 표에서는 같은 계좌 현금 줄 안에 통화 한 줄로 보인다)
 function createCashRow(currency, company, cashAcctType){
@@ -3691,6 +3683,8 @@ function createCashRow(currency, company, cashAcctType){
   assets.push(created);
   return created;
 }
+// 출금 뒤 잔액 — 잔액보다 많이 빼면 0에서 멈춘다. 이미 음수인 잔액은 올라가면 안 되므로 그대로 뺀다.
+const cashAfterOut = (bal, amt) => bal<0 ? bal-amt : Math.max(0, bal-amt);
 function cashRowAdd(cash, amount){
   const newAmt = Math.round(((cash.avgPrice||0) + amount)*100)/100;
   cash.avgPrice = newAmt; cash.currentPrice = newAmt; cash.prevPrice = newAmt;
@@ -3698,7 +3692,8 @@ function cashRowAdd(cash, amount){
 function adjustCashBalance(currency, amountInCurrency, sign, company, cashAcctType){
   let cash = findCashRow(currency, company, cashAcctType);
   if(cash==='amb'){
-    console.warn(`[현금 자동반영 건너뜀] ${currency} 현금 행이 여러 개 있어 어느 것을 조정할지 모호합니다. 수동으로 확인해 주세요.`);
+    // 조용히 넘어가면 매매 대금이 빠져 총자산이 틀어진 채로 수익에 잡힌다 — 사용자가 바로 맞출 수 있게 알린다
+    iosAlert(`같은 계좌에 ${currency} 현금이 여러 줄이라 어느 쪽인지 알 수 없어요. 현금 잔액을 직접 맞춰 주세요.`, {title:'현금 잔액 미반영'});
     return null;
   }
   if(!cash) cash = createCashRow(currency, company, cashAcctType);
@@ -3712,6 +3707,18 @@ function addTradeLog(entry){
   saveTradeLog(arr);
   renderSoldHistory();
   return rec.id;
+}
+// 원금 기록장 한 줄(실제 입금·출금) — 현금 폼과 현금 연필 수정이 같이 쓴다. "잔액 설정"은 보정이라 남기지 않는다.
+// amount = 그 통화 금액(원화는 기록 시점 환율로 환산해 고정)
+function logCashFlow(type, amount, c){
+  if(!(amount>0)) return;
+  addTradeLog({
+    name: c.name, ticker:'—', type, at: Date.now(),
+    acctType: 'cash', assetType: null, company: c.company||null,
+    price: null, quantity: null, currency: c.currency, amount,
+    totalKRW: Math.round(amount*divFx(c.currency)), pnl: null, pnlPct: null,
+    reason: '', cashAdjusted: null
+  });
 }
 
 function deleteSoldHistory(id){
@@ -3780,6 +3787,7 @@ function saveTradeLogEdit(id){
   if(isNaN(qty)||qty<=0){ fieldError(`tle_qty_${id}`,'수량을 입력해 주세요.'); return; }
   if(isNaN(price)||price<=0){ fieldError(`tle_price_${id}`,'체결단가를 입력해 주세요.'); return; }
 
+  const oldPrice = r.price, oldQty = r.quantity, oldType = r.type;   // 아래에서 덮어쓰기 전에 읽어 둔다
   if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
   r.name = name;
   r.ticker = tickerInput || (existingAsset && existingAsset.ticker!=='—' ? existingAsset.ticker : (r.ticker||'—'));
@@ -3790,7 +3798,6 @@ function saveTradeLogEdit(id){
   r.assetType = assetType || null;
   // 기록 당시 환율·평단을 지킨다 — 메모만 고쳐도 오늘 환율·오늘 평단으로 옛 손익이 바뀌던 문제.
   // 체결가·수량·유형이 바뀐 경우에만 기록 당시 환율(totalKRW÷(체결가×수량))과 당시 평단(기록 손익에서 역산)으로 다시 계산한다.
-  const oldPrice = r.price, oldQty = r.quantity, oldType = r.type;
   const liveFx = r.currency==='USD'?FX.USD:r.currency==='JPY'?FX.JPY:1;
   const entryFx = (r.totalKRW>0 && oldPrice>0 && oldQty>0) ? r.totalKRW/(oldPrice*oldQty) : liveFx;
   const oldAvg = (oldType==='sell' && r.pnl!=null && oldPrice>0 && oldQty>0) ? oldPrice - r.pnl/(oldQty*entryFx) : null;
@@ -3800,7 +3807,7 @@ function saveTradeLogEdit(id){
   if(price!==oldPrice || qty!==oldQty || type!==oldType){
     r.totalKRW = Math.round(price*qty*entryFx);
     if(type==='sell'){
-      const asset = assets.find(a=>a.name===name);
+      const asset = assets.find(a=>a.name===name && divTradeOwns(r, a)) || assets.find(a=>a.name===name);   // 같은 이름을 여러 계좌에 두면 이 기록의 계좌 평단으로
       const avg = oldAvg!=null ? oldAvg : (asset ? asset.avgPrice : null);
       if(avg!=null){
         r.pnl = Math.round((price-avg)*qty*entryFx);
@@ -3873,7 +3880,8 @@ function addTradeLog_manual(){
   if(isNaN(price)||price<=0){ st.textContent='❌ 체결단가를 입력해 주세요.'; return; }
 
   const at = dateV ? new Date(dateV+'T00:00:00').getTime() : Date.now();
-  const existing = assets.find(a=>a.name===name);
+  // 같은 이름을 여러 계좌에 두면 폼에서 고른 금융회사·계좌의 보유를 쓴다(손익은 그 계좌 평단으로)
+  const existing = assets.find(a=>a.name===name && (!companySel || a.company===companySel) && (!acctTypeSel || a.acctType===acctTypeSel)) || assets.find(a=>a.name===name);
   // 티커가 없으면 종목 상세 차트에 가격 추이·매매 마커가 아예 안 그려지는 문제가 있어서
   // 필수로 바꿈. 다만 이미 포트폴리오에 유효한 티커로 등록된 종목이면(existing.ticker)
   // 어차피 그 티커가 그대로 쓰이므로(바로 아래 addTradeLog의 ticker 필드 참고) 다시
@@ -3888,7 +3896,7 @@ function addTradeLog_manual(){
   const companyVal = companySel || (existing?existing.company:null) || null;
   const marketVal = marketSel || (existing?existing.market:null) || null;
   const currency = existing ? existing.currency : cur;
-  const fxRate = currency==='USD'?FX.USD:currency==='JPY'?FX.JPY:1;
+  const fxRate = divFxAt()(currency, at).rate;   // 과거 날짜 기록은 그날 환율로(과거 환율이 없으면 현재 환율)
   const totalKRW = Math.round(price*qty*fxRate);
 
   // 매매 이력 수동 폼 → 이력만 기록, 자산 목록/현금 업데이트 없음
@@ -4426,7 +4434,6 @@ function renderTable(){
       return g[0]===a ? cashGroupRowsHtml(g, a.company ? LINE_COLS[subAcctNames.indexOf(a.company)%LINE_COLS.length] : null) : '';
     }
     const ev=evKRW(a),cost=costKRW(a),pnl=ev-cost,rtn=cost>0?(pnl/cost)*100:0;
-    const dayChg=a.acctType==='cash'?0:(a.prevPrice>0?((a.currentPrice-a.prevPrice)/a.prevPrice)*100:0);
     const sym=CUR_SYM[a.currency];
     const cc=ACCTTYPE_COLS[a.acctType]||'#8e8e93';
     const sac=a.company?LINE_COLS[subAcctNames.indexOf(a.company)%LINE_COLS.length]:null;
@@ -4719,7 +4726,7 @@ function confirmTrade(id, mode){
   const confirmBtn = document.getElementById('tc_confirm');
 
   if(mode==='buy'){
-    const newAvg = Math.round(((a.avgPrice*a.quantity)+(price*qty))/(a.quantity+qty));
+    const newAvg = Math.round(((a.avgPrice*a.quantity)+(price*qty))/(a.quantity+qty)*100)/100;   // 저장되는 평단과 같은 소수 2자리
     titleEl.innerHTML = `<span style="color:${TONE_BUY}">+ 매수</span>`;
     detailEl.innerHTML = `
       <b>${a.name}</b><br>
@@ -4811,6 +4818,7 @@ function executeTrade(){
     let a = id ? assets.find(x=>x.id===id) : null;
     if(!a && trade.newCcy && trade.src) a = createCashRow(trade.newCcy, trade.src.company, trade.src.cashAcctType);   // 이 계좌에 처음 생기는 통화
     if(!a) return;
+    const flowAmt = Math.round(Math.abs(trade.newAmt - (a.avgPrice||0))*100)/100;   // 실제 변동액(출금이 잔액보다 크면 잔액까지만)
     a.avgPrice=trade.newAmt; a.currentPrice=trade.newAmt; a.prevPrice=trade.newAmt;
     if(trade.setMode) a.balanceSetAt = Date.now();   // 잔액을 직접 맞춘 시각 — 이보다 앞선 배당은 이미 포함으로 보고 자동 입금하지 않는다
     // 분류: 바꾼 칸만, 금융회사·계좌구분·자산유형은 그 계좌 현금 전체에(한 줄이 같이 움직이게), 투자시장은 고른 통화만
@@ -4820,6 +4828,7 @@ function executeTrade(){
     if(trade.cashAcctTypeVal !== undefined && (trade.cashAcctTypeVal||null)!==src.cashAcctType) grp.forEach(x=>{ x.cashAcctType = trade.cashAcctTypeVal || null; });
     if(trade.assetType !== undefined && (trade.assetType||null)!==(src.assetType||null)) grp.forEach(x=>{ x.assetType = trade.assetType || null; });
     if(trade.market !== undefined && (trade.market||null)!==(src.market||null)) a.market = trade.market || null;
+    if(trade.flowType) logCashFlow(trade.flowType, flowAmt, a);   // 입금·출금은 원금 기록장에도 — 안 남기면 입금액이 수익으로 잡힌다
     editingId=null;
     saveAssets();renderAll();
     revealAssetIfFiltered(a);
@@ -4964,17 +4973,7 @@ function executeTrade(){
         reason: '', cashAdjusted: null
       });
     }
-    // 원금 기록장 — 입금/출금만 로그로 남긴다("잔액 설정"은 실제 입출금이 아니라 보정이므로 제외)
-    if(trCashMode==='in' || trCashMode==='out'){
-      const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
-      addTradeLog({
-        name: cName, ticker:'—', type: trCashMode==='in'?'deposit':'withdrawal', at: Date.now(),
-        acctType: 'cash', assetType: null, company: acct,
-        price: null, quantity: null, currency: cur,
-        totalKRW: Math.round(rawAmount*fxRate), pnl: null, pnlPct: null,
-        reason: '', cashAdjusted: null
-      });
-    }
+    if(trCashMode==='in' || trCashMode==='out') logCashFlow(trCashMode==='in'?'deposit':'withdrawal', rawAmount, {name:cName, currency:cur, company:acct});
     document.getElementById('cf_name').value='현금';
     document.getElementById('cf_name_custom').value='';
     document.getElementById('cf_name_custom').style.display='none';
@@ -5630,7 +5629,7 @@ function addAsset(){
   } else {
     existing = assets.find(a=>nameTickerAcctTypeMatch(a) && assetTypeOk(a) && a.company===company);
   }
-  const newAvg    = existing ? Math.round(((existing.avgPrice*existing.quantity)+(price*qty))/(existing.quantity+qty)) : price;
+  const newAvg    = existing ? Math.round(((existing.avgPrice*existing.quantity)+(price*qty))/(existing.quantity+qty)*100)/100 : price;   // 저장되는 평단과 같은 소수 2자리
   const totalQty  = existing ? existing.quantity+qty : qty;
 
   // 확인 팝업
@@ -5725,7 +5724,8 @@ function confirmEditCash(id){
   const mode=editCashModes[id]||'set';
   const amt=parseFloat(document.getElementById(`ep_cash_amt_${id}`)?.value);
   const st=document.getElementById('formStatus');
-  if(isNaN(amt)||amt<0){ if(st) st.textContent='❌ 금액을 입력해 주세요.'; return; }
+  // '잔액 설정'은 음수도 허용 — 음수 현금 행을 열면 그 잔액이 채워져 있어, 막으면 금융회사·구분만 고칠 수 없다
+  if(isNaN(amt)||(amt<0 && mode!=='set')){ if(st) st.textContent='❌ 금액을 입력해 주세요.'; return; }
   const company = readSelectOrCustom(`ep_company_${id}`, `ep_company_custom_${id}`, false);
   if(company===null) return;
   const market = readSelectOrCustom(`ep_market_${id}`, `ep_market_custom_${id}`, false);
@@ -5743,12 +5743,12 @@ function confirmEditCash(id){
     newAmt=a.avgPrice+amt;
     changeStr=`${sym}${a.avgPrice.toLocaleString()} + ${sym}${amt.toLocaleString()} = ${sym}${newAmt.toLocaleString()}`;
   } else {
-    newAmt=Math.max(0,a.avgPrice-amt);
+    newAmt=cashAfterOut(a.avgPrice,amt);
     changeStr=`${sym}${a.avgPrice.toLocaleString()} − ${sym}${amt.toLocaleString()} = ${sym}${newAmt.toLocaleString()}`;
   }
   const modeColors={set:'#34c759',in:'#007aff',out:'#ff3b30'};
   const modeLabels={set:'잔액 설정',in:'입금',out:'출금'};
-  pendingTrade={id: a.id, mode:'edit_cash', newAmt, company, market, cashAcctTypeVal, assetType, setMode: mode==='set',
+  pendingTrade={id: a.id, mode:'edit_cash', newAmt, company, market, cashAcctTypeVal, assetType, setMode: mode==='set', flowType: mode==='in' ? 'deposit' : mode==='out' ? 'withdrawal' : null,
     groupIds: group.map(x=>x.id), newCcy: target ? null : ccy, src:{company:lead.company||null, cashAcctType:lead.cashAcctType||null, market:lead.market||null, assetType:lead.assetType||null}};
   const acctChanged = company !== (a.company||'');
   const marketChanged = market !== (a.market||'');
@@ -5825,7 +5825,7 @@ async function addCash(){
     changeStr  = `${sym}${cur_amt.toLocaleString()} + ${sym}${amount.toLocaleString()} = ${sym}${newAmount.toLocaleString()}`;
   } else if(cashMode==='out'){
     const cur_amt = existing ? existing.avgPrice : 0;
-    newAmount  = Math.max(0, cur_amt - amount);
+    newAmount  = cashAfterOut(cur_amt, amount);
     modeLabel  = '출금';
     changeStr  = `${sym}${cur_amt.toLocaleString()} - ${sym}${amount.toLocaleString()} = ${sym}${newAmount.toLocaleString()}`;
   } else if(cashMode==='div'){
@@ -5836,7 +5836,8 @@ async function addCash(){
   }
 
   const divSource = cashMode==='div' ? (document.getElementById('cf_div_source').value.trim() || name) : null;
-  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur, isDividend: cashMode==='div', divAmount: amount, divSource, cashMode, rawAmount: amount, company, cashAcctTypeVal, assetType, market};
+  // rawAmount: 원금 기록장에 남길 실제 변동액(출금이 잔액보다 크면 잔액까지만)
+  pendingTrade = {mode:'form_cash', name, amount:newAmount, cur, isDividend: cashMode==='div', divAmount: amount, divSource, cashMode, rawAmount: cashMode==='out' ? Math.abs(newAmount - (existing ? existing.avgPrice : 0)) : amount, company, cashAcctTypeVal, assetType, market};
   const titleEl    = document.getElementById('tc_title');
   const detailEl   = document.getElementById('tc_detail');
   const confirmBtn = document.getElementById('tc_confirm');
@@ -5859,7 +5860,7 @@ async function addCash(){
 // 해외 거래소 직접 상장 종목(USD/JPY)을 일반계좌에서 판 매매차익은 양도소득세 대상(22%, 연 250만원 기본공제, 종합소득세와 별도 분리과세).
 // 국내 상장(KRW)은 개인 원칙 비과세(국내 상장 해외 ETF 이익은 배당소득 — 금융소득 쪽), ISA·연금계좌 안의 매매와 가상자산은 대상이 아니다.
 // 양도차익은 매매 이력을 시간순으로 다시 풀어(선입선출 또는 이동평균) 매수·매도 각각의 결제일 환율로 원화 환산한다 — 계산은 div-tax.js realizeGains.
-const CGT_EXEMPT_MAN = 250, CGT_RATE = 0.22;
+const CGT_EXEMPT_MAN = window.DivTax.CGT_EXEMPT / 10000;
 const TAX_SET_KEY = 'pf_tax_settings_v1';   // 양도차익 계산 방식(fifo|avg)·기초 보유분 매입 환율 {보유키: 원/외화} — 백업 포함
 function loadTaxSettings(){
   try{ const m = JSON.parse(localStorage.getItem(TAX_SET_KEY)); if(m && typeof m==='object') return {method: m.method==='avg' ? 'avg' : 'fifo', buyFx: (m.buyFx && typeof m.buyFx==='object' && !Array.isArray(m.buyFx)) ? m.buyFx : {}}; }catch(e){}
@@ -5870,23 +5871,13 @@ const isOverseasTaxable = a => (a.currency==='USD' || a.currency==='JPY') && a.a
 const isKrOverseasEtf = (a, cache) => a.currency==='KRW' && a.acctType!=='cash' && !!a.market && a.market!=='kr' && !isCryptoAsset(a) && DT.normAcct(a.acctType)==='general' && divKindOf(a.ticker, a.name, cache)==='etf';
 // 세금 계산용 종목 묶음 — 지금 보유 중(평단·수량 있음) + 전량 매도해 이력만 남은 종목. firstSeen = 처음 보인 날(스냅샷·이력)
 function taxGroups(pred){
-  const log = loadTradeLog(), snaps = loadSnaps(), out = [];
-  assets.filter(a=>a.quantity>0 && pred(a)).forEach(a=>{
-    const trades = log.filter(r=>(r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, a));
-    const seen = snaps.filter(s=>s.byAsset && s.byAsset[a.id]>0).map(s=>s.timestamp).concat(trades.map(r=>r.at));
-    out.push({key:divHoldKey(a), name:a.name, ticker:a.ticker, ccy:a.currency, acct:'general', company:a.company||null, quantity:a.quantity, avgPrice:a.avgPrice,
-      firstSeen: seen.length ? Math.min(...seen) : Date.now(), trades, asset:a});
+  const snaps = loadSnaps();
+  // 배당과 같은 매칭(divTradeOwns) — 같은 종목을 ISA·다른 증권사에서 전량 매도하고 여기 남은 보유가 하나뿐이어도 그 매도를 이 보유의 과세 대상으로 합치지 않는다
+  return PC.taxGroupsOf(loadTradeLog(), assets.filter(a=>a.acctType!=='cash' && a.quantity>0), {
+    owns: divTradeOwns, pred, keyOf: a=>divHoldKey({...a, ticker:PC.tickerOrName(a)}), now: Date.now(),
+    pseudoOf: r=>({ticker: PC.tickerOrName(r), name:r.name, acctType:r.acctType, company:r.company||null, currency:r.currency||'KRW', market:r.market||null, assetType:r.assetType||null}),
+    seenOf: a=>snaps.reduce((t,s)=> s.byAsset && s.byAsset[a.id]>0 ? Math.min(t, s.timestamp) : t, Infinity),
   });
-  const sold = new Map();
-  log.forEach(r=>{
-    if(!(r.type==='buy'||r.type==='sell')) return;
-    const pseudo = {ticker: r.ticker && r.ticker!=='—' ? r.ticker : r.name, name:r.name, acctType:r.acctType, company:r.company||null, currency:r.currency||'KRW', market:r.market||null, assetType:r.assetType||null};
-    if(!pred(pseudo) || assets.some(a=>tradeMatchesAsset(r, a))) return;
-    const k = divHoldKey(pseudo);
-    if(!sold.has(k)) sold.set(k, {key:k, name:r.name, ticker:pseudo.ticker, ccy:pseudo.currency, acct:'general', company:pseudo.company, quantity:0, avgPrice:0, firstSeen:r.at, trades:[], asset:null});
-    const g = sold.get(k); g.trades.push(r); g.firstSeen = Math.min(g.firstSeen, r.at);
-  });
-  return out.concat([...sold.values()]);
 }
 // 한 해 해외주식 양도세 — 매도별 원화 손익(환차익 포함)·근거, 수동 입력 합산, 기초 보유분 매입 환율이 필요한 종목
 function cgtData(year){
@@ -5902,7 +5893,7 @@ function cgtCandidates(d){
   const fxNow = c => c==='USD' ? FX.USD : c==='JPY' ? FX.JPY : 1;
   return d.groups.filter(g=>g.quantity>0 && g.asset).map(g=>{
     const rem = d.real.remaining[g.key] || {qty:0, cost:0};
-    const cost = rem.qty > 0 ? rem.cost/rem.qty*g.quantity : costKRW(g.asset);
+    const cost = rem.qty > 0 ? rem.cost/rem.qty*g.quantity : toKRW(g.asset, g.avgPrice)*g.quantity;
     const gain = g.quantity*g.asset.currentPrice*fxNow(g.ccy) - cost;
     return {name:g.name, key:g.key, gain, delta: DT.cgtTaxOf(d.sum.gain + gain) - d.sum.tax, basis: rem.basis || 'log'};
   }).filter(c=>Math.abs(c.gain) >= 10000).sort((x,y)=>x.delta-y.delta || y.gain-x.gain);
@@ -6147,7 +6138,7 @@ function renderFinIncomeThreshold(){
   const year = taxYear(), isCur = year===new Date().getFullYear();
   // 앱 배당은 배당 장부(보유 종목 자동 계산 + 확정 기록)의 세전 금액 — ISA·연금계좌 배당은 빠진다
   const {fin, etfMan, projMan, appMan, intMan, othDivMan, baseMan, totalMan, endMan} = finTotals(year);
-  const THRESHOLD = 2000, HI_LINE = 1000;
+  const THRESHOLD = DT.FIN_THRESHOLD_MAN, HI_LINE = 1000;
   const excess = Math.max(0, endMan - THRESHOLD);
   let extraMan = 0, rate = 0;
   if(excess > 0){ extraMan = DT.finExtraTaxMan(endMan, baseMan); rate = DT.marginalRate(baseMan + excess); }
@@ -6167,7 +6158,7 @@ function renderFinIncomeThreshold(){
   const guides = [HI_LINE, THRESHOLD].filter(v=>v<=mMax).map(v=>`<div class="fi-guide" style="bottom:calc((100% - 14px) * ${(v/mMax).toFixed(4)} + 14px)"><em>${v.toLocaleString()}</em></div>`).join('');
   const inp = (field, v, lbl, opt) => fmField(lbl, fmInput('fi_'+field, {type:'number', value: v==null ? '' : v, ph:'없으면 0', attrs:`min="0" step="1" onchange="saveFinInput('${field}',this.value,${year})"`}), {cls:'s12 fi-f', opt});
   const histNote = divHistState.loading ? '보유 종목 배당 정보를 불러오는 중…' : (divHistState.failed ? `배당 정보를 못 불러온 종목 ${divHistState.failed}개는 기록한 배당만 반영돼요.` : '');
-  const tip = '이자·배당(세전)이 연 2,000만원을 넘으면 초과분이 다른 소득과 합산돼 누진세율(6~45%)로 과세돼요. ISA·연금계좌 배당은 합산되지 않아요. 국내 상장 해외 ETF를 일반계좌에서 팔아 번 이익은 배당소득이라 매매차익으로 추정해 더했어요(손실은 통산 안 함). 추가 세금은 입력한 과세표준 위에 초과분을 얹어 지방소득세 10%까지 계산한 참고값이며 배당가산(Gross-up)·세액공제는 반영하지 않아요.';
+  const tip = '이자·배당(세전)이 연 2,000만원을 넘으면 초과분이 다른 소득과 합산돼 누진세율(6~45%)로 과세돼요. ISA·연금계좌 배당은 합산되지 않아요. 국내 상장 해외 ETF를 일반계좌에서 팔아 번 이익은 배당소득이라 매매차익으로 추정해 더했어요(손실은 통산 안 함). 추가 세금은 입력한 과세표준 위에 초과분을 얹어 지방소득세 10%까지 계산한 참고값이며 배당가산(Gross-up)·세액공제는 반영하지 않아요. 고배당기업 배당 분리과세(2026~)를 선택하면 그 배당은 이 합계에서 빠지는데, 앱은 구분하지 못해 포함해서 보여 줘요.';
   const tile = (lbl, val, cls) => `<div class="cgt-t"><div class="cgt-l">${lbl}</div><div class="cgt-v ${cls||''}">${val}</div></div>`;
   const flow = isCur
     ? tile('이자·배당 합계', taxMan(totalMan)) + '<span class="cgt-op">+</span>' + tile('연말까지 예상', taxMan(projMan)) + '<span class="cgt-op">=</span>'
@@ -6252,11 +6243,12 @@ function renderPrincipalLedger(){
   fitNumTable(el.closest('table'));
 }
 
+// 원금 기록의 그 통화 금액 — 기록에 없으면(옛 기록) 원화 금액을 현재 환율로 나눈 근삿값
+const principalAmountOf = r => r.amount!=null ? r.amount : (r.currency==='KRW' ? (r.totalKRW||0) : Math.round((r.totalKRW||0)/divFx(r.currency)));
 function renderPrincipalLedgerEditForm(r){
   const dt = new Date(r.at);
   const dateVal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-  const fxRate = r.currency==='USD'?FX.USD:r.currency==='JPY'?FX.JPY:1;
-  const amountVal = r.currency==='KRW' ? (r.totalKRW||0) : Math.round((r.totalKRW||0)/fxRate);
+  const amountVal = principalAmountOf(r);
   return `<tr class="tr-full fm-row"><td colspan="5" onclick="event.stopPropagation()">
     <div class="fm">
       <div class="fm-grid">
@@ -6292,12 +6284,16 @@ function savePrincipalLedgerEdit(id){
   if(!dateV){ fieldError(`ple_date_${id}`,'날짜를 입력해 주세요.'); return; }
   if(isNaN(amount)||amount<=0){ fieldError(`ple_amount_${id}`,'금액을 입력해 주세요.'); return; }
 
+  // 원화 금액은 기록 당시 값을 지킨다 — 사유·날짜만 고쳐도 오늘 환율로 바뀌지 않게, 금액·통화를 고쳤을 때만 그날 환율로 다시 환산
+  const amountChanged = amount!==parseFloat(document.getElementById(`ple_amount_${id}`).defaultValue) || cur!==r.currency;   // 폼을 그릴 때의 금액과 비교(그 사이 환율이 바뀌어도 그대로면 안 고친 것)
   r.at = new Date(dateV+'T00:00:00').getTime();
   r.type = type;
-  r.currency = cur;
   r.reason = (document.getElementById(`ple_reason_${id}`).value||'').trim();
-  const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
-  r.totalKRW = Math.round(amount*fxRate);
+  if(amountChanged){
+    r.currency = cur;
+    r.amount = amount;
+    r.totalKRW = Math.round(amount*divFxAt()(cur, r.at).rate);
+  }
 
   saveTradeLog(arr);
   editingPrincipalLedgerId = null;
@@ -6319,11 +6315,11 @@ function addPrincipalLedgerEntry(){
   if(isNaN(amount) || amount<=0){ st.textContent = '❌ 금액을 입력해 주세요.'; return; }
 
   const at = new Date(dateV+'T00:00:00').getTime();
-  const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
+  const fxRate = divFxAt()(cur, at).rate;   // 소급 입력은 그날 환율로(과거 환율이 없으면 현재 환율)
   addTradeLog({
     name:'현금', ticker:'—', type, at,
     acctType:'cash', assetType:null, company:null,
-    price:null, quantity:null, currency:cur,
+    price:null, quantity:null, currency:cur, amount,
     totalKRW: Math.round(amount*fxRate), pnl:null, pnlPct:null,
     reason:(document.getElementById('pl_reason').value||'').trim(), cashAdjusted:null
   });
@@ -6349,49 +6345,7 @@ async function deletePrincipalLedgerEntry(id){
    월별 성과 — 월별 테이블 + 기능(B) 원금 vs 자산가치 추이
 ════════════════════════════════════════ */
 function buildMonthlyPerformance(){
-  const snaps = loadSnapsForAnalysis().slice().sort((a,b)=>a.timestamp-b.timestamp);
-  if(!snaps.length) return [];
-  const cashEvents = loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal').slice().sort((a,b)=>a.at-b.at);
-  const firstCashAt = cashEvents.length ? cashEvents[0].at : null;
-
-  const eventsByMonthKey = {};
-  cashEvents.forEach(r=>{
-    const d = new Date(r.at);
-    const key = d.getFullYear()+'-'+d.getMonth();
-    eventsByMonthKey[key] = (eventsByMonthKey[key]||0) + (r.type==='deposit'?1:-1)*(r.totalKRW||0);
-  });
-
-  function valueAtOrBefore(ts){
-    let best=null;
-    for(const s of snaps){ if(s.timestamp<=ts) best=s; else break; }
-    return best ? best.totalValue : null;
-  }
-  function valueAtOrAfter(ts){
-    for(const s of snaps){ if(s.timestamp>=ts) return s.totalValue; }
-    return null;
-  }
-
-  const start = new Date(snaps[0].timestamp);
-  const end = new Date(snaps[snaps.length-1].timestamp);
-  const months = [];
-  let cy=start.getFullYear(), cm=start.getMonth();
-  while(cy<end.getFullYear() || (cy===end.getFullYear() && cm<=end.getMonth())){
-    months.push({year:cy, month:cm});
-    cm++; if(cm>11){cm=0;cy++;}
-  }
-
-  return months.map(({year,month})=>{
-    const monthStart = new Date(year,month,1).getTime();
-    const monthEnd = new Date(year,month+1,1).getTime()-1;
-    const startVal = valueAtOrBefore(monthStart) ?? valueAtOrAfter(monthStart);
-    const endVal = valueAtOrBefore(monthEnd) ?? startVal;
-    const key = year+'-'+month;
-    const netFlow = eventsByMonthKey[key] || 0;
-    const hasFlowData = firstCashAt!==null && monthEnd >= firstCashAt;
-    const pnl = (startVal!=null && endVal!=null) ? (endVal - startVal - netFlow) : null;
-    const rtn = (pnl!=null && startVal>0) ? (pnl/startVal*100) : null;
-    return {year, month, startVal, endVal, netFlow, hasFlowData, pnl, rtn};
-  });
+  return PC.monthlyPerformance(loadSnapsForAnalysis(), loadTradeLog().filter(r=>r.type==='deposit'||r.type==='withdrawal'));
 }
 
 // 수익률(%) 계산이 가능한 시작 시점(최초 스냅샷 기록일)을 각 수익률 화면에 안내
@@ -7833,6 +7787,7 @@ function drawDonut(canvasId,data,size){
   cv.width=Math.round(LW*dpr);cv.height=Math.round(LH*dpr);
   cv.style.width=LW+'px';cv.style.height=LH+'px';
   ctx.scale(dpr,dpr);ctx.clearRect(0,0,LW,LH);
+  data=data.filter(d=>d.value>0);   // 음수(그 유형에 현금만 있고 음수일 때)는 조각으로 그릴 수 없다 — 섞으면 조각 합이 한 바퀴를 넘어 겹친다
   const total=data.reduce((s,d)=>s+d.value,0);if(!total)return;
   let angle=-Math.PI/2;const GAP=0.016;
   const fs=donutClamp(Math.round(size*0.06),8,12);
@@ -8399,8 +8354,8 @@ function renderDonuts(){
 
   // ── 자산유형별 세부 종목 비중(대형 2중 링, 실제 종목명) ──
   const tree = buildAssetClassTree(assets);
-  const treeTotal = tree.reduce((s,t)=>s+t.value,0);
-  document.getElementById('assetDetailCenter').textContent=fmt(treeTotal);
+  const treeTotal = tree.reduce((s,t)=>s+t.value,0);   // 그려지는 칸의 합 — 비중의 분모(음수 칸을 빼면 총자산보다 클 수 있다)
+  document.getElementById('assetDetailCenter').textContent=fmt(total);
   document.getElementById('assetDetailChips').innerHTML=assetTypeChipsHtml(tree,treeTotal);
   const detailLegend = document.getElementById('assetDetailLegend');
   if(fit.callout){
@@ -8912,7 +8867,7 @@ function remainingHeight(el, bottomGap){
    투자시장 분포 · 자산유형 분포 · 자산유형별 세부 종목 분포(예: Core 안의 S&P500·나스닥·코스피200 점유)
    도넛 = 구성(카테고리색), 트리맵 = 구성 + 수익: 크기=평가금액, 색=평단 대비 수익률 손익색(±50%, treemapColor),
    표시 %=총 자산 대비. 세부 종목 트리맵도 투자시장·자산유형처럼 옅은 회색 칸 안에 그리고, 묶음마다 옅은 헤어라인 테두리 + 소제목 행(모든 묶음, 좁으면 말줄임) + 그 아래 셀(자산유형색 없음).
-   현금·채권·가상자산도 모두 포함하므로 세 단계의 합계는 도넛의 총 자산과 같다(현금은 손익 0 → 회색). */
+   현금·채권·가상자산도 모두 포함하므로 세 단계의 합계는 도넛의 총 자산과 같다(현금은 손익 0 → 회색, 합계가 음수인 칸은 그릴 수 없어 뺀다). */
 const distAssetTypeKey = a => a.assetType || (a.acctType==='cash' ? '현금' : '미지정');
 const distMarketKey    = a => a.market || '미지정';
 const distMarketLabel  = k => MARKET_LABELS[k] || k;
@@ -8922,7 +8877,11 @@ const distTypeColor   = (k,i) => k==='미지정' ? '#9a9aa0' : (ASSETTYPE_COLS[k
 // 묶음은 원가·평가액을 각각 합산해 계산한다(종목별 수익률의 단순 평균이 아님). 현금은 손익 0으로 본다.
 function returnAgg(list){
   let ev=0, cost=0;
-  list.forEach(a=>{ const e=evKRW(a); ev+=e; cost += a.acctType==='cash' ? e : costKRW(a); });
+  list.forEach(a=>{
+    const e=evKRW(a);
+    if(a.acctType==='cash'){ if(e>0){ ev+=e; cost+=e; } return; }   // 음수 현금은 넣은 돈이 아니라 분모에서 뺀다(깎으면 수익률이 부푼다)
+    ev+=e; cost+=costKRW(a);
+  });
   const pnl = ev-cost;
   return {ev, cost, pnl, rtn: cost>0 ? pnl/cost*100 : 0};
 }
@@ -8932,14 +8891,17 @@ function returnText(g){
   return `(${g.rtn>=0?'+':''}${g.rtn.toFixed(1)}%, ${fmtCompactSigned(g.pnl)})`;
 }
 // 셀 색 = 그 묶음의 평단 대비 수익률(손익색 ±50%) — 이름은 셀 안 글자로 구분된다
-function distBuildItems(assetList, keyFn, labelFn, denom){
+function distBuildItems(assetList, keyFn, labelFn){
   const sums = new Map();
   assetList.forEach(a=>{
-    const v = evKRW(a); if(!(v>0)) return;
+    const v = evKRW(a); if(!v) return;
     const k = keyFn(a), e = sums.get(k) || {value:0, ids:[], list:[]};
-    e.value += v; e.ids.push(a.id); e.list.push(a); sums.set(k, e);
+    e.value += v; if(v>0) e.ids.push(a.id); e.list.push(a); sums.set(k, e);   // ids는 눌러서 갈 종목 — 음수 현금은 뺀다
   });
-  return [...sums.entries()].sort((x,y)=>y[1].value-x[1].value).map(([k,e])=>{
+  // 음수 현금은 같은 묶음과 먼저 합친다 — 묶음 전체가 음수일 때만 그릴 수 없어 뺀다. 비중은 그려지는 칸의 합 기준(합쳐서 100%)
+  const kept = [...sums.entries()].filter(([,e])=>e.value>0);
+  const denom = kept.reduce((t,[,e])=>t+e.value, 0);
+  return kept.sort((x,y)=>y[1].value-x[1].value).map(([k,e])=>{
     const g = returnAgg(e.list);
     return {
       id: e.ids.length===1 ? e.ids[0] : null,
@@ -8970,17 +8932,16 @@ function indexGroupKeyOf(name){
 function buildAssetClassTree(assetList){
   const byType = new Map();
   assetList.forEach(a=>{
-    const v = evKRW(a); if(!(v>0)) return;
+    const v = evKRW(a); if(!v) return;   // 음수 현금은 같은 이름의 현금과 먼저 합친다 — 합계가 음수인 칸은 그릴 수 없어 아래에서 뺀다
     const tk = distAssetTypeKey(a);
-    if(!byType.has(tk)) byType.set(tk, {key:tk, value:0, byName:new Map(), list:[]});
-    const t = byType.get(tk); t.value += v; t.list.push(a);
+    if(!byType.has(tk)) byType.set(tk, {key:tk, byName:new Map(), list:[]});
+    const t = byType.get(tk); t.list.push(a);
     const nm = a.name || a.ticker || '(이름 없음)';
     const n = t.byName.get(nm) || {name:nm, value:0, ids:[]};
-    n.value += v; n.ids.push(a.id); t.byName.set(nm, n);
+    n.value += v; if(v>0) n.ids.push(a.id); t.byName.set(nm, n);
   });
   return [...byType.values()]
-    .sort((x,y)=>y.value-x.value)
-    .map((t,i)=>{
+    .map(t=>{
       const byGroup = new Map();
       [...t.byName.values()].forEach(n=>{
         const gk = indexGroupKeyOf(n.name) || n.name;
@@ -8989,11 +8950,16 @@ function buildAssetClassTree(assetList){
         byGroup.set(gk, c);
       });
       const children = [...byGroup.values()]
+        .filter(c=>c.value>0)
         .map(c=>({key:c.key, value:c.value, ids:c.ids, names:c.names, label: dispName(c.key)}))
         .sort((x,y)=>y.value-x.value);
       children.forEach(c=>{ const idset=new Set(c.ids); c.agg = returnAgg(t.list.filter(a=>idset.has(a.id))); });
-      return {key:t.key, value:t.value, list:t.list, color:distTypeColor(t.key,i), children, agg:returnAgg(t.list)};
-    });
+      // 유형의 크기 = 그려지는 칸의 합 — 안쪽 링과 바깥 링이 항상 맞고 도넛이 한 바퀴를 넘지 않는다
+      return {key:t.key, value:children.reduce((s,c)=>s+c.value,0), list:t.list, children};
+    })
+    .filter(t=>t.value>0)
+    .sort((x,y)=>y.value-x.value)
+    .map((t,i)=>Object.assign(t, {color:distTypeColor(t.key,i), agg:returnAgg(t.list)}));
 }
 // 자산유형 요약 칩 줄 — "● Core 45.2%  ● 주도주 20.1% …" (세부 종목 도넛)
 function assetTypeChipsHtml(tree, total){
@@ -9096,8 +9062,7 @@ function detailTreemapHeight(W){
 function drawDetailTreemap(){
   const canvas = document.getElementById('distDetailCanvas');
   if(!canvas || canvas.offsetParent===null) return;
-  const positive = assets.filter(a=>evKRW(a)>0);
-  const tree = buildAssetClassTree(positive);
+  const tree = buildAssetClassTree(assets);
   const total = tree.reduce((s,t)=>s+t.value,0);
   const wrap = canvas.parentElement;
   const W = Math.max(200, wrap.clientWidth||300), H = detailTreemapHeight(W);
@@ -9204,15 +9169,13 @@ function drawDetailTreemap(){
 // 세부 종목 헤더 글자색이 테마를 따르므로 테마를 바꾸면 다시 그린다(shared/theme.js가 호출, 숨겨져 있으면 drawDetailTreemap이 건너뜀)
 window.onThemeChange = ()=>drawDetailTreemap();
 function drawAssetClassDistribution(){
-  const positive = assets.filter(a=>evKRW(a)>0);
-  const total = positive.reduce((s,a)=>s+evKRW(a),0);
   const onClick = id=>{ if(id) goToStockDetail(id); };
   const empty = '표시할 자산이 없습니다';
   const draw = ()=>{
     const topH = allocTmHeights ? allocTmHeights.top : 220;
     // 투자시장 · 자산유형
-    renderTreemapCanvas('distMarketCanvas',    distBuildItems(positive, distMarketKey,    distMarketLabel, total), topH, onClick, empty);
-    renderTreemapCanvas('distAssetTypeCanvas', distBuildItems(positive, distAssetTypeKey, k=>k,            total), topH, onClick, empty);
+    renderTreemapCanvas('distMarketCanvas',    distBuildItems(assets, distMarketKey,    distMarketLabel), topH, onClick, empty);
+    renderTreemapCanvas('distAssetTypeCanvas', distBuildItems(assets, distAssetTypeKey, k=>k), topH, onClick, empty);
     // 자산유형별 세부 종목 비중
     drawDetailTreemap();
   };
@@ -9399,19 +9362,8 @@ function getPeriodStart(period){
   return new Date(now.getFullYear()-5, now.getMonth(), now.getDate(), 6,5,0);
 }
 
-// ── 기준 평가금액 계산 ──
-// 미국(USD): prevPrice 기준 (어제 22:30 종가)
-// 한국/일본(KRW/JPY): prevPrice 기준 (오늘 09:00 종가)
-// 신규 종목(스냅샷에 없던 종목): null → 첫 스냅샷이 기준
-// ── 1D 기준가 계산 (단순, 오류 없음) ──
-// 기존 종목: 가장 오래된 스냅샷에 있으면 → prevPrice
-// 신규 종목: 스냅샷에 없으면 → avgPrice (오늘 매수)
-// 스냅샷이 아예 없으면: prevPrice (기존) or avgPrice (신규, prevPrice=currentPrice)
-// 판별 우선순위:
-//   1. 스냅샷에 있는 종목 → prevPrice
-//   2. 스냅샷에 없는 종목 → avgPrice
-//   3. 스냅샷 자체가 없으면 → prevPrice≠currentPrice면 prevPrice, 아니면 avgPrice
-let _baseCache = null;
+// ── 1D 기준가 ──
+// 기존 종목: dayBasePrice(전일 종가, 휴장·미국장 개장 전이면 현재가). 스냅샷에 없던 신규 종목: 원화 평단(pf-calc.js chartSeries)
 let _base1DSnap = null; // 1D 시작 직전 스냅샷 (기준가용)
 // "오늘 1D 시작 시점 이전부터 보유했던 종목"인지 판단.
 // 앱을 쓰기 시작한 이후의 가장 오래된 스냅샷 하나만 보면, 그보다 한참 전부터 보유해온
@@ -9442,19 +9394,6 @@ function setBase1DSnap(){
     _base1DSnap = snaps[0];
   }
 }
-function getBasePrice(a){
-  // 1D 기준 스냅샷에서 당시 단가 복원
-  if(_base1DSnap && _base1DSnap.byAsset){
-    const ev = _base1DSnap.byAsset[a.id];
-    const q  = (_base1DSnap.byQty && _base1DSnap.byQty[a.id]) ? _base1DSnap.byQty[a.id] : (a.quantity||1);
-    if(ev!=null && q>0){
-      return ev / q; // KRW 환산 단가 → getBaseEvKRW1D에서 다시 환산하지 않도록 주의
-    }
-  }
-  // 폴백: prevPrice(전일가), 없으면 현재가
-  if(a.prevPrice && a.prevPrice !== a.currentPrice) return a.prevPrice;
-  return a.currentPrice;
-}
 function getBaseEvKRW1D(a){
   const qty = a.quantity || 1;
   // 1D 기준 스냅샷이 있으면 그 KRW 평가금액을 현재수량 비율로 환산
@@ -9471,45 +9410,17 @@ function getBaseEvKRW1D(a){
   if(a.currency === 'JPY') return bp * FX.JPY * qty;
   return bp * qty;
 }
-// buildChartHistory 호출 시마다 캐시 초기화
-function clearBaseCache(){ _baseCache = null; _base1DSnap = null; }
-// 종목의 기간 기준단가(KRW) 계산 — 그래프/통계바/합계 공통 사용
-// prices: 해당 종목의 시점별 KRW 단가 배열, fi: 첫 유효 인덱스
-// 1D도 다른 기간과 동일하게 배열의 첫 유효 지점(prices[0])을 기준으로 삼는다 — 1D의 첫 지점은
-// buildSnapshotHistory()가 이미 "1D 시작 시점(전일 미국장 개장 직전) 스냅샷"으로 정확히 구성해두므로,
-// 여기서 prevPrice/isMarketPreOpen으로 별도 기준가를 다시 계산하면 두 로직이 서로 어긋나
-// (예: prevPrice가 갱신되어 현재가와 같아지면) 그래프는 중간에 움직이는데 끝값만 억지로 0%로
-// 수렴하는 등 불일치가 생긴다. 배열 자체의 기준점 하나만 신뢰하도록 통일.
-function calcBaseUnit(a, prices, fi){
-  return fi === 0 ? (prices[0] || 1) : (a.avgPrice || prices[fi] || 1);
-}
-
-
-// 해당 종목의 장이 "오늘 아직 거래 전"인지 (1D 변화를 0%로 처리할지)
-// - 주말(토·일): 모든 종목 휴장 → 0%
-// - 평일 오전 9시 이전: KRW(국내·한국ETF)·JPY(일본) 개장 전 → 0%
-//   (USD 미국주식은 어젯밤 미국장 거래 반영)
-// - 공휴일: 1D 그래프·통계는 dayBasePrice()의 마지막 체결 시각 판정(noTradeInCurrentDay)으로 0% 처리
-// - 주말(토·일): 한국·일본장은 휴장이라 "개장 전"으로 취급하지만, 미국장은 주말에도
-//   금요일 마감 결과가 여전히 유효한 최신 거래일 데이터이므로 "개장 전"으로 보지 않는다
-//   (그래야 토·일요일에도 금요일 등락이 0%로 리셋되지 않고 그대로 유지됨).
-function isMarketPreOpen(a){
-  if(a.acctType === 'cash') return false;
-  if(a.currency === 'USD') return false; // 미국장은 주말에도 금요일 마감 결과 유지
-  const now = new Date();
-  const day = now.getDay(); // 0=일, 6=토
-  // 주말이면 한국·일본장 휴장 → 개장 전
-  if(day === 0 || day === 6) return true;
-  // KRW·JPY:
-  // ① 오전 9시 이전 → 개장 전
-  // ② (1D 정의 변경) 미국장 개장 이후에도 국내·일본 종목은 다음 국내장 개장 전까지 당일 등락 유지 — 아래 usOpenHM 규칙은 더 이상 쓰지 않음
-  const h = now.getHours(), m = now.getMinutes();
-  const hm = h * 60 + m;
-  const dst = isUSDST();
-  const usOpenHM = dst ? 22*60+30 : 23*60+30;
-  if(hm < 9*60) return true;   // 오전 9시 이전
-  void usOpenHM;
-  return false;
+// buildChartHistory 호출 시마다 초기화
+function clearBaseCache(){ _base1DSnap = null; }
+// 변화추이 그래프·통계 바가 같이 쓰는 종목별 수익률 — 1D도 다른 기간처럼 기간 첫 지점이 기준이다(1D의 첫 지점은 buildSnapshotHistory가 전일 종가로 만든다)
+function chartSeriesMap(){
+  const m = {};
+  assets.forEach(a=>{
+    if(a.acctType==='cash' || !(a.quantity>0)) return;   // 수량 0(다 판 뒤 남은 행)은 손익도 기준금액도 없다
+    const s = PC.chartSeries(chartHistory, a.id, a.quantity, toKRW(a, a.avgPrice));
+    if(s) m[a.id] = s;
+  });
+  return m;
 }
 
 function buildSnapshotHistory(period){
@@ -9753,72 +9664,18 @@ function drawLineChart(){
 
   if(!chartHistory.length) return;
 
-  // ── % 변화율 계산 ──
-  // ── % 계산: 스냅샷 기반으로 완전 통일 ──
-  // 공식: pct[i] = (raw[i] - fv) / fv × 100
-  // fv = 종목의 첫 스냅샷 평가금액 (= chartHistory[fi])
-  // → 수량 변화 무관, 합계도 자동 정확, getBasePriceKRW 불필요
-
+  // ── % 계산: 단가 기준(수량 변화 무관), 통계 바와 같은 함수 ──
   const lines=[];
+  const seriesOf = chartSeriesMap();
 
-  // 합계는 개별 자산 pct 계산 후 가중평균으로 계산 (아래에서)
-  // 각 자산의 pct 배열을 모아둘 맵
-  const assetPctMap = {}; // {assetId: pct배열}
-
-  assets.forEach(a=>{
-    if(a.acctType==='cash') return;
-
-    const raw = chartHistory.map(h=> h.byAsset[a.id] ?? null);
-    const fi = raw.findIndex(v=>v!=null);
-    if(fi===-1) return;
-
-    // 단가 기준 pct 계산 (수량 변화 무관):
-    const curQty = a.quantity || 1;
-    const prices = chartHistory.map(h=>{
-      const ev = h.byAsset[a.id];
-      if(ev == null) return null;
-      const q = (h.byQty && h.byQty[a.id]) ? h.byQty[a.id] : curQty;
-      return ev / q;
-    });
-
-    // 기준단가 결정:
-    // 1D 기간: ① 유효한 전일종가(prevPrice) → ② 스냅샷 기준점 단가 → ③ 현재가 순 폴백
-    // 그 외 기간: fi=0이면 기준점 단가, fi>0이면 avgPrice
-    const fvPrice = calcBaseUnit(a, prices, fi);
-
-    const pct = prices.map((p,idx)=>{
-      if(idx < fi || p == null) return null;
-      return ((p - fvPrice) / fvPrice) * 100;
-    });
-
-    // 합계 가중평균용으로 모든 자산의 pct 저장 (선택 여부 무관)
-    assetPctMap[a.id] = pct;
-  });
-
-  // 화면 라인: 계좌별로 나뉜 동일 종목명은 하나로 병합(현재평가금액 가중평균), 그룹 중 하나라도 선택되어 있으면 표시
+  // 화면 라인: 계좌별로 나뉜 동일 종목명은 하나로 병합(기준금액 가중), 그룹 중 하나라도 선택되어 있으면 표시
   const lineGroups = groupAssetsByName();
   lineGroups.forEach((g,gi)=>{
     if(!g.ids.some(id=>selectedAssets.has(id))) return;
-    if(!g.ids.some(id=>assetPctMap[id])) return; // 데이터 없음
+    const members = g.ids.map(id=>seriesOf[id]).filter(Boolean);
+    if(!members.length) return; // 데이터 없음
 
-    const weights={}; let totalW=0;
-    g.ids.forEach(id=>{
-      const asset = assets.find(x=>x.id===id);
-      if(!asset) return;
-      const w = evKRW(asset);
-      weights[id]=w; totalW+=w;
-    });
-    if(totalW<=0) totalW=1;
-
-    const vals = chartHistory.map((h,idx)=>{
-      let acc=0, wsum=0;
-      g.ids.forEach(id=>{
-        const pv = assetPctMap[id] ? assetPctMap[id][idx] : null;
-        if(pv==null) return;
-        acc += pv*(weights[id]||0); wsum += (weights[id]||0);
-      });
-      return wsum>0 ? acc/wsum : null;
-    });
+    const vals = chartHistory.map((h,idx)=>PC.mergedPct(members, idx));
     const absVals = chartHistory.map(h=> g.ids.reduce((s,id)=> s+(h.byAsset[id]||0), 0));
 
     const events=[];
@@ -9837,27 +9694,11 @@ function drawLineChart(){
       color:col, lw:1.2, assetIds:g.ids, events, lastValidIdx});
   });
 
-  // ── 합계: 자산별 pct의 현재평가금액 가중평균 ──
-  // 매수/매도/현금 변화에 영향받지 않는 순수 수익률
+  // ── 합계: 종목별 수익률의 기준금액 가중평균 (= 합계 손익 ÷ 합계 기준금액) ──
+  // 매수/매도/현금 변화에 영향받지 않는 순수 수익률, 선택 여부와 무관하게 전체 종목
   if(showSum){
-    const sumAssets = assets.filter(a=>a.acctType!=='cash' && assetPctMap[a.id]);
-    // 현재 평가금액 가중치
-    const weights = {};
-    let totalWeight = 0;
-    sumAssets.forEach(a=>{ const w = evKRW(a); weights[a.id]=w; totalWeight+=w; });
-    if(totalWeight<=0) totalWeight = 1;
-
-    const sumVals = chartHistory.map((h,idx)=>{
-      let acc = 0, wsum = 0;
-      sumAssets.forEach(a=>{
-        const pv = assetPctMap[a.id][idx];
-        if(pv==null) return;            // 그 시점 데이터 없는 자산 제외
-        acc  += pv * weights[a.id];
-        wsum += weights[a.id];
-      });
-      if(wsum<=0) return null;
-      return acc / wsum;               // 가중평균 (정규화)
-    });
+    const all = Object.values(seriesOf);
+    const sumVals = chartHistory.map((h,idx)=>PC.mergedPct(all, idx));
     const rawSum = chartHistory.map(h=>Object.values(h.byAsset).reduce((s,v)=>s+(v||0),0));
     lines.unshift({label:'합계', vals:sumVals, absVals:rawSum,
       color:'#2c2c2e', lw:1.8, isSum:true, events:[]});
@@ -10103,8 +9944,7 @@ function drawLineChart(){
 
 
 function renderStatBar(){
-  // drawLineChart와 완전히 동일한 스냅샷 기반 공식
-  // pct = (raw[i] - fv) / fv × 100  (fv = 첫 스냅샷값)
+  // drawLineChart와 같은 함수로 같은 값을 쓴다(chartSeriesMap·mergedPct)
   const bar=document.getElementById('statBar');
   // 계좌별로 나뉜 동일 종목명은 그룹으로 병합 (drawLineChart와 동일한 그룹/순서 사용 — 색상 일치)
   const allGroups = groupAssetsByName();
@@ -10117,113 +9957,19 @@ function renderStatBar(){
   ];
   if(!items.length){bar.innerHTML='';return;}
 
+  const seriesOf = chartSeriesMap();
+  // 묶음의 마지막 수익률·고저·손익 — 손익 = Σ(현재 수량 × (현재 단가 − 기준단가)), 수익률은 그 손익 ÷ 기준금액과 같다
+  const statOf = list => {
+    const vals = chartHistory.map((h,idx)=>PC.mergedPct(list, idx)).filter(v=>v!=null);
+    if(!vals.length) return null;
+    return {pct:vals[vals.length-1], hi:Math.max(...vals), lo:Math.min(...vals), diff:Math.round(list.reduce((t,s)=>t+PC.seriesPnl(s), 0))};
+  };
   const rows = items.map(item=>{
-    if(!item){
-      // 합계: drawLineChart와 동일 — 자산별 pct의 현재평가금액 가중평균
-      const sumAssets = assets.filter(x=>x.acctType!=='cash');
-      // 각 자산의 pct 배열 계산 (단가 기준)
-      const pctMap = {};
-      sumAssets.forEach(x=>{
-        const rawV = chartHistory.map(h=>h.byAsset[x.id]??null);
-        const fiX = rawV.findIndex(v=>v!=null);
-        if(fiX===-1) return;
-        const cq = x.quantity||1;
-        const pr = chartHistory.map(h=>{
-          const ev=h.byAsset[x.id]; if(ev==null) return null;
-          const q=(h.byQty&&h.byQty[x.id])?h.byQty[x.id]:cq;
-          return ev/q;
-        });
-        const fvp = calcBaseUnit(x, pr, fiX);
-        pctMap[x.id] = pr.map((p,idx)=> (idx<fiX||p==null)?null:((p-fvp)/fvp)*100);
-      });
-      const wAssets = sumAssets.filter(x=>pctMap[x.id]);
-      const weights = {}; let totalW=0;
-      wAssets.forEach(x=>{ const w=evKRW(x); weights[x.id]=w; totalW+=w; });
-      if(totalW<=0) totalW=1;
-      const sumVals = chartHistory.map((h,idx)=>{
-        let acc=0,wsum=0;
-        wAssets.forEach(x=>{
-          const pv=pctMap[x.id][idx]; if(pv==null) return;
-          acc+=pv*weights[x.id]; wsum+=weights[x.id];
-        });
-        return wsum<=0?null:acc/wsum;
-      }).filter(v=>v!=null);
-      const pct = sumVals.length ? sumVals[sumVals.length-1] : 0;
-      const hiPct = sumVals.length ? Math.max(...sumVals) : 0;
-      const loPct = sumVals.length ? Math.min(...sumVals) : 0;
-      // 방식 2: 합계 금액 = Σ(자산별 현재수량 × (현재단가 − 기준단가))
-      let diff = 0;
-      wAssets.forEach(x=>{
-        const rawV = chartHistory.map(h=>h.byAsset[x.id]??null);
-        const fiX = rawV.findIndex(v=>v!=null);
-        if(fiX===-1) return;
-        const cq = x.quantity||1;
-        const pr = chartHistory.map(h=>{
-          const ev=h.byAsset[x.id]; if(ev==null) return null;
-          const q=(h.byQty&&h.byQty[x.id])?h.byQty[x.id]:cq;
-          return ev/q;
-        });
-        const fvp = calcBaseUnit(x, pr, fiX);
-        const lastP = pr[pr.length-1] ?? pr.filter(v=>v!=null).slice(-1)[0];
-        if(lastP!=null) diff += (lastP - fvp) * cq;
-      });
-      diff = Math.round(diff);
-      return {sum:true, name:'합계', color:'var(--color-text)', diff, pct, hi:hiPct, lo:loPct};
-    }
-
-    if(item.acctType==='cash'){
-      const a = item;
-      const ev = evKRW(a);
-      return {name:a.name, color:'#8e8e93', diff:0, pct:0, hi:null, lo:null};
-    }
-
-    // 일반 종목: 계좌별로 나뉜 동일 종목명은 현재평가금액 가중평균으로 병합 (drawLineChart와 동일 방식)
-    const g = item;
-    const weights = {}; let totalWg = 0;
-    const members = g.ids.map(id=>{
-      const x = assets.find(v=>v.id===id);
-      if(!x) return null;
-      const curQtyX = x.quantity || 1;
-      const rawX = chartHistory.map(h=>h.byAsset[id]??null);
-      const fiX = rawX.findIndex(v=>v!=null);
-      if(fiX===-1) return null;
-      const pricesX = chartHistory.map(h=>{
-        const ev = h.byAsset[id];
-        if(ev==null) return null;
-        const q = (h.byQty && h.byQty[id]) ? h.byQty[id] : curQtyX;
-        return ev / q;
-      });
-      const fvpX = calcBaseUnit(x, pricesX, fiX);
-      const pctX = pricesX.map((p,idx)=> (idx<fiX||p==null)?null:((p-fvpX)/fvpX)*100);
-      const w = evKRW(x);
-      weights[id]=w; totalWg+=w;
-      return {id, x, pctX, pricesX, fvpX, curQtyX};
-    }).filter(Boolean);
-    if(!members.length) return null;
-    if(totalWg<=0) totalWg=1;
-
-    const pctVals = chartHistory.map((h,idx)=>{
-      let acc=0, wsum=0;
-      members.forEach(m=>{
-        const pv=m.pctX[idx]; if(pv==null) return;
-        acc+=pv*(weights[m.id]||0); wsum+=(weights[m.id]||0);
-      });
-      return wsum>0?acc/wsum:null;
-    }).filter(v=>v!=null);
-    if(!pctVals.length) return null;
-
-    const lastPct = pctVals[pctVals.length-1];
-    const hi = Math.max(...pctVals), lo = Math.min(...pctVals);
-    // 방식 2: 계좌별 (현재단가 − 기준단가) × 수량의 합 → %와 부호 일치
-    let diff = 0;
-    members.forEach(m=>{
-      const lastPriceM = m.pricesX[m.pricesX.length-1] ?? m.pricesX.filter(v=>v!=null).slice(-1)[0];
-      if(lastPriceM!=null) diff += (lastPriceM - m.fvpX) * m.curQtyX;
-    });
-    diff = Math.round(diff);
-    const itemColor = LINE_COLS[allGroups.indexOf(g)%LINE_COLS.length];
-
-    return {name:g.name, color:itemColor, diff, pct:lastPct, hi, lo};
+    if(!item) return {sum:true, name:'합계', color:'var(--color-text)', ...(statOf(Object.values(seriesOf)) || {pct:0, hi:0, lo:0, diff:0})};
+    if(item.acctType==='cash') return {name:item.name, color:'#8e8e93', diff:0, pct:0, hi:null, lo:null};
+    // 일반 종목: 계좌별로 나뉜 동일 종목명은 하나로 병합
+    const st = statOf(item.ids.map(id=>seriesOf[id]).filter(Boolean));
+    return st && {name:item.name, color:LINE_COLS[allGroups.indexOf(item)%LINE_COLS.length], ...st};
   }).filter(Boolean);
   // iOS 목록형: 헤더(종목·수익률·손익·고/저) + 한 행에 한 종목, 열 정렬. 합계는 맨 위 강조, 나머지는 수익률 높은 순(그래프 오른쪽 라벨 순서와 같음)
   const sumRow = rows.filter(r=>r.sum), rest = rows.filter(r=>!r.sum).sort((a,b)=>b.pct-a.pct);
@@ -11128,17 +10874,7 @@ async function cmpFromHash(){
   migrateSoldHistory();
   setTimeout(()=>privMaskSubtree(document.body), 0);
   reconcileTradeLogAttrs();
-  // 기존 데이터에 음수 현금이 있으면 0으로 보정
-  let cashFixed = false;
-  assets.forEach(a=>{
-    if(a.acctType==='cash' && (a.currentPrice<0||a.avgPrice<0)){
-      a.currentPrice = Math.max(0, a.currentPrice||0);
-      a.avgPrice = Math.max(0, a.avgPrice||0);
-      a.prevPrice = Math.max(0, a.prevPrice||0);
-      cashFixed = true;
-    }
-  });
-  if(cashFixed) saveAssets();
+  // 음수 현금은 보정하지 않는다 — 현금 기록보다 많이 사면 그만큼 음수로 남아 총자산이 그대로다. 다시 열 때 0으로 만들면 그 금액이 기록 없이 생겨 수익으로 잡힌다.
   renderAll();renderSnaps();renderSoldHistory();
   restorePageState();
   // 비교 화면 DOM(#cmpView)은 스크립트 뒤에 있어 파싱이 끝난 뒤에 연다

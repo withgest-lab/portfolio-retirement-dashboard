@@ -906,6 +906,7 @@ function simulate(p, adj, opts){
       realTotal: totalInc/infMul, realNet: netInc/infMul, realEq: Math.max(0, netInc - lumpM) / infMul / expPct(p, age),
       privTaxableAnnual: y.privTaxableA, otherAnnual: y.otherA, overLimitAnnual: y.overLimitAnnual, taxedOverAnnual: y.taxedOverA,
       gross: y.paid,                                        // 연간 실제 인출액
+      genEtfGain: y.genEtfGain,                             // 일반계좌 해외ETF 실현이익(연) — 건보료 화면이 simulate와 같은 값을 내려면 필요
       freeAnnual: y.free, tirpDeferredAnnual: y.tirpDef,
       bal: b,
       privB: Math.round((b.nh+b.mf+b.irp)/10000*10)/10,

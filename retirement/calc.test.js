@@ -241,6 +241,18 @@ test('건보료 계산 내역 시점: regionalIncomeMonthly(p, age, npMonthly) �
   near(fullRow.hi / fullRow.infMul, panelFull, 0.6, '수령 후 패널 = 시뮬레이션');
 });
 
+test('건보료 화면: 일반계좌 해외ETF 이익까지 행에서 읽으면 실제 차감액(simulate)과 해마다 같다', () => {
+  const P = Object.assign({}, BASE, {gen_etf: 20000, gen_etfr: 100, rgen: 4, genage: 57, genpay: 400});
+  const rows = simulate(P, c.SA.base).rows;
+  assert.ok(rows.some(x => x.genEtfGain > 0), '테스트 전제: 해외ETF 이익이 실현되는 해가 있다');
+  for(const x of rows){
+    const y = healthPremiumYear(P, x.age, x.age >= P.npage ? P.np : 0, Math.pow(1 + P.inf/100, x.age - P.age), P.inf, x.genEtfGain);
+    assert.equal(Math.round(y.annual/12), x.hi, x.age + '세');
+  }
+  const first = rows[0], mul = Math.pow(1 + P.inf/100, first.age - P.age);
+  assert.ok(first.hi/mul > healthPremiumYear(P, first.age, 0, mul, P.inf).monthlyReal + 5, '이익을 빼면 건보료가 크게 낮게 나온다');
+});
+
 test('건보료 계산 내역: 금융소득 1,000만원 기준은 명목(그해 물가) 비교 — 오늘 가치 900이어도 명목 1,000 넘으면 반영, healthPremiumYear와 정확히 같음', () => {
   const P = Object.assign({}, BASE, {realestate: 30000, hi_interest: 450, hi_dividend: 450});
   for(const age of [P.ret, P.ret + 4, 70]){

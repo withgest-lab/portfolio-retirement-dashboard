@@ -391,3 +391,25 @@ test('배당일 자동 입금: 대상·한 번만·통화 금액', () => {
   assert.equal(T.netInCcy({ ccy: 'JPY', dps: 20, qty: 100, gross: 20 * 100 * 9, net: 20 * 100 * 9 * (1 - 0.15315) }), 1694);
 });
 
+/* ── 포트폴리오(div-tax)와 현금흐름(calc)에 따로 있는 세법 수치 — 앱이 달라 한 벌로 합치지 않고, 어긋나면 여기서 실패한다 ── */
+const C = require('../retirement/calc.js');
+
+test('두 앱의 세법 수치가 같다: 종합소득 세율표(0~20억 전 구간)', () => {
+  for(let base = 0; base <= 200000; base += 37) near(T.incomeTaxMan(base), C.basicIncomeTax(base), 1e-6);
+});
+
+test('두 앱의 세법 수치가 같다: 양도세·금융소득 기준', () => {
+  assert.equal(T.CGT_RATE, C.GEN_OV_TAX);
+  assert.equal(T.CGT_EXEMPT, C.GEN_OV_DEDUCT * 10000);
+  assert.equal(T.FIN_THRESHOLD_MAN, C.FIN_COMP_THRESHOLD);
+});
+
+test('두 앱의 금융소득 추가세액이 같다: 비교과세 결과 − 원천징수 − 다른 소득 세금', () => {
+  for(const [F, X] of [[2500, 3150], [3000, 5150], [5000, 150], [8000, 10150], [12000, 20150], [2100, 150], [2000, 3150], [1500, 3150]]){
+    const total = C.comprehensiveTotal(0, {other: X, fin: F}, 50);
+    const credit = C.comprehensiveCore(0, {other: X, finExcess: Math.max(0, F - 2000)}, 50).credit;
+    const withheldAndOther = (F * 0.14 + C.comprehensiveCore(0, {other: X}, 50).calc - credit) * 1.1;
+    near(total - withheldAndOther, T.finExtraTaxMan(F, X - 150), 1e-6);
+  }
+});
+

@@ -40,6 +40,20 @@
     return DEFAULT_FX;
   }
 
+  // 직접 입력한 계좌 이름("중개형ISA", "연금저축")을 프리셋으로 읽는다 — 이 함수가 없으면 그 계좌 잔액이 통째로 빠진다.
+  // portfolio/div-tax.js normAcct와 같은 규칙(이 파일은 그 스크립트 없이 로드돼 복사해 둠, retirement/bridge.test.js가 두 함수를 대조한다).
+  // 비어 있으면 그대로 둔다(계좌유형이 없는 현금은 은퇴 계좌 잔액과 무관)
+  var ACCT_PRESETS = ['general', 'cash', 'isa', 'irp', 'pension_personal', 'pension_retirement'];
+  function normAcctType(t) {
+    if (!t || ACCT_PRESETS.indexOf(t) >= 0) return t;
+    var s = String(t).replace(/\s/g, '').toUpperCase();
+    if (/ISA/.test(s)) return 'isa';
+    if (/IRP/.test(s)) return 'irp';
+    if (/퇴직/.test(s)) return 'pension_retirement';
+    if (/연금/.test(s)) return 'pension_personal';
+    return 'general';
+  }
+
   // 포트폴리오 대시보드의 evKRW()와 동일한 환산 규칙: currentPrice * quantity * FX
   function assetValueKRW(asset, fx) {
     if (!asset || typeof asset.quantity !== 'number' || typeof asset.currentPrice !== 'number') return 0;
@@ -84,7 +98,7 @@
         var cashAcct = a.cashAcctType !== undefined ? a.cashAcctType : a.subCategory;
         if (cashAcct && cashAcct !== 'cash') acctType = cashAcct;
       }
-      switch (acctType) {
+      switch (normAcctType(acctType)) {
         case 'pension_personal':
           if (company === 'nh') sums.nh += krw;
           else if (company === 'mf') sums.mf += krw;
@@ -112,6 +126,20 @@
         default:
           break; // 계좌유형이 없는 현금은 은퇴 계좌 잔액과 무관
       }
+    }
+
+    // 일반계좌 국내 칸이 음수(현금 기록 없이 산 종목)면 다른 칸의 평가액·원가에서 같은 비율로 뺀다 — 현금흐름은 칸 잔액을
+    // 0 아래로 내리지 않아, 그대로 넘기면 그 금액이 사라져 순자산보다 큰 돈으로 계산이 시작된다
+    if (gen.kr.ev < 0) {
+      var short = -gen.kr.ev;
+      gen.kr.ev = 0; gen.kr.cost = 0;
+      [gen.etf, gen.ov].forEach(function (b) {
+        var take = Math.min(short, b.ev);
+        if (!(take > 0)) return;
+        b.cost -= b.cost * (take / b.ev);
+        b.ev -= take;
+        short -= take;
+      });
     }
 
     var toManwon = function (v) { return Math.round(v / 10000); };

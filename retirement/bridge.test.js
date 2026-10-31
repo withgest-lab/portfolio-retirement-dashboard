@@ -95,6 +95,43 @@ test('레거시 필드(category/subCategory/subAccount)도 인식한다', () => 
   assert.strictEqual(s.nh, 300);
 });
 
+test('직접 입력한 계좌 이름도 빠지지 않고 합산된다(종목·현금 모두)', () => {
+  const s = snap([stock('중개형ISA'), stock('퇴직연금 DC'), stock('개인IRP'), stock('연금저축', { company: 'nh' }), stock('CMA'),
+    cash('ISA 계좌', 2000000)]);
+  assert.strictEqual(s.isa, 1200);
+  assert.strictEqual(s.tirp, 1000);
+  assert.strictEqual(s.irp, 1000);
+  assert.strictEqual(s.nh, 1000);
+  assert.deepStrictEqual(s.gen.kr, { ev: 1000, cost: 1000 });
+});
+
+test('계좌 이름 판정이 배당·세금 쪽(div-tax normAcct)과 어긋나지 않는다', () => {
+  const T = require(path.join('..', 'portfolio', 'div-tax.js'));
+  const bucketOf = s => s.isa ? 'isa' : s.irp ? 'irp' : s.tirp ? 'pension_retirement' : s.unclassifiedPersonalPension ? 'pension_personal' : s.gen.kr.ev ? 'general' : null;
+  ['general', 'isa', 'irp', 'pension_personal', 'pension_retirement', '중개형ISA', '중개형 isa', 'IRP 개인', '퇴직연금', '퇴직 IRP', '연금저축', '개인연금', '국내주식', 'CMA', '해외주식계좌']
+    .forEach(name => assert.strictEqual(bucketOf(snap([stock(name)])), T.normAcct(name), name));
+});
+
+test('일반계좌 음수 현금은 순자산이 맞도록 다른 칸에서 뺀다(평가손익률은 그대로)', () => {
+  const ov = extra => stock('general', Object.assign({ currency: 'USD', quantity: 1, currentPrice: 20000, avgPrice: 10000 }, extra));
+  const fx = { USD: 1000, JPY: 10 };
+  // 해외주식 2,000만(원가 1,000만) + 현금 −500만 → 해외주식 1,500만(원가 750만)
+  let s = snap([ov(), cash('general', -5000000)], fx);
+  assert.deepStrictEqual(s.gen.ov, { ev: 1500, cost: 750 });
+  assert.deepStrictEqual(s.gen.kr, { ev: 0, cost: 0 });
+  // 국내 종목이 있으면 그 칸 안에서 먼저 상계된다
+  s = snap([stock('general', { avgPrice: 1000000 }), ov(), cash('general', -5000000)], fx);
+  assert.strictEqual(s.gen.kr.ev, 500);
+  assert.strictEqual(s.gen.ov.ev, 2000);
+  // 해외ETF 칸 → 해외주식 칸 순서, 전부 합쳐 순자산과 같다
+  s = snap([stock('general', { market: 'us', quantity: 1, currentPrice: 3000000, avgPrice: 3000000 }), ov(), cash('general', -5000000)], fx);
+  assert.strictEqual(s.gen.etf.ev, 0);
+  assert.strictEqual(s.gen.ov.ev, 1800);
+  // 계좌 전체가 음수면 0 아래로 내려가지 않는다
+  s = snap([cash('general', -5000000)], fx);
+  assert.deepStrictEqual(s.gen, { ov: { ev: 0, cost: 0 }, etf: { ev: 0, cost: 0 }, kr: { ev: 0, cost: 0 } });
+});
+
 test('저장된 자산이 없으면 모두 0', () => {
   store = {};
   const s = window.PortfolioBridge.getPortfolioSnapshot();
