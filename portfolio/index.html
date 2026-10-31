@@ -1645,8 +1645,9 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
           <label class="fm-f"><div class="fm-bx"><span class="fm-l">구분</span><select class="fm-select" id="pl_type"><option value="deposit">입금</option><option value="withdrawal">출금</option></select></div></label>
           <label class="fm-f"><div class="fm-bx"><span class="fm-l">금액</span><input class="fm-input" id="pl_amount" type="number" inputmode="decimal" placeholder="0" min="0" autocomplete="off"></div></label>
           <label class="fm-f"><div class="fm-bx"><span class="fm-l">통화</span><select class="fm-select" id="pl_cur"><option value="KRW">KRW ₩</option><option value="USD">USD $</option><option value="JPY">JPY ¥</option></select></div></label>
+          <label class="fm-f w9 n8"><div class="fm-bx"><span class="fm-l">사유</span><input class="fm-input" id="pl_reason" placeholder="선택" autocomplete="off"></div></label>
+          <div class="fm-f fm-act n4"><button class="btn btn-green" data-fm-primary onclick="addPrincipalLedgerEntry()">추가</button></div>
         </div>
-        <div class="fm-a"><button class="btn btn-green" data-fm-primary onclick="addPrincipalLedgerEntry()">추가</button></div>
       </div>
       <div class="form-status" id="principalLedgerStatus"></div>
     </div>
@@ -6229,7 +6230,7 @@ function renderPrincipalLedger(){
       ? `<span class="acctType-badge" style="background:#34c75920;color:#34c759;">${r.src==='dividend' ? '배당' : '입금'}</span>`
       : `<span class="acctType-badge" style="background:#ff3b3020;color:var(--color-up);">출금</span>`;
     // 배당 종목명 등: 펼침은 구분 배지 아래, 접힘은 날짜 아래 둘째 줄(남는 폭에서 말줄임) — 둘 중 하나만 보인다(CSS .pl-nm-w/.pl-nm-f)
-    const sub = r.name && r.name!=='현금' ? r.name : '';
+    const sub = [r.name && r.name!=='현금' ? r.name : '', (r.reason||'').trim()].filter(Boolean).join(' · ');   // 배당 종목명 · 입출금 사유
     const subTip = String(sub).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     const mainRow = `<tr>
       <td style="text-align:left;font-size:12px;color:var(--color-tertiary);">${dtStr}${sub ? `<div class="tl-sub pl-nm-f" title="${subTip}">${sub}</div>` : ''}</td>
@@ -6259,10 +6260,9 @@ function renderPrincipalLedgerEditForm(r){
         ${fmField('구분', fmSelect(`ple_type_${r.id}`,[['deposit','입금'],['withdrawal','출금']],r.type,{custom:false}))}
         ${fmField('금액', fmInput(`ple_amount_${r.id}`,{type:'number',value:amountVal,attrs:'min="0"'}))}
         ${fmField('통화', fmSelect(`ple_cur_${r.id}`,FM_CUR,r.currency,{custom:false}))}
-      </div>
-      <div class="fm-a">
-        <button class="btn btn-ghost" data-fm-cancel onclick="closePrincipalLedgerEdit()">취소</button>
-        <button class="btn btn-green" data-fm-primary onclick="savePrincipalLedgerEdit('${r.id}')">저장</button>
+        ${fmField('사유', fmInput(`ple_reason_${r.id}`,{value:r.reason||''}), {opt:true, cls:'w6 n12'})}
+        ${fmAct('btn-ghost','취소','closePrincipalLedgerEdit()',{cls:'n6',attr:'data-fm-cancel'})}
+        ${fmAct('btn-green','저장',`savePrincipalLedgerEdit('${r.id}')`,{cls:'n6',attr:'data-fm-primary'})}
       </div>
     </div>
   </td></tr>`;
@@ -6291,6 +6291,7 @@ function savePrincipalLedgerEdit(id){
   r.at = new Date(dateV+'T00:00:00').getTime();
   r.type = type;
   r.currency = cur;
+  r.reason = (document.getElementById(`ple_reason_${id}`).value||'').trim();
   const fxRate = cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1;
   r.totalKRW = Math.round(amount*fxRate);
 
@@ -6320,11 +6321,11 @@ function addPrincipalLedgerEntry(){
     acctType:'cash', assetType:null, company:null,
     price:null, quantity:null, currency:cur,
     totalKRW: Math.round(amount*fxRate), pnl:null, pnlPct:null,
-    reason:'', cashAdjusted:null
+    reason:(document.getElementById('pl_reason').value||'').trim(), cashAdjusted:null
   });
   st.textContent = `✅ ${dateV} ${type==='deposit'?'입금':'출금'} 기록 추가 (자산/현금 잔액 미반영)`;
   setTimeout(()=>{ if(st.querySelector('.ic-check-circle') || st.textContent.startsWith('✅')) st.textContent=''; }, 3000);
-  document.getElementById('pl_amount').value='';
+  document.getElementById('pl_amount').value=''; document.getElementById('pl_reason').value='';
   renderPrincipalLedger();
   renderMonthlyTable();
   drawPrincipalVsValueChart();
