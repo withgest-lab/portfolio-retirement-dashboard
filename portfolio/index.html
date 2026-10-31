@@ -479,6 +479,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 .fm-input[type=date]::-webkit-datetime-edit{padding:0;}
 .fm-input[type=date]::-webkit-calendar-picker-indicator{margin:0 0 0 1px;padding:0;width:14px;}
 @media (pointer:coarse){ .fm-input[type=date]::-webkit-calendar-picker-indicator{display:none;} }
+.fm-f.r1{grid-column:1 / span 3;}   /* 넓은 화면에서 새 줄 첫 칸부터(발행일·만기일을 한 줄에 묶을 때) */
 .fm-f.fm-act.r{grid-column:7 / span 3;} .fm-f.fm-act.r10{grid-column:10 / span 3;}
 .fm-act{justify-content:flex-end;} .fm-act .btn{width:100%;height:36px;padding:0;min-width:0;}
 .fm-input,.fm-select{width:100%;min-width:0;height:36px;box-sizing:border-box;border:.5px solid rgba(60,60,67,.22);border-radius:10px;
@@ -514,6 +515,7 @@ tr[style*="background:#f0fff4"] td:first-child{background:#f0fff4!important;}
 @media (max-width:640px){
   .fm{padding:12px;}
   .fm-f,.fm-f.s4{grid-column:span 6;} .fm-f.s6,.fm-f.s8,.fm-f.s9,.fm-f.s12{grid-column:span 12;}
+  .fm-f.r1{grid-column:span 6;}
   .fm-f.fm-act.r{grid-column:span 6;} .fm-f.fm-act.r10{grid-column:span 12;}
   .fm-f.n4{grid-column:span 4;} .fm-f.n5{grid-column:span 5;} .fm-f.n7{grid-column:span 7;} .fm-f.n8{grid-column:span 8;} .fm-f.n12{grid-column:span 12;}   /* 접힘 전용 칸 수 — 위 규칙 뒤에 둬서 이긴다 */
   .fm-a .btn{flex:1 1 0;}
@@ -1908,10 +1910,10 @@ function fmBuildBuy(){
       ${fmField('통화', fmSelect('af_cur',FM_CUR,'KRW',{custom:false}))}
       <div class="fm-f w6 n12"><button type="button" class="tgl-banner fm-sw" id="af_bond_sw" role="switch" aria-checked="false" onclick="toggleBondSwitch()">확정금리 채권(복리)<span class="sw"></span></button><input type="checkbox" id="af_bond_toggle" hidden></div>
       <div id="af_bond_fields" class="fm-grid" style="display:none;grid-column:1 / -1;">
-        ${fmField('매입원금', fmInput('af_bond_principal',{type:'number'}))}
+        ${fmField('매입원금', fmInput('af_bond_principal',{type:'number'}), {cls:'n12'})}
         ${fmField('표면금리(%)', fmInput('af_bond_coupon',{type:'number',ph:'4.415',attrs:'step="0.001"'}))}
         ${fmField('가산금리(%)', fmInput('af_bond_spread',{type:'number',ph:'0.350',attrs:'step="0.001"'}))}
-        ${fmField('발행일', fmInput('af_bond_issue',{type:'date',attrs:'onchange="bondIssueChanged()"'}))}
+        ${fmField('발행일', fmInput('af_bond_issue',{type:'date',attrs:'onchange="bondIssueChanged()"'}), {cls:'r1'})}
         ${fmField('만기일', fmInput('af_bond_maturity',{type:'date',attrs:'oninput="this.dataset.auto=\'\'"'}))}
       </div>
       ${fmField('사유', fmInput('af_reason'), {opt:true, cls:'w9 n8'})}
@@ -4555,10 +4557,10 @@ function renderTable(){
       } else {
         // ── 일반 종목: 수량 / 평균단가 / 분류 (확정금리 채권은 원금·금리·발행/만기일로 대체) ──
         const holdFields = a.isBond ? `
-              ${fmField(`매입원금 (${a.currency})`, fmInput(`tp_bond_principal_${a.id}`,{type:'number',value:a.bondPrincipal||0}))}
+              ${fmField(`매입원금 (${a.currency})`, fmInput(`tp_bond_principal_${a.id}`,{type:'number',value:a.bondPrincipal||0}), {cls:'n12'})}
               ${fmField('표면금리(%)', fmInput(`tp_bond_coupon_${a.id}`,{type:'number',value:((a.bondCouponRate||0)*100).toFixed(3),attrs:'step="0.001"'}))}
               ${fmField('가산금리(%)', fmInput(`tp_bond_spread_${a.id}`,{type:'number',value:((a.bondSpreadRate||0)*100).toFixed(3),attrs:'step="0.001"'}))}
-              ${fmField('발행일', fmInput(`tp_bond_issue_${a.id}`,{type:'date',value:a.bondIssueDate||''}))}
+              ${fmField('발행일', fmInput(`tp_bond_issue_${a.id}`,{type:'date',value:a.bondIssueDate||''}), {cls:'r1'})}
               ${fmField('만기일', fmInput(`tp_bond_maturity_${a.id}`,{type:'date',value:a.bondMaturityDate||''}))}` : `
               ${fmField('수량', fmInput(`tp_qty_${a.id}`,{type:'number',value:a.quantity}))}
               ${fmField(`평균단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.avgPrice}))}`;
