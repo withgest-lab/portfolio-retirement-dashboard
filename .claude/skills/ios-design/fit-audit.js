@@ -222,6 +222,12 @@ const seedRetirement = () => ({
   nh: '10000', nhprin: '2000', nhm: '50', mf: '5000', mfprin: '500', irp: '1000', irpy: '300', tirp: '20000', tdc: '1000', tservice: '10', isa: '1000', isay: '1000',
   gongsiga1: '50000', rnh: '4', rmf: '4', rirp: '4', rtirp: '4', risa: '4', rgen: '4', rvol: '12', inf: '2.5',
 });
+// --big: 억 단위 금액을 넣어 칸 잘림을 잰다(가상의 둥근 값) — 평소 시드는 값이 짧아 잘림이 드러나지 않았다
+const seedRetirementBig = () => Object.assign(seedRetirement(), {
+  nh: '120000', nhprin: '98000', mf: '120000', mfprin: '98000', irp: '120000', tirp: '120000', tirptax: '12000', isa: '120000',
+  gen_ov: '120000', gen_etf: '98000', gen_kr: '125000', gongsiga1: '1200000', gongsiga2: '980000', hi_labor: '120000', hi_business: '98000', hi_other: '98000',
+  hi_interest: '98000', hi_dividend: '98000', hi_rentprop: '500000', lump1_age: '70', lump1_amt: '120000', bequest: '500000', hp_age: '70', hp_price: '1200000',
+});
 // 현금흐름 결과 탭 보기 6종 — 요약·근거·위기 점검·부족 대책은 자동 설계 결과가 있어야 의미가 있어 순회 전에 한 번 확정한다(confirmPlan 경로 검증 겸).
 const RESULT_VIEWS = ['flow', 'asset', 'plan', 'hi', 'basis', 'risk'];
 const seedPlan = async page => {
@@ -253,7 +259,7 @@ async function sweep(browser, preset, o) {
     const page = await browser.newPage({ viewport: { width: w, height: h } });
     await page.goto(o.base + cfg.base, { waitUntil: 'load' });
     if (o.seed && cfg.seed) await page.evaluate(m => { try { Object.keys(m).forEach(k => localStorage.setItem(k, JSON.stringify(m[k]))); } catch (e) {} }, seedAll());
-    else if (preset === 'retirement') await page.evaluate(s => { try { localStorage.clear(); localStorage.setItem('retirement_dashboard_v1', JSON.stringify(s)); } catch (e) {} }, seedRetirement());
+    else if (preset === 'retirement') await page.evaluate(s => { try { localStorage.clear(); localStorage.setItem('retirement_dashboard_v1', JSON.stringify(s)); } catch (e) {} }, o.big ? seedRetirementBig() : seedRetirement());
     await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(preset === 'portfolio' ? 2500 : 1200);
     let targets = [['', '']], seeded = false;
     if (preset === 'retirement') targets = cfg.tabs.flatMap(t => t === 'result' ? RESULT_VIEWS.map(v => [t, v]) : [[t, '']]);
@@ -271,6 +277,7 @@ async function sweep(browser, preset, o) {
       const fit = await measureFit(page), fails = judgeFit(fit, isLong);
       let boxes = null;
       if (o.boxes && !folded) { boxes = await measureBoxes(page); fails.push(...judgeBoxes(boxes)); }
+      else if (o.big && folded) { const c = (await measureBoxes(page)).clipped; if (c.length) fails.push('잘림 ' + c.slice(0, 4).join(',')); }   // 접힘은 폭·정렬 판정 없이 잘림만
       if (o.boxes || folded) fails.push(...judgeOverlap(await measureOverlap(page)));
       rows.push({ vp: w + '×' + h, name, fit, boxes, fails, isLong });
     }
@@ -283,7 +290,7 @@ async function main() {
   const args = process.argv.slice(2);
   const preset = args.find(a => !a.startsWith('--')) || 'retirement';
   const val = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null; };
-  const o = { boxes: args.includes('--boxes'), extra: args.includes('--extra'), seed: args.includes('--seed'), folded: args.includes('--folded'), base: (val('--base') || 'http://localhost:4173/').replace(/\/?$/, '/') };
+  const o = { boxes: args.includes('--boxes'), extra: args.includes('--extra'), seed: args.includes('--seed'), folded: args.includes('--folded'), big: args.includes('--big'), base: (val('--base') || 'http://localhost:4173/').replace(/\/?$/, '/') };
   const { chromium } = require('playwright');
   const browser = await chromium.launch();
   const presets = preset === 'all' ? Object.keys(SCREENS) : [preset];
@@ -302,5 +309,5 @@ async function main() {
   process.exit(bad ? 1 : 0);
 }
 
-module.exports = { measureFit, measureBoxes, measureOverlap, judgeOverlap, judgeFit, judgeBoxes, seedAssets, seedTradeLog, seedSnaps, seedAll, seedRetirement, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
+module.exports = { measureFit, measureBoxes, measureOverlap, judgeOverlap, judgeFit, judgeBoxes, seedAssets, seedTradeLog, seedSnaps, seedAll, seedRetirement, seedRetirementBig, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
 if (require.main === module) main().catch(e => { console.error(e); process.exit(2); });
