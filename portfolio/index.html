@@ -746,8 +746,12 @@ tr.dv-flash > td{animation:dvflash 1.5s ease-out;}
 .alloc-grid[data-mode="narrow"] .alloc-legend{max-width:none;}
 .alloc-grid[data-mode="wide"] .alloc-detail-row{flex-direction:row;align-items:flex-start;flex-wrap:nowrap;}
 .alloc-grid[data-mode="wide"] .alloc-detail-legend{flex:1 1 170px;width:auto;max-width:none;}
-/* 펼침·펼침+90도: 작은 도넛 범례는 이름이 잘리지 않게 금액을 숨긴다(금액은 가운데 총자산·종목 비중 막대에 있음) */
+/* 펼침·펼침+90도: 작은 도넛 범례는 이름이 잘리지 않게 금액을 숨긴다(금액은 가운데 총자산·종목 비중 막대에 있음). 세부 종목 범례는 접힘과 같이 금액까지 */
 .alloc-grid[data-mode="wide"] .alloc-legend .lg-amt{display:none;}
+.alloc-grid[data-mode="wide"] .alloc-detail-legend .lg-amt{display:block;}
+/* 작은 도넛 범례: 이름 칸을 세 범례 중 가장 긴 이름 폭(renderDonuts가 잰 값)으로 통일 — 점유율이 이름 바로 뒤에 오고 % 열이 세 범례에서 세로로 맞는다 */
+.alloc-grid[data-mode="wide"] .alloc-left .lg-name{flex:0 0 var(--lg-name-w,65px);}
+.alloc-grid[data-mode="wide"] .alloc-left .lg-pct{min-width:32px;}
 /* 왼쪽 작은 도넛 줄은 열 폭 전체를 쓰고(내용 폭으로 줄어들면 범례가 도넛 아래로 내려간다) 범례가 남는 폭을 채운다 */
 .alloc-grid[data-mode="wide"] .alloc-left .alloc-donut-row{width:100%;flex-wrap:nowrap;justify-content:flex-start;}
 .alloc-grid[data-mode="wide"] .alloc-left .alloc-donut-row .donut-canvas-wrap{flex:none;}
@@ -8281,7 +8285,14 @@ function donutDetailLegendHtml(tree, total){
    (폴드7 접힘/펼침 세로/펼침 가로, 데스크톱 공통). 높이 예산: 3·(제목 23 + d1) + 행 간격 2×14 ≤ 가용 높이.
    d2는 왼쪽 열 높이에 맞춰 좌우 균형을 잡는다(제목·칩 약 70px 제외). 폭 <600px(접힘)은 1열로 쌓고 도넛 옆에 범례.
    숨겨진 상태(다른 서브탭)면 측정 불가 → 기본값을 돌려주고, 탭이 보일 때 훅이 다시 호출한다. */
-function fitAllocDonutLayout(){
+function allocLegendNameW(datas){
+  const ctx = allocLegendNameW._c || (allocLegendNameW._c = document.createElement('canvas').getContext('2d'));
+  ctx.font = '700 10px ' + getComputedStyle(document.body).fontFamily;   // .lg-name과 같은 글꼴
+  let w = 0;
+  datas.forEach(d=>d.forEach(x=>{ w = Math.max(w, ctx.measureText(String(x.label)).width); }));
+  return Math.min(84, Math.ceil(w) + 2);   // 아주 긴 이름만 말줄임 — 큰 도넛 몫을 뺏지 않게 상한
+}
+function fitAllocDonutLayout(nameW){
   const def = {mode:'wide', d1:150, d2:240, leg1:6, callout:false, detailW:0};
   const grid = document.querySelector('#allocDonutView .alloc-grid');
   if(!grid || grid.offsetParent===null) return def;
@@ -8296,35 +8307,23 @@ function fitAllocDonutLayout(){
   // 남는 폭 전부를 오른쪽 열(자산유형별 세부 종목 도넛)에 넘긴다. 작은 도넛 안의 두 자리 비중(10% 이상) 숫자는 drawDonut이 항상 그린다.
   // 세로는 페이지 스크롤이 되므로 뷰포트 높이에 맞추지 않는다.
   const land = window.innerWidth >= 961;          // 펼침+90도(가로): 961px 이상
-  const LEG = land ? 108 : 112, SP = 12;
+  const LEG = 3 + 5 + nameW + 5 + 32, SP = 12;   // 색 막대 + 이름 + 점유율(.lg-row gap 5)
   const d1 = land ? 116 : 132;
   const leftW = d1 + SP + LEG, rightW = W - 20 - leftW;
   // 콜아웃(리더라인 라벨)은 라벨 영역 때문에 도넛 반지름이 W/2-206로 줄어 폭이 넉넉할 때만 이득이다(R≥약 205 → 오른쪽 열 ≥ 820px).
   // 그보다 좁으면 링 도넛을 열 폭에 맞춰 최대한 키우고 범례는 그 옆에 둔다.
   const callout = rightW >= 820;
-  const d2 = donutClamp(Math.floor(rightW-168), 200, 500);
+  const d2 = donutClamp(Math.floor(rightW-218), 200, 500);   // 세부 종목 범례: 이름 + 비중 + 금액이 잘리지 않을 폭을 남긴다
   return { mode:'wide', d1, d2, callout, leftW, detailW:Math.floor(rightW), leg1:Math.max(3,Math.floor(d1/ROW)) };
 }
 
 function renderDonuts(){
-  const fit = fitAllocDonutLayout();
-  const grid = document.querySelector('#allocDonutView .alloc-grid');
-  if(grid){
-    grid.dataset.mode = fit.mode;
-    grid.style.gridTemplateColumns = fit.mode==='wide' && fit.leftW ? fit.leftW+'px minmax(0,1fr)' : '';
-  }
   const total=totalEv();
   const acctTypeMap={};
   assets.forEach(a=>{const k=donutAcctTypeKey(a);acctTypeMap[k]=(acctTypeMap[k]||0)+evKRW(a);});
   const acctTypeData=Object.entries(acctTypeMap)
     .map(([k,v])=>({label:DONUT_ACCTTYPE_LABELS[k]||k,value:v,color:DONUT_ACCTTYPE_COLS[k]||'#ccc'}))
     .sort((a,b)=>b.value-a.value);
-
-  drawDonut('acctTypeDonut',acctTypeData,fit.d1);
-  document.getElementById('acctTypeCenter').textContent=fmt(total);
-  document.getElementById('acctTypeLegend').innerHTML=donutLegendHtml(acctTypeData,total,fit.leg1);
-
-  // ── 자산유형 도넛 ──
   const assetTypeMap = {};
   assets.forEach(a=>{
     const k = distAssetTypeKey(a);
@@ -8334,11 +8333,6 @@ function renderDonuts(){
   const assetTypeData = Object.entries(assetTypeMap)
     .map(([k,v])=>({label:k, value:v, color:ASSETTYPE_COLS[k]||'#8e8e93'}))
     .sort((a,b)=>b.value-a.value);
-  drawDonut('assetTypeDonut', assetTypeData, fit.d1);
-  document.getElementById('assetTypeCenter').textContent=fmt(assetTypeTotal);
-  document.getElementById('assetTypeLegend').innerHTML=donutLegendHtml(assetTypeData,assetTypeTotal,fit.leg1);
-
-  // ── 투자시장 도넛 ──
   const marketMap = {};
   assets.forEach(a=>{
     const k = distMarketKey(a);
@@ -8348,6 +8342,31 @@ function renderDonuts(){
   const marketData = Object.entries(marketMap)
     .map(([k,v])=>({label:MARKET_LABELS[k]||k, value:v, color:MARKET_COLS[k]||'#8e8e93'}))
     .sort((a,b)=>b.value-a.value);
+
+  // 범례 이름 칸 폭으로 왼쪽 열 폭이 정해지므로 데이터를 먼저 만든 뒤 레이아웃을 잰다. 글꼴이 늦게 오면 폭이 달라지니 로드 뒤 한 번 다시 그린다
+  const nameW = allocLegendNameW([acctTypeData, assetTypeData, marketData]);
+  if(document.fonts && document.fonts.status !== 'loaded' && !renderDonuts._fontWait){
+    renderDonuts._fontWait = true;
+    document.fonts.ready.then(()=>renderDonuts());
+  }
+  const fit = fitAllocDonutLayout(nameW);
+  const grid = document.querySelector('#allocDonutView .alloc-grid');
+  if(grid){
+    grid.dataset.mode = fit.mode;
+    grid.style.gridTemplateColumns = fit.mode==='wide' && fit.leftW ? fit.leftW+'px minmax(0,1fr)' : '';
+    grid.style.setProperty('--lg-name-w', nameW+'px');
+  }
+
+  drawDonut('acctTypeDonut',acctTypeData,fit.d1);
+  document.getElementById('acctTypeCenter').textContent=fmt(total);
+  document.getElementById('acctTypeLegend').innerHTML=donutLegendHtml(acctTypeData,total,fit.leg1);
+
+  // ── 자산유형 도넛 ──
+  drawDonut('assetTypeDonut', assetTypeData, fit.d1);
+  document.getElementById('assetTypeCenter').textContent=fmt(assetTypeTotal);
+  document.getElementById('assetTypeLegend').innerHTML=donutLegendHtml(assetTypeData,assetTypeTotal,fit.leg1);
+
+  // ── 투자시장 도넛 ──
   drawDonut('marketDonut', marketData, fit.d1);
   document.getElementById('marketCenter').textContent=fmt(marketTotal);
   document.getElementById('marketLegend').innerHTML=donutLegendHtml(marketData,marketTotal,fit.leg1);
