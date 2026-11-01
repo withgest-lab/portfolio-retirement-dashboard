@@ -784,10 +784,10 @@ html.dense .collapsible summary{padding:2px 0;font-size:11px;}
 /* ══ 입력 박스 통일 레이어 (맨 마지막 — 입력·선택·읽기전용 박스의 높이·폭은 여기 토큰만 쓴다) ══
    높이 --ctl-h 하나(설계는 --sp, 소득·지출·건보료는 --ps로 연속 확대), 폭은 sm(나이·월·짝 칸)/md(금액 칸)/lg(선택 칸) 3단계.
    같은 줄·같은 화면의 input/select/읽기전용은 항상 같은 높이라 위아래·좌우 행이 수평으로 맞는다(DESIGN_GUIDELINES 20절, fit-audit --boxes). */
-:root{--ctl-h:calc(20px + 4px*var(--sp,0));--ctl-w-sm:min(52px, calc(44px + 3px*var(--sp,0)));--ctl-w-md:min(76px, calc(64px + 4px*var(--sp,0)));--ctl-w-lg:148px;
+:root{--ctl-h:calc(20px + 4px*var(--sp,0));--ctl-w-sm:min(52px, calc(44px + 3px*var(--sp,0)));--ctl-w-md:min(88px, calc(80px + 8px*var(--sp,0)));--ctl-w-lg:148px;
   --ctl-fs:min(14px, calc(12px + .8px*var(--sp,0)));--bi-w:var(--ctl-w-sm);--bi-h:var(--ctl-h);}
-html.dense{--ctl-h:18px;--ctl-w-sm:40px;--ctl-w-md:58px;--ctl-fs:11px;--bi-w:var(--ctl-w-sm);--bi-h:var(--ctl-h);}
-@media (max-width:480px){ :root{--ctl-h:24px;--ctl-w-sm:48px;--ctl-w-md:66px;--ctl-fs:12.5px;} }
+html.dense{--ctl-h:18px;--ctl-w-sm:40px;--ctl-w-md:72px;--ctl-fs:11px;--bi-w:var(--ctl-w-sm);--bi-h:var(--ctl-h);}
+@media (max-width:480px){ :root{--ctl-h:24px;--ctl-w-sm:48px;--ctl-w-md:72px;--ctl-fs:12.5px;} }
 .fit-scale{--ctl-h:clamp(22px, calc(26px + 1.6px*var(--ps,0)), 40px);--ctl-w-sm:46px;--ctl-w-md:76px;--ctl-w-lg:148px;--ctl-fs:clamp(11.5px, calc(13px + .6px*var(--ps,0)), 15px);}
 .ival-input,.ymon-select,.hir-input{box-sizing:border-box;height:var(--ctl-h)!important;padding-top:0!important;padding-bottom:0!important;line-height:calc(var(--ctl-h) - 2px);font-size:var(--ctl-fs)!important;letter-spacing:0!important;}
 .acct-body .ival-input,.hir-input{width:var(--ctl-w-md)!important;}
@@ -797,6 +797,10 @@ select.hir-input{width:var(--ctl-w-lg)!important;min-width:0!important;}
 .acct-body .ymon-select,.acct-body .ival-input{text-align:right;}
 .acct-body .irow-ymon .ymon-amt .ival-input{width:var(--ctl-w-sm)!important;}   /* 연납입 금액 칸은 sm — md(76px)+단위가 2열 격자 한 칸(≈68px)보다 넓어 오른쪽 월 선택과 겹쳤다(22절 겹침 금지) */
 .acct-body .ymon-select{text-align-last:right;}
+/* 짝 칸: 칸 폭을 단위만 빼고 다 쓴다 — 고정 sm이면 832px에서 칸마다 14px가 비고 금액(해외주식·퇴직소득세 등)은 잘렸다. 단위 폭을 고정해 같은 줄 박스 폭이 같다 */
+.acct-body .fv-row .irow-ctrl{flex-wrap:nowrap;min-width:0;}
+.acct-body .fv-row input.ival-input{flex:1 1 0;width:0!important;min-width:0;max-width:72px;}
+.acct-body .fv-row .unit-tag{flex:0 0 11px;}
 
 /* ══ 소득·지출 / 건보료 패널: 섹션 카드가 패널 높이를 채우고, 행은 남는 높이를 균등 분배(fitPanel이 패널 높이를 화면 끝에 맞춤) ══ */
 .inline-panel.fit-scale.show{display:flex;flex-direction:column;}
@@ -851,6 +855,13 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
 .s2-bottom .health-input-row > .hir-input{flex:0 1 auto;min-width:30px;}
 /* 입력 폭 토큰(sm/md/lg 3종)을 화면 폭에 비례해 세 카드·건보료 카드 모두 같은 값으로: 904px에서 sm≈41·md≈67, 1003px 이상은 기존 46/76 */
 #step2Panel{--ctl-w-sm:clamp(38px, calc(((100vw - 48px) / 3 - 157px) * .45), 46px);--ctl-w-md:clamp(72px, calc(((100vw - 48px) / 3 - 157px) * .62 + 15px), 84px);}   /* 건보료 카드·아래 3카드가 같은 sm/md — md는 억 단위(만원 기준 6~7자리, 120000 = 12억)가 잘리지 않는 최소값 */
+@media (min-width:700px){   /* 펼침·90도: md 84~96px — 줄 간격 6→4px로 폭을 확보. 합계는 md, 월 보험료는 작은 값이라 md보다 12px 작게(임의계속 행이 330px 안에 들어가게) */
+  #step2Panel{--ctl-w-md:clamp(84px, calc(84px + (100vw - 750px) * .1), 96px);}
+  .hi-col .health-input-row{column-gap:4px;}
+  #gongsiga.hir-wide{width:var(--ctl-w-md)!important;}
+  select#hi_vol{width:calc(var(--ctl-w-md) + 26px)!important;}   /* 합계+4+단위 22: 아래 행의 월 보험료가 '다주택' 선택과 같은 x에서 시작 */
+  #hi_volprem{width:calc(var(--ctl-w-md) - 12px)!important;}
+}
 #step2Panel .hir-range .unit-tag{width:auto;}   /* 기간 칸의 ~·세는 글자 폭만 — 금액 칸에 폭을 넘긴다 */
 /* 필수·선택·자동 표시: 배지·범례 없이 칸 안 글자로 구분(필수 빈칸만 연한 빨강 + 라벨 뒤 빨간 점, 채우면 평소 모습). 목록은 applyInputTags */
 .ival-input::placeholder{color:#aeaeb2;font-weight:500;opacity:1;font-size:.84em;letter-spacing:0;}
@@ -1200,7 +1211,7 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
             <option value="no">안 함</option>
             <option value="yes">신청</option>
           </select>
-          <input autocomplete="off" class="hir-input" type="number" id="hi_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
+          <input autocomplete="off" class="hir-input hir-wide" type="number" id="hi_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
         </div>
         </div>
       </div>
@@ -2285,6 +2296,10 @@ function sv(id, v){
    shared/bridge.js 가 pf_assets_v1(포트폴리오 localStorage)을 읽어 계좌별 KRW 합계를 계산해준다.
    버튼을 누를 때마다 항상 현재 포트폴리오 값으로 덮어쓴다(직접 입력한 값도 포함). */
 const PF_SYNC_LABELS = {gen:ACCT_NAME.gen, nh:ACCT_NAME.nh, mf:ACCT_NAME.mf, irp:ACCT_NAME.irp, tirp:ACCT_NAME.tirp, isa:ACCT_NAME.isa};
+// 슬라이더 상한을 넘어도 깎지 않는 칸(슬라이더만 상한에 머문다).
+// 월 수령액: 자동설계가 상한(예: ISA 300만)을 넘는 값을 정직하게 채울 수 있다(ISA를 1~2년에 몰아 받는 설계 등) — 칸을 한 번 거쳐 가기만 해도 계획이 조용히 틀어졌다.
+// 잔액·원금·퇴직소득세: 실제 금액이라 상한이 없다 — 농협 잔액 6억을 넣거나 포트폴리오에서 채우면 5억으로 깎였다.
+const NO_MAX_CLAMP = ['nhpay','mfpay','irppay','tm','isam','nh','nhprin','mf','mfprin','irp','isa','tirp','tirptax'];
 function fillFromPortfolio(id){
   const statusEl = document.getElementById('pfSyncStatus');
   const setStatus = (msg, full) => { if(statusEl){ statusEl.textContent = msg; statusEl.title = full || msg; } };   // 한 줄 표시(길면 말줄임), 전체 문장은 title
@@ -2313,7 +2328,7 @@ function fillFromPortfolio(id){
     return;
   }
   if(rng){
-    const mn = parseFloat(rng.min), mx = parseFloat(rng.max);
+    const mn = parseFloat(rng.min), mx = NO_MAX_CLAMP.includes(id) ? Infinity : parseFloat(rng.max);
     v = Math.min(mx, Math.max(mn, v));
   }
   sv(id, v);
@@ -2340,9 +2355,6 @@ function onBlurFix(id){
   // 그대로 빈 칸으로 둔다(값을 만들어 채우지 않음). 계산(gv())은 빈 칸을 0으로 읽고,
   // 0이 의미상 말이 안 되는 나이류 필드(납입 종료 등)는 getP()에서 별도로 보정한다.
   if(isNaN(v)){ inp.value=''; upd(); return; }
-  // 월 수령액 칸은 자동설계가 슬라이더 상한(예: ISA 300만)을 넘는 값을 정직하게 채울 수 있다(ISA를 1~2년에 몰아 받는 설계 등).
-  // 칸을 한 번 거쳐 가기만 해도 상한으로 깎여 계획이 조용히 틀어지므로 이 칸들은 하한만 강제한다(슬라이더는 상한에 머문다).
-  const NO_MAX_CLAMP = ['nhpay','mfpay','irppay','tm','isam'];
   const mn = parseFloat(rng.min), mx = NO_MAX_CLAMP.includes(id) ? Infinity : parseFloat(rng.max);
   const clamped = Math.min(mx, Math.max(mn, v));
   inp.value = clamped;
@@ -3223,8 +3235,11 @@ function designFits(){
     const i = r.querySelector('.ival-input'), s = r.querySelector('select');
     if(i && s && i.offsetParent && Math.abs(i.offsetTop - s.offsetTop) > 4) return false;
   }
+  const smW = document.getElementById('age').offsetWidth;   // 기본 정보 칸 = sm 토큰의 실제 폭
   for(const c of document.querySelectorAll('#designTab .fv-row .irow-ctrl')){
     if(c.offsetParent && c.scrollWidth > c.clientWidth + 1) return false;
+    const i = c.querySelector('input.ival-input');   // 짝 칸은 칸 폭을 따라 줄어드니 넘침 대신 폭으로 잰다 — sm보다 좁아지면 --sp를 그만 키운다(연납입 행 겹침·짝 칸 축소 방지)
+    if(i && i.offsetParent && i.offsetWidth < smW - 2) return false;
   }
   // 입력칸 옆 단위(만/세/년)가 다음 줄로 밀려 그 칸만 2줄이 되면 안 됨(--sp 확대가 원인이 되지 않게)
   for(const c of document.querySelectorAll('#designTab .acct-body .irow-ctrl')){
@@ -3267,7 +3282,24 @@ function fitAll(){
   fitDensity(); fitPanel();
   if(mainTab === 'result'){ fitMetricCards(); fitChartHeight(); fitAltView(); }
   syncBodyScroll();
+  fitInputFonts();
 }
+/* ── 값이 칸보다 길면 그 칸의 글자만 줄인다 ──
+   칸 폭은 레이아웃이 정하고(sm/md 토큰), 억 단위 값이 들어가도 잘리지 않게 실제 글꼴로 재서 넘치는 칸만 축소한다.
+   높이는 고정이라 화면 맞춤(fitDensity·fitPanel)에 영향이 없다. 숨은 탭의 칸은 폭이 0이라 건너뛰고 탭을 열 때 fitAll이 다시 잰다. */
+const INPUT_FS_MIN = 8.5;
+const _inputFsCtx = document.createElement('canvas').getContext('2d');
+function fitInputFont(el){
+  el.style.removeProperty('font-size');
+  if(!el.value || !el.offsetWidth) return;
+  const cs = getComputedStyle(el), base = parseFloat(cs.fontSize);
+  const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 1;
+  _inputFsCtx.font = cs.fontWeight + ' ' + base + 'px ' + cs.fontFamily;
+  const w = _inputFsCtx.measureText(el.value).width;
+  if(w > room) el.style.setProperty('font-size', Math.max(INPUT_FS_MIN, Math.floor(base * room / w * 10) / 10) + 'px', 'important');   // 토큰 규칙이 !important라 인라인도 !important
+}
+function fitInputFonts(){ document.querySelectorAll('input.ival-input, input.hir-input').forEach(fitInputFont); }
+document.addEventListener('input', e=>{ if(e.target.matches && e.target.matches('input.ival-input, input.hir-input')) fitInputFont(e.target); });
 // 수익률·물가 설정 팝오버: 바깥을 누르거나 ESC면 닫는다(스위치 상태도 함께)
 function closeRatesPop(){
   const btn = document.getElementById('ratesToggleBtn');
@@ -4004,6 +4036,7 @@ function upd(){
 
   // 건보료 예상 보기가 열려 있으면 입력이 바뀔 때 실시간 갱신
   if(_altView==='hi') renderHiView();
+  fitInputFonts();   // 자동 설계·연동·합계처럼 코드가 넣은 값도 칸에 맞춘다
 }
 
 // top-bar가 position:fixed로 화면 상단에 고정되면서 비는 공간을 실제 높이만큼 body 여백으로 채움.
