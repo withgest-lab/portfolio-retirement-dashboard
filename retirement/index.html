@@ -837,7 +837,7 @@ select.hir-input.filled:not(.gen-auto){background-color:rgba(0,122,255,.1)!impor
 select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행의 두 번째 칸(월 보험료)이 위 '다주택' 선택과 같은 x에서 시작 */
 .hi-col .health-input-row:last-child,.hi-col .health-input-row:has(+ .sec-subh){border-bottom:0;}
 .hi-col .sec-subh:first-child{padding-top:max(2px, calc(2px + .6px*var(--ps,0)));}
-.s2-bottom{flex:2.6 1 auto;display:grid;grid-template-columns:minmax(0,.93fr) minmax(0,1.03fr) minmax(0,1.03fr);grid-template-rows:auto repeat(2,minmax(0,1fr));gap:var(--gap);min-height:0;}
+.s2-bottom{flex:2.6 1 auto;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.1fr) minmax(0,1.1fr);grid-template-rows:auto repeat(2,minmax(0,1fr));gap:var(--gap);min-height:0;}
 .s2-bottom > .sec-card{min-width:0;}
 /* 세 카드의 머리·1행·2행이 같은 y — 카드가 행 트랙을 공유(subgrid, 카드마다 행이 정확히 2개). 줄바꿈 없음 */
 @media (min-width:700px){
@@ -845,11 +845,27 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   .s2-bottom .sec-rows{display:contents;}
 }
 .s2-bottom .health-input-row{flex-wrap:nowrap;min-width:0;}
-.s2-bottom .health-input-row > .hir-label{flex:0 0 58px;width:58px;}
+.s2-bottom .health-input-row > .hir-label{flex:0 0 50px;width:50px;white-space:nowrap;}
+.s2-bottom > .sec-card:first-child .health-input-row > .hir-label{flex-basis:34px;width:34px;}   /* 단계 1·2는 글자가 짧다 — 좁은 카드에서 나이·비율 칸이 눌리지 않게 */
 .s2-bottom .health-input-row > .unit-tag,.s2-bottom .health-input-row > .req-st{flex:0 0 auto;white-space:nowrap;}
 .s2-bottom .health-input-row > .hir-input{flex:0 1 auto;min-width:30px;}
 /* 입력 폭 토큰(sm/md/lg 3종)을 화면 폭에 비례해 세 카드·건보료 카드 모두 같은 값으로: 904px에서 sm≈41·md≈67, 1003px 이상은 기존 46/76 */
-#step2Panel{--ctl-w-sm:clamp(38px, calc(((100vw - 48px) / 3 - 157px) * .45), 46px);--ctl-w-md:clamp(57px, calc(((100vw - 48px) / 3 - 157px) * .62), 76px);}   /* 건보료 카드·아래 3카드가 같은 sm/md — 750px(펼침 기본)에서 3카드 안쪽 ≈205px에 라벨+입력+단위가 한 줄로 들어가는 최소값 */
+#step2Panel{--ctl-w-sm:clamp(38px, calc(((100vw - 48px) / 3 - 157px) * .45), 46px);--ctl-w-md:clamp(72px, calc(((100vw - 48px) / 3 - 157px) * .62 + 15px), 84px);}   /* 건보료 카드·아래 3카드가 같은 sm/md — md는 억 단위(만원 기준 6~7자리, 120000 = 12억)가 잘리지 않는 최소값 */
+#step2Panel .hir-range .unit-tag{width:auto;}   /* 기간 칸의 ~·세는 글자 폭만 — 금액 칸에 폭을 넘긴다 */
+/* 필수·선택·자동 표시: 배지·범례 없이 칸 안 글자로 구분(필수 빈칸만 연한 빨강 + 라벨 뒤 빨간 점, 채우면 평소 모습). 목록은 applyInputTags */
+.ival-input::placeholder{color:#aeaeb2;font-weight:500;opacity:1;font-size:.84em;letter-spacing:0;}
+.hir-input::placeholder{color:#aeaeb2;font-size:.84em;letter-spacing:0;}   /* 가장 좁은 칸(sm 38px)에도 두 글자가 잘리지 않게 값보다 작게 */
+@media (max-width:480px){ #step2Panel .hi-top .hir-range{margin-left:8px;} #step2Panel #hi_volprem{width:var(--ctl-w-sm)!important;} }   /* 접힘: 기간 칸 왼쪽 선을 아래 유형·보험료 칸과 맞춤(월 보험료는 작은 값이라 sm — 384px에서 행이 눌려 칸이 밀리던 문제) */
+.ival-input.req:placeholder-shown,.hir-input.req:placeholder-shown{background:rgba(255,59,48,.1);}
+.ival-input.req::placeholder,.hir-input.req::placeholder{color:#d70015;font-weight:600;}
+.lbl-req::after{content:'';display:inline-block;width:4px;height:4px;margin-left:3px;border-radius:50%;background:#ff3b30;vertical-align:middle;flex:none;}
+/* 결과 탭: 1단계 필수가 비어 있으면 결과 대신 안내(0세부터 계산한 값을 보여 주지 않는다) */
+#needReq{display:none;}
+#resultTab.req-missing > :not(#needReq){display:none!important;}
+#resultTab.req-missing > #needReq{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;box-sizing:border-box;padding:24px 16px;background:#fff;border:.5px solid rgba(60,60,67,.12);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+#needReq p{margin:0;font-size:14px;font-weight:600;color:#1c1c1e;text-align:center;line-height:1.5;word-break:keep-all;text-wrap:balance;}
+#needReq .nw{white-space:nowrap;}
+#needReq .suggest-btn{width:auto;padding:8px 18px;}
 #step2Panel input.hir-input{padding-left:2px!important;padding-right:4px!important;}   /* 6자리 공시가격(110300)·근로 123456이 md 폭에서 잘리지 않게 입력 칸만 좌우 여백 축소(select는 ▾ 자리가 있어 제외) */
 .req-val{flex:1 1 0;min-width:0;font-size:clamp(11px, calc(11.5px + .5px*var(--ps,0)), 14px);color:#1c1c1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .req-val .ok{color:#34c759;font-weight:700;margin-right:3px;}
@@ -1121,30 +1137,30 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
           <div class="sec-subh"><span>소득</span><button type="button" class="ibtn" data-tip="오늘 돈 가치·세전 금액(매년 물가만큼 오름)이에요. 기간을 비우면 은퇴~기대수명 내내 받는 것으로 봅니다. 건보료에는 공적연금·근로 50%, 사업·기타 100%, 이자+배당은 연 1,000만원을 넘으면 전액 반영돼요. 같은 값이 현금흐름 수입과 세금(근로·사업·기타 종합과세, 이자+배당 2,000만원 초과분 종합과세)에도 쓰입니다.">ⓘ</button></div>
         <div class="health-input-row">
           <span class="hir-label">근로(연)</span>
-          <input class="hir-input" type="number" id="hi_labor" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-          <span class="hir-range"><input class="hir-input hir-age" type="number" id="hi_labor_from" min="40" max="100" step="1" placeholder="은퇴" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_labor_to" min="40" max="105" step="1" placeholder="끝" oninput="scheduleUpd()"><span class="unit-tag">세</span></span>
+          <input autocomplete="off" class="hir-input" type="number" id="hi_labor" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+          <span class="hir-range"><input autocomplete="off" class="hir-input hir-age" type="number" id="hi_labor_from" min="40" max="100" step="1" placeholder="은퇴" oninput="scheduleUpd()"><span class="unit-tag">~</span><input autocomplete="off" class="hir-input hir-age" type="number" id="hi_labor_to" min="40" max="105" step="1" placeholder="끝" oninput="scheduleUpd()"><span class="unit-tag">세</span></span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">사업(연)</span>
-          <input class="hir-input" type="number" id="hi_business" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-          <span class="hir-range"><input class="hir-input hir-age" type="number" id="hi_business_from" min="40" max="100" step="1" placeholder="은퇴" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_business_to" min="40" max="105" step="1" placeholder="끝" oninput="scheduleUpd()"><span class="unit-tag">세</span></span>
+          <input autocomplete="off" class="hir-input" type="number" id="hi_business" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+          <span class="hir-range"><input autocomplete="off" class="hir-input hir-age" type="number" id="hi_business_from" min="40" max="100" step="1" placeholder="은퇴" oninput="scheduleUpd()"><span class="unit-tag">~</span><input autocomplete="off" class="hir-input hir-age" type="number" id="hi_business_to" min="40" max="105" step="1" placeholder="끝" oninput="scheduleUpd()"><span class="unit-tag">세</span></span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">기타(연)</span>
-          <input class="hir-input" type="number" id="hi_other" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
-          <span class="hir-range"><input class="hir-input hir-age" type="number" id="hi_other_from" min="40" max="100" step="1" placeholder="은퇴" oninput="scheduleUpd()"><span class="unit-tag">~</span><input class="hir-input hir-age" type="number" id="hi_other_to" min="40" max="105" step="1" placeholder="끝" oninput="scheduleUpd()"><span class="unit-tag">세</span></span>
+          <input autocomplete="off" class="hir-input" type="number" id="hi_other" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+          <span class="hir-range"><input autocomplete="off" class="hir-input hir-age" type="number" id="hi_other_from" min="40" max="100" step="1" placeholder="은퇴" oninput="scheduleUpd()"><span class="unit-tag">~</span><input autocomplete="off" class="hir-input hir-age" type="number" id="hi_other_to" min="40" max="105" step="1" placeholder="끝" oninput="scheduleUpd()"><span class="unit-tag">세</span></span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">이자(연)</span>
-          <input class="hir-input" type="number" id="hi_interest" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input" type="number" id="hi_interest" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">배당(연)</span>
-          <input class="hir-input" type="number" id="hi_dividend" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input" type="number" id="hi_dividend" value="" placeholder="0" min="0" step="10" oninput="scheduleUpd()"><span class="unit-tag">만</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">국민연금</span>
-          <input class="hir-input gen-auto" type="text" id="hi_np_display" value="0" disabled><span class="unit-tag">만/월</span>
+          <input autocomplete="off" class="hir-input gen-auto" type="text" id="hi_np_display" value="0" disabled><span class="unit-tag">만/월</span>
           <span class="req-st ok" title="1단계 국민연금 카드에 기입한 실제 수령액을 자동으로 가져옵니다">1단계 연동</span>
         </div>
         </div>
@@ -1152,39 +1168,39 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
           <div class="sec-subh"><span>재산</span><button type="button" class="ibtn" data-tip="공시가격은 공시가격 알리미(realtyprice.kr)에서 확인하세요(5억이면 50000). 합계로 건보료 재산 과표를 계산하고, 2채 이상이면 다주택(60%)으로 자동 바뀝니다.">ⓘ</button></div>
         <div class="health-input-row">
           <span class="hir-label" title="주택1 공시가격">주택1 공시</span>
-          <input class="hir-input" type="number" id="gongsiga1" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input" type="number" id="gongsiga1" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()"><span class="unit-tag">만</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label" title="주택2 공시가격">주택2 공시</span>
-          <input class="hir-input" type="number" id="gongsiga2" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input" type="number" id="gongsiga2" value="" placeholder="0" min="0" step="1000" oninput="onHouseInput()"><span class="unit-tag">만</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">합계·유형</span>
-          <input class="hir-input gen-auto hir-wide" type="text" id="gongsiga" value="0" readonly tabindex="-1"><span class="unit-tag">만원</span>
-          <select class="hir-input hir-house" id="housetype" onchange="scheduleUpd()" title="1주택 = 1세대 1주택(공정시장가액 43~45%), 다주택 = 다주택자·법인(60%)">
+          <input autocomplete="off" class="hir-input gen-auto hir-wide" type="text" id="gongsiga" value="0" readonly tabindex="-1"><span class="unit-tag">만</span>
+          <select autocomplete="off" class="hir-input hir-house" id="housetype" onchange="scheduleUpd()" title="1주택 = 1세대 1주택(공정시장가액 43~45%), 다주택 = 다주택자·법인(60%)">
             <option value="single">1주택</option>
             <option value="multi">다주택</option>
           </select>
         </div>
         <div class="health-input-row">
           <span class="hir-label">전월세 인정 <button type="button" class="ibtn" data-tip="무주택자만 해당해요. 보증금과 월세 환산액의 약 30%를 재산으로 봅니다(전세 3억 → 9000).">ⓘ</button></span>
-          <input class="hir-input" type="number" id="hi_rentprop" value="" placeholder="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input" type="number" id="hi_rentprop" value="" placeholder="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만</span>
         </div>
           <div class="sec-subh"><span>자격</span><button type="button" class="ibtn" data-tip="피부양자가 될 수 없으면 은퇴 후 지역가입자로 바뀌어 소득+재산에 보험료가 붙어요. 임의계속가입은 퇴직 후 직장 건보료를 최대 36개월 유지하는 제도예요.">ⓘ</button></div>
         <div class="health-input-row">
           <span class="hir-label">피부양자 가족</span>
-          <select class="hir-input" id="hi_dep" onchange="scheduleUpd()">
+          <select autocomplete="off" class="hir-input" id="hi_dep" onchange="scheduleUpd()">
             <option value="no">없음 (지역가입자)</option>
             <option value="yes">있음 (직장가입자 가족)</option>
           </select>
         </div>
         <div class="health-input-row">
           <span class="hir-label">임의계속가입 <button type="button" class="ibtn" data-tip="퇴직 후 직장 건보료를 최대 36개월 유지하는 제도예요. 급여명세서의 본인 부담분(건강+장기요양)을 월 보험료에 넣으세요. 재산은 반영되지 않고, 36개월 동안 더 낮은 쪽이 적용됩니다.">ⓘ</button></span>
-          <select class="hir-input" id="hi_vol" onchange="scheduleUpd()">
-            <option value="no">신청 안 함</option>
-            <option value="yes">신청 (36개월)</option>
+          <select autocomplete="off" class="hir-input" id="hi_vol" onchange="scheduleUpd()">
+            <option value="no">안 함</option>
+            <option value="yes">신청</option>
           </select>
-          <input class="hir-input" type="number" id="hi_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
+          <input autocomplete="off" class="hir-input" type="number" id="hi_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
         </div>
         </div>
       </div>
@@ -1195,13 +1211,13 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
       <div class="sec-rows">
         <div class="health-input-row">
           <span class="hir-label">단계 1</span>
-          <input class="hir-input hir-age" type="number" id="exp_s1_age" value="" placeholder="75" min="0" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세부터</span>
-          <input class="hir-input hir-age" type="number" id="exp_s1_pct" value="" placeholder="100" min="10" max="200" step="5" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+          <input autocomplete="off" class="hir-input hir-age" type="number" id="exp_s1_age" value="" placeholder="75" min="0" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세부터</span>
+          <input autocomplete="off" class="hir-input hir-age" type="number" id="exp_s1_pct" value="" placeholder="100" min="10" max="200" step="5" oninput="scheduleUpd()"><span class="unit-tag">%</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">단계 2</span>
-          <input class="hir-input hir-age" type="number" id="exp_s2_age" value="" placeholder="85" min="0" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세부터</span>
-          <input class="hir-input hir-age" type="number" id="exp_s2_pct" value="" placeholder="100" min="10" max="200" step="5" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+          <input autocomplete="off" class="hir-input hir-age" type="number" id="exp_s2_age" value="" placeholder="85" min="0" max="100" step="1" oninput="scheduleUpd()"><span class="unit-tag">세부터</span>
+          <input autocomplete="off" class="hir-input hir-age" type="number" id="exp_s2_pct" value="" placeholder="100" min="10" max="200" step="5" oninput="scheduleUpd()"><span class="unit-tag">%</span>
         </div>
       </div>
     </div>
@@ -1210,12 +1226,12 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
       <div class="sec-rows">
         <div class="health-input-row">
           <span class="hir-label">일시 지출</span>
-          <input class="hir-input hir-age" type="number" id="lump1_age" value="" placeholder="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
-          <input class="hir-input" type="number" id="lump1_amt" value="" placeholder="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input hir-age" type="number" id="lump1_age" value="" placeholder="0" min="0" max="105" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+          <input autocomplete="off" class="hir-input" type="number" id="lump1_amt" value="" placeholder="0" min="0" step="100" oninput="scheduleUpd()"><span class="unit-tag">만</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">남길 금액</span>
-          <input class="hir-input" type="number" id="bequest" value="" placeholder="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input" type="number" id="bequest" value="" placeholder="0" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만</span>
         </div>
       </div>
     </div>
@@ -1224,12 +1240,12 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
       <div class="sec-rows">
         <div class="health-input-row">
           <span class="hir-label">임의가입</span>
-          <input class="hir-input" type="number" id="np_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
+          <input autocomplete="off" class="hir-input" type="number" id="np_volprem" value="" placeholder="0" min="0" step="1" oninput="scheduleUpd()"><span class="unit-tag">만/월</span>
         </div>
         <div class="health-input-row">
           <span class="hir-label">주택연금</span>
-          <input class="hir-input hir-age" type="number" id="hp_age" value="" placeholder="가입" title="가입 나이" min="0" max="85" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
-          <input class="hir-input" type="number" id="hp_price" value="" placeholder="시세" title="주택 시세" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만원</span>
+          <input autocomplete="off" class="hir-input hir-age" type="number" id="hp_age" value="" placeholder="가입" title="가입 나이" min="0" max="85" step="1" oninput="scheduleUpd()"><span class="unit-tag">세</span>
+          <input autocomplete="off" class="hir-input" type="number" id="hp_price" value="" placeholder="시세" title="주택 시세" min="0" step="1000" oninput="scheduleUpd()"><span class="unit-tag">만</span>
         </div>
       </div>
     </div>
@@ -1249,42 +1265,42 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">현재 나이</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="age" value="51" min="40" max="70" step="1" onblur="onBlurFix('age')" oninput="syncSlider('age');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="age" value="" min="40" max="70" step="1" onblur="onBlurFix('age')" oninput="syncSlider('age');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="age-r" min="40" max="70" step="1" value="51"  oninput="syncInput('age');scheduleUpd()">
+  <input autocomplete="off" type="range" id="age-r" min="40" max="70" step="1" value="40"  oninput="syncInput('age');scheduleUpd()">
 </div><div class="irow base-s">
   <div class="irow-top">
     <span class="ilabel">은퇴 나이</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="ret" value="57" min="50" max="70" step="1" onblur="onBlurFix('ret')" oninput="syncSlider('ret');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="ret" value="" min="50" max="70" step="1" onblur="onBlurFix('ret')" oninput="syncSlider('ret');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="ret-r" min="50" max="70" step="1" value="57"  oninput="syncInput('ret');scheduleUpd()">
+  <input autocomplete="off" type="range" id="ret-r" min="50" max="70" step="1" value="50"  oninput="syncInput('ret');scheduleUpd()">
 </div><div class="irow base-s">
   <div class="irow-top">
     <span class="ilabel">기대 수명</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="life" value="90" min="75" max="105" step="1" onblur="onBlurFix('life')" oninput="syncSlider('life');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="life" value="90" min="75" max="105" step="1" onblur="onBlurFix('life')" oninput="syncSlider('life');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="life-r" min="75" max="105" step="1" value="90"  oninput="syncInput('life');scheduleUpd()">
+  <input autocomplete="off" type="range" id="life-r" min="75" max="105" step="1" value="90"  oninput="syncInput('life');scheduleUpd()">
 </div><div class="irow base-s">
   <div class="irow-top">
     <span class="ilabel" title="오늘 돈 가치 기준(매년 물가상승률 반영) · 세후 소득과 비교합니다">월 생활비</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="exp" value="400" min="100" max="600" step="5" onblur="onBlurFix('exp')" oninput="syncSlider('exp');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="exp" value="" min="100" max="600" step="5" onblur="onBlurFix('exp')" oninput="syncSlider('exp');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="exp-r" min="100" max="600" step="5" value="400"  oninput="syncInput('exp');scheduleUpd()">
+  <input autocomplete="off" type="range" id="exp-r" min="100" max="600" step="5" value="100"  oninput="syncInput('exp');scheduleUpd()">
 </div><div class="irow base-s">
   <div class="irow-top">
     <span class="ilabel" title="사적연금 과세분이 연 1,500만원(법 기준)을 넘으면 세율이 올라갑니다. 이 값은 여유를 두고 잡는 기준(기본 1,450만)이며, 아래 막대와 자동설계가 이 값을 씁니다">저율과세 기준</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="plimit" value="1450" min="900" max="1500" step="50" onblur="onBlurFix('plimit')" oninput="syncSlider('plimit');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="plimit" value="1450" min="900" max="1500" step="50" onblur="onBlurFix('plimit')" oninput="syncSlider('plimit');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="plimit-r" min="900" max="1500" step="50" value="1450"  oninput="syncInput('plimit');scheduleUpd()">
+  <input autocomplete="off" type="range" id="plimit-r" min="900" max="1500" step="50" value="1450"  oninput="syncInput('plimit');scheduleUpd()">
 </div>
 <div class="basic-row-action">
 <button class="suggest-btn" onclick="setMainTab('step2')"><span style="font-size:12.5px;">2단계 설계로 가기 ›</span></button>
@@ -1306,7 +1322,7 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="세 칸(해외주식·해외ETF·국내·현금)의 합계 — 자동">현재 잔액</span>
     <div class="irow-ctrl">
-      <input class="ival-input gen-auto" type="text" id="gen_total" value="0" readonly tabindex="-1"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input gen-auto" type="text" id="gen_total" value="0" readonly tabindex="-1"><span class="unit-tag">만</span>
     </div>
   </div>
 </div>
@@ -1315,14 +1331,14 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="해외 상장 종목(달러·엔)의 평가액 — 팔 때 양도소득세 22%(연 250만원 공제), 건보료·피부양자 소득에는 영향 없음">해외주식</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="gen_ov" value="0" min="0" step="100" onblur="onBlurFix('gen_ov')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="gen_ov" value="" min="0" step="100" onblur="onBlurFix('gen_ov')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
     </div>
   </div>
 </div><div class="irow gen">
   <div class="irow-top">
     <span class="ilabel" title="현재 수익률(평가손익률) — 원가를 계산해 팔 때 세금을 구합니다. 증권사 원화 기준 수익률을 넣으세요">수익률</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="gen_ovr" value="0" min="-90" max="1000" step="1" onblur="onBlurFix('gen_ovr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="gen_ovr" value="" min="-90" max="1000" step="1" onblur="onBlurFix('gen_ovr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
     </div>
   </div>
 </div>
@@ -1332,14 +1348,14 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="국내 상장 해외 ETF(원화 거래)의 평가액 — 매매차익에 15.4%(배당소득), 금융소득으로 합산되어 건보료·종합과세 판정에 들어갑니다">해외ETF</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="gen_etf" value="0" min="0" step="100" onblur="onBlurFix('gen_etf')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="gen_etf" value="" min="0" step="100" onblur="onBlurFix('gen_etf')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
     </div>
   </div>
 </div><div class="irow gen">
   <div class="irow-top">
     <span class="ilabel" title="현재 수익률(평가손익률) — 원가를 계산해 팔 때 세금을 구합니다">수익률</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="gen_etfr" value="0" min="-90" max="1000" step="1" onblur="onBlurFix('gen_etfr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="gen_etfr" value="" min="-90" max="1000" step="1" onblur="onBlurFix('gen_etfr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
     </div>
   </div>
 </div>
@@ -1349,14 +1365,14 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="국내 주식·국내 ETF(와 포트폴리오의 일반계좌 현금) — 매매차익 비과세로 봅니다">국내</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="gen_kr" value="0" min="0" step="100" onblur="onBlurFix('gen_kr')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="gen_kr" value="" min="0" step="100" onblur="onBlurFix('gen_kr')" oninput="scheduleUpd()"><span class="unit-tag">만</span>
     </div>
   </div>
 </div><div class="irow gen">
   <div class="irow-top">
     <span class="ilabel" title="현재 수익률(평가손익률) — 국내 주식·ETF는 매매차익이 비과세라 세금 계산에는 영향이 없고 기록용입니다">수익률</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="gen_krr" value="0" min="-90" max="1000" step="1" onblur="onBlurFix('gen_krr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="gen_krr" value="" min="-90" max="1000" step="1" onblur="onBlurFix('gen_krr')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
     </div>
   </div>
 </div>
@@ -1366,7 +1382,7 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="해외주식 이익을 해마다 연 250만원 공제 한도만큼 실현했다 다시 사는 방법 — 원가가 올라 나중 세금이 줄어듭니다">250만 공제</span>
     <div class="irow-ctrl">
-      <select class="ymon-select" id="gen_harvest" onchange="scheduleUpd()" title="해마다 250만원 공제 활용">
+      <select autocomplete="off" class="ymon-select" id="gen_harvest" onchange="scheduleUpd()" title="해마다 250만원 공제 활용">
         <option value="no" selected>안 함</option><option value="yes">활용</option>
       </select>
     </div>
@@ -1375,7 +1391,7 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="자동설계 인출 계획 기준 일반계좌에서 평생 내는 양도·매매차익 세금(명목) — 자동설계 전에는 —">예상 세금</span>
     <div class="irow-ctrl">
-      <input class="ival-input gen-auto" type="text" id="gen_tax" value="—" readonly tabindex="-1"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input gen-auto" type="text" id="gen_tax" value="—" readonly tabindex="-1"><span class="unit-tag">만</span>
     </div>
   </div>
 </div>
@@ -1390,43 +1406,43 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">현재 잔액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nh" value="12000" min="0" max="50000" step="500" onblur="onBlurFix('nh')" oninput="syncSlider('nh');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="nh" value="" min="0" max="50000" step="500" onblur="onBlurFix('nh')" oninput="syncSlider('nh');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="nh-r" min="0" max="50000" step="500" value="12000"  oninput="syncInput('nh');scheduleUpd()">
+  <input autocomplete="off" type="range" id="nh-r" min="0" max="50000" step="500" value="0"  oninput="syncInput('nh');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
     <span class="ilabel" title="세액공제 받지 않은 납입원금(2026년 말 확정 금액) — 현재 잔액에 이미 포함된 금액입니다. 2027년부터는 세액공제 한도(연금저축 600만·IRP 합산 900만)를 넘게 낸 금액을 자동으로 더해 계산합니다">안세공 원금</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhprin" value="3000" min="0" max="20000" step="100" onblur="onBlurFix('nhprin')" oninput="syncSlider('nhprin');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="nhprin" value="" min="0" max="20000" step="100" onblur="onBlurFix('nhprin')" oninput="syncSlider('nhprin');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="nhprin-r" min="0" max="20000" step="100" value="3000"  oninput="syncInput('nhprin');scheduleUpd()">
+  <input autocomplete="off" type="range" id="nhprin-r" min="0" max="20000" step="100" value="0"  oninput="syncInput('nhprin');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
     <span class="ilabel">월 납입액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhm" value="99" min="0" max="150" step="5" onblur="onBlurFix('nhm')" oninput="syncSlider('nhm');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="nhm" value="" min="0" max="150" step="5" onblur="onBlurFix('nhm')" oninput="syncSlider('nhm');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="nhm-r" min="0" max="150" step="5" value="99"  oninput="syncInput('nhm');scheduleUpd()">
+  <input autocomplete="off" type="range" id="nhm-r" min="0" max="150" step="5" value="0"  oninput="syncInput('nhm');scheduleUpd()">
 </div><div class="fv-row">
 <div class="irow nh">
   <div class="irow-top">
     <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('nhstart')" oninput="syncSlider('nhstart');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="nhstart" value="" min="40" max="65" step="1" onblur="onBlurFix('nhstart')" oninput="syncSlider('nhstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="nhstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('nhstart');scheduleUpd()">
+  <input autocomplete="off" type="range" id="nhstart-r" min="40" max="65" step="1" value="40" oninput="syncInput('nhstart');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
     <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhend" min="50" max="75" step="1" onblur="onBlurFix('nhend')" oninput="syncSlider('nhend');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" value="" id="nhend" min="50" max="75" step="1" onblur="onBlurFix('nhend')" oninput="syncSlider('nhend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="nhend-r" min="50" max="75" step="1" value="57" oninput="syncInput('nhend');scheduleUpd()">
+  <input autocomplete="off" type="range" id="nhend-r" min="50" max="75" step="1" value="50" oninput="syncInput('nhend');scheduleUpd()">
 </div>
 </div>
 <div class="fv-row">
@@ -1434,18 +1450,18 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhage" value="57" min="55" max="80" step="1" onblur="onBlurFix('nhage')" oninput="syncSlider('nhage');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="nhage" value="" min="55" max="80" step="1" onblur="onBlurFix('nhage')" oninput="syncSlider('nhage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="nhage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('nhage');scheduleUpd()">
+  <input autocomplete="off" type="range" id="nhage-r" min="55" max="80" step="1" value="55"  oninput="syncInput('nhage');scheduleUpd()">
 </div><div class="irow nh">
   <div class="irow-top">
     <span class="ilabel">월 수령액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="nhpay" value="70" min="0" max="300" step="5" onblur="onBlurFix('nhpay')" oninput="syncSlider('nhpay');limitCheck('nhpay')"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="nhpay" value="" min="0" max="300" step="5" onblur="onBlurFix('nhpay')" oninput="syncSlider('nhpay');limitCheck('nhpay')"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="nhpay-r" min="0" max="300" step="5" value="70"  oninput="syncInput('nhpay');scheduleUpd()">
+  <input autocomplete="off" type="range" id="nhpay-r" min="0" max="300" step="5" value="0"  oninput="syncInput('nhpay');scheduleUpd()">
 </div>
 </div>
 </div>
@@ -1458,43 +1474,43 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">현재 잔액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mf" value="6000" min="0" max="30000" step="500" onblur="onBlurFix('mf')" oninput="syncSlider('mf');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="mf" value="" min="0" max="30000" step="500" onblur="onBlurFix('mf')" oninput="syncSlider('mf');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="mf-r" min="0" max="30000" step="500" value="6000"  oninput="syncInput('mf');scheduleUpd()">
+  <input autocomplete="off" type="range" id="mf-r" min="0" max="30000" step="500" value="0"  oninput="syncInput('mf');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
     <span class="ilabel" title="세액공제 받지 않은 납입원금(2026년 말 확정 금액) — 현재 잔액에 이미 포함된 금액입니다. 2027년부터는 세액공제 한도(연금저축 600만·IRP 합산 900만)를 넘게 낸 금액을 자동으로 더해 계산합니다">안세공 원금</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfprin" value="200" min="0" max="20000" step="100" onblur="onBlurFix('mfprin')" oninput="syncSlider('mfprin');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="mfprin" value="" min="0" max="20000" step="100" onblur="onBlurFix('mfprin')" oninput="syncSlider('mfprin');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="mfprin-r" min="0" max="20000" step="100" value="200"  oninput="syncInput('mfprin');scheduleUpd()">
+  <input autocomplete="off" type="range" id="mfprin-r" min="0" max="20000" step="100" value="0"  oninput="syncInput('mfprin');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
     <span class="ilabel">월 납입액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfm" value="0" min="0" max="150" step="5" onblur="onBlurFix('mfm')" oninput="syncSlider('mfm');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="mfm" value="" min="0" max="150" step="5" onblur="onBlurFix('mfm')" oninput="syncSlider('mfm');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="mfm-r" min="0" max="150" step="5" value="0"  oninput="syncInput('mfm');scheduleUpd()">
+  <input autocomplete="off" type="range" id="mfm-r" min="0" max="150" step="5" value="0"  oninput="syncInput('mfm');scheduleUpd()">
 </div><div class="fv-row">
 <div class="irow mf">
   <div class="irow-top">
     <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('mfstart')" oninput="syncSlider('mfstart');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="mfstart" value="" min="40" max="65" step="1" onblur="onBlurFix('mfstart')" oninput="syncSlider('mfstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="mfstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('mfstart');scheduleUpd()">
+  <input autocomplete="off" type="range" id="mfstart-r" min="40" max="65" step="1" value="40" oninput="syncInput('mfstart');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
     <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfend" min="50" max="75" step="1" onblur="onBlurFix('mfend')" oninput="syncSlider('mfend');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" value="" id="mfend" min="50" max="75" step="1" onblur="onBlurFix('mfend')" oninput="syncSlider('mfend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="mfend-r" min="50" max="75" step="1" value="57" oninput="syncInput('mfend');scheduleUpd()">
+  <input autocomplete="off" type="range" id="mfend-r" min="50" max="75" step="1" value="50" oninput="syncInput('mfend');scheduleUpd()">
 </div>
 </div>
 <div class="fv-row">
@@ -1502,18 +1518,18 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfage" value="57" min="55" max="80" step="1" onblur="onBlurFix('mfage')" oninput="syncSlider('mfage');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="mfage" value="" min="55" max="80" step="1" onblur="onBlurFix('mfage')" oninput="syncSlider('mfage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="mfage-r" min="55" max="80" step="1" value="57"  oninput="syncInput('mfage');scheduleUpd()">
+  <input autocomplete="off" type="range" id="mfage-r" min="55" max="80" step="1" value="55"  oninput="syncInput('mfage');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
     <span class="ilabel">월 수령액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="mfpay" value="46" min="0" max="200" step="5" onblur="onBlurFix('mfpay')" oninput="syncSlider('mfpay');limitCheck('mfpay')"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="mfpay" value="" min="0" max="200" step="5" onblur="onBlurFix('mfpay')" oninput="syncSlider('mfpay');limitCheck('mfpay')"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="mfpay-r" min="0" max="200" step="5" value="46"  oninput="syncInput('mfpay');scheduleUpd()">
+  <input autocomplete="off" type="range" id="mfpay-r" min="0" max="200" step="5" value="0"  oninput="syncInput('mfpay');scheduleUpd()">
 </div>
 </div>
 </div>
@@ -1526,24 +1542,24 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">현재 잔액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irp" value="400" min="0" max="20000" step="500" onblur="onBlurFix('irp')" oninput="syncSlider('irp');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="irp" value="" min="0" max="20000" step="500" onblur="onBlurFix('irp')" oninput="syncSlider('irp');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="irp-r" min="0" max="20000" step="500" value="400"  oninput="syncInput('irp');scheduleUpd()">
+  <input autocomplete="off" type="range" id="irp-r" min="0" max="20000" step="500" value="0"  oninput="syncInput('irp');scheduleUpd()">
 </div><div class="irow irp irow-ymon">
   <div class="irow-top">
     <span class="ilabel">연납입</span>
     <div class="irow-ctrl">
-      <span class="ymon-amt"><input class="ival-input" type="number" id="irpy" value="300" min="0" max="1200" step="50" onblur="onBlurFix('irpy')" oninput="syncSlider('irpy');scheduleUpd()"><span class="unit-tag">만</span></span>
-      <select class="ymon-select" id="irpymon" onchange="scheduleUpd()" title="연납입 하는 달">
-        <option value="1">1월</option><option value="2">2월</option><option value="3" selected>3월</option>
+      <span class="ymon-amt"><input autocomplete="off" class="ival-input" type="number" id="irpy" value="" min="0" max="1200" step="50" onblur="onBlurFix('irpy')" oninput="syncSlider('irpy');scheduleUpd()"><span class="unit-tag">만</span></span>
+      <select autocomplete="off" class="ymon-select" id="irpymon" onchange="scheduleUpd()" title="연납입 하는 달">
+        <option value="1" selected>1월</option><option value="2">2월</option><option value="3">3월</option>
         <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
         <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
         <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
       </select>
       </div>
   </div>
-  <input type="range" id="irpy-r" min="0" max="1200" step="50" value="300"  oninput="syncInput('irpy');scheduleUpd()">
+  <input autocomplete="off" type="range" id="irpy-r" min="0" max="1200" step="50" value="0"  oninput="syncInput('irpy');scheduleUpd()">
 </div><div class="irow irp" style="visibility:hidden;" aria-hidden="true">
   <!-- 농협/미래에셋 카드의 "안세공 원금" 행과 같은 자리를 차지하는 투명 스페이서 —
        IRP는 이 개념이 없지만, 5장이 나란히 놓이는 acct-grid 1행에서
@@ -1560,18 +1576,18 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="irpstart" value="" min="40" max="65" step="1" onblur="onBlurFix('irpstart')" oninput="syncSlider('irpstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="irpstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('irpstart');scheduleUpd()">
+  <input autocomplete="off" type="range" id="irpstart-r" min="40" max="65" step="1" value="40" oninput="syncInput('irpstart');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
     <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpend" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" value="" id="irpend" min="50" max="75" step="1" onblur="onBlurFix('irpend')" oninput="syncSlider('irpend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="irpend-r" min="50" max="75" step="1" value="57" oninput="syncInput('irpend');scheduleUpd()">
+  <input autocomplete="off" type="range" id="irpend-r" min="50" max="75" step="1" value="50" oninput="syncInput('irpend');scheduleUpd()">
 </div>
 </div>
 <div class="fv-row">
@@ -1579,18 +1595,18 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irpage" value="70" min="55" max="80" step="1" onblur="onBlurFix('irpage')" oninput="syncSlider('irpage');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="irpage" value="" min="55" max="80" step="1" onblur="onBlurFix('irpage')" oninput="syncSlider('irpage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="irpage-r" min="55" max="80" step="1" value="70"  oninput="syncInput('irpage');scheduleUpd()">
+  <input autocomplete="off" type="range" id="irpage-r" min="55" max="80" step="1" value="55"  oninput="syncInput('irpage');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
     <span class="ilabel">월 수령액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="irppay" value="0" min="0" max="150" step="5" onblur="onBlurFix('irppay')" oninput="syncSlider('irppay');limitCheck('irppay')"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="irppay" value="" min="0" max="150" step="5" onblur="onBlurFix('irppay')" oninput="syncSlider('irppay');limitCheck('irppay')"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="irppay-r" min="0" max="150" step="5" value="0"  oninput="syncInput('irppay');scheduleUpd()">
+  <input autocomplete="off" type="range" id="irppay-r" min="0" max="150" step="5" value="0"  oninput="syncInput('irppay');scheduleUpd()">
 </div>
 </div>
 </div>
@@ -1604,16 +1620,16 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">현재 잔액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tirp" value="22000" min="0" max="100000" step="1000" onblur="onBlurFix('tirp')" oninput="syncSlider('tirp');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="tirp" value="" min="0" max="100000" step="1000" onblur="onBlurFix('tirp')" oninput="syncSlider('tirp');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="tirp-r" min="0" max="100000" step="1000" value="22000"  oninput="syncInput('tirp');scheduleUpd()">
+  <input autocomplete="off" type="range" id="tirp-r" min="0" max="100000" step="1000" value="0"  oninput="syncInput('tirp');scheduleUpd()">
 </div><div class="irow dc irow-ymon">
   <div class="irow-top">
     <span class="ilabel">연간 DC 적립액</span>
     <div class="irow-ctrl">
-      <span class="ymon-amt"><input class="ival-input" type="number" id="tdc" value="1000" min="0" max="3000" step="50" onblur="onBlurFix('tdc')" oninput="syncSlider('tdc');scheduleUpd()"><span class="unit-tag">만</span></span>
-      <select class="ymon-select" id="tdcymon" onchange="scheduleUpd()" title="연납입 하는 달">
+      <span class="ymon-amt"><input autocomplete="off" class="ival-input" type="number" id="tdc" value="" min="0" max="3000" step="50" onblur="onBlurFix('tdc')" oninput="syncSlider('tdc');scheduleUpd()"><span class="unit-tag">만</span></span>
+      <select autocomplete="off" class="ymon-select" id="tdcymon" onchange="scheduleUpd()" title="연납입 하는 달">
         <option value="1" selected>1월</option><option value="2">2월</option><option value="3">3월</option>
         <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
         <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
@@ -1621,24 +1637,24 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
       </select>
       </div>
   </div>
-  <input type="range" id="tdc-r" min="0" max="3000" step="50" value="1000" oninput="syncInput('tdc');scheduleUpd()">
+  <input autocomplete="off" type="range" id="tdc-r" min="0" max="3000" step="50" value="0" oninput="syncInput('tdc');scheduleUpd()">
 </div><div class="fv-row fv-eq">
 <div class="irow dc">
   <div class="irow-top">
     <span class="ilabel">근속연수</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tservice" value="10" min="1" max="45" step="1" onblur="onBlurFix('tservice')" oninput="syncSlider('tservice');scheduleUpd()"><span class="unit-tag">년</span>
+      <input autocomplete="off" class="ival-input" type="number" id="tservice" value="" min="1" max="45" step="1" onblur="onBlurFix('tservice')" oninput="syncSlider('tservice');scheduleUpd()"><span class="unit-tag">년</span>
       </div>
   </div>
-  <input type="range" id="tservice-r" min="1" max="45" step="1" value="10" oninput="syncInput('tservice');scheduleUpd()">
+  <input autocomplete="off" type="range" id="tservice-r" min="1" max="45" step="1" value="1" oninput="syncInput('tservice');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
     <span class="ilabel" title="퇴직소득세(일시금 기준, 지방소득세 제외) — 퇴직 시 DC 평가액(운용수익 포함)·근속연수로 자동계산 · 회사 안내 금액을 직접 넣으면 그 값 유지, 칸을 비우면 다시 자동 · 세후 계산 때 지방소득세 10%를 자동으로 더함">퇴직소득세</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tirptax" value="2000" min="0" max="30000" step="100" onblur="onBlurFix('tirptax')" oninput="onTirptaxInput()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="tirptax" value="" min="0" max="30000" step="100" onblur="onBlurFix('tirptax')" oninput="onTirptaxInput()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="tirptax-r" min="0" max="30000" step="100" value="2000" oninput="syncInput('tirptax');_tirptaxManual=true;scheduleUpd()">
+  <input autocomplete="off" type="range" id="tirptax-r" min="0" max="30000" step="100" value="0" oninput="syncInput('tirptax');_tirptaxManual=true;scheduleUpd()">
 </div>
 </div>
 <div class="fv-row">
@@ -1646,18 +1662,18 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tdcstart" value="51" min="40" max="65" step="1" onblur="onBlurFix('tdcstart')" oninput="syncSlider('tdcstart');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="tdcstart" value="" min="40" max="65" step="1" onblur="onBlurFix('tdcstart')" oninput="syncSlider('tdcstart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="tdcstart-r" min="40" max="65" step="1" value="51" oninput="syncInput('tdcstart');scheduleUpd()">
+  <input autocomplete="off" type="range" id="tdcstart-r" min="40" max="65" step="1" value="40" oninput="syncInput('tdcstart');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
     <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tdcend" min="50" max="75" step="1" onblur="onBlurFix('tdcend')" oninput="syncSlider('tdcend');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" value="" id="tdcend" min="50" max="75" step="1" onblur="onBlurFix('tdcend')" oninput="syncSlider('tdcend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="tdcend-r" min="50" max="75" step="1" value="57" oninput="syncInput('tdcend');scheduleUpd()">
+  <input autocomplete="off" type="range" id="tdcend-r" min="50" max="75" step="1" value="50" oninput="syncInput('tdcend');scheduleUpd()">
 </div>
 </div>
 <div class="fv-row">
@@ -1665,18 +1681,18 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tage" value="65" min="55" max="80" step="1" onblur="onBlurFix('tage')" oninput="syncSlider('tage');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="tage" value="" min="55" max="80" step="1" onblur="onBlurFix('tage')" oninput="syncSlider('tage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="tage-r" min="55" max="80" step="1" value="65"  oninput="syncInput('tage');scheduleUpd()">
+  <input autocomplete="off" type="range" id="tage-r" min="55" max="80" step="1" value="55"  oninput="syncInput('tage');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
     <span class="ilabel">월 수령액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="tm" value="100" min="10" max="500" step="10" onblur="onBlurFix('tm')" oninput="syncSlider('tm');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="tm" value="" min="0" max="500" step="10" onblur="onBlurFix('tm')" oninput="syncSlider('tm');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="tm-r" min="10" max="500" step="10" value="100"  oninput="syncInput('tm');scheduleUpd()">
+  <input autocomplete="off" type="range" id="tm-r" min="0" max="500" step="10" value="0"  oninput="syncInput('tm');scheduleUpd()">
 </div>
 </div>
 </div>
@@ -1689,16 +1705,16 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">현재 잔액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isa" value="100" min="0" max="20000" step="500" onblur="onBlurFix('isa')" oninput="syncSlider('isa');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="isa" value="" min="0" max="20000" step="500" onblur="onBlurFix('isa')" oninput="syncSlider('isa');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="isa-r" min="0" max="20000" step="500" value="100"  oninput="syncInput('isa');scheduleUpd()">
+  <input autocomplete="off" type="range" id="isa-r" min="0" max="20000" step="500" value="0"  oninput="syncInput('isa');scheduleUpd()">
 </div><div class="irow isa irow-ymon">
   <div class="irow-top">
     <span class="ilabel">연납입</span>
     <div class="irow-ctrl">
-      <span class="ymon-amt"><input class="ival-input" type="number" id="isay" value="2000" min="0" max="2000" step="100" onblur="onBlurFix('isay')" oninput="syncSlider('isay');scheduleUpd()"><span class="unit-tag">만</span></span>
-      <select class="ymon-select" id="isaymon" onchange="scheduleUpd()" title="연납입 하는 달">
+      <span class="ymon-amt"><input autocomplete="off" class="ival-input" type="number" id="isay" value="" min="0" max="2000" step="100" onblur="onBlurFix('isay')" oninput="syncSlider('isay');scheduleUpd()"><span class="unit-tag">만</span></span>
+      <select autocomplete="off" class="ymon-select" id="isaymon" onchange="scheduleUpd()" title="연납입 하는 달">
         <option value="1" selected>1월</option><option value="2">2월</option><option value="3">3월</option>
         <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
         <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
@@ -1706,24 +1722,24 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
       </select>
       </div>
   </div>
-  <input type="range" id="isay-r" min="0" max="2000" step="100" value="2000"  oninput="syncInput('isay');scheduleUpd()">
+  <input autocomplete="off" type="range" id="isay-r" min="0" max="2000" step="100" value="0"  oninput="syncInput('isay');scheduleUpd()">
 </div><div class="fv-row">
 <div class="irow isa">
   <div class="irow-top">
     <span class="ilabel">납입 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isastart" value="51" min="40" max="65" step="1" onblur="onBlurFix('isastart')" oninput="syncSlider('isastart');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="isastart" value="" min="40" max="65" step="1" onblur="onBlurFix('isastart')" oninput="syncSlider('isastart');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="isastart-r" min="40" max="65" step="1" value="51" oninput="syncInput('isastart');scheduleUpd()">
+  <input autocomplete="off" type="range" id="isastart-r" min="40" max="65" step="1" value="40" oninput="syncInput('isastart');scheduleUpd()">
 </div><div class="irow isa">
   <div class="irow-top">
     <span class="ilabel">납입 종료</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isaend" min="50" max="75" step="1" onblur="onBlurFix('isaend')" oninput="syncSlider('isaend');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" value="" id="isaend" min="50" max="75" step="1" onblur="onBlurFix('isaend')" oninput="syncSlider('isaend');scheduleUpd()"><span class="unit-tag">세</span>
     </div>
   </div>
-  <input type="range" id="isaend-r" min="50" max="75" step="1" value="57" oninput="syncInput('isaend');scheduleUpd()">
+  <input autocomplete="off" type="range" id="isaend-r" min="50" max="75" step="1" value="50" oninput="syncInput('isaend');scheduleUpd()">
 </div>
 </div>
 <div class="fv-row">
@@ -1731,18 +1747,18 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">인출 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isaage" value="57" min="50" max="75" step="1" onblur="onBlurFix('isaage')" oninput="syncSlider('isaage');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="isaage" value="" min="50" max="75" step="1" onblur="onBlurFix('isaage')" oninput="syncSlider('isaage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="isaage-r" min="50" max="75" step="1" value="57"  oninput="syncInput('isaage');scheduleUpd()">
+  <input autocomplete="off" type="range" id="isaage-r" min="50" max="75" step="1" value="50"  oninput="syncInput('isaage');scheduleUpd()">
 </div><div class="irow isa">
   <div class="irow-top">
     <span class="ilabel">월 인출액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="isam" value="90" min="0" max="300" step="5" onblur="onBlurFix('isam')" oninput="syncSlider('isam');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="isam" value="" min="0" max="300" step="5" onblur="onBlurFix('isam')" oninput="syncSlider('isam');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="isam-r" min="0" max="300" step="5" value="90"  oninput="syncInput('isam');scheduleUpd()">
+  <input autocomplete="off" type="range" id="isam-r" min="0" max="300" step="5" value="0"  oninput="syncInput('isam');scheduleUpd()">
 </div>
 </div>
 </div>
@@ -1768,47 +1784,47 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel">개인연금 농협</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="rnh" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rnh')" oninput="syncSlider('rnh');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
-  <input type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
+  <input autocomplete="off" type="range" id="rnh-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rnh');scheduleUpd()">
 </div><div class="irow mf">
   <div class="irow-top">
     <span class="ilabel">개인연금 미래</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="rmf" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rmf')" oninput="syncSlider('rmf');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
-  <input type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
+  <input autocomplete="off" type="range" id="rmf-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rmf');scheduleUpd()">
 </div><div class="irow irp">
   <div class="irow-top">
     <span class="ilabel">IRP 개인 미래</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="rirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rirp')" oninput="syncSlider('rirp');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
-  <input type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
+  <input autocomplete="off" type="range" id="rirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rirp');scheduleUpd()">
 </div><div class="irow dc">
   <div class="irow-top">
     <span class="ilabel">퇴직연금 DC 농협</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="rtirp" value="4" min="0" max="15" step="0.5" onblur="onBlurFix('rtirp')" oninput="syncSlider('rtirp');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
-  <input type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
+  <input autocomplete="off" type="range" id="rtirp-r" min="0" max="15" step="0.5" value="4"  oninput="syncInput('rtirp');scheduleUpd()">
 </div><div class="irow isa">
   <div class="irow-top">
     <span class="ilabel">ISA</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="risa" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('risa')" oninput="syncSlider('risa');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
-  <input type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
+  <input autocomplete="off" type="range" id="risa-r" min="0" max="20" step="0.5" value="4"  oninput="syncInput('risa');scheduleUpd()">
 </div><div class="irow gen">
   <div class="irow-top">
     <span class="ilabel">일반계좌 미래</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rgen" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('rgen')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="rgen" value="4" min="0" max="20" step="0.5" onblur="onBlurFix('rgen')" oninput="scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
 </div>
@@ -1819,17 +1835,17 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="위기 점검 '시장 변동' 시뮬레이션에서 은퇴 후 해마다 수익률이 평균에서 벗어나는 폭(표준편차, %p)">수익률 변동폭</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="rvol" value="12" min="1" max="40" step="1" onblur="onBlurFix('rvol')" oninput="scheduleUpd()"><span class="unit-tag">%p</span>
+      <input autocomplete="off" class="ival-input" type="number" id="rvol" value="12" min="1" max="40" step="1" onblur="onBlurFix('rvol')" oninput="scheduleUpd()"><span class="unit-tag">%p</span>
       </div>
   </div>
 </div><div class="irow exp">
   <div class="irow-top">
     <span class="ilabel">물가상승률</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
+      <input autocomplete="off" class="ival-input" type="number" id="inf" value="2.5" min="0" max="10" step="0.5" onblur="onBlurFix('inf')" oninput="syncSlider('inf');scheduleUpd()"><span class="unit-tag">%</span>
       </div>
   </div>
-  <input type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
+  <input autocomplete="off" type="range" id="inf-r" min="0" max="10" step="0.5" value="2.5"  oninput="syncInput('inf');scheduleUpd()">
 </div>
 </div>
 </div>
@@ -1842,28 +1858,28 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="국민연금공단 홈페이지·앱의 '내 연금 알아보기'에서 조회한 65세 기준 예상 수령액(현재가치) — 실제로는 매년 물가만큼 오르며, 계산도 매년 물가상승률만큼 늘립니다">예상액(65세 기준)</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npbase" value="170" min="50" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="npbase" value="" min="0" max="300" step="5" onblur="onBlurFix('npbase')" oninput="syncSlider('npbase');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="npbase-r" min="50" max="300" step="5" value="170"  oninput="syncInput('npbase');scheduleUpd()">
+  <input autocomplete="off" type="range" id="npbase-r" min="0" max="300" step="5" value="0"  oninput="syncInput('npbase');scheduleUpd()">
 </div>
 <div class="fv-row">
 <div class="irow np">
   <div class="irow-top">
     <span class="ilabel">수령 시작</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npage" value="65" min="60" max="70" step="1" onblur="onBlurFix('npage')" oninput="syncSlider('npage');scheduleUpd()"><span class="unit-tag">세</span>
+      <input autocomplete="off" class="ival-input" type="number" id="npage" value="65" min="60" max="70" step="1" onblur="onBlurFix('npage')" oninput="syncSlider('npage');scheduleUpd()"><span class="unit-tag">세</span>
       </div>
   </div>
-  <input type="range" id="npage-r" min="60" max="70" step="1" value="65"  oninput="syncInput('npage');scheduleUpd()">
+  <input autocomplete="off" type="range" id="npage-r" min="60" max="70" step="1" value="65"  oninput="syncInput('npage');scheduleUpd()">
 </div><div class="irow np">
   <div class="irow-top">
     <span class="ilabel" title="조기수령(65세 미만) 1년당 -6%, 연기수령(65세 초과) 1년당 +7.2% 자동 반영">실제 수령액</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="np" value="170" min="0" max="500" step="1" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만</span>
+      <input autocomplete="off" class="ival-input" type="number" id="np" value="" min="0" max="500" step="1" onblur="onBlurFix('np')" oninput="syncSlider('np');scheduleUpd()"><span class="unit-tag">만</span>
       </div>
   </div>
-  <input type="range" id="np-r" min="0" max="500" step="1" value="170"  oninput="syncInput('np');scheduleUpd()">
+  <input autocomplete="off" type="range" id="np-r" min="0" max="500" step="1" value="0"  oninput="syncInput('np');scheduleUpd()">
 </div>
 </div>
 <div class="fv-row">
@@ -1871,15 +1887,15 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
   <div class="irow-top">
     <span class="ilabel" title="국민연금공단 '내 연금 알아보기'의 가입기간(년). 60세 전에 은퇴하고 중단을 고르면 60세까지 냈을 때보다 가입기간이 줄어 연금이 비례해 줄어듭니다. 비워 두면 감액하지 않습니다">가입기간</span>
     <div class="irow-ctrl">
-      <input class="ival-input" type="number" id="npyears" value="" placeholder="조회" min="1" max="45" step="1" onblur="onBlurFix('npyears')" oninput="syncSlider('npyears');scheduleUpd()"><span class="unit-tag">년</span>
+      <input autocomplete="off" class="ival-input" type="number" id="npyears" value="" placeholder="조회" min="1" max="45" step="1" onblur="onBlurFix('npyears')" oninput="syncSlider('npyears');scheduleUpd()"><span class="unit-tag">년</span>
       </div>
   </div>
-  <input type="range" id="npyears-r" min="1" max="45" step="1" value="20"  oninput="syncInput('npyears');scheduleUpd()">
+  <input autocomplete="off" type="range" id="npyears-r" min="1" max="45" step="1" value="1"  oninput="syncInput('npyears');scheduleUpd()">
 </div><div class="irow np">
   <div class="irow-top">
     <span class="ilabel" title="공단 예상액은 만 60세까지 보험료를 계속 낸다고 가정합니다. 60세 전 은퇴 시 계속 내면(임의가입, 보험료는 2단계 설계 탭) 예상액 그대로, 중단하면 가입기간이 줄어 연금이 줄어듭니다">60세까지</span>
     <div class="irow-ctrl">
-      <select class="ymon-select" id="npcont" onchange="scheduleUpd()" title="60세 전 은퇴 시 국민연금 납부">
+      <select autocomplete="off" class="ymon-select" id="npcont" onchange="scheduleUpd()" title="60세 전 은퇴 시 국민연금 납부">
         <option value="cont" selected>계속</option><option value="stop">중단</option>
       </select>
       </div>
@@ -1896,6 +1912,7 @@ select#hi_vol{width:112px!important;}   /* 84(합계)+6+22(단위): 아래 행�
 </div><!-- left-panel -->
 
 <div class="right-panel" id="resultTab" style="display:none;">
+  <div id="needReq"><p id="needReqMsg"></p><button type="button" class="suggest-btn" onclick="goFirstRequired()">입력하러 가기 ›</button></div>
   <!-- 메트릭 바: 라벨 1줄 + 값(부연설명 인라인) 1줄 = 카드당 2줄로 압축 -->
   <div class="metrics-bar">
     <div class="mcard" title="오늘 돈 가치·세후 평균, 옆 숫자는 월 생활비 대비"><div class="mlabel" data-short="공백기 세후">공백기 세후 월평균</div><div class="mval-row"><span class="mval" id="m1" style="color:#248a3d">-</span><span class="msub" id="m1s">-</span></div></div>
@@ -2200,7 +2217,7 @@ let _updTimer = null;
 // 집 1·2 입력이 바뀌면 합계(읽기 전용)와 주택 유형을 자동으로 맞춘다(2채 이상 = 다주택). 유형은 이후 직접 바꿔도 되고, 집 입력이 또 바뀌면 다시 자동.
 function syncHouses(){
   const h = houseSummary({gongsiga1:gv('gongsiga1'), gongsiga2:gv('gongsiga2')});
-  const g = document.getElementById('gongsiga'); if(g) g.value = h.sum.toLocaleString();
+  const g = document.getElementById('gongsiga'); if(g) g.value = h.sum ? h.sum.toLocaleString() : '';
   return h;
 }
 function onHouseInput(){
@@ -2261,7 +2278,7 @@ function sv(id, v){
   const inp = document.getElementById(id);
   const rng = document.getElementById(id+'-r');
   if(inp) inp.value = v;
-  if(rng) rng.value = v;
+  if(rng) rng.value = (v === '' || v == null) ? rng.min : v;   // 범위 입력에 ''를 넣으면 브라우저가 중간값으로 바꾼다
 }
 
 /* ── 포트폴리오 대시보드 잔액 연동 ──
@@ -2455,6 +2472,7 @@ const spanTxt = s => s ? (s[0] === s[1] ? s[0]+'세' : s[0]+'~'+s[1]+'세') : ''
    계산은 calc.js computeAutoPlan(순수 함수). 결과를 칸에 넣은 뒤 화면 문구·숫자는 전부 simulate() 결과에서 읽는다
    → 자동설계 설명과 실제 시뮬레이션이 어긋날 수 없다. */
 function autoSuggest(){
+  if(requiredBlanks().length){ goFirstRequired(true); return; }
   const p0 = getP();
   // 납입 종료 나이 5개(ISA/IRP/퇴직연금/농협/미래에셋)는 자동설계 클릭 시 은퇴나이-1로 채운다.
   // 단 사용자가 직접 넣은 값은 덮어쓰지 않는다(09fbbdb 버그 재발 방지). 자동설계가 마지막으로 써넣은
@@ -2828,18 +2846,14 @@ const ALL_FIELDS = [
   'gen_ov','gen_ovr','gen_etf','gen_etfr','gen_kr','gen_krr','gen_harvest','rgen','rvol','genage','genpay','genpayend','mfpayend','plan_mode'
 ];
 
-// 초기화 버튼이 location.reload()에만 의존하면, 일부 모바일 브라우저가 새로고침 시
-// "최근 입력값"을 폼에 자동으로 복원해버려서(localStorage를 지워도 브라우저 자체
-// 기능이라 앱 로직과 무관하게 일어남) 최근에 만졌던 필드만 초기화가 안 되고 나머지는
-// 되는 것처럼 보이는 문제가 있었다("일부값만 초기화"). 페이지가 처음 열렸을 때(사용자
-// 조작 전) HTML 그대로의 기본값을 한 번 스냅샷해두고, 초기화 버튼은 새로고침 없이
-// 이 스냅샷으로 모든 필드를 직접 되돌린다 — 브라우저의 새로고침-시-폼복원 동작과
-// 완전히 무관해서 항상 전체가 확실히 초기화된다.
-const DEFAULT_SNAPSHOT = {};
-ALL_FIELDS.forEach(id => {
-  const el = document.getElementById(id);
-  if(el) DEFAULT_SNAPSHOT[id] = el.value;
-});
+// 처음 화면·초기화의 값. 개인 값(나이·잔액·납입액 등)은 전부 빈칸이고, 여기 적힌 표준 가정값과 선택 칸 첫 항목만 값을 갖는다.
+// 예전엔 페이지를 열 때 DOM 값을 스냅샷했는데, 브라우저가 새로고침 때 복원한 옛 입력까지 "기본값"으로 잡힐 수 있어 표로 고정한다
+// (입력칸 autocomplete="off"로 복원 자체도 막는다). 여기에 없는 칸은 빈칸.
+const RESET_DEFAULTS = {
+  life:'90', plimit:'1450', npage:'65', rnh:'4', rmf:'4', rirp:'4', rtirp:'4', risa:'4', rgen:'4', rvol:'12', inf:'2.5',
+  irpymon:'1', tdcymon:'1', isaymon:'1', housetype:'single', hi_dep:'no', hi_vol:'no', npcont:'cont', gen_harvest:'no',
+  genage:'0', genpay:'0', genpayend:'0', mfpayend:'0'
+};
 
 // 자동설계가 납입종료 칸에 마지막으로 써넣은 값 {isaend:'56', …} — 이 값 그대로인 칸은
 // "자동으로 채워진 값"이라 은퇴 나이가 바뀌면 다음 자동설계 때 같이 갱신, 사용자가 바꾼
@@ -2868,11 +2882,7 @@ function loadState(){
     if(!raw) return false;
     const state = JSON.parse(raw);
     ALL_FIELDS.forEach(id => {
-      if(state[id] === undefined) return;
-      const inp = document.getElementById(id);
-      const rng = document.getElementById(id+'-r');
-      if(inp) inp.value = state[id];
-      if(rng) rng.value = state[id];
+      if(state[id] !== undefined) sv(id, state[id]);
     });
 
     // ── 마이그레이션: 집별 공시가격(gongsiga1·2, 예전 gongsiga3은 아래서 이전)은 신설 — 예전엔 공시가격 한 칸(gongsiga)뿐이었으므로 값이 있으면 집1로 옮긴다
@@ -2933,25 +2943,59 @@ function loadState(){
   } catch(e) { return false; }
 }
 
-// 초기화: localStorage를 지우고, 페이지 로드 시 캡처해둔 DEFAULT_SNAPSHOT으로 모든
-// 필드를 새로고침 없이 직접 되돌린다(모든 필드 — 일부만 유지하는 기능은 없음, 이
-// 버튼을 누르면 정말 전부 초기화됨). location.reload()에 의존하지 않으므로 브라우저의
-// 새로고침-시-폼값-복원 동작에 영향받지 않아 항상 완전히 초기화된다.
+// 초기화: localStorage를 지우고 모든 칸을 RESET_DEFAULTS로 새로고침 없이 직접 되돌린다(일부만 유지하는 기능은 없음).
+// 칸뿐 아니라 마지막 자동 설계 결과·연동 안내·보기 상태도 함께 비워, 이전 계획이 결과 탭에 남지 않게 한다.
 async function resetStateClick(){
   if(await iosConfirm({title:'설정 초기화', message:'입력한 값이 모두 지워집니다.', okText:'초기화', destructive:true})) resetState();
 }
 function resetState(){
+  clearTimeout(_updTimer); clearTimeout(_needTimer);   // 입력 직후 눌러도 대기 중인 갱신이 예전 상태로 돌지 않게
   try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
   _endAuto = {};
   _tirptaxManual = false;
-  ALL_FIELDS.forEach(id => {
-    if(DEFAULT_SNAPSHOT[id] === undefined) return;
-    const inp = document.getElementById(id);
-    const rng = document.getElementById(id+'-r');
-    if(inp) inp.value = DEFAULT_SNAPSHOT[id];
-    if(rng) rng.value = DEFAULT_SNAPSHOT[id];
-  });
+  ALL_FIELDS.forEach(id => sv(id, RESET_DEFAULTS[id] !== undefined ? RESET_DEFAULTS[id] : ''));
+  closePlanPick();
+  _planHtml = ''; _planName = ''; _planPickOpts = null; _pkSel = ''; _needKey = ''; _needRun++;
+  const sb = document.getElementById('suggest-box'); if(sb){ sb.classList.remove('show'); sb.innerHTML = ''; }
+  const st = document.getElementById('pfSyncStatus'); if(st){ st.textContent = ''; st.title = ''; }
+  chartTab = 'flow'; _altView = null; _hiPhase = 'gap';
+  setMainTab('design');
+  applyViewState();
   upd();
+}
+
+/* ── 필수 칸 ── 비어 있으면 자동 설계를 시작하지 않고, 1단계 필수가 비면 결과 탭은 안내만 보여 준다. 0은 "없음"으로 인정(빈칸과 구분) */
+function requiredBlanks(){
+  const blank = sel => [...document.querySelectorAll(sel+' input.req')].filter(e => e.value.trim() === '');
+  return [...blank('#designTab'), ...blank('#step2Panel')];   // 입력 순서대로 1단계 먼저
+}
+const reqLabelOf = el => { if(el.id === 'npbase') return '국민연금 예상액'; const l = reqLabelEl(el); return l ? l.textContent.replace('ⓘ','').trim() : ''; };   // 카드 제목 없이 읽히는 안내 문구라 국민연금은 이름을 붙인다
+function reqLabelEl(el){ const row = el.closest('.irow, .health-input-row'); return row && row.querySelector('.ilabel, .hir-label'); }
+function setReq(el, on){
+  if(!el) return;
+  el.classList.toggle('req', on);
+  el.placeholder = on ? '필수' : (el.dataset.ph || '선택');
+}
+function goFirstRequired(notice){
+  const miss = requiredBlanks(), el = miss[0];
+  if(!el) return;
+  setMainTab(el.closest('#designTab') ? 'design' : 'step2');
+  try { el.focus(); } catch(e){}
+  if(notice) toast('필수 칸을 채워 주세요 · ' + reqLabelOf(el) + (miss.length > 1 ? ' 외 ' + (miss.length-1) + '칸' : '') + (el.id === 'gongsiga1' ? ' · 집이 없으면 0' : ''));
+}
+// 값에 따라 필수가 되는 칸과 결과 탭 안내 — upd()마다
+function syncRequired(){
+  const has = id => { const e = document.getElementById(id); return !!e && e.value.trim() !== ''; };
+  const row = (ids, on) => {
+    ids.forEach(id => setReq(document.getElementById(id), on));
+    const l = reqLabelEl(document.getElementById(ids[0])); if(l) l.classList.toggle('lbl-req', on);
+  };
+  row(['hi_volprem'], document.getElementById('hi_vol').value === 'yes');
+  row(['lump1_age','lump1_amt'], has('lump1_age') || has('lump1_amt'));
+  const miss = requiredBlanks().filter(e => e.closest('#designTab'));
+  const rt = document.getElementById('resultTab');
+  rt.classList.toggle('req-missing', miss.length > 0);
+  document.getElementById('needReqMsg').innerHTML = miss.map(e => '<span class="nw">'+reqLabelOf(e)+'</span>').join(' · ') + (miss.length ? '<br>입력하면 결과가 보여요' : '');
 }
 
 function getP(){
@@ -2964,9 +3008,9 @@ function getP(){
     mf:gv('mf'),mfm:gv('mfm'),mfstart:gv('mfstart'),mfend:gv('mfend'),mfage:gv('mfage'),mfpay:gv('mfpay'),mfprin:gv('mfprin'),
     irp:gv('irp'),irpy:gv('irpy'),irpymon:gv('irpymon'),irpstart:gv('irpstart'),irpend:gv('irpend'),irpage:gv('irpage'),irppay:gv('irppay'),
     tirp:gv('tirp'),tdc:gv('tdc'),tdcymon:gv('tdcymon'),tdcstart:gv('tdcstart'),tdcend:gv('tdcend'),tservice:gv('tservice'),tage:gv('tage'),tm:gv('tm'),tirptax:gv('tirptax'),
-    np:gv('np'),npbase:gv('npbase'),npage:gv('npage'),
+    np:gv('np'),npbase:gv('npbase'),npage:gv('npage') || parseFloat(RESET_DEFAULTS.npage),   // 빈칸(0세)이면 조기수령 가산율이 -390%가 되어 연금이 음수
     isa:gv('isa'),isay:gv('isay'),isaymon:gv('isaymon'),isastart:gv('isastart'),isaend:gv('isaend'),isaage:gv('isaage'),isam:gv('isam'),
-    plimit:gv('plimit'),
+    plimit:gv('plimit') || parseFloat(RESET_DEFAULTS.plimit),   // 빈칸이면 기준 0이 되어 게이지·자동설계가 어긋남
     rnh:gv('rnh'),rmf:gv('rmf'),rirp:gv('rirp'),rtirp:gv('rtirp'),risa:gv('risa'),inf:gv('inf'),
     hi_business:gv('hi_business'),hi_labor:gv('hi_labor'),hi_interest:gv('hi_interest'),
     hi_dividend:gv('hi_dividend'),hi_other:gv('hi_other'),hi_rentprop:gv('hi_rentprop'),
@@ -3251,8 +3295,13 @@ function basicRowWraps(){
 function fitChartHeight(){
   const wrap = document.querySelector('.chart-canvas-wrap'), rt = document.getElementById('resultTab');
   if(!wrap || !rt || rt.style.display === 'none') return;
-  if(window.innerWidth <= 480){ wrap.style.height = ''; return; }
   const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 6;
+  if(rt.classList.contains('req-missing')){   // 필수 안내 카드가 화면 끝까지
+    const nr = document.getElementById('needReq');
+    nr.style.height = Math.max(180, Math.floor(window.innerHeight - nr.getBoundingClientRect().top - gap)) + 'px';
+    return;
+  }
+  if(window.innerWidth <= 480){ wrap.style.height = ''; return; }
   const cur = wrap.getBoundingClientRect().height;
   const bottom = rt.getBoundingClientRect().bottom + window.scrollY;
   const maxH = document.querySelector('.chart-main.basis-mode') ? 2000 : 620; // 보기 4종(요약·근거·위기 점검·부족 대책)은 단계 카드를 숨기고 아래 끝까지
@@ -3764,8 +3813,9 @@ function drawChart(rows, p){
 }
 
 function upd(){
-  syncHouses(); syncFilledAll();
+  syncHouses(); syncFilledAll(); syncRequired();
   const p=getP();
+  const ageIn = gv('age'), retIn = gv('ret');   // 칸에 적힌 값(getP의 p.ret은 현재 나이로 보정될 수 있음) — 비었으면 미리보기 숫자를 만들지 않는다
 
   // 납입종료 필드가 빈 칸일 때 "자동설계를 누르면 적용될 값"을 placeholder로 미리 보여줌
   // (실제 필드 값은 자동설계를 눌러야 채워짐 — 여긴 미리보기 표시만, 값을 쓰지 않음).
@@ -3775,21 +3825,26 @@ function upd(){
     ['isaend','nhend','mfend','irpend','tdcend'].forEach(fid=>{
       const el = document.getElementById(fid);
       if(!el) return;
-      el.placeholder = String(endAuto);
-      el.title = '비워두면 은퇴나이-1('+endAuto+'세)로 계산 · 자동설계를 누르면 이 값으로 채워짐';
+      el.placeholder = retIn ? String(endAuto) : '자동';
+      el.title = retIn ? '비워두면 은퇴나이-1('+endAuto+'세)로 계산 · 자동설계를 누르면 이 값으로 채워짐' : '비워두면 은퇴나이-1로 계산 · 자동설계를 누르면 이 값으로 채워짐';
+    });
+    // 납입 시작: 비워 두면 현재 나이부터(accWindows)
+    ['nhstart','mfstart','irpstart','tdcstart','isastart'].forEach(fid=>{
+      const el = document.getElementById(fid);
+      if(el) el.placeholder = ageIn ? String(ageIn) : '선택';
     });
   })();
 
   // 은퇴 후 소득 기간 칸 placeholder = 빈칸일 때 적용되는 값(은퇴 나이·기대수명)
   ['hi_labor','hi_business','hi_other'].forEach(k=>{
     const f = document.getElementById(k+'_from'), t = document.getElementById(k+'_to');
-    if(f) f.placeholder = String(p.ret);
-    if(t) t.placeholder = String(p.life);
+    if(f) f.placeholder = retIn ? String(p.ret) : '은퇴';
+    if(t) t.placeholder = p.life ? String(p.life) : '끝';
   });
 
   // 일반계좌 현재 잔액(세 칸 합계)
   (function(){
-    const t = document.getElementById('gen_total'); if(t) t.value = Math.round(genSum(genInit(p))).toLocaleString();
+    const t = document.getElementById('gen_total'), sum = Math.round(genSum(genInit(p))); if(t) t.value = sum ? sum.toLocaleString() : '';
   })();
 
   // 일시 지출 나이가 은퇴 전이면 계산에 안 들어간다고 알림(카드 제목 줄 오른쪽)
@@ -3813,15 +3868,16 @@ function upd(){
   (function(){
     const factor = npsAdjustFactor(p.npage);
     const npAuto = Math.round(p.npbase * (1 + factor) * npsMembershipFactor(p));
-    sv('np', npAuto);
+    const npBlank = document.getElementById('npbase').value.trim() === '';   // 예상액이 비었으면 0을 지어내지 않고 빈칸
+    sv('np', npBlank ? '' : npAuto);
     p.np = npAuto; // 이번 렌더링에도 바로 반영되도록 로컬 값도 함께 갱신(한 박자 늦게 반영되는 것 방지)
-    const npd = document.getElementById('hi_np_display'); if(npd) npd.value = npAuto.toLocaleString();   // 2단계 건보료 설계의 국민연금(자동) 표시
+    const npd = document.getElementById('hi_np_display'); if(npd) npd.value = npBlank ? '' : npAuto.toLocaleString();   // 2단계 건보료 설계의 국민연금(자동) 표시
   })();
 
-  // 퇴직소득세: 직접 입력하지 않았으면 퇴직 시 DC 평가액·근속연수 기준 공식값으로 자동 갱신
+  // 퇴직소득세: 직접 입력하지 않았으면 퇴직 시 DC 평가액·근속연수 기준 공식값으로 자동 갱신(0이면 빈칸)
   if(!_tirptaxManual){
-    const t = autoTirptax(p);
-    if(String(t) !== document.getElementById('tirptax').value) sv('tirptax', t);
+    const t = autoTirptax(p), show = t ? String(t) : '';
+    if(show !== document.getElementById('tirptax').value) sv('tirptax', show);
     p.tirptax = t;
   }
   saveState();   // 자동으로 바뀐 값(np·퇴직소득세)까지 반영한 뒤 저장
@@ -4021,19 +4077,22 @@ function applyHideAmounts(on){
 }
 window.addEventListener('storage', e=>{ if(e.key===HIDE_AMOUNTS_KEY) applyHideAmounts(e.newValue==='1'); });
 
-if(!loadState()) upd(); else upd();
+applyInputTags();   // 필수 표시를 먼저 달아야 첫 upd()의 결과 탭 안내가 맞다
+loadState();
+upd();
 syncFilledAll();
 requestAnimationFrame(fitDensity);
 if(document.fonts && document.fonts.ready) document.fonts.ready.then(()=>scheduleFit());
-applyInputTags();
 maskSubtree(document.body);
 
-/* ── 자동 제안 시 입력 필요도 뱃지 표시 ── */
+/* ── 필수·선택·자동 표시 ── */
 function applyInputTags(){
-  // 자동설계가 채워주는 필드만 표시(회색 배경·글자색)로 구분 — REQ/OPT 배지·색띠·범례는
-  // "복잡해 보인다"는 피드백으로 제거하고, 수동 입력값과 확실히 구분되어야 하는
-  // 자동계산 필드 표시만 남김
+  // REQ/OPT 배지·색띠·범례는 "복잡해 보인다"는 피드백으로 제거 — 빈칸의 글자(필수/선택/자동)로 구분한다.
+  // 자동설계가 채워주는 필드는 회색 배경·글자색도 유지. 값에 따라 필수가 되는 칸은 syncRequired.
   const AUTO = ['nhage','nhpay','mfage','mfpay','irpage','irppay','isaage','isam','isaend','irpend','tdcend','nhend','mfend','tage','tm','np','tirptax'];
+  const REQ = ['age','ret','life','exp','npbase','gongsiga1'];
+  const AUTO_SHOW = ['gen_total','gongsiga','hi_np_display'];        // 읽기 전용 합계·연동 칸
+  const KEEP = ['hp_age','hp_price','hi_labor_from','hi_labor_to','hi_business_from','hi_business_to','hi_other_from','hi_other_to'];   // 칸 이름이나 적용될 값을 보여 주는 칸은 그대로
 
   function tag(id, cls){
     const el = document.getElementById(id);
@@ -4043,6 +4102,16 @@ function applyInputTags(){
     row.classList.add(cls);
   }
   AUTO.forEach(id=>tag(id,'tag-auto'));
+  document.querySelectorAll('#designTab input.ival-input[id], #step2Panel input.hir-input[id]').forEach(el=>{
+    if(KEEP.includes(el.id)) return;
+    el.placeholder = (AUTO.includes(el.id) || AUTO_SHOW.includes(el.id)) ? '자동' : '선택';
+    el.dataset.ph = el.placeholder;
+  });
+  REQ.forEach(id=>{
+    const el = document.getElementById(id);
+    setReq(el, true);
+    const l = reqLabelEl(el); if(l) l.classList.add('lbl-req');
+  });
 }
 
 function toggleBanner(btn){

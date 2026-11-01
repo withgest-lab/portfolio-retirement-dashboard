@@ -216,6 +216,12 @@ const seedSnaps = () => {
 };
 const seedAll = () => ({ pf_assets_v1: seedAssets(), pf_tradelog_v1: seedTradeLog(), pf_snaps_v5: seedSnaps() });
 
+// 현금흐름 가상 입력 — 앱 기본값이 빈칸이라(필수 칸이 비면 자동 설계·결과 탭이 막힘) 실제 길이의 값을 심어 잰다. 실제 금액이 아닌 둥근 샘플만.
+const seedRetirement = () => ({
+  age: '50', ret: '60', life: '90', exp: '300', plimit: '1450', npbase: '150', npage: '65',
+  nh: '10000', nhprin: '2000', nhm: '50', mf: '5000', mfprin: '500', irp: '1000', irpy: '300', tirp: '20000', tdc: '1000', tservice: '10', isa: '1000', isay: '1000',
+  gongsiga1: '50000', rnh: '4', rmf: '4', rirp: '4', rtirp: '4', risa: '4', rgen: '4', rvol: '12', inf: '2.5',
+});
 // 현금흐름 결과 탭 보기 6종 — 요약·근거·위기 점검·부족 대책은 자동 설계 결과가 있어야 의미가 있어 순회 전에 한 번 확정한다(confirmPlan 경로 검증 겸).
 const RESULT_VIEWS = ['flow', 'asset', 'plan', 'hi', 'basis', 'risk'];
 const seedPlan = async page => {
@@ -247,7 +253,7 @@ async function sweep(browser, preset, o) {
     const page = await browser.newPage({ viewport: { width: w, height: h } });
     await page.goto(o.base + cfg.base, { waitUntil: 'load' });
     if (o.seed && cfg.seed) await page.evaluate(m => { try { Object.keys(m).forEach(k => localStorage.setItem(k, JSON.stringify(m[k]))); } catch (e) {} }, seedAll());
-    else if (preset === 'retirement') await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
+    else if (preset === 'retirement') await page.evaluate(s => { try { localStorage.clear(); localStorage.setItem('retirement_dashboard_v1', JSON.stringify(s)); } catch (e) {} }, seedRetirement());
     await page.reload({ waitUntil: 'load' }); await page.waitForTimeout(preset === 'portfolio' ? 2500 : 1200);
     let targets = [['', '']], seeded = false;
     if (preset === 'retirement') targets = cfg.tabs.flatMap(t => t === 'result' ? RESULT_VIEWS.map(v => [t, v]) : [[t, '']]);
@@ -296,5 +302,5 @@ async function main() {
   process.exit(bad ? 1 : 0);
 }
 
-module.exports = { measureFit, measureBoxes, measureOverlap, judgeOverlap, judgeFit, judgeBoxes, seedAssets, seedTradeLog, seedSnaps, seedAll, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
+module.exports = { measureFit, measureBoxes, measureOverlap, judgeOverlap, judgeFit, judgeBoxes, seedAssets, seedTradeLog, seedSnaps, seedAll, seedRetirement, MAX_BLANK, VIEWPORTS, IN_PAGE_FIT, IN_PAGE_BOXES };
 if (require.main === module) main().catch(e => { console.error(e); process.exit(2); });

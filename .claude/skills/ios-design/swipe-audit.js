@@ -43,7 +43,7 @@ const APPS = {
   retirement: {
     url: 'retirement/',
     prep: async page => {
-      await page.evaluate(() => { localStorage.clear(); localStorage.setItem('swipe_debug', '1'); });
+      await page.evaluate(s => { localStorage.clear(); localStorage.setItem('swipe_debug', '1'); localStorage.setItem('retirement_dashboard_v1', JSON.stringify(s)); }, fa.seedRetirement());
       await page.reload({ waitUntil: 'load' }); await sleep(1200);
       await page.evaluate(() => autoSuggest());   // 결과 보기(요약·위기 점검)가 의미 있게 — fit-audit seedPlan과 같은 경로
       await page.waitForFunction(() => typeof _planPickOpts !== 'undefined' && _planPickOpts && _planPickOpts.length, null, { timeout: 30000 });
