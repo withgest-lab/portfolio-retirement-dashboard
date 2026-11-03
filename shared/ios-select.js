@@ -190,5 +190,88 @@
     new MutationObserver(function (ms) { ms.forEach(function (m) { m.addedNodes.forEach(function (n) { if (n.nodeType === 1) mark(n); }); }); }).observe(document.documentElement, { childList: true, subtree: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+
+  /* ── 키보드: 입력을 마치면 내리고, 입력칸이 키보드에 가려지지 않게 (2026-11-03, 세 앱 공통) ──
+     값을 다 넣었는데도 키보드가 남아 아래 표·버튼을 가리던 문제. 터치 기기에서만 동작한다.
+     키보드가 떠 있는지는 swipe-tabs.js와 같은 기준(visualViewport 높이가 화면의 3/4 미만) — 크롬은 innerHeight를 안 줄인다.
+     ① 글자·숫자 칸 키보드에 '완료' 키(enterkeyhint=done, 칸에 이미 있으면 그대로)
+     ② Enter(완료) = 입력 끝 → 키보드를 내린다. 포트폴리오 폼은 자기 처리기가 [확인]을 먼저 누른 뒤에 내려간다.
+        자동완성 목록·풀다운이 열려 있거나 한글 조합 중이면 건드리지 않는다.
+     ③ 버튼(확인·저장·취소 등)을 누르면 내린다 ④ 입력칸 밖에서 화면을 위아래로 밀면 내린다(iOS 앱처럼)
+     ⑤ 칸이 키보드 밑에 있으면 보이는 영역 안으로 올리고, 키보드가 내려가면 스크롤이 잠긴 화면(한 화면 맞춤)은 원래 위치로 */
+  var TEXTY = /^(text|search|number|tel|email|url|password|)$/i;
+  function isText(el) { return !!el && ((el.tagName === 'INPUT' && TEXTY.test(el.type || '') && !el.readOnly) || el.tagName === 'TEXTAREA'); }
+  function kbUp() { return !!(vv && vv.height < window.innerHeight * 0.75); }
+  function dismiss() { var a = document.activeElement; if (isText(a)) { try { a.blur(); } catch (e) {} } }
+  function suggestOpen(el) {
+    var host = el.closest('.fm-f,label') || el.parentNode, b = host && host.querySelector('.suggest-box');
+    return !!(b && b.offsetParent !== null && getComputedStyle(b).display !== 'none' && b.children.length);
+  }
+  document.addEventListener('focusin', function (e) {
+    var t = e.target;
+    if (!isText(t) || !coarse()) return;
+    if (t.tagName === 'INPUT' && !t.hasAttribute('enterkeyhint')) t.setAttribute('enterkeyhint', 'done');
+    keepVisible(t);
+  });
+  document.addEventListener('keydown', function (e) {
+    var t = e.target;
+    if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229 || !coarse() || !isText(t) || t.tagName === 'TEXTAREA' || cur || suggestOpen(t)) return;
+    setTimeout(function () { if (document.activeElement === t) { try { t.blur(); } catch (er) {} } }, 0);
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('button'), a = document.activeElement;
+    if (!b || !coarse() || !isText(a) || b.closest('.ios-menu,.suggest-box')) return;
+    setTimeout(function () { if (document.activeElement === a) { try { a.blur(); } catch (er) {} } }, 0);   // 버튼이 새로 포커스한 칸(오류 안내 등)은 그대로
+  }, true);
+  var drag = null;
+  document.addEventListener('touchstart', function (e) {
+    var a = document.activeElement;
+    drag = coarse() && isText(a) && kbUp() && e.touches.length === 1 && !(e.target.closest && e.target.closest('input,textarea,select,.suggest-box,.ios-menu'))
+      ? { y: e.touches[0].clientY, x: e.touches[0].clientX } : null;
+  }, { passive: true, capture: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!drag) return;
+    var dy = Math.abs(e.touches[0].clientY - drag.y), dx = Math.abs(e.touches[0].clientX - drag.x);
+    if (dy > 24 && dy > dx) { drag = null; dismiss(); }
+  }, { passive: true, capture: true });
+  // ⑤ 포커스 때 조상 스크롤 위치를 기억 — 키보드가 내려가면 스크롤이 잠긴(overflow hidden) 조상만 되돌린다.
+  //   브라우저가 칸을 보이려고 잠긴 화면까지 밀어 올린 채 남으면 아래가 빈 화면이 된다. 사용자가 직접 스크롤할 수 있는 화면은 그대로 둔다.
+  var saved = null;
+  function scrollers(el) {
+    var out = [];
+    for (var p = el.parentElement; p; p = p.parentElement) if (p.scrollHeight > p.clientHeight + 1) out.push(p);
+    var se = document.scrollingElement; if (se && out.indexOf(se) < 0) out.push(se);
+    return out;
+  }
+  function keepVisible(t) {
+    if (!saved) saved = scrollers(t).map(function (p) { return [p, p.scrollTop]; });
+    settle(function () {
+      if (document.activeElement !== t || !kbUp()) return;
+      var b = visBox(), r = t.getBoundingClientRect();
+      var need = r.bottom - (b.bottom - 12), room = r.top - (b.top + 60);   // 위 고정 막대(52px) 아래까지만 올린다
+      if (need <= 0) return;
+      var d = Math.min(need, Math.max(0, room)), list = scrollers(t);
+      for (var i = 0; i < list.length && d > 0; i++) { var p = list[i], before = p.scrollTop; p.scrollTop = before + d; d -= p.scrollTop - before; }
+      // 한 화면에 꼭 맞아 스크롤할 곳이 없으면 브라우저에 맡긴다 — 키보드가 떠 있을 땐 보이는 영역(visualViewport)을 올려 칸을 보여 준다.
+      // 그 과정에서 잠긴 화면이 밀리면 키보드가 내려갈 때 restore()가 되돌린다.
+      if (t.getBoundingClientRect().bottom > b.bottom - 12) { try { t.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+    });
+  }
+  function restore() {
+    if (!saved || isText(document.activeElement)) return;
+    saved.forEach(function (s) { var p = s[0]; if (p !== document.scrollingElement && getComputedStyle(p).overflowY === 'hidden') p.scrollTop = s[1]; });
+    saved = null;
+  }
+  document.addEventListener('focusout', function () { setTimeout(function () { if (!isText(document.activeElement)) settle(restore); }, 0); });
+  // 안드로이드 뒤로가기로 키보드만 내리면 칸 포커스가 남는다 — 키보드가 내려가면 입력도 끝난 것으로 보고 포커스를 풀고 되돌린다
+  var kbSeen = false;
+  if (vv) vv.addEventListener('resize', function () {
+    if (kbUp()) { kbSeen = true; return; }
+    if (!kbSeen) return;
+    kbSeen = false;
+    if (coarse()) dismiss();
+    restore();
+  });
+
   window.iosSelect = { open: open, close: close };
 })();
