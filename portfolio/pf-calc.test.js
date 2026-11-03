@@ -278,3 +278,41 @@ test('현금 행: 구분을 모르는 매매는 구분 없는 행 → 그 금융
 test('현금 행: 현금이 아닌 자산은 후보가 아니다', () => {
   assert.equal(pick([{id:'s', acctType:'general', currency:'KRW', company:'nh', cashAcctType:'general'}],'general'), null);
 });
+
+/* ── 같은 종목 판정·합치기 ── */
+test('티커: .KS/.KQ 유무·대소문자·공백이 달라도 같은 코드, 미국·일본 티커는 대문자만', () => {
+  ['005930', '005930.KS', ' 005930.ks ', '005930.KQ'].forEach(t => assert.equal(P.normTicker(t), '005930'));
+  assert.equal(P.normTicker('0177n0.KS'), '0177N0');
+  assert.equal(P.normTicker('aapl'), 'AAPL');
+  assert.equal(P.normTicker('6268.T'), '6268.T');
+  assert.equal(P.normTicker(null), '');
+});
+
+const hk = (o) => Object.assign({ticker:'123450.KS', name:'가상전자', acctType:'general', company:'nh', market:'kr', assetType:'Core', currency:'KRW', quantity:10, avgPrice:1000}, o);
+test('같은 종목 키: 티커 표기·이름 공백이 달라도 같고, 필터 4개·통화 중 하나라도 다르면 다르다', () => {
+  const k = P.holdingKey(hk());
+  assert.equal(P.holdingKey(hk({ticker:'123450', name:'가상 전자'})), k);
+  ['acctType','company','market','assetType'].forEach(f => assert.notEqual(P.holdingKey(hk({[f]:'x'})), k, f));
+  assert.notEqual(P.holdingKey(hk({currency:'USD'})), k);
+  assert.equal(P.holdingKey(hk({acctType:'cash'})), null);
+  assert.equal(P.holdingKey(hk({isBond:true})), null);
+  // 티커 없는 종목은 이름(공백 무시)으로, 티커 있는 종목과는 섞이지 않는다
+  assert.equal(P.holdingKey(hk({ticker:'—', name:'가상 채권'})), P.holdingKey(hk({ticker:'', name:'가상채권'})));
+  assert.notEqual(P.holdingKey(hk({ticker:'—', name:'123450'})), k);
+});
+
+test('합치기: 수량 합·평단 가중 평균, 시세는 keep에 없을 때만 drop 값', () => {
+  const keep = hk({currentPrice:0}), drop = hk({quantity:5, avgPrice:2000, currentPrice:1500});
+  P.mergeHolding(keep, drop);
+  assert.equal(keep.quantity, 15);
+  near(keep.avgPrice, 1333.33, 0.001);
+  assert.equal(keep.currentPrice, 1500);
+});
+
+test('합치기: 스냅샷의 drop id 평가액·수량을 keep id에 더하고 drop id는 지운다', () => {
+  const snaps = [{byAsset:{a:100, b:50}, byQty:{a:10, b:5}}, {byAsset:{b:40}, byQty:{b:4}}, {byAsset:{a:90}, byQty:{a:9}}];
+  assert.equal(P.mergeSnapIds(snaps, 'a', 'b'), 2);
+  assert.deepEqual(snaps[0], {byAsset:{a:150}, byQty:{a:15}});
+  assert.deepEqual(snaps[1], {byAsset:{a:40}, byQty:{a:4}});
+  assert.deepEqual(snaps[2], {byAsset:{a:90}, byQty:{a:9}});
+});

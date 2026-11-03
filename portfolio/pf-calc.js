@@ -93,6 +93,42 @@ function pickCashRow(rows, currency, company, cashAcctType, norm){
 // 종목을 가르는 이름 — 티커가 없는 종목(채권 등)은 이름으로. 티커 칸 "—"로 묶으면 서로 다른 종목이 한 종목이 된다
 const tickerOrName = x => x.ticker && x.ticker!=='—' ? x.ticker : x.name;
 
+// 티커 비교용 — 같은 국내 종목이 "005930.KS"(자동완성)·"005930"(직접 입력)·소문자로 따로 저장돼도 한 종목으로 본다.
+// 일본(.T)·미국 티커는 대문자만 맞춘다.
+const normTicker = t => String(t==null ? '' : t).trim().toUpperCase().replace(/\.(KS|KQ|KN)$/, '');
+
+/* 보유 행이 "같은 종목"인지 가르는 키 — 종목(티커, 없으면 공백을 뺀 이름) + 화면 필터 4개(계좌유형·금융회사·투자시장·자산유형) + 통화.
+   이 밖의 값(이름 표기·티커 접미사)으로 갈리면 화면에선 똑같아 보이는데 두 행이 된다. 현금·확정금리 채권은 합치지 않으므로 null. */
+function holdingKey(a){
+  if(!a || a.acctType==='cash' || a.isBond) return null;
+  const id = a.ticker && a.ticker!=='—' ? normTicker(a.ticker) : '#'+String(a.name||'').replace(/\s+/g, '');
+  return [id, a.acctType||'', a.company||'', a.market||'', a.assetType||'', a.currency||'KRW'].join('|');
+}
+// 같은 종목 두 행을 keep 한 행으로 — 수량 합, 평단은 수량 가중 평균(저장 형식과 같은 소수 2자리). 시세는 keep 것이 없을 때만 drop 것을 쓴다.
+function mergeHolding(keep, drop){
+  const q = (keep.quantity||0) + (drop.quantity||0);
+  if(q > 0) keep.avgPrice = Math.round(((keep.avgPrice||0)*(keep.quantity||0) + (drop.avgPrice||0)*(drop.quantity||0)) / q * 100) / 100;
+  keep.quantity = q;
+  ['currentPrice','prevPrice','lastTradeAt'].forEach(f=>{ if(!(keep[f] > 0) && drop[f] > 0) keep[f] = drop[f]; });
+  return keep;
+}
+// 스냅샷의 종목별 평가액·수량에서 dropId를 keepId에 더한다(합친 뒤에도 그 종목의 과거 곡선이 이어지게). 바뀐 장 수를 돌려준다.
+function mergeSnapIds(snaps, keepId, dropId){
+  let n = 0;
+  (snaps||[]).forEach(s=>{
+    let hit = false;
+    ['byAsset','byQty'].forEach(f=>{
+      const m = s[f];
+      if(!m || !(dropId in m)) return;
+      m[keepId] = (+m[keepId]||0) + (+m[dropId]||0);
+      delete m[dropId];
+      hit = true;
+    });
+    if(hit) n++;
+  });
+  return n;
+}
+
 /* 세금 계산용 종목 묶음 — 매매 한 건은 정확히 한 묶음에만 들어가고, 같은 키(티커|계좌|금융회사)의 보유는 수량·평단을 합쳐 한 묶음이다.
    그래야 자산유형만 다른 두 행이나 금융회사가 안 적힌 옛 기록에서 매도 한 건이 두 번 과세되지 않는다.
    주인 고르기: 소유 판정(o.owns)에 맞는 보유 중 금융회사 → 계좌가 같은 쪽, 그래도 같으면 과세 대상 보유.
@@ -131,7 +167,7 @@ function taxGroupsOf(log, holdings, o){
   return [...groups.values()];
 }
 
-const api = {bondValues, chartSeries, mergedPct, seriesPnl, monthlyPerformance, pickCashRow, tickerOrName, taxGroupsOf};
+const api = {bondValues, chartSeries, mergedPct, seriesPnl, monthlyPerformance, pickCashRow, tickerOrName, taxGroupsOf, normTicker, holdingKey, mergeHolding, mergeSnapIds};
 if(typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.PfCalc = api;
 })(typeof window !== 'undefined' ? window : this);

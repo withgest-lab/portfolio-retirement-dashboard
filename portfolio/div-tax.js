@@ -331,7 +331,7 @@ function buildLedger(o){
         ex, pay, qty:q.qty, dps, gross, wht, net:gross - wht, est:false, known, qtyBasis:q.basis, payBasis, fxBasis:fx.basis,
         guess: q.basis==='assumed' || !known, hid: h.id!=null ? h.id : null};
     };
-    const T = String(h.ticker).trim().toUpperCase();
+    const T = String(h.ticker).trim().toUpperCase().replace(/\.(KS|KQ|KN)$/, '');   // 옛 제외 키도 화면의 divAssetKey(접미사 없는 코드)와 같은 형태로 정리돼 있다
     cyc.forEach(c=>{
       if(c.rec || c.pd.pay < y0 || c.pd.pay >= y1) return;
       const q = qtyAt(h, c.e.ex, h.trades, o.snaps, now);

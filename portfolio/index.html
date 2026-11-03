@@ -1784,9 +1784,9 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
 
 <script src="../shared/dialog.js?v=20261031b"></script>
 <script src="../shared/icons.js?v=20261031b"></script>
-<script src="../shared/ios-select.js?v=20261031b"></script>
-<script src="div-tax.js?v=20261012"></script>
-<script src="pf-calc.js?v=20261031"></script>
+<script src="../shared/ios-select.js?v=20261103"></script>
+<script src="div-tax.js?v=20261103"></script>
+<script src="pf-calc.js?v=20261103"></script>
 <script>if(window.kisTheme){kisTheme.mount(document.getElementById("themeMountPf").parentNode);}</script>
 <script>
 /* ════════════════════════════════════════
@@ -2386,8 +2386,19 @@ function isKoreanTicker(ticker){
 // 6자리 코드만 적는 경우가 흔함). tradeMatchesAsset의 티커 비교가 순수 문자열 일치라서, 같은
 // 종목인데 이 표기 차이 하나로 매매이력이 자산과 매칭 안 돼(이름으로도 정확히 안 겹치면)
 // 종목 상세 차트에 매수/매도 마커가 안 뜨는 문제가 있었다 — 비교 전에 항상 이 함수로 정규화한다.
+// 티커 비교·키는 모두 이 함수로(pf-calc.js normTicker) — 저장 형태는 canonTicker가 종목마다 하나로 맞춘다.
 function normalizeTicker(ticker){
-  return (ticker||'').trim().toUpperCase().replace(/\.(KS|KQ|KN)$/,'');
+  return window.PfCalc.normTicker(ticker);
+}
+// 새로 저장할 티커 형태 — 같은 코드가 이미 저장돼 있으면 그 표기를, 처음이면 stocks.csv 표기(.KS/.KQ)를, 그것도 없으면 입력 그대로(대문자)
+function canonTicker(ticker){
+  const s = (ticker||'').trim().toUpperCase();
+  if(!s || s==='—') return '—';
+  const n = normalizeTicker(s);
+  const known = assets.concat(loadTradeLog()).map(x=>x && x.ticker).find(t=>t && t!=='—' && normalizeTicker(t)===n && /\.(KS|KQ|KN)$/i.test(t));
+  if(known) return known.trim().toUpperCase();
+  const db = n!==s ? null : STOCK_DB.find(x=>normalizeTicker(x.t)===n && x.t.toUpperCase()!==n);
+  return db ? db.t.toUpperCase() : s;
 }
 
 async function fetchNaver(ticker){
@@ -2456,7 +2467,8 @@ function loadPxHistCache(){ try{ return JSON.parse(localStorage.getItem(PXHIST_K
 function savePxHistCache(cache){ try{ localStorage.setItem(PXHIST_KEY, JSON.stringify(cache)); }catch(e){} }
 function toYahooHistTicker(ticker){
   if(!ticker || ticker==='—') return null;
-  if(isKoreanTicker(ticker)) return KR_TICKER_RE.test(ticker.trim()) ? ticker.trim()+'.KS' : ticker;
+  ticker = ticker.trim().toUpperCase();   // 소문자 ".ks"가 캐시 키를 따로 만들지 않게
+  if(isKoreanTicker(ticker)) return KR_TICKER_RE.test(ticker) ? ticker+'.KS' : ticker;
   return ticker;
 }
 // 짧은 기간은 일봉만 있으면 점이 1~5개뿐이라 촘촘한 봉 간격이 필요하고, 긴 기간은 데이터량을 줄이기 위해 주봉을 쓴다
@@ -3794,7 +3806,7 @@ function saveTradeLogEdit(id){
   const oldPrice = r.price, oldQty = r.quantity, oldType = r.type;   // 아래에서 덮어쓰기 전에 읽어 둔다
   if(dateV) r.at = new Date(dateV+'T00:00:00').getTime();
   r.name = name;
-  r.ticker = tickerInput || (existingAsset && existingAsset.ticker!=='—' ? existingAsset.ticker : (r.ticker||'—'));
+  r.ticker = tickerInput ? canonTicker(tickerInput) : (existingAsset && existingAsset.ticker!=='—' ? existingAsset.ticker : (r.ticker||'—'));
   r.type = type;
   r.company = company || null;
   r.market = market || null;
@@ -3885,7 +3897,9 @@ function addTradeLog_manual(){
 
   const at = dateV ? new Date(dateV+'T00:00:00').getTime() : Date.now();
   // 같은 이름을 여러 계좌에 두면 폼에서 고른 금융회사·계좌의 보유를 쓴다(손익은 그 계좌 평단으로)
-  const existing = assets.find(a=>a.name===name && (!companySel || a.company===companySel) && (!acctTypeSel || a.acctType===acctTypeSel)) || assets.find(a=>a.name===name);
+  // 이름이 달라도 티커(.KS 표기 차이 무시)가 같으면 같은 종목
+  const isIt = a => a.acctType!=='cash' && (a.name===name || (tickerInput && a.ticker && a.ticker!=='—' && normalizeTicker(a.ticker)===normalizeTicker(tickerInput)));
+  const existing = assets.find(a=>isIt(a) && (!companySel || a.company===companySel) && (!acctTypeSel || a.acctType===acctTypeSel)) || assets.find(isIt);
   // 티커가 없으면 종목 상세 차트에 가격 추이·매매 마커가 아예 안 그려지는 문제가 있어서
   // 필수로 바꿈. 다만 이미 포트폴리오에 유효한 티커로 등록된 종목이면(existing.ticker)
   // 어차피 그 티커가 그대로 쓰이므로(바로 아래 addTradeLog의 ticker 필드 참고) 다시
@@ -3911,7 +3925,7 @@ function addTradeLog_manual(){
   }
   const newLogId = addTradeLog({
     name: existing?existing.name:name,
-    ticker: existing?existing.ticker:(tickerInput||'—'),
+    ticker: existing?existing.ticker:canonTicker(tickerInput),
     type, at, acctType:acctTypeVal, assetType:assetTypeVal, company:companyVal, market:marketVal,
     price, quantity:qty, currency, totalKRW,
     pnl, pnlPct, reason, cashAdjusted:null
@@ -4214,7 +4228,7 @@ function fitDivStockTable(){
 function divAttrResolver(){
   const log = loadTradeLog().filter(r=>r.type==='buy'||r.type==='sell');
   const subs = [...new Set(assets.filter(a=>a.company).map(a=>a.company))];
-  const T = x => String(x||'').trim().toUpperCase();
+  const T = normalizeTicker;
   return function(akey, it){
     const a = akey ? assets.find(x=>divEligible(x) && divHoldKey(x)===akey) : null;
     let r = null;
@@ -4573,15 +4587,17 @@ function renderTable(){
               ${fmField('가산금리(%)', fmInput(`tp_bond_spread_${a.id}`,{type:'number',value:((a.bondSpreadRate||0)*100).toFixed(3),attrs:'step="0.001"'}))}
               ${fmField('발행일', fmInput(`tp_bond_issue_${a.id}`,{type:'date',value:a.bondIssueDate||''}), {cls:'r1'})}
               ${fmField('만기일', fmInput(`tp_bond_maturity_${a.id}`,{type:'date',value:a.bondMaturityDate||''}))}` : `
+              ${fmField('티커', fmInput(`tp_ticker_${a.id}`,{value:a.ticker&&a.ticker!=='—'?a.ticker:'',ph:'예: 005930'}))}
               ${fmField('수량', fmInput(`tp_qty_${a.id}`,{type:'number',value:a.quantity}))}
-              ${fmField(`평균단가 (${a.currency})`, fmInput(`tp_price_${a.id}`,{type:'number',value:a.avgPrice}))}`;
+              ${fmField('평균단가', fmInput(`tp_price_${a.id}`,{type:'number',value:a.avgPrice}))}
+              ${fmField('통화', fmSelect(`tp_cur_${a.id}`,FM_CUR,a.currency||'KRW',{custom:false}))}`;
         rows+=`<tr class="tr-full fm-row"><td colspan="12" onclick="event.stopPropagation()">
           <div class="fm">
             <div class="fm-grid">
               ${holdFields}
               ${fmClassFields({market:[`tp_market_${a.id}`,`tp_market_custom_${a.id}`],company:[`tp_company_${a.id}`,`tp_company_custom_${a.id}`],acct:[`tp_accttype_${a.id}`,`tp_accttype_custom_${a.id}`],asset:[`tp_assettype_${a.id}`,`tp_assettype_custom_${a.id}`]},
                 {market:a.market,company:a.company,acct:a.acctType,asset:a.assetType},{blank:{market:'선택',company:'없음',asset:'없음'}})}
-              ${fmAct('btn-ghost','취소','closeTradePanel()',{attr:'data-fm-cancel'})}
+              ${fmAct('btn-ghost','취소','closeTradePanel()',{r:a.isBond?0:1,attr:'data-fm-cancel'})}
               ${fmAct('btn-green','저장',`confirmSaveEdit('${a.id}')`,{attr:'data-fm-primary'})}
             </div>
           </div>
@@ -4857,50 +4873,30 @@ function executeTrade(){
     if(trade.assetType !== undefined) a.assetType = trade.assetType || null;
     if(trade.market !== undefined)    a.market = trade.market || null;
     if(trade.company !== undefined) a.company = trade.company || null;
+    if(trade.ticker) a.ticker = trade.ticker;
+    if(trade.currency) a.currency = trade.currency;
     propagateHoldingAttrsToTradeLog(attrBefore, a);
     editingId=null; quickTradeId=null;
+    const n0 = assets.length, keep = mergeIfSameHolding(a);   // 고친 결과 다른 행과 같은 종목이면 한 행으로
+    if(assets.length < n0){ if(st){ st.textContent=`✅ ${keep.name} 같은 종목과 합침 → 총 ${keep.quantity.toLocaleString()}주`; setTimeout(()=>{st.textContent='';},3000); } }
     saveAssets();renderAll();
-    revealAssetIfFiltered(a);
+    revealAssetIfFiltered(keep);
     return;
   }
 
   // 매수 폼
   if(mode==='form_buy'){
     const {name, ticker, acctType, qty:fQty, price:fPrice, cur, assetType, company, market, isBond, bondFields} = trade;
-    const tickerVal = ticker||'—';
-    // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
-    // → 계좌가 다르면(예: 개인연금 vs IRP) 별도 자산 항목으로 분리됨
-    const assetTypeOk = a => !assetType || a.assetType === assetType;
-    const nameTickerAcctTypeMatch = tickerVal!=='—'
-      ? (a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.acctType===acctType)
-      : (a=>a.name===name && a.currency===cur && a.acctType===acctType);
-    let existing;
-    // 확정금리 채권은 복리 평가액이라 수량·평균단가 방식의 병합(합산)이 성립하지 않으므로
-    // 기존 종목과 절대 합치지 않고 항상 새 자산으로 등록한다.
-    if(isBond){
-      existing = undefined;
-    } else if(!company){
-      // 계좌 미지정 시, 후보가 여러 계좌에 걸쳐 나뉘어 있으면 어느 쪽에 합칠지 모호하므로
-      // 병합하지 않고 새 자산으로 분리 생성한다(잘못된 계좌로 조용히 합쳐지는 것 방지).
-      const candidates = assets.filter(a=>nameTickerAcctTypeMatch(a) && assetTypeOk(a));
-      const distinctAccts = new Set(candidates.map(a=>a.company||null));
-      existing = distinctAccts.size<=1 ? candidates[0] : undefined;
-    } else {
-      existing = assets.find(a=>nameTickerAcctTypeMatch(a) && assetTypeOk(a) && a.company===company);
-    }
+    const tickerVal = canonTicker(ticker);
+    const existing = buyMergeTarget(trade);
     let cashName = null;
     let touched = existing;   // 이번 매수로 바뀐·생긴 종목(현금 차감으로 생기는 현금 행이 아님)
     const wasAllSel = allChartSelected();
-    if(existing){
-      const attrBefore = holdingAttrSnapshot(existing);
+    if(existing){   // 합칠 행은 입력한 분류가 모두 같은 행뿐이라(buyMergeTarget) 분류는 그대로 — 수량·평단만 더한다
       const prevQty  = existing.quantity;
       const totalQty = prevQty + fQty;
       existing.avgPrice = Math.round(((existing.avgPrice*prevQty)+(fPrice*fQty))/totalQty*100)/100;
       existing.quantity = totalQty;
-      if(assetType) existing.assetType = assetType; // 자산유형 입력 시 갱신
-      if(company) existing.company = company; // 금융회사 입력 시 갱신
-      if(market) existing.market = market; // 투자시장 입력 시 갱신
-      propagateHoldingAttrsToTradeLog(attrBefore, existing); // 바뀐 속성은 기존 매매이력에도 반영
       cashName = existing.acctType!=='cash' ? adjustCashBalance(existing.currency, fPrice*fQty, -1, existing.company||null, existing.acctType||null) : null;
       if(st){ st.textContent=`✅ ${existing.name} ${fQty.toLocaleString()}주 매수 → 총 ${totalQty.toLocaleString()}주${cashName?` · ${cashName} 잔액 차감`:''}`; setTimeout(()=>{st.textContent='';},3000); }
     } else {
@@ -4914,7 +4910,7 @@ function executeTrade(){
     if(!existing) chartSelectNew(touched, wasAllSel);
     const loggedCompany = existing ? (existing.company||null) : (company||null);
     const loggedMarket = existing ? (existing.market||null) : (market||null);
-    addTradeLog({name, ticker:tickerVal, type:'buy', at:Date.now(), acctType:acctType||null, assetType:assetType||null, company:loggedCompany, market:loggedMarket, price:fPrice, quantity:fQty, currency:cur, totalKRW:Math.round(fPrice*fQty*(cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1)), pnl:null, pnlPct:null, reason:tradeReason, cashAdjusted:cashName});
+    addTradeLog({name: existing ? existing.name : name, ticker: existing ? existing.ticker : tickerVal, type:'buy', at:Date.now(), acctType:acctType||null, assetType:(existing ? existing.assetType : assetType)||null, company:loggedCompany, market:loggedMarket, price:fPrice, quantity:fQty, currency:cur, totalKRW:Math.round(fPrice*fQty*(cur==='USD'?FX.USD:cur==='JPY'?FX.JPY:1)), pnl:null, pnlPct:null, reason:tradeReason, cashAdjusted:cashName});
     resetBuyForm();
     saveAssets();renderAll();
     revealAssetIfFiltered(touched);
@@ -4943,6 +4939,7 @@ function executeTrade(){
       if(st){ st.innerHTML=`✅ ${a.name} 전량 매도 · 실현손익 <b style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">${pnl>=0?'+':''}${sym}${Math.abs(pnl).toLocaleString()}</b>`; setTimeout(()=>{st.innerHTML='';},3000); }
     } else {
       a.quantity -= sellQty;
+      mergeIfSameHolding(a);   // 매도 폼에서 분류를 고쳐 다른 행과 같은 종목이 됐으면 한 행으로
       if(st){ st.innerHTML=`✅ ${a.name} ${sellQty.toLocaleString()}주 매도 · 잔여 ${a.quantity.toLocaleString()}주 · 실현손익 <b style="color:${pnl>=0?'var(--color-up)':'var(--color-down)'}">${pnl>=0?'+':''}${sym}${Math.abs(pnl).toLocaleString()}</b>`; setTimeout(()=>{st.innerHTML='';},3000); }
     }
     resetSellForm();
@@ -5077,8 +5074,19 @@ function confirmSaveEdit(id){
       bondMaturityDate: maturityDate || a.bondMaturityDate,
     };
   }
-  pendingTrade = {id, mode:'edit', qty, price, acctType, assetType, company, market, bondFields};
-  const sym = CUR_SYM[a.currency];
+  // 티커·통화(채권은 칸 없음) — 잘못 넣으면 같은 종목이 다른 행이 되므로 여기서 고칠 수 있게
+  const tkEl = document.getElementById(`tp_ticker_${id}`), curEl = document.getElementById(`tp_cur_${id}`);
+  const ticker = tkEl ? canonTicker(tkEl.value) : a.ticker;
+  const currency = curEl ? curEl.value || a.currency : a.currency;
+  const tickerChanged = !!tkEl && ticker !== (a.ticker||'—');
+  const curChanged = currency !== a.currency;
+  pendingTrade = {id, mode:'edit', qty, price, acctType, assetType, company, market, bondFields, ticker, currency};
+  const sym = CUR_SYM[currency];
+  // 고친 값으로 다른 행과 티커·분류 4개·통화가 모두 같아지면 저장할 때 한 행으로 합친다 — 미리 보여 준다(매수 폼의 "기존 보유 합산"과 같은 문구)
+  const next = {...a, acctType, assetType:assetType||null, company:company||null, market:market||null, ticker, currency,
+    quantity: !isNaN(qty)&&qty>=0 ? qty : a.quantity, avgPrice: !isNaN(price)&&price>0 ? price : a.avgPrice};
+  const other = a.isBond ? null : assets.find(x=>x.id!==a.id && PC.holdingKey(x)===PC.holdingKey(next));
+  const merged = other ? PC.mergeHolding({...other}, next) : null;
   const acctTypeChanged = acctType !== a.acctType;
   const assetTypeChanged = assetType !== (a.assetType||'');
   const companyChanged = company !== (a.company||'');
@@ -5095,10 +5103,13 @@ function confirmSaveEdit(id){
     !isNaN(qty) ? `수량: ${qty.toLocaleString()}` : null,
     !isNaN(price) ? `평균단가: ${sym}${price.toLocaleString()}` : null,
   ]).concat([
+    chg('티커', tickerChanged, a.ticker&&a.ticker!=='—'?a.ticker:'없음', ticker!=='—'?ticker:'없음'),
+    chg('통화', curChanged, a.currency, currency),
     chg('투자시장', marketChanged, MARKET_LABELS[a.market]||a.market||'없음', MARKET_LABELS[market]||market||'없음'),
     chg('금융회사', companyChanged, COMPANY_LABELS[a.company]||a.company||'없음', COMPANY_LABELS[company]||company||'없음'),
     chg('계좌유형', acctTypeChanged, ACCTTYPE_LABELS[a.acctType]||a.acctType, ACCTTYPE_LABELS[acctType]||acctType),
     a.isBond ? null : chg('자산유형', assetTypeChanged, a.assetType||'없음', assetType||'없음'),
+    merged ? `<span style="color:var(--color-tertiary)">→ 기존 보유 합산: 총 ${merged.quantity.toLocaleString()}주 · 평균 ${sym}${merged.avgPrice.toLocaleString()}</span>` : null,
   ]).filter(Boolean);
   detailEl.innerHTML = `<b>${a.name}</b><br>${lines.join('<br>')}`;
   setConfirmTone(confirmBtn, '#34c759');
@@ -5549,11 +5560,24 @@ function toggleCustomInput(selectId, customInputId){
   if(isCustom) inp.focus();
 }
 // select+커스텀 입력 쌍에서 실제 값을 읽어옴. isAcctType면 예약어 충돌 검사(문제 있으면 null 반환 + 경고)
+// 직접입력한 금융회사·투자시장·자산유형이 목록 항목 이름과 같으면 목록 값으로 — "미래에셋"을 직접 쳐도 목록의 미래에셋(mf)과
+// 같은 값이어야 한다. 화면엔 둘 다 "미래에셋"으로 보이는데 저장값이 달라 같은 종목이 두 행으로 갈렸다(2026-11-03).
+function canonAttr(field, v){
+  if(v==null) return v;
+  const s = String(v).trim();
+  if(!s) return s;
+  if(field==='assetType') return ASSETTYPE_OPTIONS.find(o=>o.toLowerCase()===s.toLowerCase()) || s;
+  const labels = field==='company' ? COMPANY_LABELS : field==='market' ? MARKET_LABELS : null;
+  if(!labels) return s;
+  return Object.keys(labels).find(k=>k.toLowerCase()===s.toLowerCase() || labels[k]===s) || s;
+}
 function readSelectOrCustom(selectId, customInputId, isAcctType){
   const sel = document.getElementById(selectId);
   if(!sel) return '';
   if(sel.value === '__custom__'){
     const v = (document.getElementById(customInputId)?.value||'').trim();
+    const field = /(^|_)company(_|$)/.test(selectId) ? 'company' : /(^|_)market(_|$)/.test(selectId) ? 'market' : /(^|_)assettype(_|$)/.test(selectId) ? 'assetType' : null;
+    if(field) return canonAttr(field, v);
     if(isAcctType && v){
       // 이미 있는 계좌유형 이름(일반계좌·개인연금 등, 옛 명칭 국내주식·미국주식 등)을 직접 입력하면
       // 같은 뜻의 별도 값이 생겨 분류가 갈라지므로 정식 값으로 매핑한다.
@@ -5582,6 +5606,20 @@ function resetSellForm(){
   document.getElementById('sf_suggestions').style.display='none';
 }
 
+/* 매수 폼이 합칠 기존 보유 행 — 같은 종목(티커는 .KS 표기 차이 무시, 티커가 없으면 이름)·계좌유형·통화가 같고,
+   입력한 금융회사·투자시장·자산유형은 같아야 한다(빈칸이면 기존 행 값을 이어받음). 화면 필터 4개가 모두 같은 행이
+   매수 때마다 따로 생기지 않게 보유종목 수정 후 합치기(PC.holdingKey)와 같은 기준을 쓴다.
+   금융회사를 비웠는데 후보가 여러 금융회사에 걸치면 어디에 합칠지 모호하므로 새 행. 확정금리 채권은 복리 평가라 늘 새 행. */
+function buyMergeTarget({name, ticker, acctType, cur, assetType, company, market, isBond}){
+  if(isBond) return undefined;
+  const nt = ticker && ticker!=='—' ? normalizeTicker(ticker) : null;
+  const same = a => a.acctType!=='cash' && !a.isBond && a.acctType===acctType && (a.currency||'KRW')===(cur||'KRW')
+    && (nt ? a.ticker && a.ticker!=='—' && normalizeTicker(a.ticker)===nt : a.name===name)
+    && (!assetType || a.assetType===assetType) && (!market || a.market===market);
+  if(company) return assets.find(a=>same(a) && a.company===company);
+  const cands = assets.filter(same);
+  return new Set(cands.map(a=>a.company||null)).size<=1 ? cands[0] : undefined;
+}
 function addAsset(){
   const name   = document.getElementById('af_name').value.trim();
   const ticker = document.getElementById('af_ticker').value.trim().toUpperCase();
@@ -5616,23 +5654,7 @@ function addAsset(){
   }
   const sym = CUR_SYM[cur];
   const tickerVal = ticker||'—';
-  // 병합 조건: 종목명+구분이 같고(티커 있으면 티커도), 속성·계좌는 입력했을 때만 추가로 일치해야 함(빈칸이면 무시)
-  const assetTypeOk = a => !assetType || a.assetType === assetType;
-  const nameTickerAcctTypeMatch = tickerVal!=='—'
-    ? (a=>a.ticker.toUpperCase()===tickerVal && a.name===name && a.acctType===acctType)
-    : (a=>a.name===name && a.currency===cur && a.acctType===acctType);
-  let existing;
-  // 확정금리 채권은 복리 평가액이라 수량·평균단가 병합이 성립하지 않으므로 항상 신규 등록
-  if(isBond){
-    existing = undefined;
-  } else if(!company){
-    // executeTrade(form_buy)와 동일한 규칙: 계좌 미지정 시 후보가 여러 계좌에 걸쳐 있으면 병합 미리보기도 생략
-    const candidates = assets.filter(a=>nameTickerAcctTypeMatch(a) && assetTypeOk(a));
-    const distinctAccts = new Set(candidates.map(a=>a.company||null));
-    existing = distinctAccts.size<=1 ? candidates[0] : undefined;
-  } else {
-    existing = assets.find(a=>nameTickerAcctTypeMatch(a) && assetTypeOk(a) && a.company===company);
-  }
+  const existing = buyMergeTarget({name, ticker:tickerVal, acctType, cur, assetType, company, market, isBond});   // executeTrade(form_buy)와 같은 규칙
   const newAvg    = existing ? Math.round(((existing.avgPrice*existing.quantity)+(price*qty))/(existing.quantity+qty)*100)/100 : price;   // 저장되는 평단과 같은 소수 2자리
   const totalQty  = existing ? existing.quantity+qty : qty;
 
@@ -5789,8 +5811,8 @@ function setCashMode(mode){
 
 async function addCash(){
   if(cashMode==='div'){
-    const src = (document.getElementById('cf_div_source')?.value||'').trim(), T = src.toUpperCase();
-    const held = src && assets.filter(divEligible).find(a=>a.name===src || divAssetKey(a)===T);
+    const src = (document.getElementById('cf_div_source')?.value||'').trim();
+    const held = src && assets.filter(divEligible).find(a=>a.name===src || divAssetKey(a)===normalizeTicker(src));
     if(held && !await iosConfirm({title:'보유 종목 배당', message:`${held.name} 배당은 지급일에 현금으로 자동 입금돼요. 여기서 또 넣으면 두 번 늘어나요.`, okText:'그래도 추가'})) return;
   }
   const nameRaw = readSelectOrCustom('cf_name','cf_name_custom', false);
@@ -6873,7 +6895,7 @@ const DIV_WHT = DT.DIV_WHT;
 const DIV_SHELTERED = DT.SHELTERED;
 const divAcctKey = a => DT.normAcct(a.acctType);
 const divTaxable = acct => !DT.isSheltered(acct);
-const divAssetKey = a => String(a.ticker).trim().toUpperCase();
+const divAssetKey = a => normalizeTicker(a.ticker);   // .KS 유무가 다른 같은 종목이 배당·세금 묶음에서 둘로 갈리지 않게
 const divHoldKey = a => `${divAssetKey(a)}|${divAcctKey(a)}|${a.company||''}`;
 const divLegacyAcct = a => DIV_SHELTERED.includes(a.acctType) ? a.acctType : 'general';   // 옛 화면의 계좌 키(직접 입력 이름은 general로 저장됐다)
 const divEligible = a => !!a && a.acctType!=='cash' && !a.isBond && !isCryptoAsset(a) && a.ticker && a.ticker!=='—' && a.quantity>0;
@@ -6986,7 +7008,7 @@ async function ensureDividendHistory(force){
   applyDividendAutoCash();   // 새 배당 이력으로 지급일이 지난 보유 종목 배당을 현금에 넣는다
   renderAllDividendViews();
 }
-const divKindOf = (ticker, name, cache) => { const t = (cache[String(ticker).trim().toUpperCase()]||{}).type; return t ? (t==='ETF' ? 'etf' : 'stock') : (DIV_ETF_RE.test(name||'') ? 'etf' : 'stock'); };
+const divKindOf = (ticker, name, cache) => { const t = (cache[normalizeTicker(ticker)]||{}).type; return t ? (t==='ETF' ? 'etf' : 'stock') : (DIV_ETF_RE.test(name||'') ? 'etf' : 'stock'); };
 const divDateStr = ts => DT.dateStr(ts);
 // 기록(r)이 이 보유 항목(a)의 것인지 — 티커·종목명·티커를 이름 칸에 적은 경우까지, 계좌·금융회사가 적혀 있으면 그것도 같아야 한다
 function divRecMatchesAsset(r, a){
@@ -8510,27 +8532,136 @@ function tradeMatchesAsset(r, asset){
    남아 같은 종목의 행마다 배지가 달랐다(예: 개인용국채 → 국채로 고쳐도 옛 행은 개인용국채).
    before = 변경 전 holdingAttrSnapshot(a), asset = 변경 후 자산. "바뀐 필드만" 덮어써서, 이력 행을 직접 수정해 둔 값이
    있어도 이번에 바뀌지 않은 필드는 그대로 보존한다. 매칭은 옛 금융회사+계좌유형 조합으로 해야 이력이 고아가 되지 않는다. */
-const HOLDING_ATTR_FIELDS = ['company','acctType','assetType','market'];
+const HOLDING_ATTR_FIELDS = ['company','acctType','assetType','market','ticker','currency'];
 function holdingAttrSnapshot(a){
-  return {company:a.company||null, acctType:a.acctType||null, assetType:a.assetType||null, market:a.market||null};
+  return {company:a.company||null, acctType:a.acctType||null, assetType:a.assetType||null, market:a.market||null, ticker:a.ticker||null, currency:a.currency||null};
 }
 function propagateHoldingAttrsToTradeLog(before, asset){
   const after = holdingAttrSnapshot(asset);
   const fields = HOLDING_ATTR_FIELDS.filter(f=>before[f]!==after[f]);
   if(!fields.length) return;
-  const matchAsset = {...asset, company:before.company, acctType:before.acctType};
-  const log = loadTradeLog();
+  const matchAsset = {...asset, company:before.company, acctType:before.acctType, ticker:before.ticker||asset.ticker};
+  const log = loadTradeLog(), fxAt = fields.includes('currency') ? divFxAt() : null;
   let changed = false;
   log.forEach(r=>{
     if((r.type==='buy'||r.type==='sell') && tradeMatchesAsset(r, matchAsset)){
+      // 통화를 고치면(KRW로 잘못 넣은 해외 종목 등) 원화 환산 금액·손익도 그 날 환율로 다시 — 체결가·수량은 그 통화 값 그대로
+      if(fxAt && (r.currency||'KRW')!==after.currency && r.price>0 && r.quantity>0){
+        const oldRate = r.totalKRW>0 ? r.totalKRW/(r.price*r.quantity) : 1, k = fxAt(after.currency, r.at).rate / oldRate;
+        r.totalKRW = Math.round((r.totalKRW||r.price*r.quantity)*k);
+        if(r.pnl!=null) r.pnl = Math.round(r.pnl*k);
+      }
       fields.forEach(f=>{ if((r[f]||null)!==after[f]){ r[f]=after[f]; changed=true; } });
     } else if(r.type==='dividend' && divRecMatchesAsset(r, matchAsset)){
       // 배당 기록도 같은 보유로 계속 짝지어지게(풀리면 같은 회차 자동 항목이 다시 생겨 현금이 두 번 들어갈 수 있다)
       if(fields.includes('company') && (r.company||null)!==after.company){ r.company = after.company; changed = true; }
       if(fields.includes('acctType') && r.acct && r.acct!==DT.normAcct(after.acctType)){ r.acct = DT.normAcct(after.acctType); changed = true; }
+      if(fields.includes('ticker') && r.ticker && r.ticker!=='—' && r.ticker!==after.ticker){ r.ticker = after.ticker; changed = true; }
     }
   });
   if(changed){ saveTradeLog(log); renderSoldHistory(); } // 매매이력 탭은 열려 있지 않아도 다시 그려 둬야 돌아왔을 때 옛 값이 안 보인다
+}
+
+/* ── 같은 종목 두 행 합치기 ──
+   티커(표기 차이 무시)·화면 필터 4개(투자시장·금융회사·계좌유형·자산유형)·통화가 모두 같으면 한 종목이다(PC.holdingKey).
+   매수 때 분류를 잘못 골라 따로 생긴 행을 연필로 고쳐 같게 만들어도 두 행으로 남던 문제(2026-11-03) — 수정·매도 폼 저장 뒤와
+   시작할 때(unifyHoldingData) 합친다. 사라지는 행 id를 쓰던 저장값(그래프 선택·스냅샷·배당 자동 입금 기록)은 남는 행 id로 옮긴다. */
+function remapAssetIds(drops){   // drops: Map(사라지는 id → 남는 id)
+  if(!drops.size) return;
+  let sel = false;
+  drops.forEach((keep, drop)=>{ if(selectedAssets.has(drop)){ selectedAssets.delete(drop); selectedAssets.add(keep); sel = true; } });
+  if(sel) saveChartSel();
+  const snaps = loadSnaps();
+  let n = 0;
+  drops.forEach((keep, drop)=>{ n += PC.mergeSnapIds(snaps, keep, drop); });
+  if(n) saveSnaps(snaps);
+  const ac = loadDivAutoCash(), done = {};   // 아직 자동 입금을 시작하지 않았으면 null
+  let acCh = false;
+  Object.keys(ac ? ac.done : {}).forEach(k=>{
+    const i = k.indexOf('|'), head = k.slice(0, i), nk = i > 0 && drops.has(head) ? drops.get(head) + k.slice(i) : k;
+    if(nk!==k) acCh = true;
+    if(!(nk in done)) done[nk] = ac.done[k];
+  });
+  if(acCh){ ac.done = done; saveDivAutoCash(ac); }
+  drops.forEach((keep, drop)=>{ if(chartDetailId===drop) chartDetailId = keep; if(editingId===drop) editingId = null; if(quickTradeId===drop) quickTradeId = null; });
+}
+// a와 같은 종목인 다른 행 — 배열에서 앞에 있는(먼저 만든) 행을 남긴다
+function sameHoldingOf(a){
+  const k = PC.holdingKey(a);
+  return k ? assets.find(x=>x!==a && PC.holdingKey(x)===k) : undefined;
+}
+function mergeIfSameHolding(a){
+  const other = sameHoldingOf(a);
+  if(!other) return a;
+  const [keep, drop] = assets.indexOf(other) < assets.indexOf(a) ? [other, a] : [a, other];
+  PC.mergeHolding(keep, drop);
+  assets = assets.filter(x=>x!==drop);
+  remapAssetIds(new Map([[drop.id, keep.id]]));
+  return keep;
+}
+
+/* 같은 종목인데 저장값만 달라 갈린 데이터를 한 형태로 — 시작할 때와 백업 복원 뒤마다(이미 정리돼 있으면 아무것도 안 바꾼다).
+   ① 직접입력 금융회사·투자시장·자산유형이 목록 이름과 같으면 목록 값으로(canonAttr)
+   ② 국내 티커 표기(.KS 유무·소문자)를 종목마다 하나로 — 접미사 있는 표기(.KS/.KQ, 많이 쓴 쪽)를 남긴다(코스닥이 .KS로 바뀌지 않게)
+   ③ 그 결과 같은 종목이 된 보유 행을 합친다 ④ 옛 티커·금융회사로 저장된 배당 제외·자동 입금·매입 환율 키와 배당 이력 캐시 키도 같은 형태로.
+   처음 바꿀 때 원본을 _premigration_unify로 남긴다. */
+function unifyHoldingData(){
+  try{
+    const rawA = localStorage.getItem(ASSETS_KEY), rawL = localStorage.getItem(TRADE_KEY);
+    const log = loadTradeLog();
+    let aCh = false, lCh = false;
+    const fixAttrs = r=>{ let c = false; ['company','market','assetType'].forEach(f=>{ if(r[f]){ const v = canonAttr(f, r[f]); if(v!==r[f]){ r[f] = v; c = true; } } }); return c; };
+    assets.forEach(a=>{ if(fixAttrs(a)) aCh = true; });
+    log.forEach(r=>{ if(fixAttrs(r)) lCh = true; });
+    // ② 티커 표기
+    const forms = new Map();   // 정규화 코드 → Map(표기 → 횟수)
+    const tk = x => x && x.ticker && x.ticker!=='—' ? x.ticker : null;
+    assets.concat(log).forEach(x=>{
+      const t = tk(x); if(!t) return;
+      const n = normalizeTicker(t), f = t.trim().toUpperCase();
+      if(!forms.has(n)) forms.set(n, new Map());
+      forms.get(n).set(f, (forms.get(n).get(f)||0) + 1);
+    });
+    const best = new Map();
+    forms.forEach((m, n)=>{
+      const list = [...m.entries()], suf = list.filter(([f])=>f!==n);
+      best.set(n, (suf.length ? suf : list).sort((a, b)=>b[1]-a[1])[0][0]);
+    });
+    assets.forEach(a=>{ const t = tk(a); if(t){ const b = best.get(normalizeTicker(t)); if(b!==t){ a.ticker = b; aCh = true; } } });
+    log.forEach(r=>{ const t = tk(r); if(t){ const b = best.get(normalizeTicker(t)); if(b!==t){ r.ticker = b; lCh = true; } } });
+    // ③ 같은 종목 행 합치기(현금·채권 제외)
+    const drops = new Map(), byKey = new Map();
+    assets.forEach(a=>{
+      const k = PC.holdingKey(a); if(!k) return;
+      const keep = byKey.get(k);
+      if(!keep){ byKey.set(k, a); return; }
+      PC.mergeHolding(keep, a); drops.set(a.id, keep.id);
+    });
+    if(drops.size){ assets = assets.filter(a=>!drops.has(a.id)); aCh = true; }
+    if(aCh || lCh){
+      if(localStorage.getItem(ASSETS_KEY+'_premigration_unify')===null && rawA!==null) localStorage.setItem(ASSETS_KEY+'_premigration_unify', rawA);
+      if(lCh && localStorage.getItem(TRADE_KEY+'_premigration_unify')===null && rawL!==null) localStorage.setItem(TRADE_KEY+'_premigration_unify', rawL);
+      if(lCh) saveTradeLog(log);
+      if(aCh) saveAssets();
+    }
+    remapAssetIds(drops);
+    // ④ 저장된 키 "티커|계좌|금융회사|…" — 티커는 접미사 없는 코드(divAssetKey), 금융회사는 목록 값
+    const fixKey = k=>{ const p = String(k).split('|'); if(p.length < 3) return k; p[0] = normalizeTicker(p[0]); p[2] = canonAttr('company', p[2]); return p.join('|'); };
+    const dis = loadDivDismiss(), dis2 = [...new Set(dis.map(fixKey))];
+    if(dis2.length!==dis.length || dis2.some((k, i)=>k!==dis[i])) localStorage.setItem(DIV_DISMISS_KEY, JSON.stringify(dis2));
+    const ac = loadDivAutoCash(), done = {};
+    let acCh = false;
+    Object.keys(ac ? ac.done : {}).forEach(k=>{ const nk = fixKey(k); if(nk!==k) acCh = true; if(!(nk in done)) done[nk] = ac.done[k]; });
+    if(acCh){ ac.done = done; saveDivAutoCash(ac); }
+    const ts = loadTaxSettings(), fx = {};
+    let tsCh = false;
+    Object.keys(ts.buyFx).forEach(k=>{ const nk = fixKey(k); if(nk!==k) tsCh = true; if(!(nk in fx)) fx[nk] = ts.buyFx[k]; });
+    if(tsCh){ ts.buyFx = fx; saveTaxSettings(ts); }
+    const dh = loadDivHist(), dh2 = {};
+    let dhCh = false;
+    Object.keys(dh).forEach(k=>{ const nk = normalizeTicker(k); if(nk!==k) dhCh = true; if(!dh2[nk] || (dh[k].at||0) > (dh2[nk].at||0)) dh2[nk] = dh[k]; });
+    if(dhCh) saveDivHist(dh2);
+  }catch(e){ console.warn('unifyHoldingData', e); }
 }
 // 이미 어긋나 있는 기존 이력을 현재 보유종목 기준으로 1회 맞춘다(속성·투자시장). 이름이 같은 현재 보유종목이 있고
 // 그 종목들의 값이 서로 일치할 때만 — 모호하거나 이미 정리·매도된 종목은 건드리지 않는다. 실행 전 원본을 백업해 둔다.
@@ -10407,6 +10538,7 @@ function restoreFromFile(event){
       triggerJsonDownload(buildBackupData(), `포트폴리오-복원전-${now.getFullYear()}-${p2(now.getMonth()+1)}-${p2(now.getDate())}-${p2(now.getHours())}${p2(now.getMinutes())}`);
 
       const result = applyBackupData(data);
+      unifyHoldingData();   // 옛 백업도 같은 종목 기준으로(파일 대조는 위에서 끝남)
       renderAll(); renderSnaps(); renderSoldHistory();
 
       const converted = result.rows.filter(r=>!r.sameAsFile).map(r=>r.label);
@@ -10892,6 +11024,7 @@ async function cmpFromHash(){
   renderBackupStamp();
   migrateSoldHistory();
   setTimeout(()=>privMaskSubtree(document.body), 0);
+  unifyHoldingData();   // 같은 종목이 저장값 차이(.KS 유무·직접입력 이름)로 갈린 행·이력을 한 형태로
   reconcileTradeLogAttrs();
   // 음수 현금은 보정하지 않는다 — 현금 기록보다 많이 사면 그만큼 음수로 남아 총자산이 그대로다. 다시 열 때 0으로 만들면 그 금액이 기록 없이 생겨 수익으로 잡힌다.
   renderAll();renderSnaps();renderSoldHistory();
