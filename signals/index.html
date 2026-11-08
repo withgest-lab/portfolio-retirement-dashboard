@@ -599,7 +599,23 @@
   .opinion .op-l1, .opinion .op-l2, .opinion .op-l3 { word-break: keep-all; text-wrap: balance; }
   .opinion .nw { white-space: nowrap; }
   .opinion .op-l3 b { font-variant-numeric: tabular-nums; }
-  /* 기간별 흐름: 기간 시작가 → 기간 최고가(오른 폭) → 지금(고점 대비), 결과(시작가 대비) — 상승 빨강·하락 파랑 */
+  /* 알아두실 점: 박스 오른쪽 아래 스위치(포트폴리오 .tgl-banner와 같은 모양, 이름 고정), 켜면 박스 안에 종목별 인사이트 */
+  .op-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .tgl-banner { display: inline-flex; align-items: center; gap: 7px; border: none; cursor: pointer; border-radius: 999px; box-sizing: border-box;
+    min-height: 26px; padding: 0 8px 0 11px; background: var(--surface-1); color: var(--text-secondary); font: inherit; font-size: 11.5px;
+    font-weight: 600; white-space: nowrap; transition: background .15s, color .15s; -webkit-tap-highlight-color: transparent; }
+  .tgl-banner .sw { width: 28px; height: 16px; border-radius: 999px; background: var(--fill-hover); position: relative; transition: .15s; flex-shrink: 0; }
+  .tgl-banner .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: .15s; }
+  .tgl-banner.on { background: var(--accent); color: #fff; }
+  .tgl-banner.on .sw { background: rgba(255,255,255,.35); }
+  .tgl-banner.on .sw::after { left: 14px; }
+  .op-notes { margin-top: 8px; padding-top: 8px; border-top: 0.5px solid var(--hairline); display: flex; flex-direction: column; gap: 5px; }
+  .op-notes[hidden] { display: none; }
+  .op-notes p { margin: 0; padding-left: 0.9em; text-indent: -0.9em; word-break: keep-all; text-wrap: balance; }
+  .op-notes p::before { content: "·"; display: inline-block; width: 0.9em; text-indent: 0; text-align: center; color: var(--text-muted); font-weight: 700; }
+  .card.fullscreen .tgl-banner { font-size: 13px; min-height: 30px; }
+  /* 기간별 흐름: 시작→최고(기간 시작가 → 기간 최고가), 최고→지금, 시작→지금(그 기간 결과) — 상승 빨강·하락 파랑 */
   .moves-block { margin-top: 12px; }
   .moves-table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
   .moves-table th { font-size: 12px; font-weight: 600; color: var(--text-muted); text-align: right; padding: 0 4px 4px; white-space: nowrap; }
@@ -725,19 +741,22 @@
     <div class="help-body">
       <div class="help-pane" data-pane="buy">
       <section>
-        <h3>맨 위 회색 박스 — "지금 살 때인가?"</h3>
+        <h3>맨 위 회색 박스 — 3분할 매수 기준 의견</h3>
         <div class="help-group">
-        <p>맨 앞 칩이 <b>지금 무엇을 검토할 때인지</b>, 그 옆이 이유, 둘째 줄이 근거 숫자, 셋째 줄이 <b>같은 구간에서 과거에 샀다면 1년 뒤 어땠는지</b>(평소와 비교)입니다. 매수 지시가 아니라 판단 자료이며 최종 판단은 직접 하세요.</p>
-        <p><b>적극 매수 검토</b> — 2단계 이상으로 깊고, 이 종목의 지난 날들 중 이보다 깊었던 날이 10% 이하(드문 깊이)이며, 급등 뒤 하락이 아님. <b>분할 매수 검토</b> — 2단계 이상이지만 이 종목엔 드물지 않은 깊이. <b>신중 · 급등 뒤 하락</b> — 2단계 이상인데 아직 1년 전보다 30% 넘게 높음(고점이 급등으로 부풀어 있어 같은 낙폭이라도 더 빠지기 쉬움). <b>관찰</b> — 1단계. <b>대기</b> — 평소 범위. <b>주의</b> — 과거 어떤 하락보다 깊음. <b>판단 보류</b> — 과거 하락 사례 5번 미만.</p>
-        <p class="note"><b>근거(2026-11 검증)</b> — 과거 매일, <b>그날까지의 자료만으로</b> 판단을 다시 내려 1년 뒤 결과를 셌습니다(148종목·약 20년). 1년 뒤 중앙값 / 손실 확률 / 6개월 안 15% 넘게 더 빠진 비율: 평소 +14% / 29% / 29%, <b>적극 매수 검토 +16% / 27% / 32%</b>, 분할 매수 검토 +13% / 32% / 33%, <b>신중 · 급등 뒤 +12% / 39% / 43%</b>, 관찰 +11% / 34% / 31%. 지수 ETF만 보면 적극 매수 검토가 +18% / 6%로 가장 뚜렷했고, 급등 뒤 하락은 -11% / 66%였습니다. 한국 개별주는 어떤 구간에서도 평소(손실 42%)와 비슷하거나 나빴습니다.</p>
-        <p class="note">적극 매수 검토여도 6개월 안에 15% 넘게 더 빠진 경우가 셋 중 하나였습니다 — 바닥을 맞히는 신호가 아니라 "평소보다 유리한 가격대"라는 뜻이니 나눠 사는 판단에 쓰세요. 지금 남아 있는 종목만으로 센 결과(망한 종목 제외)라 실제보다 좋게 나옵니다.</p>
+        <p>칩이 <b>지금 할 일</b>입니다 — <b>1차 매수 시작</b> · <b>2차 매수</b> · <b>3차 매수</b> · <b>더 기다리기</b> · 판단 보류. 옆 글이 이유, 둘째 줄이 3분할 가격(기다리기면 1차가 되는 조건), 셋째 줄이 <b>과거에 이럴 때 샀다면 1년 뒤</b> 어땠는지를 아무 때나 산 경우와 비교한 결과입니다. 매수 지시가 아니라 판단 자료이며 최종 판단은 직접 하세요.</p>
+        <p><b>1차</b> — 이번 하락에서 매수 판단이 처음 나온 날의 가격. 매수 판단은 2단계 이상(과거 조정 중 깊은 25%)이면서 급등 뒤가 아닐 때(1년 전 대비 +30% 이하), 또는 사상 최대 낙폭일 때입니다. 3분할은 1년 단위라, 하락이 1년 넘게 이어지면 1년마다 새 1차를 잡습니다. <b>2차·3차</b> — 과거 1차 신호 뒤 1년 안 최저점의 중앙값·하위 25% 지점입니다(묶음별, 그날까지 1년이 끝난 신호만): 지수 -8%·-14%, 미국ETF -12%·-23%, 미국주식 -8%·-20%, 한국주식 -17%·-30%, 일본주식 -13%·-23%. 1차 신호 뒤 1차가보다 3% 넘게 반등했는데 지금 매수 판단이 아니면 다시 기다리기입니다. <b>적극</b>은 드문 깊이(지난 날 중 이보다 깊었던 날 10% 이하)이면서 이 종목·묶음 과거가 아무 때나보다 뚜렷이 좋았을 때(1년 뒤 +3%p 이상, 손해 확률 3%p 이상 낮음)만 붙습니다.</p>
+        <p><b>더 기다리기</b> — 아직 2단계 전(흔한 깊이·얕은 조정)이거나, 2단계 이상이어도 1년 전보다 30% 넘게 높은 <b>급등 뒤 하락</b>(고점이 급등으로 부풀어 같은 낙폭이라도 더 빠지기 쉬움)일 때입니다. 급등 뒤 하락은 1년 전 기준가가 매일 뒤로 밀리므로 가격이 그대로여도 조건이 풀릴 수 있습니다(둘째 줄의 거래일). <b>판단 보류</b> — 과거 하락 사례 5번 미만.</p>
+        <p class="note"><b>낱말 뜻</b> — <b>아무 때나 산 경우</b>: 판단과 상관없이 매일 샀을 때(타이밍을 재지 않음)의 1년 뒤 중앙값. <b>손해 확률</b>: 1년 뒤 산 값보다 낮았던 비율(손실 금액이 아님). <b>하락 N번</b>: 그 판단이 나온 하락 중 1년 뒤 결과가 있는 횟수 — 5번 미만이면 비슷한 종목 묶음 값을 씁니다. 비교어는 차이가 3%p 안이면 "비슷", 밖이면 "나았음·못했음"입니다.</p>
+        <p class="note"><b>근거(2026-11 검증, 148종목·약 20년)</b> — 과거 매일 <b>그날까지의 자료만으로</b> 판단을 다시 내려 1년 뒤를 셌습니다. 1년 뒤 중앙값 / 손해 확률 / 6개월 안 15% 넘게 더 빠진 비율: 아무 때나 +14% / 29% / 28%, <b>드문 깊이 +16% / 27% / 33%</b>, 깊은 조정 +13% / 33% / 33%, <b>급등 뒤 하락 +12% / 39% / 42%</b>, 1단계 조정 +11% / 34% / 31%. 지수만 보면 드문 깊이가 +18% / 6%로 가장 뚜렷했습니다. 한국 개별주는 어떤 판단에서도 아무 때나(손해 42%)와 비슷하거나 나빴습니다.</p>
+        <p class="note"><b>3분할의 성격</b> — 1차 신호 날 한 번에 산 경우와 1/3씩 1차·2차·3차 가격에 나눠 산 경우(1년 안 못 채운 몫은 현금)의 1년 뒤: 한 번에 +14% · 손해 29% → 3분할 +8% · 21%(1차 신호 1,221번, 간격도 그날까지의 자료로). 2차는 절반, 3차는 4번 중 1번 정도만 체결되므로 <b>수익을 키우기보다 손해 확률·최악을 줄이는 방법</b>입니다. 한국 개별주는 3분할이 수익과 손해 모두 나았습니다. 지금 남아 있는 종목만으로 센 결과(망한 종목 제외)라 실제보다 좋게 나옵니다.</p>
+        <p class="note"><b>알아두실 점</b> — 박스 오른쪽 아래 스위치를 켜면 그 종목에 맞는 데이터 인사이트(기다린 비용, 산 뒤 더 빠진 비율, 2·3차 가격과 단계 선, 사례 쏠림, 3분할 결과)가 박스 안에 나옵니다. 기본은 꺼짐입니다.</p>
         </div>
       </section>
       <section>
         <h3>"기간별 흐름" 표는요?</h3>
         <div class="help-group">
-        <p>3개월·6개월·1년·3년마다 <b>그 기간 시작가 → 기간 중 최고가(오른 폭) → 지금(고점 대비)</b>, 그리고 <b>결과</b>(시작가 대비 지금)입니다. 예: 1년 +120% / 고점 대비 -30% / 결과 +54%는 "1년 동안 2.2배까지 올랐다가 30% 빠졌지만 아직 1년 전보다 54% 높다"는 뜻입니다.</p>
-        <p>깊이 떨어졌어도 결과가 크게 플러스면 급등분을 일부 돌려준 것뿐일 수 있습니다. 굵은 1년 행이 '급등 뒤 하락' 판단 기준입니다(1년 결과 +30% 초과).</p>
+        <p>3개월·6개월·1년·3년마다 <b>시작→최고</b>(그 기간 시작가에서 기간 중 최고가까지), <b>최고→지금</b>(최고가에서 지금까지), <b>시작→지금</b>(시작가 대비 지금 = 그 기간 결과)입니다. 세 값은 (1+시작→최고)×(1+최고→지금) = 1+시작→지금으로 이어집니다. 예: 1년 +120% / -30% / +54%는 "1년 동안 2.2배까지 올랐다가 30% 빠졌지만 아직 1년 전보다 54% 높다"는 뜻입니다.</p>
+        <p>깊이 떨어졌어도 시작→지금이 크게 플러스면 급등분을 일부 돌려준 것뿐일 수 있습니다. 굵은 1년 행이 '급등 뒤 하락' 기준입니다(1년 시작→지금 +30% 초과).</p>
         </div>
       </section>
       <section>
@@ -793,7 +812,7 @@
         <p><b>낙폭국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중("지금")입니다. 진행중 박스는 아래 점이 이번 저점, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 고르면 하늘색 테두리와 저점 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다.</p>
         <p><b>RSI·MFI</b> — 기준선(RSI 30, MFI 20) 아래가 과매도 구간입니다. 선택 기간이 3년 이하면 일·주·월봉, 3~15년이면 주봉, 15년 초과면 월봉만 보여줍니다(길수록 일봉이 빽빽해져 자동 전환).</p>
         <p><b>기간 버튼(1Y~ALL)</b> — 고른 기간이 카드 안의 가격·낙폭·RSI·MFI 차트에 모두 적용됩니다. 상승장·하락장이 언제 시작됐는지 보려면 10Y 이상으로 늘려 보세요. 보유 데이터보다 긴 기간은 흐리게 표시되며 선택할 수 없습니다.</p>
-        <p><b>과거 매수 판단별 결과</b> — 회색 박스의 판단을 과거 매일(그날까지의 자료만으로)에 적용했을 때 1년 뒤 중앙값·손실 확률·6개월 안 15% 넘게 더 빠진 비율입니다. 위는 이 종목, 아래는 비슷한 종목 묶음 전체입니다. 이 종목 사례(하락 횟수)가 5번 미만이면 회색 박스 셋째 줄은 묶음 값을 씁니다.</p>
+        <p><b>과거 매수 판단별 결과</b> — 판단(드문 깊이·깊은 조정·급등 뒤 하락·1단계 조정·사상 최대 낙폭)을 과거 매일(그날까지의 자료만으로)에 적용했을 때 1년 뒤 중앙값·손해 확률·6개월 안 15% 넘게 더 빠진 비율입니다. 위는 이 종목, 아래는 비슷한 종목 묶음 전체입니다. 이 종목 사례(1년 뒤 결과가 있는 하락)가 5번 미만이면 회색 박스 셋째 줄은 묶음 값을 씁니다.</p>
         <p><b>크게 보기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-expand"/></svg></b> — 카드를 전체 화면으로 열어 요약과 큰 차트를 봅니다. 오른쪽 위 "닫기"(또는 Esc)로 돌아옵니다.</p>
         </div>
       </section>
@@ -804,7 +823,7 @@
         <p><b>NEW</b> — 오늘 처음 발생한 알림 표시(텔레그램에도 같은 내용이 발송됩니다).</p>
         <p><b>데이터 부족</b> — 최근 상장 등으로 과거 낙폭 국면이 5개 미만이면 단계 판정을 생략합니다.</p>
         <p><b>필터 칩</b> — 분류 칩(미국지수·한국지수·미국ETF·한국ETF·미국주식·한국주식·일본주식·비트코인)은 여러 개를 함께 고를 수 있고, "모든분류"를 누르면 초기화됩니다. 미국지수는 S&amp;P500·나스닥100·다우·러셀2000 대표 ETF(SPY·QQQ·DIA·IWM), 한국지수는 코스피200·코스닥150 대표 ETF(KODEX 200·KODEX 코스닥150), 비트코인은 현물(코인베이스, 달러)과 미국 현물 ETF(IBIT)입니다. 단계 칩은 "1단계+"=1단계 이상, "3단계"=3단계만 보여줍니다.</p>
-        <p><b>정렬</b> — "분류순"은 위 분류 순서(같은 분류 안은 시가총액순), "매수판단순"은 적극 매수 검토 → 분할 → 신중 → 주의 → 관찰 → 대기 순입니다.</p>
+        <p><b>정렬</b> — "분류순"은 위 분류 순서(같은 분류 안은 시가총액순), "매수판단순"은 3차 매수 → 2차 → 1차 → 더 기다리기 → 판단 보류 순이고, 같은 상태 안은 판단이 깊은 순(드문 깊이 → 깊은 조정 → 급등 뒤 하락 → …)입니다.</p>
         </div>
       </section>
       <section>
@@ -2851,31 +2870,40 @@ function sellTimeframeBadgesHtml(tfSummary) {
 // ---- 의견 요약(카드 맨 위 2~3줄) ----
 // 매수는 전략 저장소가 정한 판단(t.buy)과 근거 숫자·과거 결과를, 매도는 천정 대비 낙폭 단계와 보강 신호를 정해진 규칙대로
 // 요약한다. 지시가 아니라 참고다.
-function opinionBox(kind, label, l1, l2, l3, more, hint) {
+function opinionBox(kind, label, l1, l2, l3, more, hint, foot) {
   return `<div class="opinion op-${kind}">
     <div class="op-head"><span class="op-chip">${escapeHtml(label)}${hint ? `<small> · ${escapeHtml(hint)}</small>` : ""}</span><span class="op-l1">${l1}</span></div>
-    <div class="op-l2">${l2}</div>
+    ${l2 ? `<div class="op-l2">${l2}</div>` : ""}
     ${l3 ? `<div class="op-l3${more ? " op-more" : ""}">${l3}${more ? ic("chevron") : ""}</div>` : ""}
+    ${foot || ""}
   </div>`;
 }
 
 // ---- 매수 판단("지금 살 때인가") ----
 // 판단은 전략 저장소(signal_bot/buy_view.py)가 정해 t.buy.tier로 준다: 낙폭 단계 + 시간상 드문 깊이 + 급등 뒤 하락 여부.
-// 칩은 행동(무엇을 검토할 때인가), 2줄은 근거 숫자, 3줄은 "같은 구간에서 과거에 샀다면"의 결과를 평소와 비교한다.
+// 카드 박스는 이 판단을 3분할 매수 의견(t.buy.plan → buyPlanOpinion)으로 보여준다. 아래 BUY_TIERS 칩·buyFacts·
+// buyEvidenceHtml은 plan이 없는 옛 scores.json(화면이 데이터보다 먼저 배포된 경우)에서만 쓴다.
 // 일봉 다이버전스·과매도는 2단계 이상에서 1년 뒤 결과를 바꾸지 못해(검증) 판단에 쓰지 않는다 — 배지로만 보여준다.
-// 칩 = 행동(무엇을 검토할 때인가), l1 = 짧은 이유. 칩과 l1, l1과 2줄 근거가 같은 낱말을 되풀이하지 않게 둔다.
 const BUY_TIERS = {
   strong:  { kind: "strong",  label: "적극 매수 검토", l1: "과거에 드문 깊이" },
   split:   { kind: "split",   label: "분할 매수 검토", l1: "깊지만 이 종목엔 드물지 않음" },
   hot:     { kind: "hot",     label: "신중", l1: "급등 뒤 하락" },
   record:  { kind: "caution", label: "주의", l1: "과거 사례가 없는 깊이" },
-  watch:   { kind: "watch",   label: "관찰", l1: "평소와 성과 차이 없던 구간" },
+  watch:   { kind: "watch",   label: "관찰", l1: "아무 때나와 성과 차이 없던 구간" },
   wait:    { kind: "wait",    label: "대기", l1: "매수 구간 아님" },
   unknown: { kind: "unknown", label: "판단 보류", l1: "과거 하락 사례 5번 미만" },
 };
+// 펼친 화면의 "과거 매수 판단별 결과" 표 행 이름 — 칩(할 일)이 아니라 판단이 나온 상황이다
+const TIER_NAME = { strong: "드문 깊이", split: "깊은 조정", hot: "급등 뒤 하락", watch: "1단계 조정", wait: "얕은 조정", record: "사상 최대 낙폭", unknown: "판단 보류" };
 const BUY_TIER_ORDER = ["strong", "split", "hot", "record", "watch", "wait", "unknown"];
 const BUY_GROUP_LABEL = { index: "지수", usETF: "미국ETF", krETF: "한국ETF", usStock: "미국주식", krStock: "한국주식", jpStock: "일본주식", crypto: "비트코인" };
-function buyTierRank(t) { const k = t.buy && t.buy.tier; const i = BUY_TIER_ORDER.indexOf(k); return i < 0 ? 99 : i; }
+// 매수판단순: 3차 > 2차 > 1차 > 더 기다리기 > 판단 보류, 같은 상태 안은 판단(tier) 순
+const PLAN_RANK = { t3: 0, t2: 1, t1: 2, wait: 3, unknown: 4 };
+function buyTierRank(t) {
+  const k = t.buy && t.buy.tier; const i = BUY_TIER_ORDER.indexOf(k); const tierRank = i < 0 ? 99 : i;
+  const p = t.buy && t.buy.plan;
+  return p ? (PLAN_RANK[p.state] ?? 9) * 100 + tierRank : tierRank;
+}
 
 // 수익률 표기: 10% 미만은 소수 한 자리, 그 이상은 정수(기간별 흐름 표·판단 박스 공통)
 function fmtMovePct(v) {
@@ -2912,7 +2940,7 @@ function buyFacts(t) {
   return out;
 }
 
-// 3줄: 같은 구간에서 과거에 샀다면(워크포워드) — 1년 뒤 중앙값·손실 확률(평소와 비교)·6개월 안 추가 하락·사례
+// 3줄(옛 데이터용): 같은 판단 날 과거에 샀다면(워크포워드) — 1년 뒤 중앙값·손해 확률(아무 때나 산 경우와 비교)·추가 하락·사례
 function buyEvidenceHtml(t) {
   const st = t.buy && t.buy.stats;
   if (!st || !st.tier || !st.base) return "";
@@ -2920,12 +2948,156 @@ function buyEvidenceHtml(t) {
   const src = st.src === "group"
     ? `${BUY_GROUP_LABEL[st.group] || ""} ${a.tickers || ""}종목 묶음 기준`
     : (t.buy.pct_from ? `비트코인 현물 하락 ${a.n_ep}번` : `이 종목 하락 ${a.n_ep}번`) + (st.few ? "(사례 적음)" : "");
-  return "같은 구간에서 샀다면 " + joinFacts([
-    `1년 뒤 <b>${fmtMovePct(a.med12)}</b>(평소 ${fmtMovePct(b.med12)})`,
-    `손실 <b>${fmtShare(a.loss)}</b>(평소 ${fmtShare(b.loss)})`,
+  return "같은 판단 날 샀다면 " + joinFacts([
+    `1년 뒤 <b>${fmtMovePct(a.med12)}</b>(아무 때나 ${fmtMovePct(b.med12)})`,
+    `손해 확률 <b>${fmtShare(a.loss)}</b>(${fmtShare(b.loss)})`,
     a.drop15 != null ? `6개월 안 -15%↓ ${fmtShare(a.drop15)}` : "",
     src,
   ]);
+}
+
+// ---- 3분할 매수 의견(t.buy.plan) ----
+// 엔진(signal_bot/buy_view.plan)이 상태·3분할 가격·근거·알아두실 점 숫자를 정하고 화면은 문장으로만 옮긴다.
+// 칩 = 지금 할 일, 1줄 = 이유(완결형), 2줄 = 3분할 가격(기다리기면 1차가 되는 조건), 3줄 = 과거에 이럴 때 샀다면 1년 뒤
+// (판단과 상관없이 매일 산 "아무 때나"와 비교). 낙폭 %·1년 결과는 가격 줄·기간별 흐름 표에 있으므로 박스에서 되풀이하지 않는다.
+const PLAN_CHIP = { t1: "1차 매수 시작", t2: "2차 매수", t3: "3차 매수", wait: "더 기다리기", unknown: "판단 보류" };
+const PLAN_WHY = {
+  strong: "드물게 깊은 하락", split: "깊은 조정에 들어옴", record: "과거 어떤 하락보다 깊음",
+  hot: "급등분을 되돌리는 중", watch: "흔한 깊이의 조정", wait: "아직 얕은 조정", rebound: "1차 신호 뒤 반등",
+};
+const NOTES_OPEN = new Set();   // 알아두실 점을 켠 종목 — 기본 꺼짐, 저장하지 않음(다시 그릴 때만 유지)
+
+// 받침이 있으면 a(이·은), 없으면 b(가·는) — 한글이 아닌 끝 글자(ETF 등)는 받침 없음으로 읽는다
+function josa(word, a, b) {
+  const c = word.charCodeAt(word.length - 1);
+  return c >= 0xac00 && c <= 0xd7a3 && (c - 0xac00) % 28 ? a : b;
+}
+function absPct(v) { return v == null ? "-" : fmtMovePct(-Math.abs(v)).slice(1); }
+// 숫자·%·괄호 바로 뒤의 조사("+17%로", "(+12%)보다", "24거래일")가 다음 줄로 떨어지지 않게 묶는다 —
+// keep-all은 글자끼리만 붙들고 기호 뒤는 끊는다(QQQ "+17%" / "로" 실측). 태그는 건드리지 않는다.
+function glue(s) { return s.replace(/([^\s<>]+?(?:%p?|\)|\d))([가-힣]+)/g, '<span class="nw">$1$2</span>'); }
+// 3분할 가격: 원·엔은 정수, 달러는 100 이상이면 정수·미만이면 소수 2자리
+function fmtLevel(v, t) {
+  if (v == null) return "-";
+  const cur = curSym(t.currency);
+  if (isWholeCur(t.currency)) return cur + Math.round(v).toLocaleString("ko-KR");
+  return cur + (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2));
+}
+
+// 2줄: 3분할 가격 — 1차가 났으면 1차 날짜·가격과 2·3차 가격, 기다리기면 1차가 되는 조건과 1차 대비 2·3차 간격
+function planPriceHtml(p, t) {
+  const lv = p.lv || {};
+  const sep = "&nbsp;· ";
+  if (p.state === "wait") {
+    const c = p.cond || {};
+    let first = "";
+    if (c.kind === "hot") first = `1차: ${fmtLevel(c.price, t)}까지 ${absPct(c.gap)} 더 하락하거나${c.days ? `, 가격 그대로면 약 ${c.days}거래일 뒤` : ""}`;
+    else if (c.kind === "stage2") first = `1차: 2단계 선 ${fmtLevel(c.price, t)}(${absPct(c.gap)} 더 하락)`;
+    else if (c.kind === "rebound") first = `1차가 ${fmtLevel(c.price, t)}(${absPct(c.gap)} 아래) 근처로 돌아오면 다시 검토`;
+    if (c.kind === "hot" && !c.days) first = first.replace(/하거나$/, "");
+    const later = c.kind === "rebound"
+      ? [nw(`2차 ${fmtLevel(lv.t2, t)}`), nw(`3차 ${fmtLevel(lv.t3, t)}`)]
+      : [nw(`2차 ${fmtMovePct(lv.s2)}`), nw(`3차 ${fmtMovePct(lv.s3)}(1차 대비)`)];
+    return glue(first) + sep + later.join(sep);
+  }
+  const head = nw(`1차 ${fmtDateFull((p.t1 || {}).date)} ${fmtLevel((p.t1 || {}).price, t)}`);
+  if (p.state === "t1") return [head, nw(`2차 ${fmtLevel(lv.t2, t)}(${fmtMovePct(lv.s2)})`), nw(`3차 ${fmtLevel(lv.t3, t)}(${fmtMovePct(lv.s3)})`)].join(sep);
+  if (p.state === "t2") return [head, nw(`2차 ${fmtLevel(lv.t2, t)} 도달`), nw(`3차 ${fmtLevel(lv.t3, t)}까지 ${fmtMovePct(lv.t3 / t.close - 1)}`)].join(sep);
+  return [head, nw(`2차 ${fmtLevel(lv.t2, t)}`), nw(`3차 ${fmtLevel(lv.t3, t)} 도달`)].join(sep);
+}
+
+// 3줄: 과거에 이럴 때 샀다면 1년 뒤 — 주어(이 종목 / 비슷한 묶음 / 묶음의 1차 신호)와 아무 때나 산 경우와의 비교어
+function planEvidenceHtml(p, t) {
+  const ev = p.ev;
+  if (!ev || !ev.base || !ev.cmp) return "";
+  const g = BUY_GROUP_LABEL[ev.group] || "같은 묶음";
+  const subj = ev.src === "anchor" ? `${g} 1차 신호 날 샀다면`
+    : ev.src === "group" ? `비슷한 ${g} ${nw(`${ev.tickers || ""}종목을`)} 이럴 때 샀다면`
+    : t.buy.pct_from ? "비트코인 현물을 이럴 때 샀다면" : "이 종목을 이럴 때 샀다면";
+  const [cmpP, cmpV] = { better: ["보다", "나았고"], worse: ["보다", "못했고"], same: ["와", "비슷했고"] }[ev.cmp.med];
+  const lossWord = { lower: "더 낮았음", higher: "더 높았음", same: "비슷했음" }[ev.cmp.loss];
+  const k = lossWord.lastIndexOf(" ");
+  const lossHead = k < 0 ? "" : lossWord.slice(0, k + 1), lossTail = lossWord.slice(k + 1);
+  const also = ev.cmp.med === "same" && ev.cmp.loss === "same" ? "도" : "은";
+  const cases = ev.src === "anchor" ? `1차 신호 ${ev.n}번` : `하락 ${ev.n}번${ev.few ? "(사례 적음)" : ""}`;
+  // 용어("아무 때나", "손해 확률")와 숫자+조사는 줄 사이로 갈라지지 않게 한 덩어리로 둔다
+  return `${subj} 1년 뒤 ${nw(`<b>${fmtMovePct(ev.med12)}</b>로`)} ${nw("아무 때나")} 산 ${nw(`경우(${fmtMovePct(ev.base.med12)})${cmpP}`)} ${cmpV}, `
+    + `${nw(`손해 확률${also}`)} ${nw(`<b>${fmtShare(ev.loss)}</b>로`)} ${lossHead}${nw(`${lossTail}(${fmtShare(ev.base.loss)})`)}&nbsp;· ${nw(cases)}`;
+}
+
+// 알아두실 점: 엔진이 준 숫자(plan.notes)에서 이 상태에 맞는 것만 4개까지 + 생존 편향 한 줄. 박스 3줄과 같은 말은 쓰지 않는다.
+function planNotes(p, t) {
+  const n = p.notes || {}, b = t.buy || {}, ev = p.ev || {};
+  const own = BUY_GROUP_LABEL[ev.group] || "이 묶음";
+  const g = p.lv && p.lv.src === "all" ? "전체 종목" : own;
+  const pc = fmtMovePct, sh = fmtShare;
+  const rare = b.days_deeper != null && b.days_deeper <= 0.10
+    ? `지난 ${Math.round(b.years)}년 중 이보다 깊었던 날 ${b.days_deeper < 0.01 && b.days_deeper > 0 ? "1% 미만" : sh(b.days_deeper)}` : "";
+  const c = {};
+  if (n.hot) {
+    const h = n.hot;
+    const pxTxt = h.sw_px == null ? "" : h.sw_px < -0.005 ? `그날 가격은 보통 ${absPct(h.sw_px)} 더 쌌음`
+      : h.sw_px > 0.005 ? `그날 가격은 보통 ${absPct(h.sw_px)} 더 비쌌음` : "그날 가격은 비슷했음";
+    if (h.sw_days != null) {
+      c.hotWait = `${h.missed <= 0.2 ? "기다린 비용은 작았음" : "기다리면 놓칠 수도 있음"}: 과거 이럴 때 기다렸다면 ${sh(h.sw)}는 보통 ${h.sw_days}거래일 뒤 매수 판단으로 바뀌었고(${pxTxt}), 그 전에 신고가로 회복해 놓친 경우는 ${sh(h.missed)}`;
+    }
+    c.hotDrop = `이럴 때 산 뒤 1년 안에 ${sh(h.m15)}가 15% 넘게 더 빠졌음(최저점은 보통 ${pc(h.m_med)}, 4번 중 1번은 ${pc(h.m_p25)} 아래)`;
+    if (rare) c.rareHot = `낙폭만 보면 드문 깊이(${rare})지만 1년 전보다 아직 30% 넘게 높아 매수 판단을 미룸`;
+  }
+  if (n.watch && p.why === "wait") {
+    c.watch = `1단계(${pc(n.watch.level)}, ${fmtLevel(n.watch.price, t)})까지 내려와도 1차가 아님: ${own}${josa(own, "이", "가")} 이 단계일 때 산 경우 1년 뒤 ${pc(n.watch.med12)}로 아무 때나(${pc(n.watch.base)})보다 못했음`;
+  }
+  if (n.drop15 != null) c.drop15 = `이럴 때 산 뒤 6개월 안에 15% 넘게 더 빠진 경우 ${sh(n.drop15)} → ${p.state === "t1" ? "2·3차" : "3차"} 몫을 남겨 두기`;
+  if (n.conf) {
+    const deep = n.conf.line === "p10";
+    c.conf = `${n.conf.lv === "t2" ? "2차" : "3차"} 가격이 이 종목 ${deep ? "3단계" : "2단계"} 선(${fmtLevel(n.conf.price, t)})과 거의 같음: 과거 조정 ${(t.percentiles || {}).count}번 중 ${deep ? "10%" : "25%"}만 이보다 깊었음`;
+  }
+  if (rare && p.why === "strong") c.rare = `${rare}뿐`;
+  const s = n.self || n.conc;
+  if (n.self) {
+    const bunched = s.top2 >= 0.8 && s.years.length === 2;
+    c.self = `이 종목만 보면 1년 뒤 ${pc(s.med12)}였지만 하락 ${s.n_ep}번뿐${bunched ? `이고 ${s.years.join("·")}년에 몰려 있어` : "이라"} 비슷한 종목 묶음으로 판단`;
+  } else if (n.conc) {
+    c.conc = `이 종목 사례가 ${s.years.join("·")}년 두 번의 하락에 몰려 있음(해당 날의 ${sh(s.top2)})`;
+  }
+  if (n.record) c.record = "과거 어떤 하락보다 깊어 3차 아래로도 빠질 수 있음";
+  if (p.lv && p.lv.src === "all") c.allSrc = `${own}${josa(own, "은", "는")} 1차 신호가 적어 2·3차 간격은 전체 종목 기준(1차 신호 ${p.lv.n}번)`;
+  if (n.no_edge && !(ev.src === "group" && ev.cmp && ev.cmp.med === "same")) {
+    c.noEdge = `${own}${josa(own, "은", "는")} 매수 판단 날도 1년 뒤 결과가 아무 때나 산 경우와 비슷했음: 판단보다 나눠 사기가 중요`;
+  }
+  if (n.ladder) {
+    // 3줄의 1차 신호 결과(전체 표본)와 숫자가 엇갈려 보이지 않게, 같은 표본(그날까지 간격을 정할 수 있었던 신호) 안의 차이(%p)로 쓴다
+    const L = n.ladder;
+    const dm = Math.round((L.lad - L.lump) * 100), dl = Math.round((L.lad_loss - L.lump_loss) * 100);
+    const medPart = dm < -1 ? `1년 뒤 수익은 ${-dm}%p 낮았지만` : dm > 1 ? `1년 뒤 수익은 ${dm}%p 높았고` : "1년 뒤 수익은 비슷했고";
+    const lossPart = dl < -1 ? `손해 확률${dm < -1 ? "도" : "은"} ${-dl}%p 낮았음` : dl > 1 ? `손해 확률은 ${dl}%p 높았음` : "손해 확률은 비슷했음";
+    const head = dm < -1 && dl < -1 ? "3분할은 수익보다 손해를 줄이는 방법" : dm > 1 && dl < -1 ? "3분할이 수익·손해 모두 나았음" : "3분할 결과";
+    c.ladder = `${head}: ${g} 1차 신호 때 한 번에 산 경우보다 ${medPart} ${lossPart}(비교 ${L.n}번, 2차 체결 ${sh(L.f2)}, 3차 ${sh(L.f3)})`;
+  }
+  const order = p.state === "wait"
+    ? (p.why === "hot" ? ["rareHot", "hotWait", "hotDrop", "self", "conc", "noEdge", "ladder"]
+      : p.why === "rebound" ? ["ladder", "noEdge"] : ["watch", "self", "conc", "noEdge", "ladder"])
+    : p.state === "t3" ? ["record", "rare", "self", "conc", "allSrc", "ladder"]
+    : ["rare", "drop15", "conf", "record", "self", "conc", "allSrc", "noEdge", "ladder"];
+  return order.map(k => c[k]).filter(Boolean).slice(0, 4)
+    .concat(["지금 남아 있는 종목만으로 센 결과라(망한 종목 제외) 실제보다 좋게 나옴"]);
+}
+
+// 알아두실 점 스위치(이름 고정, 켜면 파랑) + 내용 — 클릭은 문서 캡처 단계에서 받아 카드 펼침으로 번지지 않게 한다(wireNotesSwitch)
+function notesSwitchHtml(symb, notes) {
+  if (!notes.length) return "";
+  const on = NOTES_OPEN.has(symb);
+  return `<div class="op-foot"><button type="button" class="tgl-banner op-notes-sw${on ? " on" : ""}" role="switch" aria-checked="${on}" data-symb="${escapeHtml(symb)}">알아두실 점<span class="sw"></span></button></div>`
+    + `<div class="op-notes"${on ? "" : " hidden"}>${notes.map(s => `<p>${glue(s)}</p>`).join("")}</div>`;
+}
+
+function buyPlanOpinion(t) {
+  const p = t.buy.plan;
+  if (p.state === "unknown" || !PLAN_CHIP[p.state]) return opinionBox("unknown", PLAN_CHIP.unknown, "과거 하락 사례 5번 미만", "", "", false);
+  const kind = p.state === "wait" ? (p.why === "hot" ? "hot" : "wait") : (p.aggr ? "strong" : "split");
+  const why = p.why === "wait" && t.depth > -0.005 ? "신고가 부근" : (PLAN_WHY[p.why] || "");
+  return opinionBox(kind, PLAN_CHIP[p.state], escapeHtml(why), planPriceHtml(p, t), planEvidenceHtml(p, t), false,
+    p.aggr ? "적극" : "", notesSwitchHtml(t.symb, planNotes(p, t)));
 }
 
 function buyOpinion(t) {
@@ -2933,6 +3105,7 @@ function buyOpinion(t) {
     // 새 판단 데이터가 아직 없는 옛 scores.json(화면이 데이터보다 먼저 배포된 경우)
     return opinionBox("unknown", "판단 준비 중", "매일 07:30 갱신 뒤 판단이 표시됩니다", "", "", false);
   }
+  if (t.buy.plan) return buyPlanOpinion(t);
   const tier = BUY_TIERS[t.buy.tier] || BUY_TIERS.unknown;
   const f = buyFacts(t);
   let parts;
@@ -2945,8 +3118,8 @@ function buyOpinion(t) {
   return opinionBox(tier.kind, tier.label, tier.l1, l2, buyEvidenceHtml(t), false);
 }
 
-// 기간별 흐름: 3개월·6개월·1년·3년 — 기간 시작가 → 기간 최고가(오른 폭) → 지금(내린 폭), 결과(시작가 대비).
-// 1년 행은 '급등 뒤 하락' 판단 기준이라 굵게 둔다.
+// 기간별 흐름: 3개월·6개월·1년·3년 — 시작→최고(기간 시작가 → 기간 최고가), 최고→지금, 시작→지금(그 기간 결과).
+// 칸 이름은 출발점→도착점으로 쓴다("오른 폭/고점 대비/결과"는 고점 가격인지 변동폭인지 헷갈렸다). 1년 행은 '급등 뒤 하락' 기준이라 굵게.
 function movesTableHtml(t) {
   const mv = t.buy && t.buy.moves;
   if (!mv) return "";
@@ -2959,7 +3132,7 @@ function movesTableHtml(t) {
     }).join("");
   if (!rows) return "";
   return `<div class="moves-block">
-    <table class="moves-table"><thead><tr><th>기간별 흐름</th><th>오른 폭</th><th>고점 대비</th><th>결과</th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="moves-table"><thead><tr><th>기간</th><th>시작→최고</th><th>최고→지금</th><th>시작→지금</th></tr></thead><tbody>${rows}</tbody></table>
   </div>`;
 }
 
@@ -2972,13 +3145,13 @@ function buyPerfTableHtml(t, perf) {
     if (!sum || !sum.base) return "";
     const cls = v => (v == null ? "" : v >= 0 ? "up" : "down");
     const row = (k, s) => {
-      const label = `${(BUY_TIERS[k] || {}).label || k}${tagNow && k === cur ? ' <span class="now-tag">지금</span>' : ""}`;
+      const label = `${TIER_NAME[k] || k}${tagNow && k === cur ? ' <span class="now-tag">지금</span>' : ""}`;
       if (!s) return `<tr><td>${label}</td><td class="muted" colspan="4">사례 없음</td></tr>`;
       return `<tr${k === cur ? ' class="now"' : ""}><td>${label}</td><td>${sampleOf(s)}</td><td class="${cls(s.med12)}">${fmtMovePct(s.med12)}</td><td>${fmtShare(s.loss)}</td><td>${fmtShare(s.drop15)}</td></tr>`;
     };
     const rows = ["strong", "split", "hot", "watch", "record"].map(k => row(k, sum.tiers && sum.tiers[k])).join("");
-    return `<table class="sell-table buy-perf"><thead><tr><th>판단</th><th>사례</th><th>1년 뒤</th><th>손실</th><th>추가↓</th></tr></thead>
-      <tbody>${rows}<tr class="base"><td>평소(아무 날)</td><td>${baseSample(sum.base)}</td><td class="${cls(sum.base.med12)}">${fmtMovePct(sum.base.med12)}</td><td>${fmtShare(sum.base.loss)}</td><td>${fmtShare(sum.base.drop15)}</td></tr></tbody></table>`;
+    return `<table class="sell-table buy-perf"><thead><tr><th>판단</th><th>사례</th><th>1년 뒤</th><th>손해</th><th>추가↓</th></tr></thead>
+      <tbody>${rows}<tr class="base"><td>아무 때나</td><td>${baseSample(sum.base)}</td><td class="${cls(sum.base.med12)}">${fmtMovePct(sum.base.med12)}</td><td>${fmtShare(sum.base.loss)}</td><td>${fmtShare(sum.base.drop15)}</td></tr></tbody></table>`;
   };
   const g = perf.group || {};
   // 사례 = 그 판단이 나온 하락 횟수(묶음은 종목들의 합). 지금 판단은 두 표 모두 굵게, "지금" 표시는 위 표에만.
@@ -2988,7 +3161,7 @@ function buyPerfTableHtml(t, perf) {
       <div class="chart-label"><span class="ttl">과거 매수 판단별 결과</span> <span class="sub">· 그날까지의 자료로 판단했을 때(중앙값)</span></div>
       ${own ? `<div class="buy-perf-cap">${perf.src_symb ? "비트코인 현물(2015~)" : "이 종목"}</div>${own}` : ""}
       ${grp ? `<div class="buy-perf-cap">비슷한 ${BUY_GROUP_LABEL[g.name] || ""} ${g.base.tickers}종목 전체</div>${grp}` : ""}
-      <div class="sell-note">사례는 그 판단이 나온 하락 횟수, 손실은 1년 뒤 마이너스였던 비율, 추가↓는 6개월 안에 15% 넘게 더 빠진 비율입니다. 지금 남아 있는 종목만으로 센 결과라(망한 종목 제외) 실제보다 좋게 나오고, 사례가 적은 판단은 참고만 하세요.</div>
+      <div class="sell-note">사례는 그 판단이 나온 하락 중 1년 뒤 결과가 있는 횟수, 손해는 1년 뒤 산 값보다 낮았던 비율, 추가↓는 산 뒤 6개월 안에 15% 넘게 더 빠진 비율, 아무 때나는 판단과 상관없이 매일 샀을 때입니다. 지금 남아 있는 종목만으로 센 결과라(망한 종목 제외) 실제보다 좋게 나오고, 사례가 적은 판단은 참고만 하세요.</div>
     </div>`;
 }
 
@@ -3471,7 +3644,7 @@ function statsBlockHtml(t, opts) {
   const recovery = recoveryLineHtml(t.percentiles, t.buy && t.buy.pct_from);
   const badges = `${t.is_record_drawdown ? `<div class="record-badge">${ic("warning")}사상 최대 낙폭</div>` : ""}
     ${t.mdd_alert ? `<div class="mdd-badge">${ic("bell")}${escapeHtml(t.mdd_alert.label)}</div>` : ""}`;
-  // 기간별 흐름(오른 폭·고점 대비·결과)이 낙폭 경로를 숫자로 보여주므로 카드의 1년 낙폭 스파크는 뺐다(같은 경로는 펼친 화면의 큰 낙폭 차트).
+  // 기간별 흐름(시작→최고·최고→지금·시작→지금)이 낙폭 경로를 숫자로 보여주므로 카드의 1년 낙폭 스파크는 뺐다(같은 경로는 펼친 화면의 큰 낙폭 차트).
   // 새 데이터가 없는 옛 scores.json에서만 예전 스파크를 그대로 둔다.
   const moves = movesTableHtml(t);
   const spark = (skipSpark || moves) ? "" : `
@@ -3810,6 +3983,27 @@ async function init() {
   });
   mq.addEventListener("change", paint);
   paint();
+})();
+
+// 알아두실 점 스위치: 문서 캡처 단계에서 받아 카드 펼침·크게 보기 클릭으로 번지지 않게 막고,
+// 같은 종목 박스(그리드·신규 알림 배너·크게 보기)를 함께 맞춘다. 켠 종목은 NOTES_OPEN에만 둔다(저장 안 함).
+(function wireNotesSwitch() {
+  document.addEventListener("click", (e) => {
+    const sw = e.target.closest && e.target.closest(".op-notes-sw");
+    if (!sw) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const symb = sw.dataset.symb;
+    const on = !NOTES_OPEN.has(symb);
+    if (on) NOTES_OPEN.add(symb); else NOTES_OPEN.delete(symb);
+    document.querySelectorAll(`.op-notes-sw[data-symb="${CSS.escape(symb)}"]`).forEach(b => {
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", String(on));
+      const box = b.closest(".opinion");
+      const notes = box && box.querySelector(".op-notes");
+      if (notes) notes.hidden = !on;
+    });
+  }, true);
 })();
 
 (function wireTopbarPress() {
