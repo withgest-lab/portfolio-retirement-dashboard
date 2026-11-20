@@ -428,6 +428,9 @@
   .hist-now b.down { color: var(--loss); }
   .card.fullscreen .hist-now { font-size: 13.5px; }
   .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -0.05em; }
+  .ma-legend { display: inline-flex; margin-left: 6px; }
+  .ma-legend i { width: 12px; height: 2px; border-radius: 1px; background: var(--series-2); vertical-align: 0.25em; }
+  .chart-label .ma-key { color: var(--series-2); font-weight: 600; white-space: nowrap; }
 
   .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
   footer { text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 24px; }
@@ -833,7 +836,7 @@
       <section>
         <h3>카드를 펼치면 나오는 차트들은요?</h3>
         <div class="help-group">
-        <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다.</p>
+        <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
         <p><b>낙폭 추이</b> — 낙폭%를 시간순으로 그린 그래프입니다. 0%(신고가) 아래로 얼마나, 얼마나 오래 내려가 있었는지 보여줍니다. 기본은 회색이고, 아래 히스토그램에서 박스를 고르면 그 국면의 하락 구간은 빨강, 회복 구간은 초록으로 강조됩니다. 앰버 점선은 코로나19·2022 금리인상 같은 시장 전체 충격 시기, 또는 종목별 큰 낙폭(-25% 이상)의 조사된 원인이며 마우스를 올리면 설명이 나옵니다. 원인을 못 찾으면 "확인 안 됨"으로 표시했고 아직 조사 안 된 국면도 있으니 참고용으로만 보세요.</p>
         <p><b>낙폭국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중("지금")입니다. 진행중 박스는 아래 점이 이번 저점, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 고르면 하늘색 테두리와 저점 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다.</p>
         <p><b>RSI·MFI</b> — 기준선(RSI 30, MFI 20) 아래가 과매도 구간입니다. 선택 기간이 3년 이하면 일·주·월봉, 3~15년이면 주봉, 15년 초과면 월봉만 보여줍니다(길수록 일봉이 빽빽해져 자동 전환).</p>
@@ -1806,6 +1809,27 @@ function lineChartSvg(records, opts) {
   return `<svg viewBox="0 0 ${W} ${H}" class="detail-chart">${defs ? `<defs>${defs}</defs>` : ""}${body}</svg>`;
 }
 
+// 200일선: 200거래일 종가 단순 평균. 고른 기간이 아니라 전체 이력(약 20년)으로 계산해 날짜별로 붙인다 —
+// 1Y처럼 짧은 기간을 골라도 첫날부터 선이 이어진다. 결과는 원본 배열에 캐시(같은 배열은 다시 계산하지 않음).
+const MA_DAYS = 200;
+function withMa200(slice, full) {
+  if (!slice || !slice.length || !full || !full.length) return slice;
+  if (!full._ma200) {
+    const m = new Map(), q = [];
+    let sum = 0;
+    full.forEach(r => {
+      if (r.close == null) return;
+      q.push(r.close); sum += r.close;
+      if (q.length > MA_DAYS) sum -= q.shift();
+      if (q.length === MA_DAYS) m.set(r.date, sum / MA_DAYS);
+    });
+    full._ma200 = m;
+  }
+  return slice.map(r => ({ ...r, ma200: full._ma200.get(r.date) ?? null }));
+}
+const MA_SERIES = { key: "ma200", color: "var(--series-2)", width: 1.3 };
+const MA_LEGEND = `<span class="legend ma-legend"><span><i></i>200일선</span></span>`;
+
 function priceChartBlock(records, currency, eventMarkers, chartOpts) {
   const large = chartOpts && chartOpts.large;
   const W = (chartOpts && chartOpts.width) || 320;
@@ -1822,6 +1846,7 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
     nowFormat: v => fmtExactPrice(v, currency),
     series: [
       { key: "rolling_high", color: "var(--text-muted)", width: 1.2, dashed: true },
+      MA_SERIES,
       // split: 기간 시작가 위=초록(--gain), 아래=빨강(--loss) + 같은 색 그라데이션 - 포트폴리오 종목 가격 그래프와 동일.
       { key: "close", color: "var(--gain)", width: large ? 2.2 : 1.8, labelCurrent: true, split: true },
     ],
@@ -1829,7 +1854,7 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
     eventMarkers,
   });
   return `<div class="chart-block">
-    <div class="chart-label"><span class="ttl">가격</span> </div>
+    <div class="chart-label"><span class="ttl">가격</span> ${MA_LEGEND}</div>
     ${chart}
   </div>`;
 }
@@ -2419,7 +2444,7 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW) {
   const asOfDate = fullUnderwater.length ? fullUnderwater[fullUnderwater.length - 1].date : null;
   const maxDays = spanDays(fullUnderwater);
 
-  const priceSlice = sliceByPeriod(detail.daily, state.period);
+  const priceSlice = withMa200(sliceByPeriod(detail.daily, state.period), detail.daily);
   const underwaterSlice = sliceByPeriod(fullUnderwater, state.period);
   const events = computeDetailEvents(detail);
 
@@ -2460,7 +2485,7 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW) {
   // 오른쪽 여백은 끝점 옆 값 라벨이 통째로 들어가는 거터 크기 - 고정 문자열이 아니라 실제로 표시될 값들
   // (현재가·낙폭·RSI/MFI·P50/P25/P10·진행중 저점/지금)의 글자 폭으로 계산한다.
   const priceVals = [];
-  priceSlice.forEach(r => { if (r.close != null) priceVals.push(r.close); if (r.rolling_high != null) priceVals.push(r.rolling_high); });
+  priceSlice.forEach(r => { if (r.close != null) priceVals.push(r.close); if (r.rolling_high != null) priceVals.push(r.rolling_high); if (r.ma200 != null) priceVals.push(r.ma200); });
   const depthVals = underwaterSlice.map(r => r.depth).filter(v => v != null);
   const sharedLeft = Math.max(
     estimateLeftMargin(priceVals, v => fmtAxisPrice(v, t.currency), F.reg),
@@ -3495,7 +3520,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW) {
   const levels = sell.thresholds.levels;
   const n = Number(state.lookback);
   const series = sellSeries(detail, n);
-  const slice = sliceByPeriod(series, state.period);
+  const slice = withMa200(sliceByPeriod(series, state.period), series);
   const maxDays = spanDays(series);
   const domainStart = slice.length ? slice[0].date : (series[0] && series[0].date);
   const domainEnd = series.length ? series[series.length - 1].date : null;
@@ -3548,7 +3573,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW) {
   const upExtra = upH ? upH + F.reg + 8 : 0;
 
   const priceVals = [];
-  slice.forEach(r => { priceVals.push(r.close, r.rolling_high); });
+  slice.forEach(r => { priceVals.push(r.close, r.rolling_high); if (r.ma200 != null) priceVals.push(r.ma200); });
   const depthVals = slice.map(r => r.depth).concat(levels);
   const sharedLeft = Math.max(
     estimateLeftMargin(priceVals, v => fmtAxisPrice(v, t.currency), F.reg),
@@ -3621,6 +3646,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW) {
     yFormat: v => fmtAxisPrice(v, t.currency), nowFormat: v => fmtExactPrice(v, t.currency),
     series: [
       { key: "rolling_high", color: "var(--text-muted)", width: 1.2, dashed: true },
+      MA_SERIES,
       { key: "close", color: "var(--gain)", width: large ? 2.2 : 1.8, labelCurrent: true, split: true },
     ],
     markerKey: "divergence_bear", markerMinGap: 14, arrowSeriesKey: "close",
@@ -3663,7 +3689,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW) {
   return `
     <div class="detail-toolbar">${periodButtonsHtml(maxDays)}</div>
     <div class="chart-block">
-      <div class="chart-label"><span class="ttl">가격 · 돌파/천정</span> <span class="sub">· 점선=신고가 기준선 · ▲돌파 ▼천정</span></div>
+      <div class="chart-label"><span class="ttl">가격 · 돌파/천정</span> <span class="sub">· 점선=신고가 · <span class="ma-key">주황=200일선</span> · ▲돌파 ▼천정</span></div>
       ${priceChart}
     </div>
     <div class="chart-block">
