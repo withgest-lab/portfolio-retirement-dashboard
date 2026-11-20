@@ -3223,7 +3223,7 @@ function buyPlanOpinion(t) {
 function buyOpinion(t) {
   if (!t.buy) {
     // 새 판단 데이터가 아직 없는 옛 scores.json(화면이 데이터보다 먼저 배포된 경우)
-    return opinionBox("unknown", "판단 준비 중", "매일 07:30 갱신 뒤 판단이 표시됩니다", "", "", false);
+    return opinionBox("unknown", "판단 준비 중", "다음 갱신(미국장 마감 직후) 뒤 판단이 표시됩니다", "", "", false);
   }
   if (t.buy.plan) return buyPlanOpinion(t);
   const tier = BUY_TIERS[t.buy.tier] || BUY_TIERS.unknown;
@@ -4108,7 +4108,7 @@ async function init() {
     document.getElementById("meta-line").textContent =
       `기준일 ${fmtDateFull(DATA.as_of_date)}`;   // 종목 수는 아래 grid-count가 보여준다
     document.getElementById("footer").textContent =
-      "매일 한국시간 07:30 자동 갱신 · 조회/알림 전용 시스템(자동매매 없음) · " +
+      "평일 미국장 마감 직후(한국시간 06시대, 서머타임 05시대) 자동 갱신 · 조회/알림 전용 시스템(자동매매 없음) · " +
       "MDD/RSI/MFI/다이버전스는 참고 지표이며 최종 매수판단은 사용자가 직접 합니다";
     render();
     if (EMBED) { await embedOpen(URLQ.get("symb") || ""); postParent({ type: "kis:ready", symb: fullscreenSymb || URLQ.get("symb"), mode: state.mode }); }

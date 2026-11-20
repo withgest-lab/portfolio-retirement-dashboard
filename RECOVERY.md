@@ -8,17 +8,19 @@
 |---|---|---|
 | 포트폴리오·현금흐름·홈·**매매전략 화면**·나란히 비교·풀다운 | 이 저장소 (`portfolio-retirement-dashboard`) | `main`에 push → 자동 배포 |
 | 종목 추가, 신호 계산·알림 규칙, ETF 매칭 규칙(`signal_bot/proxies.py`) | 전략 저장소 (`kis-buy-signal`) | `main`에 push → 다음 매일 실행에 반영 |
-| 시세·신호 데이터 | 자동 (전략 저장소 `daily.yml`, 매일 GitHub 서버에서 실행) | 이 저장소 `deploy.yml`이 2시간마다 확인해 바뀌었으면 자동 배포 |
+| 시세·신호 데이터 | 자동 — 평일 미국 정규장 마감 직후(16:02 ET, 겨울 06:02·여름 05:02 KST) 전략 저장소 `us-close-timer.yml`이 `daily.yml`을 실행, 주말·대체 실행은 매일 07:30 KST 예약 | 이 저장소 `signals-watch.yml`이 새 데이터가 올라오는 즉시 배포(약 06:15 KST). `deploy.yml`도 2시간마다 확인(대체) |
 
 ```
-[전략 저장소 daily.yml: 시세→신호→텔레그램]
+[전략 저장소 us-close-timer.yml] 마감 몇 시간 전부터 여러 번 깨어나 16:02 ET까지 대기 → daily.yml 실행
+[전략 저장소 daily.yml: 16:04 ET까지 대기·SPY 확인 → 시세→신호→텔레그램]
         └─ data 브랜치에 scores.json + detail/*.json 발행
-                          │  (2시간마다 최신 커밋 확인 — 바뀌었을 때만)
+                          │  (signals-watch.yml: 마감 뒤 30초마다 확인 → 올라오면 바로 / deploy.yml: 2시간마다)
 [이 저장소 deploy.yml] ◀──┘
    화면(main) + 데이터 스냅샷 → 무결성 점검 통과 시에만 GitHub Pages 배포
 ```
 
 - 두 저장소를 잇는 것은 **공개 JSON 데이터뿐**이다. 비밀 토큰으로 서로를 호출하지 않는다.
+- GitHub 예약 실행은 몇 시간씩 밀린다(2026-11: 07:30 예약이 실제 11~13시 시작). 그래서 타이머·감시 워크플로는 마감 몇 시간 전부터 매시 깨어나고, 먼저 깨어난 것이 정해진 시각까지 기다린다(같은 저장소 실행은 `GITHUB_TOKEN`으로 가능, 공개 저장소라 대기 비용 없음).
 - 배포 직전 점검(`deploy.yml`의 *Validate strategy data*)이 실패하면 **직전 정상 배포가 그대로 유지**된다. 실패 메일이 오면 Actions 로그의 `::error::` 줄을 본다.
 - 어떤 데이터로 배포됐는지: `https://withgest-lab.github.io/portfolio-retirement-dashboard/signals/_source.json` (`data_sha`, `as_of_date`, `built_at`).
 
@@ -31,6 +33,7 @@
 | 전략 데이터(`data` 브랜치)가 깨졌다 | 전략 저장소 Actions → *KIS 매수신호 알림* → **Run workflow**. 끝나면 이 저장소 Actions → **Run workflow** |
 | MDD 기준 캐시 만료 | 자동 재수집(첫 실행은 10분 이상 걸릴 수 있음) |
 | 일일 실행이 실패했다 | 텔레그램에 "실행이 실패했습니다" 알림이 온다. 실행 기록 링크에서 어느 단계인지 확인 |
+| 아침에 매매전략이 안 바뀌었다 | 전략 저장소 Actions → *미국장 마감 타이머* 기록(대기·실행 요청 줄), 이 저장소 *매매전략 데이터 마감 직후 배포* 기록 확인. 급하면 *KIS 매수신호 알림* → **Run workflow** 뒤 이 저장소 *Deploy* → **Run workflow** |
 | 한국투자증권 키 만료·교체 | 전략 저장소 Settings → Secrets: `KIS_APP_KEY`, `KIS_APP_SECRET`, `KIS_ACCT_NO` 갱신 후 수동 실행 |
 | 텔레그램 봇 교체 | Secrets `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` 갱신 |
 | 시세 프록시(Cloudflare Worker) 장애 | `portfolio/cors-worker.js`를 Cloudflare Worker로 다시 배포하고 `portfolio/index.html`의 주소 갱신 |

@@ -1,0 +1,75 @@
+name: 매매전략 데이터 마감 직후 배포
+
+# 전략 저장소(kis-buy-signal)는 미국 정규장 마감 직후(16:02 ET — 겨울 06:02 KST, 여름 05:02 KST) us-close-timer.yml이
+# daily.yml을 실행해 data 브랜치에 새 데이터를 올린다(약 6~8분). 이 워크플로는 그 데이터가 올라오는 즉시 deploy.yml을
+# 실행한다 — deploy.yml의 2시간 간격 예약은 실제로 하루 3번꼴로만 돌아(2026-11) 몇 시간씩 늦었다.
+# GitHub 예약이 몇 시간씩 밀리므로 마감 몇 시간 전부터 여러 번 깨워 두고, 먼저 깨어난 것이 기다린다.
+# 같은 저장소의 workflow_dispatch는 GITHUB_TOKEN으로도 새 실행을 만든다(비밀값 불필요, 공개 저장소라 대기 비용 없음).
+on:
+  schedule:
+    # 평일(UTC) 12~20시 매시 17분 — 마감 4시간 안에 깨어난 것만 기다린다(대기 + 감시 90분이 job 한도 안)
+    - cron: "17 12-20 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+  contents: read
+
+# 한 번에 하나만 기다린다. 뒤에 깨어난 것은 대기열에서 기다리다 '이미 배포 실행됨'을 보고 끝난다.
+# deploy.yml의 동시 실행 그룹("pages")과는 따로라 기다리는 동안에도 push 배포는 막히지 않는다.
+concurrency:
+  group: signals-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - name: Deploy as soon as post-close strategy data lands
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'EOF'
+          import datetime as dt, json, os, subprocess, time, zoneinfo
+          ny = zoneinfo.ZoneInfo("America/New_York")
+          repo = os.environ["REPO"]
+          now = dt.datetime.now(ny)
+          target = now.replace(hour=16, minute=2, second=0, microsecond=0)   # 타이머가 daily.yml을 시작하는 시각
+          watch_end = target + dt.timedelta(minutes=90)
+
+          def gh(*a):
+              return subprocess.run(["gh", *a], check=True, capture_output=True, text=True).stdout
+
+          def deployed_since(t):
+              runs = json.loads(gh("run", "list", "-R", repo, "--workflow", "deploy.yml", "-L", "20", "--json", "createdAt"))
+              return any(dt.datetime.fromisoformat(r["createdAt"].replace("Z", "+00:00")) >= t for r in runs)
+
+          def data_time():
+              d = gh("api", "repos/withgest-lab/kis-buy-signal/commits/data", "--jq", ".commit.committer.date").strip()
+              return dt.datetime.fromisoformat(d.replace("Z", "+00:00"))
+
+          if now.weekday() >= 5:
+              print(f"뉴욕 {now:%a} — 장 없는 날"); raise SystemExit
+          wait = (target - now).total_seconds()
+          if wait > 4 * 3600:
+              print(f"뉴욕 {now:%H:%M} — 마감까지 {wait / 3600:.1f}시간, 나중에 깨어나는 것이 맡음"); raise SystemExit
+          if now > watch_end:
+              print("감시 시간(마감 뒤 90분)이 지남 — deploy.yml 정기 확인이 맡음"); raise SystemExit
+          if wait > 0:
+              print(f"뉴욕 {now:%H:%M:%S} — 16:02 ET까지 {wait / 60:.0f}분 대기"); time.sleep(wait)
+          while True:
+              try:
+                  landed = data_time() >= target
+              except Exception as e:
+                  print(f"data 브랜치 확인 실패({e}) — 다시 시도"); landed = False
+              if landed:
+                  if deployed_since(data_time()):
+                      print("새 데이터가 이미 배포됨"); raise SystemExit
+                  gh("workflow", "run", "deploy.yml", "-R", repo, "--ref", "main")
+                  print(f"새 데이터 확인 → deploy.yml 실행 요청 — 뉴욕 {dt.datetime.now(ny):%H:%M:%S}"); raise SystemExit
+              if dt.datetime.now(ny) > watch_end:
+                  print("마감 뒤 90분 안에 새 데이터가 없음 — 전략 저장소 daily.yml 실행 상태를 확인하세요"); raise SystemExit(1)
+              time.sleep(30)
+          EOF
