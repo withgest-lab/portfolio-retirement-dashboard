@@ -599,6 +599,21 @@
   .opinion .op-l1, .opinion .op-l2, .opinion .op-l3 { word-break: keep-all; text-wrap: balance; }
   .opinion .nw { white-space: nowrap; }
   .opinion .op-l3 b { font-variant-numeric: tabular-nums; }
+  /* 근거: 결론 한 줄 + 2칸 비교(줄마다 숫자 종류 하나 — 수익률 % / 손해·놓침 100번 중 N번). 값 열은 내용 폭, 나은 쪽만 굵게 */
+  .opinion .op-l2 { margin-top: 5px; }
+  .op-verdict { font-weight: 700; color: var(--text-primary); }
+  .op-verdict .op-vsub { font-weight: 500; color: var(--text-secondary); }
+  .ev-grid { display: grid; grid-template-columns: max-content max-content max-content; column-gap: 14px; row-gap: 1px;
+    justify-content: start; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .ev-grid .ev-col { font-size: 11px; color: var(--text-muted); text-align: right; white-space: nowrap; }
+  .ev-grid .ev-row { white-space: nowrap; color: var(--text-secondary); }
+  .ev-grid .ev-row b { color: var(--text-primary); font-weight: 600; }
+  .ev-grid .ev-row small { font-size: 11px; color: var(--text-muted); }
+  .ev-grid .ev-v { text-align: right; white-space: nowrap; color: var(--text-secondary); }
+  .ev-grid .ev-v.good { color: var(--text-primary); font-weight: 700; }
+  .ev-src { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .opinion .op-l3 { margin-top: 5px; }
+  .op-notes p b { font-weight: 600; }
   /* 알아두실 점: 박스 오른쪽 아래 스위치(포트폴리오 .tgl-banner와 같은 모양, 이름 고정), 켜면 박스 안에 종목별 인사이트 */
   .op-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
   .tgl-banner { display: inline-flex; align-items: center; gap: 7px; border: none; cursor: pointer; border-radius: 999px; box-sizing: border-box;
@@ -628,11 +643,21 @@
   .card.fullscreen .moves-table { font-size: 13.5px; }
   .buy-perf-cap { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin: 8px 0 2px; }
   .sell-table.buy-perf th, .sell-table.buy-perf td { white-space: nowrap; }
+  /* 값 열은 내용 폭(첫 열이 남는 폭), 머리는 두 줄(종류 / 단위)이라 아래 정렬 */
+  .sell-table.buy-perf th:not(:first-child), .sell-table.buy-perf td:not(:first-child) { width: 1%; padding-left: 16px; }
+  .sell-table.buy-perf td.muted { width: auto; }
+  .sell-table.buy-perf th { vertical-align: bottom; line-height: 1.25; }
+  .sell-table.buy-perf th small { font-size: 10.5px; font-weight: 400; }
   .sell-table.buy-perf tr.now td { font-weight: 700; color: var(--text-primary); }
   .sell-table.buy-perf tr.now td.up { color: var(--gain); }
   .sell-table.buy-perf tr.now td.down { color: var(--loss); }
-  .sell-table.buy-perf tr.base td { color: var(--text-secondary); }
+  .sell-table.buy-perf tr.few td { color: var(--text-muted); font-weight: 400; }
+  .sell-table.buy-perf tr.base td { color: var(--text-secondary); border-top: 1px solid var(--hairline); }
   .now-tag { font-size: 10.5px; font-weight: 700; color: var(--accent); }
+  .base-tag { font-size: 10.5px; font-weight: 600; color: var(--text-muted); }
+  .used-tag { font-size: 10.5px; font-weight: 700; color: var(--accent); }
+  .perf-sum { font-size: 12.5px; font-weight: 600; color: var(--text-primary); margin: 0 0 2px; word-break: keep-all; text-wrap: balance; line-height: 1.5; }
+  .card.fullscreen .perf-sum { font-size: 14px; }
   .op-watch .op-chip { background: var(--stage-1); color: var(--on-yellow); }
   .op-wait .op-chip, .op-ok .op-chip, .op-ref .op-chip, .op-unknown .op-chip { background: var(--fill); color: var(--text-secondary); }
   .op-caution .op-chip { background: var(--status-crit); }
@@ -2894,8 +2919,8 @@ const BUY_TIERS = {
   wait:    { kind: "wait",    label: "대기", l1: "매수 구간 아님" },
   unknown: { kind: "unknown", label: "판단 보류", l1: "과거 하락 사례 5번 미만" },
 };
-// 펼친 화면의 "과거 매수 판단별 결과" 표 행 이름 — 칩(할 일)이 아니라 판단이 나온 상황이다
-const TIER_NAME = { strong: "드문 깊이", split: "깊은 조정", hot: "급등 뒤 하락", watch: "1단계 조정", wait: "얕은 조정", record: "사상 최대 낙폭", unknown: "판단 보류" };
+// 펼친 화면의 "과거에 이런 하락에서 샀다면" 표 행 이름 — 칩(할 일)이 아니라 판단이 나온 상황이다
+const TIER_NAME = { strong: "드물게 깊은 하락", split: "깊은 조정", hot: "급등 뒤 하락", watch: "1단계 조정", wait: "얕은 조정", record: "사상 최대 낙폭", unknown: "판단 보류" };
 const BUY_TIER_ORDER = ["strong", "split", "hot", "record", "watch", "wait", "unknown"];
 const BUY_GROUP_LABEL = { index: "지수", usETF: "미국ETF", krETF: "한국ETF", usStock: "미국주식", krStock: "한국주식", jpStock: "일본주식", crypto: "비트코인" };
 // 매수판단순: 3차 > 2차 > 1차 > 더 기다리기 > 판단 보류, 같은 상태 안은 판단(tier) 순
@@ -2941,27 +2966,24 @@ function buyFacts(t) {
   return out;
 }
 
-// 3줄(옛 데이터용): 같은 판단 날 과거에 샀다면(워크포워드) — 1년 뒤 중앙값·손해 확률(아무 때나 산 경우와 비교)·추가 하락·사례
+// 3줄(옛 데이터용 — plan 없음): 같은 판단 날 과거에 샀다면 vs 아무 때나, 회색 박스와 같은 2칸 비교
 function buyEvidenceHtml(t) {
   const st = t.buy && t.buy.stats;
   if (!st || !st.tier || !st.base) return "";
   const a = st.tier, b = st.base;
-  const src = st.src === "group"
-    ? `${BUY_GROUP_LABEL[st.group] || ""} ${a.tickers || ""}종목 묶음 기준`
-    : (t.buy.pct_from ? `비트코인 현물 하락 ${a.n_ep}번` : `이 종목 하락 ${a.n_ep}번`) + (st.few ? "(사례 적음)" : "");
-  return "같은 판단 날 샀다면 " + joinFacts([
-    `1년 뒤 <b>${fmtMovePct(a.med12)}</b>(아무 때나 ${fmtMovePct(b.med12)})`,
-    `손해 확률 <b>${fmtShare(a.loss)}</b>(${fmtShare(b.loss)})`,
-    a.drop15 != null ? `6개월 안 -15%↓ ${fmtShare(a.drop15)}` : "",
-    src,
+  return evidenceGrid(["이럴 때", "아무 때나"], [
+    ["수익률", "1년 뒤", fmtMovePct(a.med12), fmtMovePct(b.med12), betterSide(a.med12, b.med12)],
+    ["손해", "100번 중", n100(a.loss), n100(b.loss), betterSide(a.loss, b.loss, true)],
   ]);
 }
 
 // ---- 3분할 매수 의견(t.buy.plan) ----
-// 엔진(signal_bot/buy_view.plan)이 상태·3분할 가격·근거·알아두실 점 숫자를 정하고 화면은 문장으로만 옮긴다.
-// 칩 = 지금 할 일, 1줄 = 이유(완결형), 2줄 = 3분할 가격(기다리기면 1차가 되는 조건), 3줄 = 과거에 이럴 때 샀다면 1년 뒤
-// (판단과 상관없이 매일 산 "아무 때나"와 비교). 낙폭 %·1년 결과는 가격 줄·기간별 흐름 표에 있으므로 박스에서 되풀이하지 않는다.
-// 추가 매수 보류(hold) = 매수 판단이지만 이 종목·묶음의 같은 판단 결과가 아무 때나보다 나빴음 — 칩이 3줄 근거와 반대로 말하지 않게
+// 엔진(signal_bot/buy_view.plan)이 상태·3분할 가격·근거 숫자를 정하고 화면은 옮기기만 한다.
+// 박스: 칩 = 지금 할 일, 옆 = 이유(완결형) / 근거 = 결론 한 줄 + 2칸 비교 / 가격 줄. 목표는 "지금 매수 타이밍인가"를 근거와 함께 읽게 하는 것.
+// 숫자 문법(2026-11-21 — 수익률과 확률이 같은 %라 헷갈렸다): %는 수익률(부호)에만, 확률은 "100번 중 N번", 가격 거리는 "N% 아래".
+// 2칸 비교의 상대: 매수·보류 = 아무 때나 산 경우(ev), 기다리기·급등 뒤 매수 = 기다렸다 1차 신호 날 산 경우(wv — 그 전에
+// 신고가가 오면 그날 산 것으로 셈). 낙폭 %·1년 결과는 가격 줄·기간별 흐름 표에 있으므로 박스에서 되풀이하지 않는다.
+// 추가 매수 보류(hold) = 매수 판단이지만 이 종목·묶음의 같은 판단 결과가 아무 때나보다 나빴음 — 칩이 근거와 반대로 말하지 않게
 const PLAN_CHIP = { t1: "1차 매수 시작", t2: "2차 매수", t3: "3차 매수", wait: "더 기다리기", hold: "추가 매수 보류", unknown: "판단 보류" };
 const PLAN_WHY = {
   strong: "드물게 깊은 하락", split: "깊은 조정에 들어옴", record: "과거 어떤 하락보다 깊음",
@@ -2986,135 +3008,196 @@ function fmtLevel(v, t) {
   if (isWholeCur(t.currency)) return cur + Math.round(v).toLocaleString("ko-KR");
   return cur + (v >= 100 ? Math.round(v).toLocaleString("en-US") : v.toFixed(2));
 }
+// 확률 → "N번"(100번 중). 0.4% 같은 작은 값은 "1번 미만"
+function n100(p) {
+  if (p == null) return "-";
+  const n = Math.round(p * 100);
+  return n === 0 && p > 0 ? "1번 미만" : `${n}번`;
+}
+// 거래일 → 사람 말(약 N주·N달)
+function tradingDaysText(d) {
+  if (d == null) return "";
+  if (d < 5) return `${d}거래일`;
+  return d < 22 ? `약 ${Math.round(d / 5)}주` : `약 ${Math.round(d / 21)}달`;
+}
+// 어느 쪽이 나은지(엔진 compare와 같은 3%p·3번 기준): 0 = a가 나음, 1 = b가 나음, -1 = 비슷. 손해는 적을수록 낫다.
+const EDGE = 0.03;
+function betterSide(a, b, lowerIsBetter) {
+  if (a == null || b == null) return -1;
+  const d = Math.round((lowerIsBetter ? b - a : a - b) * 10000) / 10000;
+  return d >= EDGE ? 0 : d <= -EDGE ? 1 : -1;
+}
 
-// 2줄: 3분할 가격 — 1차가 났으면 1차 날짜·가격과 2·3차 가격·기한(1년), 기다리기면 1차가 되는 조건과 1차 대비 2·3차 간격,
-// 보류면 근거가 생기는 다음 깊이(드문 깊이 선) 또는 "근거 없음"
+// 근거 2칸 비교 격자 — 줄마다 종류가 하나(수익률 % / 손해·놓침 100번 중 N번)라 숫자가 섞이지 않는다. 나은 쪽만 굵게.
+// rows = [[종류, 단위, 왼쪽 값, 오른쪽 값, betterSide 결과]]
+function evidenceGrid(cols, rows) {
+  const cell = (v, good) => `<span class="ev-v${good ? " good" : ""}">${v}</span>`;
+  return `<div class="ev-grid"><span></span><span class="ev-col">${cols[0]}</span><span class="ev-col">${cols[1]}</span>`
+    + rows.map(([kind, unit, a, b, side]) => `<span class="ev-row"><b>${kind}</b> <small>${unit}</small></span>${cell(a, side === 0)}${cell(b, side === 1)}`).join("")
+    + `</div>`;
+}
+function verdictHtml(head, sub) {
+  return `<div class="op-verdict">${head}${sub ? `<span class="op-vsub"> — ${sub}</span>` : ""}</div>`;
+}
+
+// 근거: 결론 한 줄 + 2칸 비교 + 출처. 기다리기·급등 뒤 매수는 wv(지금 vs 기다렸다), 그 밖은 ev(이럴 때 vs 아무 때나).
+// 1차 신호 뒤 반등은 1차가 이미 났으니 '1차까지 기다리기' 비교를 쓰지 않는다(엔진도 wv를 주지 않음).
+const useWait = p => !!p.wv && ((p.state === "wait" && p.why !== "rebound") || p.why === "hot");
+function planEvidenceHtml(p, t) {
+  if (useWait(p)) return waitEvidenceHtml(p, t);
+  const ev = p.ev;
+  if (!ev || !ev.base || !ev.cmp) return "";
+  const g = BUY_GROUP_LABEL[ev.group] || "같은 묶음";
+  const anchor = ev.src === "anchor";
+  const who = anchor ? "1차 신호 날" : "이럴 때";
+  const { med, loss } = ev.cmp;
+  let head, sub;
+  if (p.state === "hold") {
+    head = "매수 타이밍 근거 없음";
+    sub = med === "worse" ? `과거 ${who} 산 게 아무 때나보다 못했음` : `과거 ${who} 산 게 손해로 끝난 경우가 더 많았음`;
+  } else if (p.state === "wait") {
+    // 옛 데이터(wv 없음)의 기다리기: 지금 판단 날의 과거 결과를 아무 때나와 견준 사실만
+    head = `과거 ${who} 샀다면`;
+    sub = med === "better" ? "아무 때나보다 나았음" : med === "worse" ? "아무 때나보다 못했음" : "아무 때나와 비슷했음";
+  } else if (med === "better" && loss === "lower") {
+    head = "매수 타이밍 근거 있음"; sub = `과거 ${who} 산 게 수익률은 높고 손해는 적었음`;
+  } else if (med === "better" && loss === "higher") {
+    head = "매수 타이밍 근거 엇갈림"; sub = `과거 ${who} 산 게 수익률은 높았지만 손해도 많았음`;
+  } else if (med === "better") {
+    head = "매수 타이밍 근거 있음"; sub = `과거 ${who} 산 게 수익률이 높았음`;
+  } else if (loss === "lower") {
+    head = "매수 타이밍 근거 있음"; sub = `과거 ${who} 산 게 손해가 적었음`;
+  } else {
+    head = "매수 타이밍 근거 약함"; sub = `과거 ${who} 산 것과 아무 때나 산 게 비슷했음 — 나눠 사기로 손해를 줄이는 쪽`;
+  }
+  const grid = evidenceGrid([who, "아무 때나"], [
+    ["수익률", "1년 뒤", fmtMovePct(ev.med12), fmtMovePct(ev.base.med12), betterSide(ev.med12, ev.base.med12)],
+    ["손해", "100번 중", n100(ev.loss), n100(ev.base.loss), betterSide(ev.loss, ev.base.loss, true)],
+  ]);
+  const src = anchor ? [nw(`${g} 1차 신호 ${ev.n}번 기준`)]
+    : ev.src === "group" ? [nw(`비슷한 ${g} ${ev.tickers || ""}종목`), nw(`과거 하락 ${ev.n}번 기준`)]
+    : [nw(`${t.buy.pct_from ? "비트코인 현물" : "이 종목"} 과거 하락 ${ev.n}번 기준${ev.few ? "(사례 적음)" : ""}`)];
+  return verdictHtml(head, sub) + grid + `<div class="ev-src">${src.join("&nbsp;· ")}</div>`;
+}
+
+// 기다리기 근거: 지금 사면 vs 기다렸다 사면(1차 신호 날, 그 전에 신고가면 그날) — 묶음의 같은 판단 날 전체
+function waitEvidenceHtml(p, t) {
+  const w = p.wv, c = w.cmp || {};          // cmp = 기다린 쪽을 지금 사는 쪽과 견줌
+  const waitBetter = c.med === "better" || (c.med === "same" && c.loss === "lower");
+  let head, sub;
+  if (p.state === "wait") {
+    if (waitBetter) { head = "기다릴 근거 있음"; sub = c.med === "better" ? "과거엔 1차 신호까지 기다려 산 게 나았음" : "과거엔 기다려 산 게 손해가 적었음"; }
+    else if (c.med === "worse") { head = "기다릴 근거 약함"; sub = "과거엔 바로 산 게 나았음"; }
+    else { head = "지금 살 근거 없음"; sub = "과거엔 지금 사도 기다려 산 것보다 낫지 않았음"; }
+  } else {
+    head = "매수 타이밍 근거 있음";
+    sub = c.med === "worse" ? "과거엔 기다린 것보다 바로 산 게 나았음" : "과거엔 기다려도 나을 게 없었음";
+  }
+  const grid = evidenceGrid(["지금 사면", "기다렸다 사면"], [
+    ["수익률", "1년 뒤", fmtMovePct(w.now12), fmtMovePct(w.wait12), betterSide(w.now12, w.wait12)],
+    ["손해", "100번 중", n100(w.now_loss), n100(w.wait_loss), betterSide(w.now_loss, w.wait_loss, true)],
+    ["놓침", "100번 중", "-", n100(w.missed), -1],
+  ]);
+  const g = BUY_GROUP_LABEL[(p.ev || {}).group] || (p.lv && p.lv.src === "all" ? "전체 종목" : "같은 묶음");
+  const name = TIER_NAME[t.buy.tier] || "";
+  const src = [nw(`${g} ${name} 날 ${w.n.toLocaleString("ko-KR")}일 기준`), nw("놓침 = 1차 신호 전에 신고가")];
+  return verdictHtml(head, sub) + grid + `<div class="ev-src">${src.join("&nbsp;· ")}</div>`;
+}
+
+// 가격 줄: 1차가 났으면 1차 가격·날짜와 2·3차 가격·기한(1년), 기다리기면 1차가 되는 조건, 보류면 다시 볼 가격
 function planPriceHtml(p, t) {
   const lv = p.lv || {};
   const sep = "&nbsp;· ";
   if (p.state === "hold") {
     const c = p.cond || {};
     return c.kind === "rare"
-      ? glue(`1차 근거가 생기는 때: 드문 깊이 선 ${fmtLevel(c.price, t)}(${absPct(c.gap)} 더 하락)`)
+      ? glue(`다시 볼 가격 ${fmtLevel(c.price, t)}(지금보다 ${absPct(c.gap)} 아래 · 드물게 깊은 수준)`)
       : `낙폭 기준 추가 매수 근거 없음${sep}${nw("정기 적립만")}`;
   }
   if (p.state === "wait") {
     const c = p.cond || {};
     let first = "";
-    if (c.kind === "hot") first = `1차: ${fmtLevel(c.price, t)}까지 ${absPct(c.gap)} 더 하락하거나${c.days ? `, 가격 그대로면 약 ${c.days}거래일 뒤` : ""}`;
-    else if (c.kind === "stage2") first = `1차: 2단계 선 ${fmtLevel(c.price, t)}(${absPct(c.gap)} 더 하락)`;
-    else if (c.kind === "rebound") first = `1차가 ${fmtLevel(c.price, t)}(${absPct(c.gap)} 아래) 근처로 돌아오면 다시 검토`;
-    if (c.kind === "hot" && !c.days) first = first.replace(/하거나$/, "");
+    if (c.kind === "hot") first = `1차 시작 ${fmtLevel(c.price, t)}(지금보다 ${absPct(c.gap)} 아래)${c.days ? ` 또는 가격 그대로면 ${tradingDaysText(c.days)} 뒤` : ""}`;
+    else if (c.kind === "stage2") first = `1차 시작 ${fmtLevel(c.price, t)}(지금보다 ${absPct(c.gap)} 아래 · 깊은 조정)`;
+    else if (c.kind === "rebound") first = `1차 ${fmtLevel(c.price, t)}(지금보다 ${absPct(c.gap)} 아래) 근처로 돌아오면 다시 검토`;
     const later = c.kind === "rebound"
       ? [nw(`2차 ${fmtLevel(lv.t2, t)}`), nw(`3차 ${fmtLevel(lv.t3, t)}`)]
-      : [nw(`2차 ${fmtMovePct(lv.s2)}`), nw(`3차 ${fmtMovePct(lv.s3)}(1차 대비)`)];
-    return glue(first) + sep + later.join(sep);
+      : [nw(`2·3차는 1차보다 ${absPct(lv.s2)}·${absPct(lv.s3)} 아래`)];
+    return (first ? glue(first) + sep : "") + later.join(sep);
   }
-  const head = nw(`1차 ${fmtDateFull((p.t1 || {}).date)} ${fmtLevel((p.t1 || {}).price, t)}`);
-  // 기한: 3분할은 1년 단위 — 2·3차 가격이 그때까지 안 오면 남은 몫은 사지 않는다(알아두실 점에 체결률)
-  const until = (p.t1 || {}).until && p.state !== "t3" ? [nw(`기한 ${fmtDateFull(p.t1.until)}`)] : [];
-  if (p.state === "t1") return [head, nw(`2차 ${fmtLevel(lv.t2, t)}(${fmtMovePct(lv.s2)})`), nw(`3차 ${fmtLevel(lv.t3, t)}(${fmtMovePct(lv.s3)})`), ...until].join(sep);
-  if (p.state === "t2") return [head, nw(`2차 ${fmtLevel(lv.t2, t)} 도달`), nw(`3차 ${fmtLevel(lv.t3, t)}까지 ${fmtMovePct(lv.t3 / t.close - 1)}`), ...until].join(sep);
+  const t1 = p.t1 || {};
+  const head = nw(`1차 ${fmtLevel(t1.price, t)}(${fmtDateFull(t1.date)})`);
+  // 기한: 3분할은 1년 단위 — 2·3차 가격이 그때까지 안 오면 남은 몫은 사지 않는다(알아두실 점에 체결 횟수)
+  const until = t1.until && p.state !== "t3" ? [nw(`기한 ${fmtDateFull(t1.until)}`)] : [];
+  if (p.state === "t1") return [head, nw(`2차 ${fmtLevel(lv.t2, t)}(${absPct(lv.s2)} 아래)`), nw(`3차 ${fmtLevel(lv.t3, t)}(${absPct(lv.s3)} 아래)`), ...until].join(sep);
+  if (p.state === "t2") return [head, nw(`2차 ${fmtLevel(lv.t2, t)} 도달`), nw(`3차 ${fmtLevel(lv.t3, t)}(지금보다 ${absPct(lv.t3 / t.close - 1)} 아래)`), ...until].join(sep);
   return [head, nw(`2차 ${fmtLevel(lv.t2, t)}`), nw(`3차 ${fmtLevel(lv.t3, t)} 도달`)].join(sep);
 }
 
-// 3줄: 과거에 이럴 때 샀다면 1년 뒤 — 주어(이 종목 / 비슷한 묶음 / 묶음의 1차 신호)와 아무 때나 산 경우와의 비교어
-function planEvidenceHtml(p, t) {
-  const ev = p.ev;
-  if (!ev || !ev.base || !ev.cmp) return "";
-  const g = BUY_GROUP_LABEL[ev.group] || "같은 묶음";
-  const subj = ev.src === "anchor" ? `${g} 1차 신호 날 샀다면`
-    : ev.src === "group" ? `비슷한 ${g} ${nw(`${ev.tickers || ""}종목을`)} 이럴 때 샀다면`
-    : t.buy.pct_from ? "비트코인 현물을 이럴 때 샀다면" : "이 종목을 이럴 때 샀다면";
-  const [cmpP, cmpV] = { better: ["보다", "나았고"], worse: ["보다", "못했고"], same: ["와", "비슷했고"] }[ev.cmp.med];
-  const lossWord = { lower: "더 낮았음", higher: "더 높았음", same: "비슷했음" }[ev.cmp.loss];
-  const k = lossWord.lastIndexOf(" ");
-  const lossHead = k < 0 ? "" : lossWord.slice(0, k + 1), lossTail = lossWord.slice(k + 1);
-  const also = ev.cmp.med === "same" && ev.cmp.loss === "same" ? "도" : "은";
-  const cases = ev.src === "anchor" ? `1차 신호 ${ev.n}번` : `하락 ${ev.n}번${ev.few ? "(사례 적음)" : ""}`;
-  // 급등 뒤 하락에서 기다리는 근거는 1년 수익이 아니라 추가 하락 위험이다(기다려도 1년 수익은 나아지지 않았다 — 2026-11 점검)
-  if (p.state === "wait" && p.why === "hot" && ev.cmp.drop && ev.drop15 != null && ev.base.drop15 != null) {
-    const [dP, dV] = { more: ["보다", "많았"], less: ["보다", "적었"], same: ["와", "비슷했"] }[ev.cmp.drop];
-    const join = ev.cmp.drop === "more" && ev.cmp.med === "better" ? "지만" : "고";
-    const medTxt = { better: "나았음", worse: "못했음", same: "비슷했음" }[ev.cmp.med];
-    return `${subj} 6개월 안에 15% 넘게 더 빠진 경우가 ${nw(`<b>${fmtShare(ev.drop15)}</b>로`)} ${nw("아무 때나")} 산 ${nw(`경우(${fmtShare(ev.base.drop15)})${dP}`)} ${dV}${join}, `
-      + `1년 뒤는 ${nw(`<b>${fmtMovePct(ev.med12)}</b>로`)} ${nw(`${medTxt}(${fmtMovePct(ev.base.med12)})`)}&nbsp;· ${nw(cases)}`;
-  }
-  // 용어("아무 때나", "손해 확률")와 숫자+조사는 줄 사이로 갈라지지 않게 한 덩어리로 둔다
-  return `${subj} 1년 뒤 ${nw(`<b>${fmtMovePct(ev.med12)}</b>로`)} ${nw("아무 때나")} 산 ${nw(`경우(${fmtMovePct(ev.base.med12)})${cmpP}`)} ${cmpV}, `
-    + `${nw(`손해 확률${also}`)} ${nw(`<b>${fmtShare(ev.loss)}</b>로`)} ${lossHead}${nw(`${lossTail}(${fmtShare(ev.base.loss)})`)}&nbsp;· ${nw(cases)}`;
-}
-
-// 알아두실 점: 엔진이 준 숫자(plan.notes)에서 이 상태에 맞는 것만 4개까지 + 생존 편향 한 줄. 박스 3줄과 같은 말은 쓰지 않는다.
+// 알아두실 점: 이 종목·지금 할 일에 닿는 것만 [이름, 한 문장]으로 3개까지 + 생존 편향 한 줄. 박스 근거와 같은 숫자는 쓰지 않는다.
+// 방법론 검증 수(1,073번 등)·묶음 공통 문장은 도움말이 맡는다. 숫자 문법은 박스와 같다(확률 = 100번 중 N번).
 function planNotes(p, t) {
   const n = p.notes || {}, b = t.buy || {}, ev = p.ev || {};
   const own = BUY_GROUP_LABEL[ev.group] || "이 묶음";
   const g = p.lv && p.lv.src === "all" ? "전체 종목" : own;
-  const pc = fmtMovePct, sh = fmtShare;
-  const rare = b.days_deeper != null && b.days_deeper <= 0.10
-    ? `지난 ${Math.round(b.years)}년 중 이보다 깊었던 날 ${b.days_deeper < 0.01 && b.days_deeper > 0 ? "1% 미만" : sh(b.days_deeper)}` : "";
+  const pc = fmtMovePct;
+  const rareOk = b.days_deeper != null && b.days_deeper <= 0.10;
+  const deeper = b.days_deeper != null ? `지난 ${Math.round(b.years)}년 중 이보다 깊었던 날 100번 중 ${n100(b.days_deeper)}` : "";
   const c = {};
-  if (n.hot) {
-    const h = n.hot;
-    const pxTxt = h.sw_px == null ? "" : h.sw_px < -0.005 ? `그날 가격은 보통 ${absPct(h.sw_px)} 더 쌌음`
-      : h.sw_px > 0.005 ? `그날 가격은 보통 ${absPct(h.sw_px)} 더 비쌌음` : "그날 가격은 비슷했음";
-    if (h.sw_days != null) {
-      // 기다린 뒤 1년 수익도 함께 — 기다리는 이유가 수익이 아니라 추가 하락 위험이라는 것을 숫자로 보여 준다
-      const dw = h.wait12 != null && h.now12 != null ? h.wait12 - h.now12 : null;
-      const after = dw == null ? "" : dw >= 0.03 ? `, 그날 산 1년 뒤도 ${pc(h.wait12)}로 바로 산 경우(${pc(h.now12)})보다 나았음`
-        : `, 다만 그날 산 1년 뒤는 ${pc(h.wait12)}로 바로 산 경우(${pc(h.now12)})${dw <= -0.03 ? "보다 못해" : "와 비슷해"} 기다리는 이유는 수익보다 추가 하락 위험`;
-      c.hotWait = `${h.missed <= 0.2 ? "기다린 비용은 작았음" : "기다리면 놓칠 수도 있음"}: 과거 이럴 때 기다렸다면 ${sh(h.sw)}는 보통 ${h.sw_days}거래일 뒤 매수 판단으로 바뀌었고(${pxTxt}) ${sh(h.missed)}는 그 전에 신고가로 회복해 놓쳤음${after}`;
-    }
-    c.hotDrop = `이럴 때 산 뒤 1년 안에 ${sh(h.m15)}가 15% 넘게 더 빠졌음(최저점은 보통 ${pc(h.m_med)}, 4번 중 1번은 ${pc(h.m_p25)} 아래)`;
-    if (rare) c.rareHot = `낙폭만 보면 드문 깊이(${rare})지만 1년 전보다 아직 30% 넘게 높아 매수 판단을 미룸`;
+  if (rareOk && p.why === "strong") c.rare = ["드문 정도", deeper];
+  const ws = p.wv || n.hot;   // 옛 데이터는 notes.hot(같은 필드)
+  if (ws && ws.sw_days != null && p.why !== "rebound" && (p.state === "wait" || p.why === "hot")) {
+    const px = ws.sw_px == null ? "" : ws.sw_px < -0.005 ? `, 지금보다 ${absPct(ws.sw_px)} 싸게`
+      : ws.sw_px > 0.005 ? `, 지금보다 ${absPct(ws.sw_px)} 비싸게` : ", 비슷한 가격에";
+    c.wait = ["기다리면", `1차 신호는 보통 ${tradingDaysText(ws.sw_days)} 뒤${px} 왔음`];
   }
+  if (rareOk && b.tier === "hot") c.rareHot = ["깊이만 보면", `${deeper}이지만 1년 전보다 아직 30% 넘게 높음`];
   if (n.watch && p.why === "wait") {
-    c.watch = `1단계(${pc(n.watch.level)}, ${fmtLevel(n.watch.price, t)})까지 내려와도 1차가 아님: ${own}${josa(own, "이", "가")} 이 단계일 때 산 경우 1년 뒤 ${pc(n.watch.med12)}로 아무 때나(${pc(n.watch.base)})보다 못했음`;
+    c.watch = ["1단계까지 와도", `고점보다 ${absPct(n.watch.level)} 아래(${fmtLevel(n.watch.price, t)})까지는 1차가 아님 — ${own}${josa(own, "이", "가")} 이 단계일 때 산 1년 뒤 수익률은 ${pc(n.watch.med12)}로 아무 때나(${pc(n.watch.base)})보다 못했음`];
   }
-  if (n.drop15 != null) c.drop15 = `이럴 때 산 뒤 6개월 안에 15% 넘게 더 빠진 경우 ${sh(n.drop15)} → ${p.state === "t1" ? "2·3차" : "3차"} 몫을 남겨 두기`;
+  if ((p.state === "t1" || p.state === "t2") && p.t1 && p.t1.until && n.ladder) {
+    const L = n.ladder, until = fmtDateFull(p.t1.until);
+    c.fill = ["2·3차 가격", p.state === "t1"
+      ? `과거 1차 뒤 1년 안에 2차는 100번 중 ${n100(L.f2)}, 3차는 ${n100(L.f3)}만 왔음 — ${until}까지 안 오면 남은 돈은 현금`
+      : `과거 1차 뒤 1년 안에 3차는 100번 중 ${n100(L.f3)}만 왔음 — ${until}까지 안 오면 남은 돈은 현금`];
+  }
   if (n.conf) {
     const deep = n.conf.line === "p10";
-    c.conf = `${n.conf.lv === "t2" ? "2차" : "3차"} 가격이 이 종목 ${deep ? "3단계" : "2단계"} 선(${fmtLevel(n.conf.price, t)})과 거의 같음: 과거 조정 ${(t.percentiles || {}).count}번 중 ${deep ? "10%" : "25%"}만 이보다 깊었음`;
+    c.conf = [`${n.conf.lv === "t2" ? "2차" : "3차"} 가격 위치`, `이 종목 ${deep ? "3단계" : "2단계"} 선(${fmtLevel(n.conf.price, t)})과 거의 같음 — 과거 조정 ${(t.percentiles || {}).count}번 중 이보다 깊었던 건 100번 중 ${deep ? 10 : 25}번`];
   }
-  if (rare && p.why === "strong") c.rare = `${rare}뿐`;
+  if (n.record) c.record = ["더 깊어질 수 있음", "과거 어떤 하락보다 깊어 3차 아래로도 빠질 수 있음"];
   const s = n.self || n.conc;
   if (n.self) {
     const bunched = s.top2 >= 0.8 && s.years.length === 2;
-    c.self = `이 종목만 보면 1년 뒤 ${pc(s.med12)}였지만 하락 ${s.n_ep}번뿐${bunched ? `이고 ${s.years.join("·")}년에 몰려 있어` : "이라"} 비슷한 종목 묶음으로 판단`;
+    c.self = ["이 종목만 보면", `하락 ${s.n_ep}번뿐(1년 뒤 수익률 ${pc(s.med12)})${bunched ? `이고 ${s.years.join("·")}년에 몰려 있어` : "이라"} 비슷한 종목 묶음으로 판단`];
   } else if (n.conc) {
-    c.conc = `이 종목 사례가 ${s.years.join("·")}년 두 번의 하락에 몰려 있음(해당 날의 ${sh(s.top2)})`;
+    c.conc = ["사례 쏠림", `이 종목 사례가 ${s.years.join("·")}년 두 번의 하락에 몰려 있음(해당 날 100번 중 ${n100(s.top2)})`];
   }
-  if (n.record) c.record = "과거 어떤 하락보다 깊어 3차 아래로도 빠질 수 있음";
   if (p.lv && p.lv.src === "all") {
-    c.allSrc = p.lv.scaled
-      ? `${own}${josa(own, "은", "는")} 1차 신호가 적어 전체 종목 간격을 변동성만큼 넓힘(×${p.lv.scaled.toFixed(1)}, 2차 ${pc(p.lv.s2)} · 3차 ${pc(p.lv.s3)})`
-      : `${own}${josa(own, "은", "는")} 1차 신호가 적어 2·3차 간격은 전체 종목 기준(1차 신호 ${p.lv.n}번)`;
+    c.allSrc = ["2·3차 간격", p.lv.scaled
+      ? `${own}${josa(own, "은", "는")} 1차 신호가 적어 전체 종목 간격을 변동성만큼 넓혀 씀(1차보다 ${absPct(p.lv.s2)}·${absPct(p.lv.s3)} 아래)`
+      : `${own}${josa(own, "은", "는")} 1차 신호가 적어 전체 종목 간격을 씀`];
   }
-  // 못 채운 몫: 3분할은 1년 단위, 가격이 안 오면 사지 않는다(시간 기준으로 마저 사는 것보다 손해 확률·나쁜 경우가 작았다 — 도움말)
-  if ((p.state === "t1" || p.state === "t2") && p.t1 && p.t1.until && n.ladder) {
-    c.fill = `${p.state === "t1" ? "2·3차" : "3차"} 가격이 ${fmtDateFull(p.t1.until)}까지 안 오면 남은 몫은 사지 않음(현금): 과거 2차는 ${sh(n.ladder.f2)}, 3차는 ${sh(n.ladder.f3)}만 체결`;
-  }
-  if (n.hold) c.hold = "그날까지 근거가 나빴던 1차 신호는 실제로도 1년 뒤 +10%·손해 35%로, 근거가 비슷·나았던 신호(+16%·손해 23~27%)보다 못했음(1,073번 검증)";
+  if (n.hold) c.hold = ["근거가 약할 때", "이렇게 근거가 나빴던 1차 신호는 과거에도 1년 뒤 수익률 +10%로, 근거가 괜찮던 신호(+16%)보다 못했음"];
   if (n.no_edge && !(ev.src === "group" && ev.cmp && ev.cmp.med === "same")) {
-    c.noEdge = `${own}${josa(own, "은", "는")} 매수 판단 날도 1년 뒤 결과가 아무 때나 산 경우보다 낫지 않았음: 판단보다 나눠 사기가 중요`;
+    c.noEdge = ["타이밍보다 나눠 사기", `${own}${josa(own, "은", "는")} 매수 판단 날 산 1년 뒤도 아무 때나보다 낫지 않았음`];
   }
-  if (n.ladder) {
-    // 3줄의 1차 신호 결과(전체 표본)와 숫자가 엇갈려 보이지 않게, 같은 표본(그날까지 간격을 정할 수 있었던 신호) 안의 차이(%p)로 쓴다
+  if (n.ladder && (p.state === "t1" || p.state === "t2")) {
+    // 근거 격자의 숫자(전체 표본)와 엇갈려 보이지 않게, 같은 표본 안의 차이로 쓴다
     const L = n.ladder;
     const dm = Math.round((L.lad - L.lump) * 100), dl = Math.round((L.lad_loss - L.lump_loss) * 100);
-    const medPart = dm < -1 ? `1년 뒤 수익은 ${-dm}%p 낮았지만` : dm > 1 ? `1년 뒤 수익은 ${dm}%p 높았고` : "1년 뒤 수익은 비슷했고";
-    const lossPart = dl < -1 ? `손해 확률${dm < -1 ? "도" : "은"} ${-dl}%p 낮았음` : dl > 1 ? `손해 확률은 ${dl}%p 높았음` : "손해 확률은 비슷했음";
-    const head = dm < -1 && dl < -1 ? "3분할은 수익보다 손해를 줄이는 방법" : dm > 1 && dl < -1 ? "3분할이 수익·손해 모두 나았음" : "3분할 결과";
-    c.ladder = `${head}: ${g} 1차 신호 때 한 번에 산 경우보다 ${medPart} ${lossPart}(비교 ${L.n}번, 2차 체결 ${sh(L.f2)}, 3차 ${sh(L.f3)})`;
+    const medPart = dm < -1 ? `1년 뒤 수익률은 ${-dm}%p 낮았지만` : dm > 1 ? `1년 뒤 수익률은 ${dm}%p 높았고` : "1년 뒤 수익률은 비슷했고";
+    const lossPart = dl < -1 ? `손해는 100번 중 ${-dl}번 적었음` : dl > 1 ? `손해는 100번 중 ${dl}번 많았음` : "손해는 비슷했음";
+    c.ladder = ["나눠 사기", `${g} 1차 신호 때 한 번에 산 것보다 ${medPart} ${lossPart}`];
   }
   const order = p.state === "wait"
-    ? (p.why === "hot" ? ["rareHot", "hotWait", "hotDrop", "self", "conc", "noEdge", "ladder"]
-      : p.why === "rebound" ? ["ladder", "noEdge"] : ["watch", "self", "conc", "noEdge", "ladder"])
-    : p.state === "hold" ? ["hold", "self", "conc", "allSrc", "noEdge", "ladder"]
-    : p.state === "t3" ? ["record", "rare", "self", "conc", "allSrc", "ladder"]
-    : ["rare", "drop15", "fill", "conf", "record", "self", "conc", "allSrc", "noEdge", "ladder"];
-  return order.map(k => c[k]).filter(Boolean).slice(0, 4)
-    .concat(["지금 남아 있는 종목만으로 센 결과라(망한 종목 제외) 실제보다 좋게 나옴"]);
+    ? (p.why === "rebound" ? ["self", "conc", "noEdge"] : ["wait", "rareHot", "watch", "self", "conc", "noEdge"])
+    : p.state === "hold" ? ["hold", "rareHot", "self", "conc", "noEdge"]
+    : p.state === "t3" ? ["record", "rare", "self", "conc", "allSrc"]
+    : p.state === "t2" ? ["fill", "record", "conf", "self", "conc", "allSrc", "ladder"]
+    : ["rare", "wait", "fill", "conf", "record", "self", "conc", "allSrc", "noEdge", "ladder"];
+  const picked = order.map(k => c[k]).filter(Boolean).slice(0, 3);
+  return picked.length ? picked.concat([[null, "망한 종목은 빠진 결과라 실제보다 좋게 나옴"]]) : [];
 }
 
 // 알아두실 점 스위치(이름 고정, 켜면 파랑) + 내용 — 클릭은 문서 캡처 단계에서 받아 카드 펼침으로 번지지 않게 한다(wireNotesSwitch)
@@ -3122,7 +3205,7 @@ function notesSwitchHtml(symb, notes) {
   if (!notes.length) return "";
   const on = NOTES_OPEN.has(symb);
   return `<div class="op-foot"><button type="button" class="tgl-banner op-notes-sw${on ? " on" : ""}" role="switch" aria-checked="${on}" data-symb="${escapeHtml(symb)}">알아두실 점<span class="sw"></span></button></div>`
-    + `<div class="op-notes"${on ? "" : " hidden"}>${notes.map(s => `<p>${glue(s)}</p>`).join("")}</div>`;
+    + `<div class="op-notes"${on ? "" : " hidden"}>${notes.map(([name, s]) => `<p>${name ? `<b>${name}</b>: ` : ""}${glue(s)}</p>`).join("")}</div>`;
 }
 
 function buyPlanOpinion(t) {
@@ -3130,10 +3213,10 @@ function buyPlanOpinion(t) {
   if (p.state === "unknown" || !PLAN_CHIP[p.state]) return opinionBox("unknown", PLAN_CHIP.unknown, "과거 하락 사례 5번 미만", "", "", false);
   const buying = p.state === "t1" || p.state === "t2" || p.state === "t3";
   const kind = p.state === "hold" ? "hot" : p.state === "wait" ? (p.why === "hot" ? "hot" : "wait") : (p.aggr ? "strong" : "split");
-  // 급등 뒤 하락인데 이 종목·묶음 자료로는 추가 하락이 잦지 않았던 경우(엔진 hot_supported False)는 매수 판단으로 본다
   const why = p.why === "wait" && t.depth > -0.005 ? "신고가 부근"
-    : buying && p.why === "hot" ? "급등 뒤 하락이지만 추가 하락이 잦지 않았음" : (PLAN_WHY[p.why] || "");
-  return opinionBox(kind, PLAN_CHIP[p.state], escapeHtml(why), planPriceHtml(p, t), planEvidenceHtml(p, t), false,
+    : buying && p.why === "hot" ? "급등 뒤 하락" : (PLAN_WHY[p.why] || "");
+  // 근거(결론 + 2칸 비교)가 칩 바로 아래, 가격 줄은 그 아래
+  return opinionBox(kind, PLAN_CHIP[p.state], escapeHtml(why), planEvidenceHtml(p, t), planPriceHtml(p, t), false,
     p.aggr ? "적극" : "", notesSwitchHtml(t.symb, planNotes(p, t)));
 }
 
@@ -3173,32 +3256,76 @@ function movesTableHtml(t) {
   </div>`;
 }
 
-// 펼침·크게 보기: 판단별 과거 결과(이 종목 / 같은 묶음). 지금 판단 행은 굵게 + "지금".
-// 칸은 줄바꿈하지 않고(접힘 384에서도 한 줄), 열 이름 설명은 표 아래 한 줄이 맡는다. 묶음이 이 종목 하나뿐이면(비트코인) 묶음 표는 뺀다.
+// 펼침·크게 보기: 하락 종류별 과거 결과 — 박스와 같은 숫자 문법(수익률 %, 손해 100번 중 N번).
+// 결론 한 줄 → 박스가 쓴 표(판단에 씀·"지금")를 위에 → 다른 표. 칸 색은 아무 때나 대비(3%p·3번 — 엔진 compare와 같은 기준),
+// 사례 5번 미만 줄은 회색(엔진도 이런 줄은 판단에 안 씀). 사례 수 열은 "번"이 손해 횟수와 헷갈려 두지 않는다.
+// 묶음이 이 종목 하나뿐이면(비트코인) 묶음 표는 뺀다.
 function buyPerfTableHtml(t, perf) {
   if (!perf) return "";
   const cur = t.buy && t.buy.tier;
-  const table = (sum, sampleOf, baseSample, tagNow) => {
-    if (!sum || !sum.base) return "";
-    const cls = v => (v == null ? "" : v >= 0 ? "up" : "down");
-    const row = (k, s) => {
-      const label = `${TIER_NAME[k] || k}${tagNow && k === cur ? ' <span class="now-tag">지금</span>' : ""}`;
-      if (!s) return `<tr><td>${label}</td><td class="muted" colspan="4">사례 없음</td></tr>`;
-      return `<tr${k === cur ? ' class="now"' : ""}><td>${label}</td><td>${sampleOf(s)}</td><td class="${cls(s.med12)}">${fmtMovePct(s.med12)}</td><td>${fmtShare(s.loss)}</td><td>${fmtShare(s.drop15)}</td></tr>`;
-    };
-    const rows = ["strong", "split", "hot", "watch", "record"].map(k => row(k, sum.tiers && sum.tiers[k])).join("");
-    return `<table class="sell-table buy-perf"><thead><tr><th>판단</th><th>사례</th><th>1년 뒤</th><th>손해</th><th>추가↓</th></tr></thead>
-      <tbody>${rows}<tr class="base"><td>아무 때나</td><td>${baseSample(sum.base)}</td><td class="${cls(sum.base.med12)}">${fmtMovePct(sum.base.med12)}</td><td>${fmtShare(sum.base.loss)}</td><td>${fmtShare(sum.base.drop15)}</td></tr></tbody></table>`;
-  };
+  const p = (t.buy && t.buy.plan) || {};
+  const src = p.ev && p.ev.src;
+  // 박스 근거가 이 표의 줄인가(기다리기·급등 뒤 매수는 '지금 vs 기다렸다' 비교라 표 밖, 1차 신호 날 결과도 표 밖)
+  const boxUsesTable = !!p.ev && !useWait(p) && src !== "anchor";
   const g = perf.group || {};
-  // 사례 = 그 판단이 나온 하락 횟수(묶음은 종목들의 합). 지금 판단은 두 표 모두 굵게, "지금" 표시는 위 표에만.
-  const own = table(perf.self, s => `${s.n_ep}번`, b => `${Math.round(b.days / 252)}년`, true);
-  const grp = (g.base && g.base.tickers > 1) ? table(g, s => `${s.n_ep}번`, b => `${Math.round(b.days / 252)}년`, !own) : "";
+  const ownSum = perf.self && perf.self.base ? perf.self : null;
+  const grpSum = g.base && g.base.tickers > 1 ? g : null;
+  const primary = src === "group" && grpSum ? "group" : ownSum ? "self" : grpSum ? "group" : null;
+  if (!primary) return "";
+  const ROWS = ["strong", "split", "hot", "watch", "wait", "record"];
+  const few = s => s.n_ep != null && s.n_ep < 5;
+  const tone = side => (side === 0 ? "up" : side === 1 ? "down" : "");
+  let anyFew = false;
+  const table = (sum, isPrimary) => {
+    const b = sum.base;
+    const row = k => {
+      const s = sum.tiers && sum.tiers[k];
+      const isNow = isPrimary && k === cur;
+      const label = `${TIER_NAME[k] || k}${isNow ? ' <span class="now-tag">지금</span>' : ""}`;
+      if (!s) return `<tr><td>${label}</td><td class="muted" colspan="2">이런 하락 없었음</td></tr>`;
+      const f = few(s);
+      if (f) anyFew = true;
+      const cls = [isNow ? "now" : "", f ? "few" : ""].filter(Boolean).join(" ");
+      return `<tr${cls ? ` class="${cls}"` : ""}><td>${label}</td>`
+        + `<td class="${f ? "" : tone(betterSide(s.med12, b.med12))}">${fmtMovePct(s.med12)}</td>`
+        + `<td class="${f ? "" : tone(betterSide(s.loss, b.loss, true))}">${n100(s.loss)}</td></tr>`;
+    };
+    return `<table class="sell-table buy-perf"><thead><tr><th>언제 샀나</th><th>수익률<br><small>1년 뒤</small></th><th>손해<br><small>100번 중</small></th></tr></thead>`
+      + `<tbody>${ROWS.map(row).join("")}<tr class="base"><td>아무 때나 <span class="base-tag">비교 기준</span></td>`
+      + `<td>${fmtMovePct(b.med12)}</td><td>${n100(b.loss)}</td></tr></tbody></table>`;
+  };
+  const caps = {
+    self: ownSum ? (perf.src_symb ? "비트코인 현물(2015~)" : `이 종목 · 지난 ${Math.max(1, Math.round(ownSum.base.days / 252))}년`) : "",
+    group: grpSum ? `비슷한 ${BUY_GROUP_LABEL[g.name] || ""} ${g.base.tickers}종목` : "",
+  };
+  const sums = { self: ownSum, group: grpSum };
+  const blocks = [primary, primary === "group" ? "self" : "group"].filter(k => sums[k]).map((k, i) =>
+    `<div class="buy-perf-cap">${caps[k]}${i === 0 && boxUsesTable ? ' <span class="used-tag">판단에 씀</span>' : ""}</div>${table(sums[k], i === 0)}`);
+
+  // 결론 한 줄: 위 표에서 아무 때나보다 나았던/못했던 하락(사례 5번 이상만, 박스 비교어와 같은 기준)
+  const sp = sums[primary];
+  const subj = primary === "group" ? `비슷한 ${BUY_GROUP_LABEL[g.name] || "종목"}` : perf.src_symb ? "비트코인 현물" : "이 종목";
+  const better = [], worse = [];
+  let judged = 0;
+  ROWS.forEach(k => {
+    const s = sp.tiers && sp.tiers[k];
+    if (!s || few(s)) return;
+    judged++;
+    const m = betterSide(s.med12, sp.base.med12), l = betterSide(s.loss, sp.base.loss, true);
+    if (m === 1 || (m === -1 && l === 1)) worse.push(nw(TIER_NAME[k]));
+    else if ((m === 0 && l !== 1) || (m === -1 && l === 0)) better.push(nw(TIER_NAME[k]));
+  });
+  const tp = subj + josa(subj, "은", "는");
+  const summary = !judged ? `${tp} 사례가 적어 하락 종류별로 나눠 보기 어려움`
+    : better.length && worse.length ? `${tp} ${better.join("·")} 때 산 게 아무 때나보다 나았고, ${worse.join("·")} 때는 못했음`
+    : better.length ? `${tp} ${better.join("·")} 때 산 게 아무 때나보다 나았음`
+    : worse.length ? `${tp} ${worse.join("·")} 때 산 게 아무 때나보다 못했고, 나았던 하락은 없었음`
+    : `${tp} 어떤 하락에서 사도 아무 때나와 비슷했음`;
   return `<div class="chart-block">
-      <div class="chart-label"><span class="ttl">과거 매수 판단별 결과</span> <span class="sub">· 그날까지의 자료로 판단했을 때(중앙값)</span></div>
-      ${own ? `<div class="buy-perf-cap">${perf.src_symb ? "비트코인 현물(2015~)" : "이 종목"}</div>${own}` : ""}
-      ${grp ? `<div class="buy-perf-cap">비슷한 ${BUY_GROUP_LABEL[g.name] || ""} ${g.base.tickers}종목 전체</div>${grp}` : ""}
-      <div class="sell-note">사례는 그 판단이 나온 하락 중 1년 뒤 결과가 있는 횟수, 손해는 1년 뒤 산 값보다 낮았던 비율, 추가↓는 산 뒤 6개월 안에 15% 넘게 더 빠진 비율, 아무 때나는 판단과 상관없이 매일 샀을 때입니다. 지금 남아 있는 종목만으로 센 결과라(망한 종목 제외) 실제보다 좋게 나오고, 사례가 적은 판단은 참고만 하세요.</div>
+      <div class="chart-label"><span class="ttl">과거에 이런 하락에서 샀다면</span> <span class="sub">· 산 뒤 1년</span></div>
+      <div class="perf-sum">${summary}</div>
+      ${blocks.join("")}
+      <div class="sell-note">${anyFew ? "회색 줄은 과거 사례 5번 미만이라 참고만 · " : ""}초록은 아무 때나보다 나았던 칸, 빨강은 못했던 칸 · 망한 종목은 빠진 결과라 실제보다 좋게 나옴</div>
     </div>`;
 }
 
