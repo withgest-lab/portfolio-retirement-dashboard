@@ -431,14 +431,6 @@
   .ma-legend { display: inline-flex; margin-left: 6px; }
   .ma-legend i { width: 12px; height: 2px; border-radius: 1px; background: var(--series-2); vertical-align: 0.25em; }
   .chart-label .ma-key { color: var(--series-2); font-weight: 600; white-space: nowrap; }
-  /* 연준 기준금리 띠: 가격 그래프 바로 아래, 같은 날짜 축(빨강 = 1년 새 오른 폭, 파랑 = 내린 폭) */
-  .rate-label { font-size: 11.5px; color: var(--text-secondary); margin: 4px 0 0; word-break: keep-all; text-wrap: balance; line-height: 1.45; }
-  .rate-label .rate-ttl { font-weight: 600; color: var(--text-primary); }
-  .rate-label .nw { white-space: nowrap; }
-  .rate-label i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 3px 0 2px; vertical-align: -0.05em; opacity: .72; }
-  .rate-label i.up { background: var(--price-up); }
-  .rate-label i.down { background: var(--price-down); margin-left: 6px; }
-  .card.fullscreen .rate-label { font-size: 13px; }
 
   .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
   footer { text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 24px; }
@@ -782,9 +774,9 @@
         <div class="help-group">
         <p>칩이 <b>지금 할 일</b>입니다 — <b>1차 매수 시작</b> · <b>2차 매수</b> · <b>3차 매수</b> · <b>더 기다리기</b> · <b>추가 매수 보류</b> · 판단 보류. 옆 글이 이유입니다. 그 아래가 <b>근거</b>: 첫 줄이 결론(<b>매수 타이밍 근거 있음/없음</b>, 기다리기면 <b>기다릴 근거 있음</b> 또는 <b>지금 살 근거 없음</b>), 작은 표가 그 숫자입니다 — 매수·보류 카드는 <b>이럴 때 샀다면 vs 아무 때나 샀다면</b>, 기다리기 카드는 <b>지금 사면 vs 기다렸다 사면</b>. 나은 쪽 숫자가 굵게 보입니다. 맨 아래 줄이 3분할 가격(기다리기·보류면 1차가 되는 가격)입니다. 칩은 근거와 반대로 말하지 않습니다. 매수 지시가 아니라 판단 자료이며 최종 판단은 직접 하세요.</p>
         <p><b>숫자 읽는 법</b> — <b>%는 수익률만</b>(예: 1년 뒤 +23%), <b>"100번 중 N번"은 그런 일이 있었던 횟수</b>(예: 손해 100번 중 17번 = 그런 날 100번 샀다면 17번은 1년 뒤 산 값보다 낮았음), 가격 거리는 <b>"N% 아래"</b>(예: 2차 ¥7,461(14% 아래) = 1차보다 14% 낮은 가격)로 씁니다.</p>
-        <p><b>3분할 진행 기준</b> — <b>1차</b>: 이번 하락에서 매수 판단이 처음 나온 날의 가격. 매수 판단은 2단계 이상(과거 조정 중 깊은 25%)이면서 급등 뒤가 아닐 때(1년 전 대비 +30% 이하), 또는 사상 최대 낙폭일 때입니다. <b>2차·3차</b>: 과거 1차 신호 뒤 1년 안 최저점의 중앙값·하위 25% 지점입니다(묶음별, 그날까지 1년이 끝난 신호만 — 지수 -8%·-14%, 미국ETF -12%·-23%, 미국주식 -8%·-20%, 한국주식 -17%·-30%, 일본주식 -14%·-24%). 그래서 2차는 100번 중 50번쯤, 3차는 25번쯤 체결됩니다. <b>기한 1년</b>: 2·3차 가격이 1년 안에 안 오면 남은 몫은 사지 않고 현금으로 둡니다(하락이 1년 넘게 이어지면 새 1차). 1차 신호 뒤 1차가보다 3% 넘게 반등했는데 지금 매수 판단이 아니면 다시 기다리기입니다. <b>적극</b>은 드물게 깊은 하락(지난 날 100번 중 이보다 깊었던 날이 10번 이하)이면서 이 종목·묶음 과거가 아무 때나보다 뚜렷이 좋았을 때(1년 뒤 수익률 3%p 이상 높고, 손해가 100번 중 3번 이상 적음)만 붙습니다.</p>
+        <p><b>3분할 진행 기준</b> — <b>1차</b>: 이번 하락에서 매수 판단이 처음 나온 날의 가격. 매수 판단은 2단계 이상(과거 조정 바닥 중 깊은 25%)이면서 <b>지난 날 중 이보다 깊었던 날이 100번 중 25번 이하</b>(시간상 드문 편)이고 급등 뒤가 아닐 때(1년 전 대비 +30% 이하), 또는 사상 최대 낙폭일 때입니다. 2단계는 하락 한 번당 바닥 하나만 세서 그 하락이 얼마나 오래 갔는지를 못 보므로, 오래 빠져 있던 종목에서는 2단계도 흔한 가격대일 수 있습니다 — 그런 날(<b>깊지만 흔한 깊이</b>)은 1차가 아니고 더 기다립니다(그날 샀다면 1년 뒤 +11.2% · 손해 100번 중 34번으로 아무 때나 +13.5% · 30번보다 못했고, 기다렸다 1차 때 사면 +16.3% · 28번, 2026-11-21 검증). <b>2차·3차</b>: 과거 1차 신호 뒤 1년 안 최저점의 중앙값·하위 25% 지점입니다(묶음별, 그날까지 1년이 끝난 신호만 — 지수 -8%·-14%, 미국ETF -12%·-23%, 미국주식 -8%·-20%, 한국주식 -17%·-30%, 일본주식 -14%·-24%). 그래서 2차는 100번 중 50번쯤, 3차는 25번쯤 체결됩니다. <b>기한 1년</b>: 2·3차 가격이 1년 안에 안 오면 남은 몫은 사지 않고 현금으로 둡니다(하락이 1년 넘게 이어지면 새 1차). 1차 신호 뒤 1차가보다 3% 넘게 반등했는데 지금 매수 판단이 아니면 다시 기다리기입니다. <b>적극</b>은 드물게 깊은 하락(지난 날 100번 중 이보다 깊었던 날이 10번 이하)이면서 이 종목·묶음 과거가 아무 때나보다 뚜렷이 좋았을 때(1년 뒤 수익률 3%p 이상 높고, 손해가 100번 중 3번 이상 적음)만 붙습니다.</p>
         <p><b>추가 매수 보류</b> — 매수 판단이어도 이 종목·묶음의 같은 판단 결과가 아무 때나보다 나빴을 때입니다(1년 뒤 수익률이 3%p 넘게 낮거나, 비슷한데 손해가 100번 중 3번 넘게 많음). 그날까지의 자료로 이렇게 분류된 1차 신호는 실제로도 1년 뒤 +10% · 손해 100번 중 35번으로, 근거가 비슷·나았던 신호(+16% · 23~27번)보다 못했습니다(1,073번 검증). 더 깊은 '드물게 깊은 하락'의 근거가 괜찮으면 그 가격을 <b>다시 볼 가격</b>으로 보여 줍니다.</p>
-        <p><b>더 기다리기</b> — 아직 2단계 전(흔한 깊이·얕은 조정)이거나 <b>급등 뒤 하락</b>(2단계 이상인데 1년 전보다 30% 넘게 높음)이면서 <b>기다린 쪽이 실제로 나았을 때</b>입니다. <b>기다렸다 사면</b> = 같은 하락에서 1차 신호(매수 판단)가 나온 날 산다, 그 전에 신고가가 오면 그날 산다(<b>놓침</b>). 1단계·얕은 조정은 모든 묶음에서 기다린 쪽이 나았습니다(1단계: 바로 +11.0% · 손해 100번 중 34번 vs 기다림 +14.7% · 30번, 148종목 그날까지의 자료로 검증). 급등 뒤 하락은 묶음마다 달라, 그 묶음에서 기다린 쪽이 바로 산 것보다 낫지 않았으면 기다리지 않고 매수 판단으로 봅니다(미국주식: 바로 +34% vs 기다림 +26%, 100번 중 43번은 기다리다 놓침). 이렇게 바꾼 규칙을 과거에 적용하면 급등 뒤 하락 날 결과가 +8.9% · 손해 42번 → +11.9% · 38번으로 나아졌습니다(2026-11-21). 급등 뒤 하락은 1년 전 기준가가 매일 뒤로 밀리므로 가격이 그대로여도 풀릴 수 있습니다(가격 줄의 "가격 그대로면 약 N주 뒤"). <b>판단 보류</b> — 과거 하락 사례 5번 미만.</p>
+        <p><b>더 기다리기</b> — 아직 2단계 전(흔한 깊이·얕은 조정), 2단계지만 자주 있던 깊이(<b>깊지만 흔한 깊이</b>, 1차는 드문 깊이 선 가격)이거나 <b>급등 뒤 하락</b>(2단계 이상인데 1년 전보다 30% 넘게 높음)이면서 <b>기다린 쪽이 실제로 나았을 때</b>입니다. <b>기다렸다 사면</b> = 같은 하락에서 1차 신호(매수 판단)가 나온 날 산다, 그 전에 신고가가 오면 그날 산다(<b>놓침</b>). 1단계·얕은 조정은 모든 묶음에서 기다린 쪽이 나았습니다(1단계: 바로 +11.0% · 손해 100번 중 34번 vs 기다림 +14.7% · 30번, 148종목 그날까지의 자료로 검증). 급등 뒤 하락은 묶음마다 달라, 그 묶음에서 기다린 쪽이 바로 산 것보다 낫지 않았으면 기다리지 않고 매수 판단으로 봅니다(미국주식: 바로 +34% vs 기다림 +26%, 100번 중 43번은 기다리다 놓침). 이렇게 바꾼 규칙을 과거에 적용하면 급등 뒤 하락 날 결과가 +8.9% · 손해 42번 → +11.9% · 38번으로 나아졌습니다(2026-11-21). 급등 뒤 하락은 1년 전 기준가가 매일 뒤로 밀리므로 가격이 그대로여도 풀릴 수 있습니다(가격 줄의 "가격 그대로면 약 N주 뒤"). <b>판단 보류</b> — 과거 하락 사례 5번 미만.</p>
         <p class="note"><b>낱말 뜻</b> — <b>아무 때나 샀다면</b>: 판단과 상관없이 매일 샀을 때(타이밍을 재지 않음). <b>수익률 1년 뒤</b>: 그때 샀다면 1년 뒤 수익률의 가운데 값(절반은 이보다 좋았음). <b>손해 100번 중 N번</b>: 1년 뒤에도 산 값보다 낮았던 횟수(손실 금액이 아님). <b>놓침 100번 중 N번</b>: 기다리다 1차 신호 전에 신고가가 와 버린 횟수. <b>과거 하락 N번</b>: 그 판단이 나온 하락 중 1년 뒤 결과가 있는 횟수 — 5번 미만이면 비슷한 종목 묶음 값을 씁니다. 결론은 수익률 차이 3%p, 손해 차이 100번 중 3번을 기준으로 "있음·없음·비슷"을 정합니다.</p>
         <p class="note"><b>근거(2026-11 검증, 148종목·약 20년)</b> — 과거 매일 <b>그날까지의 자료만으로</b> 판단을 다시 내려 1년 뒤를 셌습니다. 1년 뒤 수익률 · 손해(100번 중): 아무 때나 +14% · 29번, <b>드물게 깊은 하락 +16% · 27번</b>, 깊은 조정 +13% · 33번, <b>급등 뒤 하락 +12% · 39번</b>, 1단계 조정 +11% · 34번. 지수만 보면 드물게 깊은 하락이 +18% · 6번으로 가장 뚜렷했습니다. 한국 개별주는 어떤 판단에서도 아무 때나(손해 42번)와 비슷하거나 나빴습니다.</p>
         <p class="note"><b>3분할 방식 검증</b>(1차 신호 1,091번, 간격도 그날까지의 자료로) — 1년 뒤 수익률 · 손해(100번 중) · 나쁜 10번의 수익률: 1차 날 한 번에 +14% · 29번 · -20%, <b>2·3차를 가격으로만(지금 방식)</b> +8% · <b>21번</b> · <b>-7%</b>(평균 투입 59%), 가격 또는 6·9개월 뒤 +10% · 27번 · -13%, 0·3·6개월 시간으로만 +10% · 31번 · -15%. 시간으로 나눠 사면 한 번에 사는 것보다 수익·손해 모두 나을 게 없었고, 가격으로만 사는 지금 방식이 손해 횟수와 나쁜 경우를 가장 크게 줄였습니다 — <b>수익을 키우기보다 손해를 줄이는 방법</b>이고, 못 채운 몫(평균 41%)은 현금으로 남습니다. 한국 개별주는 3분할이 수익과 손해 모두 나았습니다. 간격을 종목 변동성에 맞추면 오히려 체결이 벌어져(변동성 높낮이별 2차 체결 100번 중 42~61번 vs 묶음 간격 50~57번) 묶음 간격을 쓰고, 비트코인처럼 1차 신호가 적어 전체 종목 간격을 쓰는 종목만 변동성만큼 넓힙니다. 지금 남아 있는 종목만으로 센 결과(망한 종목 제외)라 실제보다 좋게 나옵니다.</p>
@@ -847,12 +839,12 @@
         <h3>카드를 펼치면 나오는 차트들은요?</h3>
         <div class="help-group">
         <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
-        <p><b>연준 기준금리 띠</b> — 가격 그래프 바로 아래 띠는 미국 연준이 정하는 기준금리(FOMC 목표 범위 상단)가 <b>1년 전보다 오른 폭(빨강, 위)·내린 폭(파랑, 아래)</b>입니다. 높이·깊이가 그 폭이고, FOMC 결정마다 0.25%p·0.5%p(빅 스텝)·0.75%p(자이언트 스텝)씩 계단으로 바뀝니다. 가장 높은·깊은 구간과 오른쪽 끝(지금)에 숫자가 있고, 위 글자는 지금 목표 범위와 가장 최근 결정입니다. 금리를 올리는 동안 주가가 어땠는지 같은 날짜 축으로 견줘 보는 용도입니다. 자료: 미국 세인트루이스 연은(FRED).</p>
+        <p><b>연준 기준금리 배경</b> — 가격 그래프 뒤의 옅은 빨강·파랑 면은 미국 연준이 정하는 기준금리(FOMC 목표 범위 상단)가 <b>1년 전보다 오른 폭(빨강, 위)·내린 폭(파랑, 아래)</b>입니다. 높이·깊이가 그 폭(그 기간 안 최대 폭 기준, 가격 눈금과는 따로)이고, FOMC 결정마다 0.25%p·0.5%p(빅 스텝)·0.75%p(자이언트 스텝)씩 계단으로 바뀝니다. 가장 높은·깊은 구간에 숫자가 있습니다(범례 줄 없이 색으로만 구분). 배경이 있을 때는 가격 선 아래 색 채움을 끄고 선 색(시작가 위 초록·아래 빨강)만 둡니다. 금리를 올리는 동안 주가가 어땠는지 같은 날짜 축으로 견줘 보는 용도입니다. 자료: 미국 세인트루이스 연은(FRED).</p>
         <p><b>낙폭 추이</b> — 낙폭%를 시간순으로 그린 그래프입니다. 0%(신고가) 아래로 얼마나, 얼마나 오래 내려가 있었는지 보여줍니다. 기본은 회색이고, 아래 히스토그램에서 박스를 고르면 그 국면의 하락 구간은 빨강, 회복 구간은 초록으로 강조됩니다. 앰버 점선은 코로나19·2022 금리인상 같은 시장 전체 충격 시기, 또는 종목별 큰 낙폭(-25% 이상)의 조사된 원인이며 마우스를 올리면 설명이 나옵니다. 원인을 못 찾으면 "확인 안 됨"으로 표시했고 아직 조사 안 된 국면도 있으니 참고용으로만 보세요.</p>
         <p><b>낙폭국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중("지금")입니다. 진행중 박스는 아래 점이 이번 저점, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 고르면 하늘색 테두리와 저점 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다.</p>
         <p><b>RSI·MFI</b> — 기준선(RSI 30, MFI 20) 아래가 과매도 구간입니다. 선택 기간이 3년 이하면 일·주·월봉, 3~15년이면 주봉, 15년 초과면 월봉만 보여줍니다(길수록 일봉이 빽빽해져 자동 전환).</p>
         <p><b>기간 버튼(1Y~ALL)</b> — 고른 기간이 카드 안의 가격·낙폭·RSI·MFI 차트에 모두 적용됩니다. 상승장·하락장이 언제 시작됐는지 보려면 10Y 이상으로 늘려 보세요. 보유 데이터보다 긴 기간은 흐리게 표시되며 선택할 수 없습니다.</p>
-        <p><b>과거에 이런 하락에서 샀다면</b> — 하락 종류(드물게 깊은 하락·깊은 조정·급등 뒤 하락·1단계 조정·얕은 조정·사상 최대 낙폭)별로 그런 날 샀다면 1년 뒤 수익률과 손해(100번 중 N번)가 어땠는지, 맨 아래 <b>아무 때나</b>(비교 기준)와 견줍니다. 맨 위 한 줄이 결론, 초록 칸은 아무 때나보다 나았던 칸, 빨강은 못했던 칸입니다. 회색 박스가 근거로 쓴 표가 위에 오고 <b>판단에 씀</b>·<b>지금</b> 표시가 붙습니다. 회색 줄은 과거 사례 5번 미만이라 판단에 쓰지 않습니다. 하락 종류는 과거 매일 그날까지의 자료만으로 나눴습니다.</p>
+        <p><b>과거에 이런 하락에서 샀다면</b> — 하락 종류(드물게 깊은 하락·깊은 조정·깊지만 흔한 깊이·급등 뒤 하락·1단계 조정·얕은 조정·사상 최대 낙폭)별로 그런 날 샀다면 1년 뒤 수익률과 손해(100번 중 N번)가 어땠는지, 맨 아래 <b>아무 때나</b>(비교 기준)와 견줍니다. 맨 위 한 줄이 결론, 초록 칸은 아무 때나보다 나았던 칸, 빨강은 못했던 칸입니다. 회색 박스가 근거로 쓴 표가 위에 오고 <b>판단에 씀</b>·<b>지금</b> 표시가 붙습니다. 회색 줄은 과거 사례 5번 미만이라 판단에 쓰지 않습니다. 하락 종류는 과거 매일 그날까지의 자료만으로 나눴습니다.</p>
         <p><b>크게 보기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-expand"/></svg></b> — 카드를 전체 화면으로 열어 요약과 큰 차트를 봅니다. 오른쪽 위 "닫기"(또는 Esc)로 돌아옵니다.</p>
         </div>
       </section>
@@ -863,7 +855,7 @@
         <p><b>NEW</b> — 오늘 처음 발생한 알림 표시(텔레그램에도 같은 내용이 발송됩니다).</p>
         <p><b>데이터 부족</b> — 최근 상장 등으로 과거 낙폭 국면이 5개 미만이면 단계 판정을 생략합니다.</p>
         <p><b>필터 칩</b> — 분류 칩(미국지수·한국지수·미국ETF·한국ETF·미국주식·한국주식·일본주식·비트코인)은 여러 개를 함께 고를 수 있고, "모든분류"를 누르면 초기화됩니다. 미국지수는 S&amp;P500·나스닥100·다우·러셀2000 대표 ETF(SPY·QQQ·DIA·IWM), 한국지수는 코스피200·코스닥150 대표 ETF(KODEX 200·KODEX 코스닥150), 비트코인은 현물(코인베이스, 달러)과 미국 현물 ETF(IBIT)입니다. 단계 칩은 "1단계+"=1단계 이상, "3단계"=3단계만 보여줍니다.</p>
-        <p><b>정렬</b> — "분류순"은 위 분류 순서(같은 분류 안은 시가총액순), "매수판단순"은 3차 매수 → 2차 → 1차 → 더 기다리기 → 추가 매수 보류 → 판단 보류 순이고, 같은 상태 안은 판단이 깊은 순(드물게 깊은 하락 → 깊은 조정 → 급등 뒤 하락 → …)입니다.</p>
+        <p><b>정렬</b> — "분류순"은 위 분류 순서(같은 분류 안은 시가총액순), "매수판단순"은 3차 매수 → 2차 → 1차 → 더 기다리기 → 추가 매수 보류 → 판단 보류 순이고, 같은 상태 안은 판단이 깊은 순(드물게 깊은 하락 → 깊은 조정 → 깊지만 흔한 깊이 → 급등 뒤 하락 → …)입니다.</p>
         </div>
       </section>
       <section>
@@ -1486,6 +1478,8 @@ function lineChartSvg(records, opts) {
   [margin.top, margin.top + innerH / 2, plotB].forEach(gy => {
     body += `<line x1="${plotL}" x2="${plotR}" y1="${gy}" y2="${gy}" stroke="var(--grid)" stroke-width="1"/>`;
   });
+  // 연준 기준금리 1년 변화 배경(가격 그래프만) — 눈금선 위, 가격 선 아래
+  if (opts.rateBg) body += rateBgSvg(opts.rateBg, plotL, plotR, margin.top, plotB, dx, fSmall);
 
   // 히스토그램에서 고른 국면의 구간(시작~끝)은 옅은 인디고 배경 띠로 - 선 아래에 깔려 데이터를 가리지 않는다.
   laidOut.filter(ev => ev.isBand).forEach(ev => {
@@ -1550,7 +1544,7 @@ function lineChartSvg(records, opts) {
       segs.forEach(seg => {
         const path = "M" + seg.pts.map(p => p.x + "," + p.y).join(" L");
         const fx = seg.pts[0].x, lx = seg.pts[seg.pts.length - 1].x;
-        body += `<path d="${path} L${lx},${baseY} L${fx},${baseY} Z" fill="url(#${seg.up ? gu : gd})" stroke="none"/>`;
+        if (!opts.rateBg) body += `<path d="${path} L${lx},${baseY} L${fx},${baseY} Z" fill="url(#${seg.up ? gu : gd})" stroke="none"/>`;
         body += `<path d="${path}" fill="none" stroke="${seg.up ? "var(--gain)" : "var(--loss)"}" stroke-width="${s.width || 2}" stroke-linecap="round" stroke-linejoin="round"/>`;
       });
       return;
@@ -1860,21 +1854,9 @@ function rateIdx(date) {
 function rateOn(date) { const k = rateIdx(date); return k < 0 ? null : RATES.steps[k][1]; }
 const shiftYear = (d, n) => `${Number(d.slice(0, 4)) + n}${d.slice(4)}`;
 const fmtPp = v => `${v > 0 ? "+" : v < 0 ? "-" : ""}${+Math.abs(v).toFixed(2)}%p`;
-// FOMC 한 번 결정 폭의 흔한 이름(0.25%p는 이름 없이 숫자만)
-function stepName(diff) {
-  const a = Math.round(Math.abs(diff) * 100);
-  if (a === 50) return diff > 0 ? "빅 스텝" : "빅 컷";
-  if (a === 75) return "자이언트 스텝";
-  return a >= 100 ? "울트라 스텝" : "";
-}
-function rateStripHtml(domainStart, domainEnd, o) {
-  if (!RATES || !domainStart || !domainEnd) return "";
-  const W = o.width || 320;
-  const left = o.marginLeft != null ? o.marginLeft : 40, right = o.marginRight != null ? o.marginRight : 48;
-  const innerW = W - left - right;
-  const fs = (o.large ? CHART_FONT.large : CHART_FONT.small).small;
-  const top = fs + 4, plotH = o.large ? 46 : 30, H = top + plotH + fs + 4;
-  // 값이 바뀌는 날 = 기간 시작·결정일·결정일 1년 뒤(1년 전 값이 바뀜). 그 사이는 일정하니 계단(사각형)으로 그린다.
+// 기간 안 1년 변화 계단: 값이 바뀌는 날 = 기간 시작·결정일·결정일 1년 뒤(1년 전 값이 바뀜), 그 사이는 일정
+function rateSegs(domainStart, domainEnd) {
+  if (!RATES || !domainStart || !domainEnd) return null;
   const ev = new Set([domainStart]);
   RATES.steps.forEach(([d]) => {
     if (d > domainStart && d <= domainEnd) ev.add(d);
@@ -1890,53 +1872,44 @@ function rateStripHtml(domainStart, domainEnd, o) {
     const last = segs[segs.length - 1];
     if (last && last.v === v && last.end === d) last.end = end; else segs.push({ start: d, end, v });
   });
-  if (!segs.length) return "";
+  if (!segs.length) return null;
   const vals = segs.map(g => g.v);
   let hi = Math.max(0, ...vals), lo = Math.min(0, ...vals);
   if (hi - lo < 0.5) { if (hi > 0) hi = lo + 0.5; else if (lo < 0) lo = hi - 0.5; else { hi = 0.25; lo = -0.25; } }
-  const y = v => top + (hi - v) / (hi - lo) * plotH, y0 = y(0);
-  const x = d => dateToX(d, domainStart, domainEnd, left, innerW);
+  return { segs, hi, lo, domainEnd };
+}
+// 가격 그래프 배경(공유받은 참고 그림처럼 가격 뒤에): 오른 폭 빨강·내린 폭 파랑 면 + 계단 윗선, 가장 높은·깊은 구간 숫자.
+// 가격과 다른 눈금이라 축 숫자는 없고, 면의 높이·깊이는 그 기간 안 최대 폭 기준.
+function rateBgSvg(rs, plotL, plotR, top, bottom, dx, fs) {
+  if (!rs) return "";
+  const pad = (bottom - top) * 0.06, T = top + pad, B = bottom - pad;
+  const y = v => T + (rs.hi - v) / (rs.hi - rs.lo) * (B - T), y0 = y(0);
   const col = v => (v > 0 ? "var(--price-up)" : "var(--price-down)");
-  let body = "";
-  segs.forEach(g => {
+  const clampX = x => Math.min(Math.max(x, plotL), plotR);
+  let out = "";
+  rs.segs.forEach(g => {
     if (!g.v) return;
-    const x1 = x(g.start), x2 = Math.max(x(g.end), x1 + 0.6), yv = y(g.v);
-    body += `<rect x="${x1.toFixed(1)}" y="${Math.min(yv, y0).toFixed(1)}" width="${(x2 - x1).toFixed(1)}" height="${Math.abs(yv - y0).toFixed(1)}" style="fill:${col(g.v)}" opacity="0.72"/>`;
+    const x1 = clampX(dx(g.start)), x2 = Math.max(clampX(dx(g.end)), x1 + 0.6), yv = y(g.v);
+    out += `<rect x="${x1.toFixed(1)}" y="${Math.min(yv, y0).toFixed(1)}" width="${(x2 - x1).toFixed(1)}" height="${Math.abs(yv - y0).toFixed(1)}" style="fill:${col(g.v)}" opacity="0.2"/>`
+      + `<line x1="${x1.toFixed(1)}" x2="${x2.toFixed(1)}" y1="${yv.toFixed(1)}" y2="${yv.toFixed(1)}" style="stroke:${col(g.v)}" stroke-width="1" opacity="0.55"/>`;
   });
-  body += `<line x1="${left}" x2="${W - right}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.8" opacity="0.6"/>`;
-  // 가장 높은 인상 폭·가장 깊은 인하 폭에 숫자(띠 위·아래 여백 안)
+  const peak = rs.segs.reduce((m, g) => (g.v > (m ? m.v : 0) ? g : m), null);
+  const trough = rs.segs.reduce((m, g) => (g.v < (m ? m.v : 0) ? g : m), null);
   const label = (g, above) => {
-    const cx = Math.min(Math.max((x(g.start) + x(g.end)) / 2, left + 16), W - right - 16);
-    const ty = above ? y(g.v) - 3 : y(g.v) + fs + 1;
-    return `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" style="fill:${col(g.v)}">${fmtPp(g.v)}</text>`;
+    const cx = Math.min(Math.max((clampX(dx(g.start)) + clampX(dx(g.end))) / 2, plotL + 18), plotR - 18);
+    const ty = above ? Math.max(y(g.v) - 3, top + fs) : Math.min(y(g.v) + fs + 1, bottom - 2);
+    return `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" style="fill:${col(g.v)};${TEXT_HALO}">${fmtPp(g.v)}</text>`;
   };
-  const peak = segs.reduce((m, g) => (g.v > (m ? m.v : 0) ? g : m), null);
-  const trough = segs.reduce((m, g) => (g.v < (m ? m.v : 0) ? g : m), null);
-  const lastSeg = segs[segs.length - 1];
-  // 지금 구간이 가장 높은·깊은 구간이면 숫자는 오른쪽 거터 하나만(같은 값 두 번·겹침 방지)
-  if (peak && peak !== lastSeg) body += label(peak, true);
-  if (trough && trough !== lastSeg) body += label(trough, false);
-  // 오른쪽 거터: 지금의 1년 변화
-  const cur = lastSeg.v;
-  body += `<text x="${W - right + 6}" y="${(y(cur) + fs / 2 - 1).toFixed(1)}" font-size="${fs}" font-weight="600" style="fill:${cur ? col(cur) : "var(--text-muted)"}">${cur ? fmtPp(cur) : "0"}</text>`;
-  // 위 글자: 지금 목표 범위와 가장 최근 결정
-  const k = rateIdx(domainEnd);
-  if (k < 0) return "";
-  const sNow = RATES.steps[k], sPrev = RATES.steps[k - 1];
-  const level = sNow[2] != null ? `${sNow[2].toFixed(2)}~${sNow[1].toFixed(2)}%` : `${sNow[1].toFixed(2)}%`;
-  let lastTxt = "";
-  if (sPrev) {
-    const diff = Math.round((sNow[1] - sPrev[1]) * 100) / 100, name = stepName(diff);
-    lastTxt = `최근 ${+Math.abs(diff).toFixed(2)}%p ${diff > 0 ? "인상" : "인하"}${name ? `(${name})` : ""} ${fmtDateFull(sNow[0])}`;
-  }
-  return `<div class="rate-label"><span class="rate-ttl">연준 기준금리</span> ${nw(level)}${lastTxt ? `&nbsp;· ${nw(lastTxt)}` : ""}`
-    + `&nbsp;· ${nw('<i class="up"></i>인상 <i class="down"></i>인하(1년 변화폭)')}</div>`
-    + `<svg viewBox="0 0 ${W} ${H}" class="detail-chart rate-strip" role="img" aria-label="연준 기준금리 1년 변화">${body}</svg>`;
+  if (peak) out += label(peak, true);
+  if (trough) out += label(trough, false);
+  return out;
 }
 const MA_LEGEND = `<span class="legend ma-legend"><span><i></i>200일선</span></span>`;
 
 function priceChartBlock(records, currency, eventMarkers, chartOpts) {
   const large = chartOpts && chartOpts.large;
+  const rs = rateSegs((chartOpts && chartOpts.domainStart) || (records[0] && records[0].date),
+    (chartOpts && chartOpts.domainEnd) || (records.length && records[records.length - 1].date));
   const W = (chartOpts && chartOpts.width) || 320;
   const H = (chartOpts && chartOpts.height) || 130;
   const chart = lineChartSvg(records, {
@@ -1957,12 +1930,11 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
     ],
     markerKey: "divergence",
     eventMarkers,
+    rateBg: rs,
   });
   return `<div class="chart-block">
     <div class="chart-label"><span class="ttl">가격</span> ${MA_LEGEND}</div>
     ${chart}
-    ${rateStripHtml((chartOpts && chartOpts.domainStart) || (records[0] && records[0].date),
-      (chartOpts && chartOpts.domainEnd) || (records.length && records[records.length - 1].date), chartOpts || {})}
   </div>`;
 }
 
@@ -3045,6 +3017,7 @@ function opinionBox(kind, label, l1, l2, l3, more, hint, foot) {
 const BUY_TIERS = {
   strong:  { kind: "strong",  label: "적극 매수 검토", l1: "과거에 드물게 깊은 하락" },
   split:   { kind: "split",   label: "분할 매수 검토", l1: "깊지만 이 종목엔 드물지 않음" },
+  deep:    { kind: "watch",   label: "관찰", l1: "깊지만 자주 있던 깊이" },
   hot:     { kind: "hot",     label: "신중", l1: "급등 뒤 하락" },
   record:  { kind: "caution", label: "주의", l1: "과거 사례가 없는 깊이" },
   watch:   { kind: "watch",   label: "관찰", l1: "아무 때나와 성과 차이 없던 구간" },
@@ -3052,8 +3025,8 @@ const BUY_TIERS = {
   unknown: { kind: "unknown", label: "판단 보류", l1: "과거 하락 사례 5번 미만" },
 };
 // 펼친 화면의 "과거에 이런 하락에서 샀다면" 표 행 이름 — 칩(할 일)이 아니라 판단이 나온 상황이다
-const TIER_NAME = { strong: "드물게 깊은 하락", split: "깊은 조정", hot: "급등 뒤 하락", watch: "1단계 조정", wait: "얕은 조정", record: "사상 최대 낙폭", unknown: "판단 보류" };
-const BUY_TIER_ORDER = ["strong", "split", "hot", "record", "watch", "wait", "unknown"];
+const TIER_NAME = { strong: "드물게 깊은 하락", split: "깊은 조정", deep: "깊지만 흔한 깊이", hot: "급등 뒤 하락", watch: "1단계 조정", wait: "얕은 조정", record: "사상 최대 낙폭", unknown: "판단 보류" };
+const BUY_TIER_ORDER = ["strong", "split", "deep", "hot", "record", "watch", "wait", "unknown"];
 const BUY_GROUP_LABEL = { index: "지수", usETF: "미국ETF", krETF: "한국ETF", usStock: "미국주식", krStock: "한국주식", jpStock: "일본주식", crypto: "비트코인" };
 // 매수판단순: 3차 > 2차 > 1차 > 더 기다리기 > 판단 보류, 같은 상태 안은 판단(tier) 순
 const PLAN_RANK = { t3: 0, t2: 1, t1: 2, wait: 3, hold: 4, unknown: 5 };
@@ -3119,7 +3092,7 @@ function buyEvidenceHtml(t) {
 const PLAN_CHIP = { t1: "1차 매수 시작", t2: "2차 매수", t3: "3차 매수", wait: "더 기다리기", hold: "추가 매수 보류", unknown: "판단 보류" };
 const PLAN_WHY = {
   strong: "드물게 깊은 하락", split: "깊은 조정에 들어옴", record: "과거 어떤 하락보다 깊음",
-  hot: "급등 뒤라 더 빠지기 쉬움", watch: "흔한 깊이의 조정", wait: "아직 얕은 조정", rebound: "1차 신호 뒤 반등",
+  deep: "깊지만 자주 있던 깊이", hot: "급등 뒤라 더 빠지기 쉬움", watch: "흔한 깊이의 조정", wait: "아직 얕은 조정", rebound: "1차 신호 뒤 반등",
   noedge: "깊지만 과거 근거가 약함",
 };
 const NOTES_OPEN = new Set();   // 알아두실 점을 켠 종목 — 기본 꺼짐, 저장하지 않음(다시 그릴 때만 유지)
@@ -3251,6 +3224,7 @@ function planPriceHtml(p, t) {
     let first = [];
     if (c.kind === "hot") first = [nw(`1차 시작 ${fmtLevel(c.price, t)}`), nw(`(지금보다 ${absPct(c.gap)} 아래)`), ...(c.days ? [nw(`또는 가격 그대로면 ${tradingDaysText(c.days)} 뒤`)] : [])];
     else if (c.kind === "stage2") first = [nw(`1차 시작 ${fmtLevel(c.price, t)}`), nw(`(깊은 조정 진입 · ${absPct(c.gap)} 아래)`)];
+    else if (c.kind === "rare25") first = [nw(`1차 시작 ${fmtLevel(c.price, t)}`), nw(`(드문 깊이 진입 · ${absPct(c.gap)} 아래)`)];
     else if (c.kind === "rebound") first = [nw(`1차 ${fmtLevel(c.price, t)}`), nw(`(지금보다 ${absPct(c.gap)} 아래)`), nw("근처로 돌아오면 다시 검토")];
     const later = c.kind === "rebound"
       ? [nw(`2차 ${fmtLevel(lv.t2, t)}`), nw(`3차 ${fmtLevel(lv.t3, t)}`)]
@@ -3284,6 +3258,7 @@ function planNotes(p, t) {
     c.wait = ["기다리면", `1차 신호는 보통 ${tradingDaysText(ws.sw_days)} 뒤${px} 왔음`];
   }
   if (rareOk && b.tier === "hot") c.rareHot = ["깊이만 보면", `${deeper}이지만 1년 전보다 아직 30% 넘게 높음`];
+  if (b.tier === "deep" && deeper) c.deepCommon = ["자주 있던 깊이", `과거 조정의 바닥치고는 깊지만(2단계) ${deeper}이라 이 종목엔 흔한 가격대 — 100번 중 25번 이하로 드물어야 1차`];
   if (n.watch && p.why === "wait") {
     c.watch = ["1단계까지 와도", `고점보다 ${absPct(n.watch.level)} 아래(${fmtLevel(n.watch.price, t)})까지는 1차가 아님 — ${own}${josa(own, "이", "가")} 이 단계일 때 산 1년 뒤 수익률은 ${pc(n.watch.med12)}로 아무 때나(${pc(n.watch.base)})보다 못했음`];
   }
@@ -3323,7 +3298,7 @@ function planNotes(p, t) {
     c.ladder = ["나눠 사기", `${g} 1차 신호 때 한 번에 산 것보다 ${medPart} ${lossPart}`];
   }
   const order = p.state === "wait"
-    ? (p.why === "rebound" ? ["self", "conc", "noEdge"] : ["wait", "rareHot", "watch", "self", "conc", "noEdge"])
+    ? (p.why === "rebound" ? ["self", "conc", "noEdge"] : ["deepCommon", "wait", "rareHot", "watch", "self", "conc", "noEdge"])
     : p.state === "hold" ? ["hold", "rareHot", "self", "conc", "noEdge"]
     : p.state === "t3" ? ["record", "rare", "self", "conc", "allSrc"]
     : p.state === "t2" ? ["fill", "record", "conf", "self", "conc", "allSrc", "ladder"]
@@ -3404,7 +3379,7 @@ function buyPerfTableHtml(t, perf) {
   const grpSum = g.base && g.base.tickers > 1 ? g : null;
   const primary = src === "group" && grpSum ? "group" : ownSum ? "self" : grpSum ? "group" : null;
   if (!primary) return "";
-  const ROWS = ["strong", "split", "hot", "watch", "wait", "record"];
+  const ROWS = ["strong", "split", "deep", "hot", "watch", "wait", "record"];
   const few = s => s.n_ep != null && s.n_ep < 5;
   const tone = side => (side === 0 ? "up" : side === 1 ? "down" : "");
   let anyFew = false;
@@ -3759,6 +3734,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW) {
     markerKey: "divergence_bear", markerMinGap: 14, arrowSeriesKey: "close",
     arrowMarkers: withCycArrows(sellMarkers(evs, domainStart, true)), pointMarks,
     eventMarkers: priceMarkers, maxEventRows: 5,
+    rateBg: rateSegs(domainStart, domainEnd),
   });
   const uwChart = lineChartSvg(slice, {
     ...common, height: uwH,
@@ -3798,7 +3774,6 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW) {
     <div class="chart-block">
       <div class="chart-label"><span class="ttl">가격 · 돌파/천정</span> <span class="sub">· 점선=신고가 · <span class="ma-key">주황=200일선</span> · ▲돌파 ▼천정</span></div>
       ${priceChart}
-      ${rateStripHtml(domainStart, domainEnd, common)}
     </div>
     <div class="chart-block">
       <div class="chart-label"><span class="ttl">천정 대비 낙폭</span></div>
