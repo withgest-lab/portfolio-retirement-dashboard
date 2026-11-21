@@ -431,6 +431,14 @@
   .ma-legend { display: inline-flex; margin-left: 6px; }
   .ma-legend i { width: 12px; height: 2px; border-radius: 1px; background: var(--series-2); vertical-align: 0.25em; }
   .chart-label .ma-key { color: var(--series-2); font-weight: 600; white-space: nowrap; }
+  /* 연준 기준금리 띠: 가격 그래프 바로 아래, 같은 날짜 축(빨강 = 1년 새 오른 폭, 파랑 = 내린 폭) */
+  .rate-label { font-size: 11.5px; color: var(--text-secondary); margin: 4px 0 0; word-break: keep-all; text-wrap: balance; line-height: 1.45; }
+  .rate-label .rate-ttl { font-weight: 600; color: var(--text-primary); }
+  .rate-label .nw { white-space: nowrap; }
+  .rate-label i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 3px 0 2px; vertical-align: -0.05em; opacity: .72; }
+  .rate-label i.up { background: var(--price-up); }
+  .rate-label i.down { background: var(--price-down); margin-left: 6px; }
+  .card.fullscreen .rate-label { font-size: 13px; }
 
   .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
   footer { text-align: center; color: var(--text-muted); font-size: 11px; margin-top: 24px; }
@@ -839,6 +847,7 @@
         <h3>카드를 펼치면 나오는 차트들은요?</h3>
         <div class="help-group">
         <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
+        <p><b>연준 기준금리 띠</b> — 가격 그래프 바로 아래 띠는 미국 연준이 정하는 기준금리(FOMC 목표 범위 상단)가 <b>1년 전보다 오른 폭(빨강, 위)·내린 폭(파랑, 아래)</b>입니다. 높이·깊이가 그 폭이고, FOMC 결정마다 0.25%p·0.5%p(빅 스텝)·0.75%p(자이언트 스텝)씩 계단으로 바뀝니다. 가장 높은·깊은 구간과 오른쪽 끝(지금)에 숫자가 있고, 위 글자는 지금 목표 범위와 가장 최근 결정입니다. 금리를 올리는 동안 주가가 어땠는지 같은 날짜 축으로 견줘 보는 용도입니다. 자료: 미국 세인트루이스 연은(FRED).</p>
         <p><b>낙폭 추이</b> — 낙폭%를 시간순으로 그린 그래프입니다. 0%(신고가) 아래로 얼마나, 얼마나 오래 내려가 있었는지 보여줍니다. 기본은 회색이고, 아래 히스토그램에서 박스를 고르면 그 국면의 하락 구간은 빨강, 회복 구간은 초록으로 강조됩니다. 앰버 점선은 코로나19·2022 금리인상 같은 시장 전체 충격 시기, 또는 종목별 큰 낙폭(-25% 이상)의 조사된 원인이며 마우스를 올리면 설명이 나옵니다. 원인을 못 찾으면 "확인 안 됨"으로 표시했고 아직 조사 안 된 국면도 있으니 참고용으로만 보세요.</p>
         <p><b>낙폭국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중("지금")입니다. 진행중 박스는 아래 점이 이번 저점, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 고르면 하늘색 테두리와 저점 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다.</p>
         <p><b>RSI·MFI</b> — 기준선(RSI 30, MFI 20) 아래가 과매도 구간입니다. 선택 기간이 3년 이하면 일·주·월봉, 3~15년이면 주봉, 15년 초과면 월봉만 보여줍니다(길수록 일봉이 빽빽해져 자동 전환).</p>
@@ -1830,6 +1839,100 @@ function withMa200(slice, full) {
   return slice.map(r => ({ ...r, ma200: full._ma200.get(r.date) ?? null }));
 }
 const MA_SERIES = { key: "ma200", color: "var(--series-2)", width: 1.3 };
+// ---- 연준 기준금리 띠(가격 그래프 바로 아래, 같은 날짜 축) ----
+// 전략 저장소가 FRED에서 받아 금리가 바뀐 날만 올린 rates.json([날짜, 목표 범위 상단, 하단]) — 실효금리가 아니라 FOMC가
+// 정한 값이라 0.25·0.5·0.75%p 결정이 계단으로 보인다. 띠 = 그날 기준금리 − 1년 전 기준금리: 오른 폭은 빨강(위),
+// 내린 폭은 파랑(아래), 높이·깊이가 그 폭(금리 인상 = 빨강, 인하 = 파랑으로 부르는 관행). 가격 선의 초록/빨강과
+// 섞이지 않게 가격 뒤에 겹치지 않고 아래 띠로 둔다. 파일이 없거나 받기에 실패하면 띠만 뺀다.
+let RATES = null;
+async function loadRates() {
+  try {
+    const r = await fetch("rates.json", { cache: "no-store" });
+    if (r.ok) { const j = await r.json(); if (j && Array.isArray(j.steps) && j.steps.length) RATES = j; }
+  } catch (e) { /* 띠 없이 그린다 */ }
+}
+function rateIdx(date) {
+  const st = RATES.steps;
+  let lo = 0, hi = st.length - 1, k = -1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (st[m][0] <= date) { k = m; lo = m + 1; } else hi = m - 1; }
+  return k;
+}
+function rateOn(date) { const k = rateIdx(date); return k < 0 ? null : RATES.steps[k][1]; }
+const shiftYear = (d, n) => `${Number(d.slice(0, 4)) + n}${d.slice(4)}`;
+const fmtPp = v => `${v > 0 ? "+" : v < 0 ? "-" : ""}${+Math.abs(v).toFixed(2)}%p`;
+// FOMC 한 번 결정 폭의 흔한 이름(0.25%p는 이름 없이 숫자만)
+function stepName(diff) {
+  const a = Math.round(Math.abs(diff) * 100);
+  if (a === 50) return diff > 0 ? "빅 스텝" : "빅 컷";
+  if (a === 75) return "자이언트 스텝";
+  return a >= 100 ? "울트라 스텝" : "";
+}
+function rateStripHtml(domainStart, domainEnd, o) {
+  if (!RATES || !domainStart || !domainEnd) return "";
+  const W = o.width || 320;
+  const left = o.marginLeft != null ? o.marginLeft : 40, right = o.marginRight != null ? o.marginRight : 48;
+  const innerW = W - left - right;
+  const fs = (o.large ? CHART_FONT.large : CHART_FONT.small).small;
+  const top = fs + 4, plotH = o.large ? 46 : 30, H = top + plotH + fs + 4;
+  // 값이 바뀌는 날 = 기간 시작·결정일·결정일 1년 뒤(1년 전 값이 바뀜). 그 사이는 일정하니 계단(사각형)으로 그린다.
+  const ev = new Set([domainStart]);
+  RATES.steps.forEach(([d]) => {
+    if (d > domainStart && d <= domainEnd) ev.add(d);
+    const a = shiftYear(d, 1);
+    if (a > domainStart && a <= domainEnd) ev.add(a);
+  });
+  const days = [...ev].sort();
+  const segs = [];
+  days.forEach((d, i) => {
+    const a = rateOn(d), b = rateOn(shiftYear(d, -1));
+    if (a == null || b == null) return;
+    const v = Math.round((a - b) * 100) / 100, end = days[i + 1] || domainEnd;
+    const last = segs[segs.length - 1];
+    if (last && last.v === v && last.end === d) last.end = end; else segs.push({ start: d, end, v });
+  });
+  if (!segs.length) return "";
+  const vals = segs.map(g => g.v);
+  let hi = Math.max(0, ...vals), lo = Math.min(0, ...vals);
+  if (hi - lo < 0.5) { if (hi > 0) hi = lo + 0.5; else if (lo < 0) lo = hi - 0.5; else { hi = 0.25; lo = -0.25; } }
+  const y = v => top + (hi - v) / (hi - lo) * plotH, y0 = y(0);
+  const x = d => dateToX(d, domainStart, domainEnd, left, innerW);
+  const col = v => (v > 0 ? "var(--price-up)" : "var(--price-down)");
+  let body = "";
+  segs.forEach(g => {
+    if (!g.v) return;
+    const x1 = x(g.start), x2 = Math.max(x(g.end), x1 + 0.6), yv = y(g.v);
+    body += `<rect x="${x1.toFixed(1)}" y="${Math.min(yv, y0).toFixed(1)}" width="${(x2 - x1).toFixed(1)}" height="${Math.abs(yv - y0).toFixed(1)}" style="fill:${col(g.v)}" opacity="0.72"/>`;
+  });
+  body += `<line x1="${left}" x2="${W - right}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="var(--text-muted)" stroke-width="0.8" opacity="0.6"/>`;
+  // 가장 높은 인상 폭·가장 깊은 인하 폭에 숫자(띠 위·아래 여백 안)
+  const label = (g, above) => {
+    const cx = Math.min(Math.max((x(g.start) + x(g.end)) / 2, left + 16), W - right - 16);
+    const ty = above ? y(g.v) - 3 : y(g.v) + fs + 1;
+    return `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" font-size="${fs}" font-weight="600" style="fill:${col(g.v)}">${fmtPp(g.v)}</text>`;
+  };
+  const peak = segs.reduce((m, g) => (g.v > (m ? m.v : 0) ? g : m), null);
+  const trough = segs.reduce((m, g) => (g.v < (m ? m.v : 0) ? g : m), null);
+  const lastSeg = segs[segs.length - 1];
+  // 지금 구간이 가장 높은·깊은 구간이면 숫자는 오른쪽 거터 하나만(같은 값 두 번·겹침 방지)
+  if (peak && peak !== lastSeg) body += label(peak, true);
+  if (trough && trough !== lastSeg) body += label(trough, false);
+  // 오른쪽 거터: 지금의 1년 변화
+  const cur = lastSeg.v;
+  body += `<text x="${W - right + 6}" y="${(y(cur) + fs / 2 - 1).toFixed(1)}" font-size="${fs}" font-weight="600" style="fill:${cur ? col(cur) : "var(--text-muted)"}">${cur ? fmtPp(cur) : "0"}</text>`;
+  // 위 글자: 지금 목표 범위와 가장 최근 결정
+  const k = rateIdx(domainEnd);
+  if (k < 0) return "";
+  const sNow = RATES.steps[k], sPrev = RATES.steps[k - 1];
+  const level = sNow[2] != null ? `${sNow[2].toFixed(2)}~${sNow[1].toFixed(2)}%` : `${sNow[1].toFixed(2)}%`;
+  let lastTxt = "";
+  if (sPrev) {
+    const diff = Math.round((sNow[1] - sPrev[1]) * 100) / 100, name = stepName(diff);
+    lastTxt = `최근 ${+Math.abs(diff).toFixed(2)}%p ${diff > 0 ? "인상" : "인하"}${name ? `(${name})` : ""} ${fmtDateFull(sNow[0])}`;
+  }
+  return `<div class="rate-label"><span class="rate-ttl">연준 기준금리</span> ${nw(level)}${lastTxt ? `&nbsp;· ${nw(lastTxt)}` : ""}`
+    + `&nbsp;· ${nw('<i class="up"></i>인상 <i class="down"></i>인하(1년 변화폭)')}</div>`
+    + `<svg viewBox="0 0 ${W} ${H}" class="detail-chart rate-strip" role="img" aria-label="연준 기준금리 1년 변화">${body}</svg>`;
+}
 const MA_LEGEND = `<span class="legend ma-legend"><span><i></i>200일선</span></span>`;
 
 function priceChartBlock(records, currency, eventMarkers, chartOpts) {
@@ -1858,6 +1961,8 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
   return `<div class="chart-block">
     <div class="chart-label"><span class="ttl">가격</span> ${MA_LEGEND}</div>
     ${chart}
+    ${rateStripHtml((chartOpts && chartOpts.domainStart) || (records[0] && records[0].date),
+      (chartOpts && chartOpts.domainEnd) || (records.length && records[records.length - 1].date), chartOpts || {})}
   </div>`;
 }
 
@@ -3693,6 +3798,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW) {
     <div class="chart-block">
       <div class="chart-label"><span class="ttl">가격 · 돌파/천정</span> <span class="sub">· 점선=신고가 · <span class="ma-key">주황=200일선</span> · ▲돌파 ▼천정</span></div>
       ${priceChart}
+      ${rateStripHtml(domainStart, domainEnd, common)}
     </div>
     <div class="chart-block">
       <div class="chart-label"><span class="ttl">천정 대비 낙폭</span></div>
@@ -4129,10 +4235,12 @@ async function init() {
   wireToolbar();
   applyModeUI();
   wireHelp();
+  const ratesP = loadRates();   // 연준 기준금리 띠(없어도 화면은 그대로)
   try {
     const res = await fetch("scores.json", { cache: "no-store" });
     if (!res.ok) throw new Error("scores.json 로드 실패: " + res.status);
     DATA = await res.json();
+    await ratesP;
     document.getElementById("meta-line").textContent =
       `기준일 ${fmtDateFull(DATA.as_of_date)}`;   // 종목 수는 아래 grid-count가 보여준다
     document.getElementById("footer").textContent =
