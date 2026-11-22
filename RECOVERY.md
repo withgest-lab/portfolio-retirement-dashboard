@@ -7,7 +7,7 @@
 | 바꾸고 싶은 것 | 고칠 곳 | 반영 |
 |---|---|---|
 | 포트폴리오·현금흐름·홈·**매매전략 화면**·나란히 비교·풀다운 | 이 저장소 (`portfolio-retirement-dashboard`) | `main`에 push → 자동 배포 |
-| 종목 추가, 신호 계산·알림 규칙, ETF 매칭 규칙(`signal_bot/proxies.py`) | 전략 저장소 (`kis-buy-signal`) | `main`에 push → 다음 매일 실행에 반영 |
+| 종목 추가, 신호 계산·알림 규칙, ETF 매칭 규칙(`signal_bot/proxies.py`), 금리·공포지수 데이터 | 전략 저장소 (`kis-buy-signal`) | `main`에 push → **바로 `daily.yml` 수동 실행 1회**(`gh workflow run daily.yml -R withgest-lab/kis-buy-signal --ref main`) → data 브랜치 발행 → 이 저장소 배포. 다음 정기 실행까지 기다리지 않는다(Claude는 엔진 수정 검증 때 항상). 로컬에서 KIS API를 부른 직후 1분 안에는 실행 금지(토큰 발급 1분 1회) |
 | 시세·신호 데이터 | 자동 — 평일 미국 정규장 마감 직후(16:02 ET, 겨울 06:02·여름 05:02 KST) 전략 저장소 `us-close-timer.yml`이 `daily.yml`을 실행, 주말·대체 실행은 매일 07:30 KST 예약 | 이 저장소 `signals-watch.yml`이 새 데이터가 올라오는 즉시 배포(약 06:15 KST). `deploy.yml`도 2시간마다 확인(대체) |
 
 ```
