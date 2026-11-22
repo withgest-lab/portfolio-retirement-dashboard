@@ -914,7 +914,7 @@
       <section>
         <h3>카드를 펼치면 나오는 차트들은요?</h3>
         <div class="help-group">
-        <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. 그래프 머리 오른쪽에 <b>시작가 → 현재가 · 수익률</b>(선택 기간)이 있고(좁은 화면은 시작·현재 낱말을 빼거나 한 줄 아래로), 수익률 색도 선과 같습니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
+        <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b>(기간 시작일 종가, 휴장이면 그 직전 거래일 — 1Y는 1년 전 그날, YTD는 작년 마지막 날) 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. 그래프 머리 오른쪽에 <b>시작가 → 현재가 · 수익률</b>(고른 기간 동안의 수익률 — 기간 버튼을 바꾸면 함께 바뀜)이 있고(좁은 화면은 시작·현재 낱말을 빼거나 한 줄 아래로), 수익률 색도 선과 같습니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
         <p><b>차트 묶음</b> — 크게 보기의 가격 · RSI·MFI·공포지수 · 낙폭 · 낙폭 국면 히스토그램은 같은 날짜 축의 한 카드입니다. 위아래 시점을 맞춰 보도록 옅은 세로 격자를 같은 날짜에 긋고, 날짜 글자는 맨 아래 히스토그램에만 적습니다. 펼친 화면에서는 기간 버튼~히스토그램이 한 화면에 들어가게 높이를 화면에 맞춥니다(아주 짧은 화면은 기간 버튼이 위로 지나가고, 그래도 모자라면 글자가 작아지지 않게 조금 스크롤됩니다).</p>
         <p><b>연준 기준금리</b> — 가격 그래프 뒤 옅은 면은 금리 <b>추세 구간</b>입니다: 연준이 금리를 올리던 기간(인상기)은 빨강, 내리던 기간(인하기)은 파랑, 1년 넘게 그대로면 색이 없습니다(같은 방향 결정이 12개월 안에 이어지면 한 사이클로 봅니다. 마지막 결정 뒤 12개월이 안 지났으면 오늘까지 칠해 지금 추세를 보여 줍니다). 아래쪽 계단선은 기준금리(FOMC 목표 범위 상단) 자체로 오른 단은 빨강·내린 단은 파랑이고, 오른쪽 끝에 지금 값(<b>금리 4.00%</b>처럼, 색 = 지금 추세)이 있습니다. 인상기·인하기의 <b>시작에는 출발 금리, 끝에는 도달 금리</b>를 그 계단선 위의 <b>둥근 캡슐(큰 글자, 예: 5.50%)</b>로 적고(지금 이어지는 사이클의 끝은 오른쪽 값), 0.5%p 이상 큰 결정은 캡슐 없는 <b>작은 글자로 이름과 폭</b>을 붙입니다 — <b>빅스텝·빅컷 ±0.5%p · 자이언트 ±0.75%p · 울트라 ±1%p</b>(같은 폭이 연달아면 ×N, 예: 자이언트스텝 +0.75%p ×4). 캡슐 = 그때의 금리 수준(%), 작은 글자 = 한 번에 바꾼 폭(%p)이라 두 숫자가 헷갈리지 않습니다. 그래프 위 경계의 작은 표시는 FOMC 결정일입니다: <b>▲인상(빨강) · ▼인하(파랑) · •동결(회색)</b>, 화살표 개수가 폭입니다(▲ 0.25%p 스몰 · ▲▲ 0.5%p 빅 · ▲▲▲ 0.75%p 자이언트 · ▲▲▲▲ 1%p), 그 날짜에 아주 옅은 세로 점선(마우스를 올리면 날짜·폭·결정 뒤 범위). 기간이 길어 촘촘하면 동결 표시부터 생략합니다. 금리 사이클과 주가 흐름을 같은 날짜 축으로 견줘 보는 용도입니다. 자료: FRED·뉴욕 연은(금리), 연준 회의 일정(결정일).</p>
         <p><b>낙폭</b> — 낙폭%를 시간순으로 그린 그래프입니다. 0%(신고가) 아래로 얼마나, 얼마나 오래 내려가 있었는지 보여줍니다. 기본은 회색이고, 아래 히스토그램에서 박스를 고르면 그 국면의 하락 구간은 빨강, 회복 구간은 초록으로 강조됩니다. 앰버 점선은 코로나19·2022 금리인상 같은 시장 전체 충격 시기, 또는 종목별 큰 낙폭(-25% 이상)의 조사된 원인입니다 — 이름은 바로 위 가격 그래프에 한 번만 적고 여기에는 점선과 저점 값만 둡니다(마우스를 올리면 설명). 원인을 못 찾으면 "확인 안 됨"으로 표시했고 아직 조사 안 된 국면도 있으니 참고용으로만 보세요.</p>
@@ -1133,23 +1133,30 @@ const PERIODS = [
 function toTs(dateStr) { return new Date(dateStr + "T00:00:00").getTime(); }
 
 // 선택한 기간(예: "10Y")만큼 records의 끝부분을 잘라 반환. records는 date 오름차순 가정.
-function sliceByPeriod(records, periodKey) {
-  if (!records || !records.length) return records || [];
-  if (periodKey === "ALL") return records;
-  if (periodKey === "YTD") {
-    // 고정 일수 차감이 아니라 달력 기준(올해 1/1) - 데이터의 마지막 날짜가 속한
-    // 연도의 1/1 이후만 남긴다.
-    const year = records[records.length - 1].date.slice(0, 4);
-    const cutoff = toTs(`${year}-01-01`);
-    const idx = records.findIndex(r => toTs(r.date) >= cutoff);
-    return idx <= 0 ? records : records.slice(idx);
-  }
+// 기간 시작 시각(ms) — ALL·알 수 없는 기간은 null. YTD는 고정 일수 차감이 아니라 달력 기준(데이터 마지막 날짜가 속한 해의 1/1).
+function periodCutoff(records, periodKey) {
+  if (!records || !records.length || periodKey === "ALL") return null;
+  if (periodKey === "YTD") return toTs(`${records[records.length - 1].date.slice(0, 4)}-01-01`);
   const spec = PERIODS.find(p => p[0] === periodKey);
   const days = spec ? spec[1] : Infinity;
-  if (days === Infinity) return records;
-  const cutoff = toTs(records[records.length - 1].date) - days * 86400000;
+  if (days === Infinity) return null;
+  return toTs(records[records.length - 1].date) - days * 86400000;
+}
+function sliceByPeriod(records, periodKey) {
+  if (!records || !records.length) return records || [];
+  const cutoff = periodCutoff(records, periodKey);
+  if (cutoff == null) return records;
   const idx = records.findIndex(r => toTs(r.date) >= cutoff);
   return idx <= 0 ? records : records.slice(idx);
+}
+// 기간 수익률의 기준가 = 기간 시작일 종가(휴장이면 그 직전 거래일) — 1Y는 1년 전 그날 종가, YTD는 작년 마지막 종가(보통의 기간 수익률 정의).
+// 자료가 기간보다 짧거나 ALL이면 첫 종가. 가격 선 초록/빨강 기준·시작가 점선도 이 값을 쓴다(수익률 부호와 선 색이 늘 같게).
+function periodBaseRec(full, periodKey) {
+  if (!full || !full.length) return null;
+  const cutoff = periodCutoff(full, periodKey);
+  let base = null;
+  if (cutoff != null) for (let i = full.length - 1; i >= 0; i--) { if (toTs(full[i].date) <= cutoff) { if (full[i].close != null) { base = full[i]; break; } } }
+  return base || full.find(r => r.close != null) || null;
 }
 
 // records가 실제로 커버하는 기간(일수) - 이보다 긴 기간 버튼은 비활성화.
@@ -1465,6 +1472,7 @@ function lineChartSvg(records, opts) {
 
   let vals = [];
   opts.series.forEach(s => records.forEach(r => { if (r[s.key] != null) vals.push(r[s.key]); }));
+  if (opts.splitBase != null) vals.push(opts.splitBase);
   if (opts.thresholds) vals.push(...opts.thresholds.map(t => t.value));
   if (!vals.length) return '<div class="chart-loading">표시할 데이터가 없습니다.</div>';
 
@@ -1685,7 +1693,7 @@ function lineChartSvg(records, opts) {
       const pts = [];
       records.forEach((r, i) => { if (r[s.key] != null) pts.push({ x: xAt(i), y: yAt(r[s.key]), v: r[s.key] }); });
       if (!pts.length) return;
-      const base = pts[0].v, baseY = yAt(base);
+      const base = opts.splitBase != null ? opts.splitBase : pts[0].v, baseY = yAt(base);
       splitBase[s.key] = base;
       body += `<line x1="${plotL}" x2="${plotR}" y1="${baseY}" y2="${baseY}" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="2 4" opacity="0.55"/>`;
       const segs = [];
@@ -2373,10 +2381,11 @@ function priceTitle(sell, chartW) {
 // 가격 그래프 0번 줄 오른쪽: 기간 수익률 "시작 $645.20 → 현재 $689.81 · 수익률 +6.9%"(사용자 지정 형식 — 시작가·현재가·수익률).
 // 수익률 색은 가격 선과 같은 규칙(시작가 이상 초록 · 아래 빨강). 기간 이름(1Y 등)은 바로 위 기간 버튼이 보여 주므로 쓰지 않는다.
 // 좁으면 낱말(시작·현재)부터 빼고, 그래도 안 되면 수익률만.
-function priceReturnCorner(records, currency) {
+function priceReturnCorner(records, currency, baseRec) {
   const cl = (records || []).filter(r => r.close != null);
-  if (cl.length < 2 || !(cl[0].close > 0)) return null;
-  const a = cl[0], z = cl[cl.length - 1], v = z.close / a.close - 1;
+  const a = baseRec && baseRec.close > 0 ? baseRec : cl[0];
+  if (cl.length < 2 || !a || !(a.close > 0)) return null;
+  const z = cl[cl.length - 1], v = z.close / a.close - 1;
   const p0 = fmtExactPrice(a.close, currency), p1 = fmtExactPrice(z.close, currency);
   const L = t => ({ text: t, color: "var(--text-muted)" });
   const P = t => ({ text: t, color: "var(--text-secondary)", weight: 600 });
@@ -2419,7 +2428,8 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
     kpiAt: chartOpts && chartOpts.kpiAt,
     rates: true,
     cornerTitle: priceTitle(false, W),
-    cornerRight: priceReturnCorner(records, currency),
+    cornerRight: priceReturnCorner(records, currency, chartOpts && chartOpts.base),
+    splitBase: chartOpts && chartOpts.base ? chartOpts.base.close : null,
     noXAxis: chartOpts && chartOpts.noXAxis,
     xTicks: chartOpts && chartOpts.xTicks,
   });
@@ -3218,7 +3228,7 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
     <div class="stack-group${hs.short ? " snap-stack" : ""}">
       <div class="chart-stack">
         <div class="detail-toolbar stack-tools">${periodButtonsHtml(maxDays)}</div>
-        ${priceChartBlock(priceSlice, t.currency, events.concat(priceMarkers), bigChart)}
+        ${priceChartBlock(priceSlice, t.currency, events.concat(priceMarkers), { ...bigChart, base: periodBaseRec(detail.daily, state.period) })}
         ${osc0 ? oscillatorChartBlock(osc0.recs, osc0.label, bigOsc, buildSelectionMarkers("osc", osc0.recs, troughDates)) : ""}
         ${underwaterDetailBlock(underwaterSlice, events.concat(uwMarkers), bigUw)}
         <div class="chart-block stack-hist">
@@ -4414,7 +4424,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
   const uwMarkers = chartEvents.concat(bandMarkers, buildSelectionMarkers("underwater", slice, troughDates, null));
 
   const priceChart = lineChartSvg(slice, {
-    ...common, height: hs.price, yFloor: 0, noXAxis: true, cornerTitle: priceTitle(true, chartW), cornerRight: priceReturnCorner(slice, t.currency),
+    ...common, height: hs.price, yFloor: 0, noXAxis: true, cornerTitle: priceTitle(true, chartW), cornerRight: priceReturnCorner(slice, t.currency, periodBaseRec(series, state.period)), splitBase: (periodBaseRec(series, state.period) || {}).close,
     yFormat: v => fmtAxisPrice(v, t.currency), nowFormat: v => fmtExactPrice(v, t.currency),
     series: [
       { key: "rolling_high", color: "var(--text-muted)", width: 1.2, dashed: true },
