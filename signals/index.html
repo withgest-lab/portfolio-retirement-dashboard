@@ -524,16 +524,17 @@
      안쪽은 헤어라인으로만 나눈다(카드 사이 간격·카드마다 안쪽 여백·제목 줄을 아껴 헤더 아래 한 화면에 들어가게).
      제목은 그래프 안 위쪽 여백에(lineChartSvg opts.cornerTitle), 날짜 글자는 맨 아래 히스토그램에만. */
   .stack-group { margin-bottom: 12px; }
-  .stack-group .period-group { margin: 0 0 6px; }
-  .stack-group .period-btn { padding: 4px 0; }
+  /* 기간 버튼 = 카드 머리(바꾸는 대상인 아래 그림들과 한 카드) */
+  .stack-tools .period-group { margin: 2px 0 4px; }
+  .stack-tools .period-btn { padding: 4px 0; }
   .chart-stack > .chart-block { margin-bottom: 4px; }
   .card.fullscreen .stack-group { scroll-snap-align: start; scroll-margin-top: 52px; }
   .card.fullscreen .stack-group.snap-stack { scroll-snap-align: none; }
-  .card.fullscreen .stack-group.snap-stack .chart-stack { scroll-snap-align: start; scroll-margin-top: 52px; }
+  .card.fullscreen .stack-group.snap-stack .stack-price { scroll-snap-align: start; scroll-margin-top: 52px; }   /* 최소 높이로도 안 될 때만: 기간 줄은 위로 지나가고 첫 그림부터 */
   .fullscreen-backdrop { scroll-snap-type: y proximity; }
   .card.fullscreen .chart-stack {
     background: var(--surface-1); border: 0.5px solid var(--hairline); border-radius: var(--radius);
-    box-shadow: var(--shadow-card); padding: 4px 14px 2px;
+    box-shadow: var(--shadow-card); padding: 6px 14px 2px;
   }
   .card.fullscreen .chart-stack > .chart-block {
     background: none; border: 0; border-radius: 0; box-shadow: none; padding: 2px 0; margin: 0;
@@ -546,6 +547,18 @@
   .hist-head .hist-now { font-weight: 400; color: var(--text-secondary); line-height: 1.45; word-break: keep-all; text-wrap: balance; margin: 0; }
   .card.fullscreen .hist-head .hist-now { font-size: 13px; }
   svg.hist-svg { touch-action: manipulation; cursor: pointer; }
+  /* 선택한 국면 설명(회색 박스)도 카드 안 히스토그램 바로 아래 — 선택하면 그 높이까지 넣어 다시 맞춘다 */
+  .chart-stack .episode-detail-box, .card.fullscreen .chart-stack .episode-detail-box { margin: 2px 0 4px; }
+  .chart-stack .episode-detail-box-inner { margin: 0; padding: 7px 12px; line-height: 1.5; word-break: keep-all; }
+  .card.fullscreen .chart-stack .episode-detail-box-inner { font-size: 13px; }
+  .chart-stack .ed-title { margin-bottom: 3px; }
+  /* 매도 사이클 설명(상승·하락 칸)은 카드 안에서 한 줄로 이어 쓴다 — 줄이 모자라면 칸 단위로만 줄바꿈 */
+  .chart-stack .episode-detail-box-inner:has(.ed-grid) { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; }
+  .chart-stack .episode-detail-box-inner:has(.ed-grid) .ed-title { margin: 0; }
+  .chart-stack .ed-grid { display: contents; }
+  .chart-stack .ed-cell { flex-direction: row; align-items: baseline; gap: 5px; white-space: nowrap; }
+  .chart-stack .ed-v br { display: none; }
+  .chart-stack .ed-v br + .fwd::before { content: " · "; }
 
   /* 매도 전략 모드 */
   .lookback-wrap { display: flex; align-items: center; gap: 6px; flex: none; font-size: 12.5px; color: var(--text-secondary); }
@@ -729,6 +742,10 @@
   .fs-tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .fs-tools .btn { text-decoration: none; }
   .fs-tools .lbl-short { display: none; }
+  /* 매수 ↔ 매도 바로가기: 바뀔 모드의 색(매수 빨강·매도 파랑) 틴트 캡슐 */
+  .fs-mode-to { gap: 2px; padding-right: 10px; }
+  .fs-mode-to.to-buy { color: var(--price-up); background: color-mix(in srgb, var(--price-up) 12%, transparent); }
+  .fs-mode-to.to-sell { color: var(--price-down); background: color-mix(in srgb, var(--price-down) 12%, transparent); }
   /* 고정 높이 + 위아래 padding 0 + line-height: 상속된 줄높이(1.4)가 내용 영역보다 커서 글자 아랫부분이 잘리던 문제 */
   select.sort-select.fs-lookback { height: 30px; font-size: 12.5px; padding-top: 0; padding-bottom: 0; line-height: 30px; }
   .fs-mode { flex-shrink: 0; align-self: center; font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
@@ -753,7 +770,7 @@
   html.embed .fs-hero { padding: 0 0 14px; }
   html.embed .card.fullscreen .chart-block { padding: 14px 0 10px; }
   html.embed .card.fullscreen .chart-block:last-child { border-bottom: 0; }
-  html.embed .card.fullscreen .stack-group.snap-stack .chart-stack { scroll-margin-top: 0; }
+  html.embed .card.fullscreen .stack-group.snap-stack .stack-price { scroll-margin-top: 0; }
   html.embed .card.fullscreen .stack-group { scroll-margin-top: 0; border-bottom: 0.5px solid var(--hairline); padding: 10px 0 4px; margin: 0; }
   html.embed .card.fullscreen .chart-stack { background: transparent; border: 0; box-shadow: none; border-radius: 0; padding: 0; }
   html.embed .card.fullscreen .chart-stack > .chart-block { padding: 3px 0; border-bottom: 0; }
@@ -899,10 +916,10 @@
         <div class="help-group">
         <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
         <p><b>차트 묶음</b> — 크게 보기의 가격 · RSI·MFI·공포지수 · 낙폭 · 낙폭 국면 히스토그램은 같은 날짜 축의 한 카드입니다. 위아래 시점을 맞춰 보도록 옅은 세로 격자를 같은 날짜에 긋고, 날짜 글자는 맨 아래 히스토그램에만 적습니다. 펼친 화면에서는 기간 버튼~히스토그램이 한 화면에 들어가게 높이를 화면에 맞춥니다(아주 짧은 화면은 기간 버튼이 위로 지나가고, 그래도 모자라면 글자가 작아지지 않게 조금 스크롤됩니다).</p>
-        <p><b>연준 기준금리</b> — 가격 그래프 뒤 옅은 면은 금리 <b>추세 구간</b>입니다: 연준이 금리를 올리던 기간(인상기)은 빨강, 내리던 기간(인하기)은 파랑, 1년 넘게 그대로면 색이 없습니다(같은 방향 결정이 12개월 안에 이어지면 한 사이클로 봅니다. 마지막 결정 뒤 12개월이 안 지났으면 오늘까지 칠해 지금 추세를 보여 줍니다). 아래쪽 계단선은 기준금리(FOMC 목표 범위 상단) 자체로 오른 단은 빨강·내린 단은 파랑이고, 오른쪽 끝에 지금 값(<b>금리 4.00%</b>처럼, 색 = 지금 추세)이 있습니다. 그래프 위 경계의 작은 표시는 FOMC 결정일입니다: <b>▲인상(빨강) · ▼인하(파랑) · •동결(회색)</b>, 그 날짜에 아주 옅은 세로 점선(마우스를 올리면 날짜·폭·결정 뒤 범위). 기간이 길어 촘촘하면 동결 표시부터 생략합니다. 금리 사이클과 주가 흐름을 같은 날짜 축으로 견줘 보는 용도입니다. 자료: FRED·뉴욕 연은(금리), 연준 회의 일정(결정일).</p>
+        <p><b>연준 기준금리</b> — 가격 그래프 뒤 옅은 면은 금리 <b>추세 구간</b>입니다: 연준이 금리를 올리던 기간(인상기)은 빨강, 내리던 기간(인하기)은 파랑, 1년 넘게 그대로면 색이 없습니다(같은 방향 결정이 12개월 안에 이어지면 한 사이클로 봅니다. 마지막 결정 뒤 12개월이 안 지났으면 오늘까지 칠해 지금 추세를 보여 줍니다). 아래쪽 계단선은 기준금리(FOMC 목표 범위 상단) 자체로 오른 단은 빨강·내린 단은 파랑이고, 오른쪽 끝에 지금 값(<b>금리 4.00%</b>처럼, 색 = 지금 추세)이 있습니다. 인상기·인하기의 <b>시작에는 출발 금리, 끝에는 도달 금리</b>를 계단 옆에 적고(지금 이어지는 사이클의 끝은 오른쪽 값), 0.5%p 이상 큰 결정은 <b>빅스텝·빅컷(0.5%p) · 자이언트스텝(0.75%p) · 울트라(1%p 이상)</b>으로 이름을 붙입니다(같은 폭이 연달아면 ×N). 그래프 위 경계의 작은 표시는 FOMC 결정일입니다: <b>▲인상(빨강) · ▼인하(파랑) · •동결(회색)</b>, 화살표 개수가 폭입니다(▲ 0.25%p 스몰 · ▲▲ 0.5%p 빅 · ▲▲▲ 0.75%p 자이언트 · ▲▲▲▲ 1%p), 그 날짜에 아주 옅은 세로 점선(마우스를 올리면 날짜·폭·결정 뒤 범위). 기간이 길어 촘촘하면 동결 표시부터 생략합니다. 금리 사이클과 주가 흐름을 같은 날짜 축으로 견줘 보는 용도입니다. 자료: FRED·뉴욕 연은(금리), 연준 회의 일정(결정일).</p>
         <p><b>낙폭</b> — 낙폭%를 시간순으로 그린 그래프입니다. 0%(신고가) 아래로 얼마나, 얼마나 오래 내려가 있었는지 보여줍니다. 기본은 회색이고, 아래 히스토그램에서 박스를 고르면 그 국면의 하락 구간은 빨강, 회복 구간은 초록으로 강조됩니다. 앰버 점선은 코로나19·2022 금리인상 같은 시장 전체 충격 시기, 또는 종목별 큰 낙폭(-25% 이상)의 조사된 원인입니다 — 이름은 바로 위 가격 그래프에 한 번만 적고 여기에는 점선과 저점 값만 둡니다(마우스를 올리면 설명). 원인을 못 찾으면 "확인 안 됨"으로 표시했고 아직 조사 안 된 국면도 있으니 참고용으로만 보세요.</p>
-        <p><b>낙폭 국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중입니다. 진행중 박스는 매일 갱신되는 낙폭으로 다시 계산해 지금까지의 가장 깊은 낙폭까지 그립니다. 아래 점이 이번 바닥, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 누르면(박스 근처를 눌러도 가장 가까운 국면이 골라집니다) 하늘색 테두리와 바닥 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다. 같은 박스를 다시 누르면 해제됩니다.</p>
-        <p><b>RSI·MFI·공포지수</b> — 가격 바로 아래 낮은 칸입니다(0~100). 주황 = RSI, 초록 = MFI, 회보라 = CNN 공포·탐욕 지수이고 오른쪽에 지금 값(공포지수는 극공포·공포·중립·탐욕·극탐욕 + 점수)이 있습니다. 왼쪽 숫자 30/20은 과매도 기준선(RSI 30, MFI 20)이고 그 위 글자가 봉 단위입니다. 공포지수가 <b>극단적 공포(25 이하)인 기간은 보라 세로 띠, 극단적 탐욕(75 이상)인 기간은 금색 세로 띠</b>로 칠해 위 가격과 바로 견줄 수 있습니다. 선택 기간이 3년 이하면 일봉 칸이 가격 아래에, 주·월봉 칸은 맨 아래에 붙고, 3~15년이면 주봉, 15년 초과면 월봉입니다(길수록 일봉이 빽빽해져 자동 전환). 공포지수 자료: CNN Fear &amp; Greed Index, 2011년부터의 이력은 공개 데이터셋 <a href="https://github.com/JakeLaoyu/fear-greed-index" target="_blank" rel="noopener">JakeLaoyu/fear-greed-index</a>(MIT).</p>
+        <p><b>낙폭 국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중입니다. 진행중 박스는 매일 갱신되는 낙폭으로 다시 계산해 지금까지의 가장 깊은 낙폭까지 그립니다. 아래 점이 이번 바닥, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 누르면(박스 근처를 눌러도 가장 가까운 국면이 골라집니다) 하늘색 테두리와 바닥 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다. 박스를 고르면 위 그림에 그 국면 바닥 날짜의 값이 함께 찍힙니다(가격 위 바닥 날짜·바닥 가격, RSI·MFI·공포지수 숫자, 낙폭 %). 설명 박스도 카드 안 히스토그램 바로 아래에 나옵니다. 같은 박스를 다시 누르면 해제됩니다.</p>
+        <p><b>RSI·MFI·공포지수</b> — 가격 바로 아래 낮은 칸입니다(0~100). 주황 = RSI, 초록 = MFI, 회보라 = CNN 공포·탐욕 지수이고 오른쪽에 지금 값(공포지수는 극공포·공포·중립·탐욕·극탐욕 + 점수)이 있습니다. 왼쪽 숫자 30/20은 과매도 기준선(RSI 30, MFI 20)이고 그 위 글자가 봉 단위입니다. 공포지수가 <b>극단적 공포(25 이하)인 기간은 보라 세로 띠, 극단적 탐욕(75 이상)인 기간은 금색 세로 띠</b>로 칠해 위 가격과 바로 견줄 수 있고, 보라 띠마다 그 기간의 가장 낮은 공포지수를 점 아래 숫자로 적습니다(지금이 바닥이면 오른쪽 값과 같아 생략). 선택 기간이 3년 이하면 일봉 칸이 가격 아래에, 주·월봉 칸은 맨 아래에 붙고, 3~15년이면 주봉, 15년 초과면 월봉입니다(길수록 일봉이 빽빽해져 자동 전환). 공포지수 자료: CNN Fear &amp; Greed Index, 2011년부터의 이력은 공개 데이터셋 <a href="https://github.com/JakeLaoyu/fear-greed-index" target="_blank" rel="noopener">JakeLaoyu/fear-greed-index</a>(MIT).</p>
         <p><b>기간 버튼(1Y~ALL)</b> — 고른 기간이 카드 안의 가격·낙폭·RSI·MFI 차트에 모두 적용됩니다. 상승장·하락장이 언제 시작됐는지 보려면 10Y 이상으로 늘려 보세요. 보유 데이터보다 긴 기간은 흐리게 표시되며 선택할 수 없습니다.</p>
         <p><b>과거에 이런 하락에서 샀다면</b> — 하락 종류(드물게 깊은 하락·깊은 조정·깊지만 흔한 깊이·급등 뒤 하락·1단계 조정·얕은 조정·사상 최대 낙폭)별로 그런 날 샀다면 1년 뒤 수익률과 손해(100번 중 N번)가 어땠는지, 맨 아래 <b>아무 때나</b>(비교 기준)와 견주는 한 표입니다. 왼쪽 열 묶음이 회색 박스 판단에 쓴 자료(<b>판단에 씀</b>), 오른쪽이 견줘 볼 다른 자료(이 종목 또는 비슷한 묶음 — 묶음에 든 종목은 표 아래 한 줄)입니다. 지금 단계 줄은 판단에 쓴 쪽이 파랑, 다른 쪽이 회색으로 칠해져 같은 단계를 나란히 볼 수 있습니다. 맨 위 한 줄이 결론, 초록 칸은 아무 때나보다 나았던 칸, 빨강은 못했던 칸, 회색 글자는 과거 사례 5번 미만이라 판단에 쓰지 않는 칸입니다. 하락 종류는 과거 매일 그날까지의 자료만으로 나눴습니다.</p>
         <p><b>크게 보기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-expand"/></svg></b> — 카드를 전체 화면으로 열어 요약과 큰 차트를 봅니다. 오른쪽 위 "닫기"(또는 Esc)로 돌아옵니다.</p>
@@ -1545,10 +1562,12 @@ function lineChartSvg(records, opts) {
   // 임계선 라벨("신고가" 등)이 맨 위 눈금선 바로 위에 놓이므로 이벤트 줄이 없어도 그 글자가 들어갈 만큼은 위쪽을 확보한다.
   const minTop = (opts.thresholds && opts.thresholds.length && opts.thresholdLabels !== false) ? fReg + 6 : 0;
   // 제목만 있을 때: 제목(0번 줄 기준선 10) 아래 6px, 금리 결정 표시(▲▼•)가 들어가면 그 높이만큼 더.
-  const titleTop = opts.cornerTitle ? 10 + (opts.rates && RATES ? 11 : 6) : 0;
-  const evTop = usedRows ? 12 + usedRows * rowGap + 4 + (opts.rates && RATES ? 4 : 0) : 0;
-  const baseTop = opts.compact ? 5 : (opts.rates && RATES ? 14 : 12);
-  const margin = { top: Math.max(minTop, baseTop, titleTop, evTop), right, bottom: opts.noXAxis ? 6 : fReg + 10, left };
+  const titleTop = opts.cornerTitle ? 10 + (opts.rates && RATES ? 17 : 6) : 0;
+  const evTop = usedRows ? 12 + usedRows * rowGap + 4 + (opts.rates && RATES ? 9 : 0) : 0;
+  const baseTop = opts.compact ? 5 : (opts.rates && RATES ? 19 : 12);
+  // 압축 칸의 공포지수 극단적 공포 구간이 보이면 바닥 숫자(점 아래) 자리를 아래 여백에 둔다
+  const fngLowRoom = !!opts.compact && opts.series.some(s => s.zone && records.some(r => r[s.key] != null && r[s.key] <= FNG_FEAR));
+  const margin = { top: Math.max(minTop, baseTop, titleTop, evTop), right, bottom: (opts.noXAxis ? 6 : fReg + 10) + (fngLowRoom ? fSmall - 1 : 0), left };
   const innerH = H - margin.top - margin.bottom;
   const plotL = margin.left, plotR = W - margin.right, plotB = margin.top + innerH;
   // 값 라벨(저점 %)이 내려갈 수 있는 최대 y - 맨 아래 날짜 눈금과 겹치지 않게 그 위에서 멈춘다.
@@ -1571,12 +1590,22 @@ function lineChartSvg(records, opts) {
   // 연준 기준금리(가격 그래프만): 추세 구간 면 + 금리 계단은 가격 선 아래, 결정 표시는 맨 위(fg)
   const rov = opts.rates ? rateOverlaySvg(dStart, dEnd, { plotL, plotR, top: margin.top, bottom: plotB, dx, fs: fSmall }) : null;
   if (rov) body += rov.bg;
-  // 공포·탐욕 극단 구간(opts.series의 zone): 그 기간을 세로 띠로 — 극단적 공포 = 보라, 극단적 탐욕 = 금색
+  // 공포·탐욕 극단 구간(opts.series의 zone): 그 기간을 세로 띠로 — 극단적 공포 = 보라, 극단적 탐욕 = 금색.
+  // 극단적 공포 구간마다 가장 낮은 값(바닥)을 모아 두었다가 선을 다 그린 뒤 점 아래에 숫자로(낙폭 그래프의 저점 숫자와 같은 방식).
+  const occ = [];   // 그래프 안에 놓인 글자 사각형(맨 마지막 금리 글자가 피한다)
+  const fngLows = [];
+  let kpiI = -1;
+  if (opts.kpiAt) {
+    const tt = new Date(opts.kpiAt + "T00:00:00").getTime();
+    let best = Infinity;
+    records.forEach((r, i) => { const dd = Math.abs(new Date(r.date + "T00:00:00").getTime() - tt); if (dd < best) { best = dd; kpiI = i; } });
+  }
   opts.series.filter(s => s.zone).forEach(s => {
     const half = Math.max(0.6, innerW / Math.max(1, n) / 2);
     let run = null;
     const flush = () => {
       if (!run) return;
+      if (run.fear) fngLows.push({ v: run.minV, i: run.minI });
       const x1 = Math.max(plotL, run.x0 - half), x2 = Math.min(plotR, run.x1 + half);
       body += `<rect x="${x1.toFixed(1)}" y="${margin.top}" width="${Math.max(1.2, x2 - x1).toFixed(1)}" height="${innerH}" style="fill:${run.fear ? "var(--fng-fear)" : "var(--fng-greed)"}" opacity="${run.fear ? 0.13 : 0.17}"><title>${run.fear ? "극단적 공포" : "극단적 탐욕"} ${fmtDateFull(run.d0)} ~ ${fmtDateFull(run.d1)}</title></rect>`;
       run = null;
@@ -1585,8 +1614,8 @@ function lineChartSvg(records, opts) {
       const v = r[s.key];
       const z = v == null ? 0 : v <= FNG_FEAR ? 1 : v >= FNG_GREED ? 2 : 0;
       if (!z) { flush(); return; }
-      if (run && run.fear === (z === 1)) { run.x1 = xAt(i); run.d1 = r.date; }
-      else { flush(); run = { fear: z === 1, x0: xAt(i), x1: xAt(i), d0: r.date, d1: r.date }; }
+      if (run && run.fear === (z === 1)) { run.x1 = xAt(i); run.d1 = r.date; if (v < run.minV) { run.minV = v; run.minI = i; } }
+      else { flush(); run = { fear: z === 1, x0: xAt(i), x1: xAt(i), d0: r.date, d1: r.date, minV: v, minI: i }; }
     });
     flush();
   });
@@ -1727,6 +1756,27 @@ function lineChartSvg(records, opts) {
     });
   }
 
+  // 공포지수 바닥 숫자: 깊은 바닥부터 점 아래 → 위 → 오른쪽 → 왼쪽 중 다른 숫자와 안 겹치는 첫 자리. 바닥이 마지막 점(지금)이면
+  // 오른쪽 거터 '극공포 N'과 같은 값이라 뺀다(한 화면 중복 문구 금지).
+  if (fngLows.length) {
+    const lastI = (() => { const zs = opts.series.find(s => s.zone); let k = n - 1; while (k >= 0 && records[k][zs.key] == null) k--; return k; })();
+    const placedF = [];
+    fngLows.filter(f => f.i !== lastI && !(kpiI >= 0 && Math.abs(xAt(f.i) - xAt(kpiI)) < 26)).sort((a, b) => a.v - b.v).forEach(f => {
+      const fx = xAt(f.i), fy = yAt(f.v), txt = String(Math.round(f.v)), w = textW(txt, fSmall, true);
+      const spots = [[fx, fy + fSmall + 3, "middle"], [fx, fy - 5, "middle"], [fx + 6, fy + fSmall * 0.35, "start"], [fx - 6, fy + fSmall * 0.35, "end"]];
+      const spot = spots.map(([x, y, a]) => {
+        const an = a === "middle" ? fitAnchor(x, w, plotL, plotR) : a;
+        const l = an === "start" ? x : an === "end" ? x - w : x - w / 2;
+        return { x, y, an, l, r: l + w, top: y - fSmall, bot: y + 2 };
+      }).find(q => q.l >= plotL && q.r <= plotR && q.top >= margin.top - 1 && q.bot <= H - 1
+        && !placedF.some(o => q.l < o.r + 3 && q.r > o.l - 3 && q.top < o.bot + 1 && q.bot > o.top - 1));
+      body += `<circle cx="${fx}" cy="${fy}" r="2.4" style="fill:var(--fng-fear)" stroke="var(--surface-1)" stroke-width="1"><title>극단적 공포 바닥 ${Math.round(f.v)} · ${fmtDateFull(records[f.i].date)}</title></circle>`;
+      if (!spot) return;
+      placedF.push(spot);
+      body += `<text x="${spot.x}" y="${spot.y}" text-anchor="${spot.an}" font-size="${fSmall}" font-weight="700" style="fill:var(--fng-fear);${TEXT_HALO}">${txt}</text>`;
+    });
+  }
+
   // 이벤트 라벨/점선. 구간 띠(band)는 라벨만(경계선은 위에서 이미 그렸다).
   // 색: 국면 구간 = 인디고, 저점 = 빨강, 그 밖의 원인/거시이벤트 = 앰버(--event).
   laidOut.forEach(ev => {
@@ -1793,6 +1843,7 @@ function lineChartSvg(records, opts) {
       const cands = [0, 1, 2, 3, 4, -1, -2, -3].map(k => fit(base + k * step));
       const ly = cands.find(y => !hits(y)) ?? cands[0];
       placed.push({ l: l0, r: r0, ly });
+      occ.push({ l: l0, r: r0, t: ly - fSmall, b: ly + 2 });
       body += `<circle cx="${px}" cy="${py}" r="3.8" fill="${pm.color}" stroke="var(--surface-1)" stroke-width="1.5"><title>${escapeHtml(pm.label)} ${escapeHtml(fmtDateFull(pm.date))}</title></circle>`;
       body += `<text x="${lx}" y="${ly}" text-anchor="${onLeft ? "end" : "start"}" font-size="${fSmall}" font-weight="700" style="${TEXT_HALO}" fill="${pm.textColor || pm.color}" pointer-events="none">${escapeHtml(pm.label)}</text>`;
     });
@@ -1854,6 +1905,32 @@ function lineChartSvg(records, opts) {
       placed.push(chosen);
       body += `<text x="${chosen.x}" y="${chosen.y}" text-anchor="${chosen.anchor}" font-size="${fSmall}" font-weight="700" style="${TEXT_HALO}" fill="var(--status-crit)">${txt}</text>`;
     });
+  }
+
+  // 히스토그램에서 고른 국면의 바닥 날짜(opts.kpiAt) 값: 지금 값을 보여 주는 시리즈마다 점 + 숫자(색 = 시리즈, 공포지수는 구간 색).
+  // 세로선 오른쪽(자리 없으면 왼쪽)에 값 높이 순으로 겹치지 않게 쌓는다.
+  if (opts.kpiAt && kpiI >= 0) {
+    const kx = xAt(kpiI);
+    const items = labelSeries.map(s => {
+      const v = records[kpiI][s.key];
+      if (v == null) return null;
+      const txt = s.split ? nowFmt(v) : String(Math.round(v));
+      const col = s.nowColorFn ? s.nowColorFn(v) : (s.split ? "var(--text-primary)" : s.color);
+      return { y: yAt(v), txt, col, w: textW(txt, fSmall, true) };
+    }).filter(Boolean).sort((a, b) => a.y - b.y);
+    if (items.length) {
+      const right = kx + 7 + Math.max(...items.map(i => i.w)) <= plotR;
+      const lo = margin.top + fSmall, hi = plotB + Math.min(fSmall, margin.bottom - 3);
+      let prev = -Infinity;
+      items.forEach(it => { it.ly = Math.max(it.y + fSmall * 0.35, prev + fSmall + 1, lo); prev = it.ly; });
+      let lim = hi;
+      for (let i = items.length - 1; i >= 0; i--) { items[i].ly = Math.min(items[i].ly, lim); lim = items[i].ly - fSmall - 1; }
+      items.forEach(it => {
+        body += `<circle cx="${kx}" cy="${it.y}" r="3" style="fill:${it.col}" stroke="var(--surface-1)" stroke-width="1.5"/>`;
+        body += `<text x="${right ? kx + 7 : kx - 7}" y="${it.ly}" text-anchor="${right ? "start" : "end"}" font-size="${fSmall}" font-weight="700" style="fill:${it.col};${TEXT_HALO}">${it.txt}</text>`;
+        occ.push(right ? { l: kx + 7, r: kx + 7 + it.w, t: it.ly - fSmall, b: it.ly + 2 } : { l: kx - 7 - it.w, r: kx - 7, t: it.ly - fSmall, b: it.ly + 2 });
+      });
+    }
   }
 
   // y축: 위/중간/아래 3곳에 값을 찍는다(각 눈금선 높이에 맞춰). 압축 칸(0~100 고정)은 숫자 대신
@@ -1927,6 +2004,21 @@ function lineChartSvg(records, opts) {
       if (ly + 2 > b0 && ly - fSmall < b1) ly = b1 + fSmall + 2 <= baseMax + 2 ? b1 + fSmall + 2 : b0 - 3;
     });
     body += `<text x="${gx}" y="${ly}" font-size="${fSmall}" font-weight="700" style="fill:${rov.label.color}"><title>${escapeHtml(rov.label.title)}</title>${escapeHtml(rov.label.text)}</text>`;
+  }
+  if (rov && rov.pend.length) {
+    const fsR = fSmall, mine = [];
+    rov.pend.forEach(q => {
+      const w = textW(q.txt, fsR, true);
+      for (const [x, yy, a] of q.cands) {
+        const an = a === "middle" ? fitAnchor(x, w, plotL, plotR) : a;
+        const l = an === "start" ? x : an === "end" ? x - w : x - w / 2, r = l + w, t = yy - fsR, b = yy + 2;
+        if (l < plotL || r > plotR || t < margin.top || b > plotB) continue;
+        if (occ.concat(mine).some(o => l < o.r + 3 && r > o.l - 3 && t < o.b + 1 && b > o.t - 1)) continue;
+        mine.push({ l, r, t, b });
+        body += `<text x="${x.toFixed(1)}" y="${yy.toFixed(1)}" text-anchor="${an}" font-size="${fsR}" font-weight="${q.weight}" style="fill:${q.color};${TEXT_HALO}">${q.txt}</text>`;
+        break;
+      }
+    });
   }
   if (rov) body += rov.fg;
   body += titleSvg;
@@ -2069,6 +2161,7 @@ function rateOverlaySvg(dStart, dEnd, g) {
   const clampX = x => Math.min(Math.max(x, plotL), plotR);
   const up = "var(--price-up)", down = "var(--price-down)";
   let bg = "", fg = "";
+  const pend = [];   // 금리 글자 요청 — lineChartSvg가 다른 글자를 다 놓은 뒤 빈자리에 놓는다(겹치면 금리 글자가 비키거나 빠짐)
   // 1) 추세 구간(옅은 면)
   const cyc = rateCycles();
   cyc.forEach((c, i) => {
@@ -2101,6 +2194,45 @@ function rateOverlaySvg(dStart, dEnd, g) {
     });
     bg += `<g opacity="0.9">${tread}${risers}</g>`;
     const tr = rateTrendAt(dEnd);
+    // 금리 글자(그래프 위 맨 앞 층): ① 인상기·인하기 시작 = 첫 결정 전 수준(단 왼쪽), 끝 = 마지막 결정 뒤 수준(단 오른쪽)
+    //   — 지금 이어지는 사이클의 끝 값은 오른쪽 거터 '금리 N%'와 같아 뺀다. ② 0.5%p 이상 결정은 이름(빅스텝·빅컷·자이언트·울트라),
+    //   같은 폭이 연달아 나오면 한 번에 '×N'. 서로·그래프 밖과 겹치면 다음 자리, 자리가 없으면 뺀다.
+    const putR = (txt, cands, color, weight) => { pend.push({ txt, cands, color, weight }); };
+    const lv = v => `${(+v).toFixed(2)}%`;
+    const cycAll = rateCycles();
+    let prevEnd = null;   // 앞 사이클 끝에 적은 수준 — 다음 사이클 시작이 같은 수준(그 사이 동결)이면 한 번만 적는다
+    cycAll.forEach((c, ci) => {
+      const col = c.dir > 0 ? up : down;
+      const ongoing = ci === cycAll.length - 1 && daysBetween(c.end, dEnd) <= 365;
+      if (c.start >= dStart && c.start <= dEnd) {
+        const k = rateIdx(c.start), pre = RATES.steps[k - 1] ? RATES.steps[k - 1][1] : null;
+        if (pre != null && !(prevEnd != null && Math.abs(prevEnd - pre) < 1e-6)) {
+          const x = clampX(dx(c.start)), yy = y(pre);
+          putR(lv(pre), [[x - 3, yy - 3, "end"], [x - 3, yy + fs + 2, "end"], [x + 3, yy - 3, "start"]], col, 700);
+        }
+      }
+      prevEnd = null;
+      if (!ongoing && c.end >= dStart && c.end <= dEnd) {
+        const k = rateIdx(c.end), post = RATES.steps[k][1];
+        const x = clampX(dx(c.end)), yy = y(post);
+        putR(lv(post), [[x + 3, yy - 3, "start"], [x + 3, yy + fs + 2, "start"], [x - 3, yy - 3, "end"]], col, 700);
+        prevEnd = post;
+      }
+    });
+    const stepName = d => { const a = Math.abs(d), u = d > 0; return a >= 0.99 ? (u ? "울트라스텝" : "울트라컷") : a >= 0.74 ? (u ? "자이언트스텝" : "자이언트컷") : a >= 0.49 ? (u ? "빅스텝" : "빅컷") : ""; };
+    const chg = rateDecisions().filter(d => d.dir && d.date >= dStart && d.date <= dEnd);
+    const groups = [];
+    chg.forEach(d => {
+      const g = groups[groups.length - 1];
+      if (g && g.last === chg.indexOf(d) - 1 && Math.abs(g.delta - d.delta) < 0.01) { g.n++; g.last++; }
+      else groups.push({ d, delta: d.delta, n: 1, last: chg.indexOf(d) });
+    });
+    groups.filter(g => stepName(g.delta)).forEach(g => {
+      const k = g.d.k, x = clampX(dx(RATES.steps[k][0]));
+      const yTop = Math.min(y(RATES.steps[k][1]), y(RATES.steps[k - 1][1])), yMid = (y(RATES.steps[k][1]) + y(RATES.steps[k - 1][1])) / 2;
+      const txt = stepName(g.delta) + (g.n > 1 ? ` ×${g.n}` : "");
+      putR(txt, [[x, yTop - 4, "middle"], [x + 4, yMid + fs * 0.35, "start"], [x - 4, yMid + fs * 0.35, "end"], [x, yTop - 4 - fs - 1, "middle"]], g.delta > 0 ? up : down, 600);
+    });
     label = { y: y(pts[pts.length - 1][1]), text: `금리 ${RATES.steps[k1][1].toFixed(2)}%`, color: tr > 0 ? up : tr < 0 ? down : "var(--text-secondary)",
       title: `기준금리 ${fmtRateRange(k1)} · ${tr > 0 ? "인상 추세" : tr < 0 ? "인하 추세" : "동결"}` };
   }
@@ -2115,22 +2247,28 @@ function rateOverlaySvg(dStart, dEnd, g) {
       if (!d.dir && !showHold) return;
       const x = clampX(dx(d.date));
       const col = d.dir > 0 ? up : d.dir < 0 ? down : "var(--text-muted)";
-      const tip = `${fmtDateFull(d.date)} ${d.dir > 0 ? "인상 " + fmtPp(d.delta) : d.dir < 0 ? "인하 " + fmtPp(d.delta) : "동결"}${d.unscheduled ? "(긴급)" : ""} → ${fmtRateRange(d.k)}`;
+      const stepWord = a => (a >= 0.99 ? "울트라" : a >= 0.74 ? "자이언트" : a >= 0.49 ? "빅" : "스몰");
+      const tip = `${fmtDateFull(d.date)} ${d.dir > 0 ? "인상 " + fmtPp(d.delta) : d.dir < 0 ? "인하 " + fmtPp(d.delta) : "동결"}${d.dir ? `(${stepWord(Math.abs(d.delta))} ${d.dir > 0 ? "스텝" : "컷"})` : ""}${d.unscheduled ? "(긴급)" : ""} → ${fmtRateRange(d.k)}`;
       if (showLine) bg += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${top}" y2="${bottom}" style="stroke:${col}" stroke-width="1" stroke-dasharray="1.5 3" opacity="${d.dir ? 0.32 : 0.2}"/>`;
       if (x - lastX < (d.dir ? 4 : 6)) return;
       lastX = x;
       const gy = top - 2;
       if (d.dir) {
-        const w = gap >= 9 ? 3.5 : 2.6, h = gap >= 9 ? 6 : 4.6;
-        const path = d.dir > 0 ? `M${(x - w).toFixed(1)},${gy} L${(x + w).toFixed(1)},${gy} L${x.toFixed(1)},${(gy - h).toFixed(1)} Z`
-          : `M${(x - w).toFixed(1)},${(gy - h).toFixed(1)} L${(x + w).toFixed(1)},${(gy - h).toFixed(1)} L${x.toFixed(1)},${gy} Z`;
-        fg += `<path d="${path}" style="fill:${col}"><title>${tip}</title></path>`;
+        // 화살표 개수 = 폭(▲ 0.25%p 스몰 · ▲▲ 0.5%p 빅 · ▲▲▲ 0.75%p 자이언트 · ▲▲▲▲ 1%p) — 위로 겹쳐 쌓아 옆 결정과 부딪히지 않게
+        const nStep = Math.max(1, Math.min(4, Math.round(Math.abs(d.delta) / 0.25)));
+        const w = gap >= 9 ? 3.4 : 2.6, h = gap >= 9 ? 4.4 : 3.6, sy = h * 0.78;
+        for (let q = 0; q < nStep; q++) {
+          const b0 = gy - q * sy;
+          const path = d.dir > 0 ? `M${(x - w).toFixed(1)},${b0.toFixed(1)} L${(x + w).toFixed(1)},${b0.toFixed(1)} L${x.toFixed(1)},${(b0 - h).toFixed(1)} Z`
+            : `M${(x - w).toFixed(1)},${(b0 - h).toFixed(1)} L${(x + w).toFixed(1)},${(b0 - h).toFixed(1)} L${x.toFixed(1)},${b0.toFixed(1)} Z`;
+          fg += `<path d="${path}" style="fill:${col}" stroke="var(--surface-1)" stroke-width="0.6"><title>${tip}</title></path>`;
+        }
       } else {
         fg += `<circle cx="${x.toFixed(1)}" cy="${(gy - 2.4).toFixed(1)}" r="1.7" style="fill:${col}" opacity="0.8"><title>${tip}</title></circle>`;
       }
     });
   }
-  return { bg, fg, label };
+  return { bg, fg, label, pend };
 }
 
 // ---- CNN 공포·탐욕 지수(0~100): RSI·MFI 칸의 세 번째 선 ----
@@ -2195,6 +2333,7 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
     markerKey: "divergence",
     eventMarkers,
     maxEventRows: (chartOpts && chartOpts.evRows) || 3,
+    kpiAt: chartOpts && chartOpts.kpiAt,
     rates: true,
     cornerTitle: priceTitle(false, W),
     noXAxis: chartOpts && chartOpts.noXAxis,
@@ -2236,6 +2375,7 @@ function oscillatorChartBlock(records, tag, chartOpts, eventMarkers) {
     // 히스토그램에서 고른 국면의 바닥 날짜는 점선만(값은 선과 거터에서 읽힌다 — 글자 줄을 따로 쓰지 않는다).
     eventMarkers,
     eventLabels: false,
+    kpiAt: chartOpts && chartOpts.kpiAt,
     noXAxis: chartOpts && chartOpts.noXAxis,
     xTicks: chartOpts && chartOpts.xTicks,
   });
@@ -2292,7 +2432,8 @@ function stackHeights(large, sell, chartW, fit, hasUp) {
   const over = fit && fit.over != null ? fit.over : (sell ? 76 : 58);
   const wt = sell ? { price: 0.35, osc: 0.11, uw: 0.18, hist: 0.36 } : { price: 0.36, osc: 0.11, uw: 0.22, hist: 0.31 };
   // 최소 높이(글자·라벨이 겹치지 않는 선): RSI칸 48 = 거터 세 줄(RSI·MFI·공포)이 들어가는 높이
-  const mn = sell ? { price: 120, osc: 48, uw: 66, hist: hasUp ? 120 : 100 } : { price: 120, osc: 48, uw: 70, hist: 100 };
+  const oscMin = FNG ? 58 : 48;   // 공포지수가 있으면 바닥 숫자 자리(아래 여백)만큼 더
+  const mn = sell ? { price: 120, osc: oscMin, uw: 66, hist: hasUp ? 120 : 100 } : { price: 120, osc: oscMin, uw: 70, hist: 100 };
   const mx = { price: 340, osc: 84, uw: 250, hist: sell && hasUp ? 380 : 300 };
   const minSum = Object.values(mn).reduce((x, y) => x + y, 0);
   const short = avail - tb - over < minSum;   // 최소 높이로도 안 되면 기간 탭만 위로 지나가게(차트 카드만 한 화면)
@@ -2692,10 +2833,10 @@ function episodeHistogramSvg(episodes, percentiles, domainStart, domainEnd, char
       svg += mk(bx, topY, brkTxt, "var(--gain)", ba);
       const bl = ba === "end" ? bx - bwid : bx, br = bl + bwid;
       // ▼천정 자리: 상승 막대 위 끝 → 0% 선 오른쪽 → ▲돌파 한 줄 위 중 ▲돌파 글자와 겹치지 않는 첫 자리(상승 막대가 아주 낮을 때 대비)
-      const spots = [[px, topY, "end"], [px + 3, zeroY - 4, "start"], [px, topY - fs - 2, "end"]];
+      const spots = [[px, topY, "end"], [px + 3, zeroY - 4, "start"], [px, topY - fs - 2, "end"], [px - 3, zeroY - 4, "end"]];
       const free = spots.find(([x, y, a]) => {
         const l = a === "end" ? x - pw : x, r = l + pw;
-        return !(l < br + 3 && r > bl - 3 && Math.abs(y - topY) < fs + 1) && r <= W - 2;
+        return !(l < br + 3 && r > bl - 3 && Math.abs(y - topY) < fs + 1) && r <= plotR && l >= plotL;
       }) || spots[2];
       svg += mk(free[0], free[1], peakTxt, "var(--status-crit)", free[2]);
     } else {
@@ -2820,7 +2961,7 @@ function buildSelectionMarkers(kind, records, troughDates, episode) {
     (troughDates || []).forEach(d => {
       const rec = (records || []).find(r => r.date === d);
       const val = (kind === "underwater" && rec) ? rec.depth : null;
-      items.push({ date: d, label: "바닥", val, isSelection: true });
+      items.push({ date: d, label: kind === "price" ? (isSell() ? fmtDateFull(d) : `바닥 ${fmtDateFull(d)}`) : "바닥", val, isSelection: true });
     });
     return items;
   }
@@ -2970,16 +3111,16 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
     } else segs.push({ start: selectedEpisode.start, end: selectedEpisode.end, color: "var(--status-crit)" });
     bigUw.highlightSegs = segs;
   }
+  if (troughDates[0]) { bigChart.kpiAt = troughDates[0]; bigOsc.kpiAt = troughDates[0]; }
   const priceMarkers = buildSelectionMarkers("price", priceSlice, troughDates, selectedEpisode);
   const uwMarkers = buildSelectionMarkers("underwater", underwaterSlice, troughDates, selectedEpisode);
   const episodeBoxHtml = selectedEpisode
-    ? episodeDetailHtml(selectedEpisode, findEpisodeCause(events, selectedEpisode.start, selectedEpisode.end),
-        findDepthTroughs(fullUnderwater, selectedEpisode.start, selectedEpisode.end)[0])
+    ? episodeDetailHtml(selectedEpisode, findEpisodeCause(events, selectedEpisode.start, selectedEpisode.end), null)   // 바닥 날짜·깊이는 위 그림에 찍힌다
     : "";
 
   // 히스토그램 위 한 줄 요약(진행중 국면이 있을 때): 바닥 대비 지금 위치.
   let nowSummaryHtml = "";
-  if (nowEp && nowDepth != null) {
+  if (nowEp && nowDepth != null && !selectedEpisode) {   // 국면을 고르면 카드 안 설명 박스가 요약을 대신한다
     const rec = nowDepth - nowEp.depth;
     const frac = nowEp.depth < 0 ? rec / (0 - nowEp.depth) : 0;
     const troughDate = nowTroughRec ? `(${fmtDateFull(nowTroughRec.date)})` : "";
@@ -2991,8 +3132,8 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
   const [osc0, ...oscRest] = oscSets;
   return `
     <div class="stack-group${hs.short ? " snap-stack" : ""}">
-      <div class="detail-toolbar">${periodButtonsHtml(maxDays)}</div>
       <div class="chart-stack">
+        <div class="detail-toolbar stack-tools">${periodButtonsHtml(maxDays)}</div>
         ${priceChartBlock(priceSlice, t.currency, events.concat(priceMarkers), bigChart)}
         ${osc0 ? oscillatorChartBlock(osc0.recs, osc0.label, bigOsc, buildSelectionMarkers("osc", osc0.recs, troughDates)) : ""}
         ${underwaterDetailBlock(underwaterSlice, events.concat(uwMarkers), bigUw)}
@@ -3002,10 +3143,10 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
             ${nowSummaryHtml}
           </div>
           ${episodeHistogramSvg(episodesAll, detail.percentiles, domainStart, asOfDate, bigHist, selectedEpisode)}
+          ${episodeBoxHtml ? `<div class="episode-detail-box">${episodeBoxHtml}</div>` : ""}
         </div>
       </div>
     </div>
-    <div class="episode-detail-box">${episodeBoxHtml}</div>
     ${buyPerfTableHtml(t, detail.buy_perf)}
     ${oscRest.map(o => oscillatorChartBlock(o.recs, o.label, { ...common, height: hs.osc + F.reg + 10 }, buildSelectionMarkers("osc", o.recs, troughDates))).join("")}
   `;
@@ -3125,14 +3266,15 @@ function renderDetailInto(container, t, detail, large) {
     if (m && (!container._fit || Math.abs(m.over - container._fit.over) > 4 || Math.abs(m.tb - container._fit.tb) > 4)) { container._fit = m; draw(); }
   }
 }
-// → { over: 차트 카드 안에서 차트가 아닌 높이(히스토그램 머리·요약 줄·안쪽 여백), tb: 기간 탭 줄(카드 위까지) }
+// → { over: 카드 안에서 그림·기간 줄이 아닌 높이(히스토그램 머리·요약 줄·안쪽 여백), tb: 카드 안 기간 줄(그 위 끝~첫 그림 위 끝) }
 function measureStackOver(container) {
   const g = container.querySelector(".stack-group"), st = g && g.querySelector(".chart-stack");
   if (!st || !g.offsetHeight) return null;
   let charts = 0;
   st.querySelectorAll("svg.detail-chart").forEach(sv => { charts += sv.getBoundingClientRect().height; });
-  const gr = g.getBoundingClientRect(), sr = st.getBoundingClientRect();
-  return { over: Math.round(sr.height - charts), tb: Math.round(sr.top - gr.top) };
+  const tools = st.querySelector(".stack-tools"), first = st.querySelector(".chart-block");
+  const tb = tools && first ? Math.round(first.getBoundingClientRect().top - tools.getBoundingClientRect().top) : 0;
+  return { over: Math.round(st.getBoundingClientRect().height - charts - tb), tb };
 }
 
 // 화면 폭이 바뀌면(폴드 펼침/접힘, 세로↔가로 회전, 창 크기 조절) 차트를 새 폭에 맞춰 다시 그린다.
@@ -3168,6 +3310,7 @@ function openFullscreen(symb, detail) {
       <div class="fullscreen-header-inner">
         <div class="fs-title" id="fs-title"><span class="symb">${escapeHtml(t.symb)}</span><span class="name">${escapeHtml(t.name)}</span></div>
         <div class="fs-tools">
+          ${!EMBED ? `<button type="button" class="btn fs-mode-to ${isSell() ? "to-buy" : "to-sell"}" data-action="switch-mode" title="${isSell() ? "매수" : "매도"} 전략으로 바로 보기"><span class="lbl-long">${isSell() ? "매수" : "매도"} 전략</span><span class="lbl-short">${isSell() ? "매수" : "매도"}</span>${ic("chevron")}</button>` : ""}
           ${!EMBED && heldPortfolioLink(t.symb) ? `<a class="btn btn-tint fs-held" href="${heldPortfolioLink(t.symb)}" title="포트폴리오의 내 보유 종목 상세와 나란히 비교">${ic("columns")}<span class="lbl-long">내 보유 상세 나란히</span><span class="lbl-short">내 보유</span></a>` : ""}
           <button type="button" class="btn btn-tint" data-action="close-fullscreen" aria-label="닫기" title="원본으로 보기">${ic("xmark")}닫기</button>
         </div>
@@ -3202,6 +3345,19 @@ function openFullscreen(symb, detail) {
       { root: document.getElementById("fullscreen-backdrop"), rootMargin: "-52px 0px 0px 0px", threshold: 0 });
     fsTitleObs.observe(fsBlock);
   }
+  // 매수 ↔ 매도 바로가기: 목록 상단 [매수|매도]와 같은 길(저장·목록 갱신)로 바꾸고 같은 종목 크게 보기를 다시 연다.
+  // 차트 묶음을 보던 중이면 바뀐 모드에서도 묶음 위치로.
+  const modeBtn = card.querySelector('[data-action="switch-mode"]');
+  if (modeBtn) modeBtn.addEventListener("click", () => {
+    const bd = document.getElementById("fullscreen-backdrop"), g0 = card.querySelector(".stack-group");
+    const atCharts = !!g0 && g0.getBoundingClientRect().top < 160;
+    const to = isSell() ? "buy" : "sell";
+    const chip = document.querySelector(`#mode-seg .chip[data-mode="${to}"]`);
+    if (chip) chip.click(); else { state.mode = to; applyModeUI(); render(); }
+    openFullscreen(symb, detail);
+    const g1 = card.querySelector(".stack-group");
+    if (atCharts && g1) bd.scrollTop = g1.getBoundingClientRect().top - bd.getBoundingClientRect().top + bd.scrollTop - 52;
+  });
   const held = card.querySelector("a.fs-held");
   if (held) held.addEventListener("click", () => {
     try { sessionStorage.setItem(FS_RETURN_KEY, JSON.stringify({ symb, t: Date.now() })); } catch (e) { /* 무시 */ }
@@ -4211,7 +4367,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
     riseBars, upH, sellStyle: true, cycleMarks,
   }, selectedEpisode);
 
-  const nowSummaryHtml = sellCycleLineHtml(series, by, nowEv, candidate, levels, domainEnd);
+  const nowSummaryHtml = selectedEpisode ? "" : sellCycleLineHtml(series, by, nowEv, candidate, levels, domainEnd);   // 고르면 설명 박스가 대신
   const episodeBoxHtml = selEv
     ? sellEpisodeDetailHtml(selEv, selectedEpisode, series)
     : "";
@@ -4227,18 +4383,18 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
 
   return `
     <div class="stack-group${hs.short ? " snap-stack" : ""}">
-      <div class="detail-toolbar">${periodButtonsHtml(maxDays)}</div>
       <div class="chart-stack">
+        <div class="detail-toolbar stack-tools">${periodButtonsHtml(maxDays)}</div>
         <div class="chart-block stack-price">${priceChart}</div>
-        ${osc0 ? oscillatorChartBlock(osc0.recs, osc0.label, { ...common, height: hs.osc, noXAxis: true, sell: true }, buildSelectionMarkers("osc", osc0.recs, troughDates)) : ""}
+        ${osc0 ? oscillatorChartBlock(osc0.recs, osc0.label, { ...common, height: hs.osc, noXAxis: true, sell: true, kpiAt: troughDates[0] }, buildSelectionMarkers("osc", osc0.recs, troughDates)) : ""}
         <div class="chart-block stack-uw">${uwChart}</div>
         <div class="chart-block stack-hist">
           <div class="chart-label hist-head"><span class="ttl">사이클</span><span class="legend">${histLegend}</span>${nowSummaryHtml.replace(/^<div class="hist-now">/, '<span class="hist-now">').replace(/<\/div>$/, "</span>")}</div>
           ${histSvg}
+          ${episodeBoxHtml ? `<div class="episode-detail-box">${episodeBoxHtml}</div>` : ""}
         </div>
       </div>
     </div>
-    <div class="episode-detail-box">${episodeBoxHtml}</div>
     <div class="chart-block">
       <div class="chart-label"><span class="ttl">과거 신호 성과</span> <span class="sub">· 같은 단계에 처음 들어간 뒤(중앙값)</span></div>
       ${sellPerfTableHtml(by.perf)}
@@ -4486,6 +4642,7 @@ function goToTicker(symb) {
   updateCategoryChipUI();
 
   render();
+  if (!EMBED && wideScreen()) { if (!fullscreenSymb) openFullscreenFor(symb, null); return; }
 
   const card = document.querySelector(`#grid .card[data-symb="${CSS.escape(symb)}"]`);
   if (!card) return;
@@ -4495,6 +4652,17 @@ function goToTicker(symb) {
     ensureDetailCharts(symb, card);
   }
 }
+
+// 펼침(폭 > 480) 화면은 카드를 펼치는 대신 바로 크게 보기 — 상세 데이터가 없으면 받아서 연다(실패하면 예전처럼 카드 펼침).
+const wideScreen = () => window.innerWidth > 480;
+async function openFullscreenFor(symb, cardEl) {
+  if (!detailCache[symb]) {
+    try { const r = await fetch(`detail/${symb}.json`, { cache: "no-store" }); if (r.ok) detailCache[symb] = await r.json(); } catch (e) { /* 아래 대체 */ }
+  }
+  if (detailCache[symb]) openFullscreen(symb, detailCache[symb]);
+  else if (cardEl) { cardEl.classList.add("expanded"); ensureDetailCharts(symb, cardEl); }
+}
+let autoFsSymb = null;   // 필터 결과 1종목으로 자동으로 연 종목 — 닫은 뒤 같은 결과로 다시 그려도 또 열지 않는다
 
 function render() {
   if (!DATA) return;
@@ -4529,7 +4697,13 @@ function render() {
   }
 
   document.querySelectorAll("#banner .card, #grid .card").forEach(el => {
-    el.addEventListener("click", () => {
+    el.addEventListener("click", (e) => {
+      if (!EMBED && wideScreen()) {
+        // 카드 안 버튼·링크·스위치(근거 보기 등)는 제 동작만
+        if (e.target.closest("button, a, select, input, label, summary, [role='switch'], .op-notes-sw")) return;
+        openFullscreenFor(el.dataset.symb, el);
+        return;
+      }
       el.classList.toggle("expanded");
       if (el.classList.contains("expanded")) ensureDetailCharts(el.dataset.symb, el);
     });
@@ -4549,6 +4723,14 @@ function render() {
       });
     }
   });
+
+  // 필터(검색·단계·분류) 결과가 한 종목이면 펼침 화면에서는 바로 크게 보기
+  if (list.length === 1 && filterActive && !EMBED && wideScreen()) {
+    if (!fullscreenSymb && autoFsSymb !== list[0].symb) {
+      autoFsSymb = list[0].symb;
+      openFullscreenFor(list[0].symb, document.querySelector(`#grid .card[data-symb="${CSS.escape(list[0].symb)}"]`));
+    }
+  } else autoFsSymb = null;
 }
 
 // 도움말: 매수/매도 패널 전환. 열 때는 항상 지금 화면 모드의 패널로 시작하고, 위 토글로 언제든 바꿀 수 있다.
