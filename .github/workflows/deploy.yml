@@ -90,8 +90,10 @@ jobs:
           echo "DATA_SHA=$(git -C _data rev-parse HEAD)" >> "$GITHUB_ENV"
           cp _data/docs/scores.json "$SITE_DIR/signals/scores.json"
           cp _data/docs/detail/*.json "$SITE_DIR/signals/detail/"
-          # 가격 그래프 아래 연준 기준금리 띠(선택) — 없으면 띠 없이 배포
-          if [ -s _data/docs/rates.json ]; then cp _data/docs/rates.json "$SITE_DIR/signals/rates.json"; else echo "::warning::rates.json 없음 — 금리 띠 없이 배포"; fi
+          # 가격 그래프의 연준 기준금리 추세 구간·결정 표시(선택) — 없으면 금리 표시 없이 배포
+          if [ -s _data/docs/rates.json ]; then cp _data/docs/rates.json "$SITE_DIR/signals/rates.json"; else echo "::warning::rates.json 없음 — 금리 표시 없이 배포"; fi
+          # RSI·MFI 칸의 CNN 공포·탐욕 지수(선택) — 없으면 그 선 없이 배포
+          if [ -s _data/docs/fng.json ]; then cp _data/docs/fng.json "$SITE_DIR/signals/fng.json"; else echo "::warning::fng.json 없음 — 공포지수 없이 배포"; fi
 
       # 무결성 점검 — 하나라도 어기면 이 job이 실패해 직전 정상 배포가 그대로 유지된다(깨진 데이터 배포 방지).
       - name: Validate strategy data

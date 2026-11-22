@@ -1212,6 +1212,10 @@ body.cmp-on{overflow:hidden;}
 .cmp-seg button.mode-buy.active{color:#ff3b30;}
 .cmp-seg button.mode-sell.active{color:#0a84ff;}
 .cmp-close{flex:0 0 auto;width:44px;height:30px;padding:0;}   /* 가로로 넓혀 누르기 쉽게 */
+/* 매매전략에서 들어왔을 때만: '‹ 매매전략'(같은 종목 크게 보기로 복귀). 접힘은 ‹만 */
+.cmp-back{flex:0 0 auto;display:inline-flex;align-items:center;gap:2px;height:30px;padding:0 12px 0 6px;white-space:nowrap;font-size:13px;}
+.cmp-back[hidden]{display:none;}
+.cmp-back svg{width:17px;height:17px;flex:0 0 auto;}
 .cmp-body{flex:1 1 auto;min-height:0;display:grid;gap:8px;padding:8px;}
 .cmp-body.v-split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
 .cmp-body.v-detail,.cmp-body.v-strat{grid-template-columns:minmax(0,1fr);}
@@ -1254,6 +1258,8 @@ html[data-theme="dark"]:not([data-native-dark]) #cmpFrame{filter:invert(1) hue-r
   .stock-dtools > :is(.cmp-open-btn,.period-tabs){grid-column:1/-1;}
   .cmp-bar{gap:6px;padding:7px 10px;}
   .cmp-seg .seg-split,.cmp-title span{display:none;}
+  .cmp-back{padding:0 8px;}
+  .cmp-back .lbl{display:none;}
   .cmp-seg button{padding:5px 10px;}
   .cmp-body{padding:0;gap:0;}
   .cmp-pane{border-radius:0;border:0;box-shadow:none;}
@@ -4342,7 +4348,7 @@ function renderSnaps(){
 let editingId=null, quickTradeId=null, chartDetailId=null;
 // 종목 상세 ⇄ 매매전략 비교 화면 상태(아래 "종목 상세 ⇄ 매매전략 비교" 절)
 // 보기(pref)는 열 때마다 "나란히"로 시작한다 — 열린 동안만 상세/전략으로 바꿔 보고, 기억하지 않는다
-const cmp = {open:false, id:null, symb:null, via:null, frame:null, ready:false, frameSymb:null, frameMode:null,
+const cmp = {open:false, id:null, symb:null, via:null, frame:null, ready:false, frameSymb:null, frameMode:null, fromSignals:null,
   pref: 'split',
   focus: 'strat',
   mode: (()=>{ try{ return localStorage.getItem('kis-mode')==='sell'?'sell':'buy'; }catch(e){ return 'buy'; } })()};
@@ -10855,6 +10861,7 @@ async function cmpOpen(id){
   document.getElementById('cmpSymb').textContent = '';
   document.getElementById('cmpView').classList.add('open');
   document.body.classList.add('cmp-on');
+  document.getElementById('cmpBack').hidden = !cmp.fromSignals;
   if(!wasOpen){ try{ history.pushState({pfCmp:1}, ''); }catch(e){} cmp.pref = 'split'; cmp.focus = 'strat'; }   // 이전 보기와 무관하게 나란히(접힘은 split이 없어 전략)
   renderTable();                    // 표의 상세 행을 거둬 id 중복을 없앤다
   cmpApplyView(false);
@@ -10969,6 +10976,7 @@ function cmpSetMode(m){
 function cmpClose(){
   if(!cmp.open) return;
   cmp.open = false;
+  cmp.fromSignals = null;
   document.getElementById('cmpView').classList.remove('open');
   document.body.classList.remove('cmp-on');
   document.getElementById('cmpLeft').innerHTML = '';
@@ -11009,6 +11017,7 @@ async function cmpFromHash(){
   const m = location.hash.match(/[#&]cmp=([^&]+)/); if(!m) return;
   const symb = decodeURIComponent(m[1]).toUpperCase();
   const mm = location.hash.match(/[#&]mode=(buy|sell)/);
+  const fromSig = /[#&]from=signals/.test(location.hash);
   try{ history.replaceState(history.state, '', location.pathname + location.search); }catch(e){}
   if(mm){ cmp.mode = mm[1]; try{ localStorage.setItem('kis-mode', cmp.mode); }catch(e){} }
   const sig = await loadSigData();
@@ -11016,7 +11025,16 @@ async function cmpFromHash(){
   if(!cands.length) return;
   cands.sort((x,y)=>(y.quantity*(y.currentPrice||0)) - (x.quantity*(x.currentPrice||0)));
   switchPage('portfolio');
+  cmp.fromSignals = fromSig ? symb : null;
   cmpOpen(cands[0].id);
+}
+// 매매전략 크게 보기의 "내 보유 상세 나란히"로 들어왔을 때만 보이는 '‹ 매매전략': 그 화면(같은 종목 크게 보기)으로 돌아간다.
+// 매매전략 → 포트폴리오(#cmp, 해시는 지움) → 비교 화면(pushState) 순서라 두 칸 뒤로 가면 매매전략이 그대로 복원된다(bfcache).
+// 기록이 없으면(새 탭 등) 매매전략을 새로 열고, 그 화면이 같은 종목 크게 보기를 다시 연다(signals reopenFromReturn).
+function cmpBackToSignals(){
+  try{ sessionStorage.setItem('kis-fs-back', String(Date.now())); }catch(e){}   // 매매전략이 새로 불러올 때 같은 종목 크게 보기를 다시 열라는 표시
+  if(/\/signals\//.test(document.referrer||'') && history.state && history.state.pfCmp && history.length > 2){ history.go(-2); return; }
+  location.href = '../signals/';
 }
 
 (async function init(){
@@ -11104,6 +11122,7 @@ document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refresh
 </script>
 <div id="cmpView" role="dialog" aria-label="종목 상세와 매매전략 비교">
   <div class="cmp-bar">
+    <button type="button" class="btn btn-green cmp-back" id="cmpBack" onclick="cmpBackToSignals()" aria-label="매매전략으로 돌아가기" title="매매전략으로 돌아가기(같은 종목 크게 보기)" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span class="lbl">매매전략</span></button>
     <div class="cmp-title"><b id="cmpName"></b><span id="cmpSymb"></span></div>
     <div class="period-tabs cmp-seg" id="cmpViewSeg" role="tablist" aria-label="보기">
       <button type="button" data-v="detail" onclick="cmpSetView('detail')" title="종목 상세만 (1)">상세</button>
