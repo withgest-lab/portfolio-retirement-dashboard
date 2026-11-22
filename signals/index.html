@@ -524,7 +524,8 @@
      안쪽은 헤어라인으로만 나눈다(카드 사이 간격·카드마다 안쪽 여백·제목 줄을 아껴 헤더 아래 한 화면에 들어가게).
      제목은 그래프 안 위쪽 여백에(lineChartSvg opts.cornerTitle), 날짜 글자는 맨 아래 히스토그램에만. */
   .stack-group { margin-bottom: 12px; }
-  .stack-group .period-group { margin: 2px 0 8px; }
+  .stack-group .period-group { margin: 0 0 6px; }
+  .stack-group .period-btn { padding: 4px 0; }
   .chart-stack > .chart-block { margin-bottom: 4px; }
   .card.fullscreen .stack-group { scroll-snap-align: start; scroll-margin-top: 52px; }
   .card.fullscreen .stack-group.snap-stack { scroll-snap-align: none; }
@@ -532,17 +533,18 @@
   .fullscreen-backdrop { scroll-snap-type: y proximity; }
   .card.fullscreen .chart-stack {
     background: var(--surface-1); border: 0.5px solid var(--hairline); border-radius: var(--radius);
-    box-shadow: var(--shadow-card); padding: 6px 14px 4px;
+    box-shadow: var(--shadow-card); padding: 4px 14px 2px;
   }
   .card.fullscreen .chart-stack > .chart-block {
-    background: none; border: 0; border-radius: 0; box-shadow: none; padding: 4px 0; margin: 0;
+    background: none; border: 0; border-radius: 0; box-shadow: none; padding: 2px 0; margin: 0;
   }
   .card.fullscreen .chart-stack > .chart-block + .chart-block { border-top: 0.5px solid var(--hairline); }
   .hist-head { display: flex; align-items: baseline; gap: 2px 10px; flex-wrap: wrap; margin: 2px 0; }
   .hist-head .legend { gap: 2px 10px; font-size: 11.5px; }
   .card.fullscreen .hist-head .ttl { font-size: 13px; }
   .card.fullscreen .hist-head .legend { font-size: 12px; }
-  .stack-hist .hist-now { margin: 0 0 2px; line-height: 1.45; word-break: keep-all; text-wrap: balance; }
+  .hist-head .hist-now { font-weight: 400; color: var(--text-secondary); line-height: 1.45; word-break: keep-all; text-wrap: balance; margin: 0; }
+  .card.fullscreen .hist-head .hist-now { font-size: 13px; }
   svg.hist-svg { touch-action: manipulation; cursor: pointer; }
 
   /* 매도 전략 모드 */
@@ -2192,6 +2194,7 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
     ],
     markerKey: "divergence",
     eventMarkers,
+    maxEventRows: (chartOpts && chartOpts.evRows) || 3,
     rates: true,
     cornerTitle: priceTitle(false, W),
     noXAxis: chartOpts && chartOpts.noXAxis,
@@ -2282,24 +2285,25 @@ function stackTickDates(domainStart, domainEnd, innerW) {
 // fit.over = 묶음 안 차트가 아닌 부분(기간 탭·히스토그램 머리·요약 줄·여백)의 실측 높이(1차 렌더 뒤 renderDetailInto가 잰다).
 // 최소 높이 아래로는 줄이지 않는다(시인성 우선 — 짧은 화면은 조금 스크롤). 접힘(≤480)·작은 카드는 예전 고정·폭 기준.
 function stackHeights(large, sell, chartW, fit, hasUp) {
-  if (!large) return { price: 130, osc: 64, uw: sell ? 120 : 110, hist: sell && hasUp ? 196 : 140 };
-  if (window.innerWidth <= 480) {
-    return { price: Math.round(clamp(chartW * 0.5, 180, 240)), osc: 72, uw: Math.round(clamp(chartW * 0.36, 130, 180)),
-      hist: Math.round(clamp(chartW * 0.42, 150, 200)) + (sell && hasUp ? 70 : 0) };
-  }
-  const avail = (EMBED ? window.innerHeight : window.innerHeight - 52) - 6;
-  // 짧은 화면(펼침+90도 620 등): 기간 탭은 위로 지나가게 두고 차트 카드만 한 화면에(맞춤 기준 = .chart-stack)
-  const short = avail < 660;
-  const over = (fit && fit.over != null ? fit.over : (sell ? 108 : 90)) + (short ? 0 : (fit && fit.tb != null ? fit.tb : 43));
-  const Hc = Math.max(0, avail - over);
+  if (!large) return { price: 130, osc: 64, uw: sell ? 120 : 110, hist: sell && hasUp ? 196 : 140, evRows: 3 };
+  // 실기기 펼침은 크롬 탭 줄·주소창·작업 표시줄 때문에 높이가 650(기본)·576(90도) 안팎 — 그 높이에서도 기간 탭까지 한 화면에.
+  const avail = (EMBED ? window.innerHeight : window.innerHeight - 52) - 4;
+  const tb = fit && fit.tb != null ? fit.tb : (window.innerWidth < 620 ? 66 : 36);
+  const over = fit && fit.over != null ? fit.over : (sell ? 76 : 58);
   const wt = sell ? { price: 0.35, osc: 0.11, uw: 0.18, hist: 0.36 } : { price: 0.36, osc: 0.11, uw: 0.22, hist: 0.31 };
-  const mn = sell ? { price: 165, osc: 52, uw: 96, hist: hasUp ? 165 : 140 } : { price: 170, osc: 56, uw: 100, hist: 140 };
+  // 최소 높이(글자·라벨이 겹치지 않는 선): RSI칸 48 = 거터 세 줄(RSI·MFI·공포)이 들어가는 높이
+  const mn = sell ? { price: 120, osc: 48, uw: 66, hist: hasUp ? 120 : 100 } : { price: 120, osc: 48, uw: 70, hist: 100 };
   const mx = { price: 340, osc: 84, uw: 250, hist: sell && hasUp ? 380 : 300 };
+  const minSum = Object.values(mn).reduce((x, y) => x + y, 0);
+  const short = avail - tb - over < minSum;   // 최소 높이로도 안 되면 기간 탭만 위로 지나가게(차트 카드만 한 화면)
+  const Hc = Math.max(0, avail - over - (short ? 0 : tb));
   const out = { short };
   Object.keys(wt).forEach(k => { out[k] = Math.round(clamp(Hc * wt[k], mn[k], mx[k])); });
   // 최소 높이에 걸린 항목 때문에 합이 넘치면, 아직 최소보다 큰 항목에서 넘친 만큼 덜어 낸다
-  let excess = Object.keys(wt).reduce((a, k) => a + out[k], 0) - Hc;
+  let excess = Object.keys(wt).reduce((x, k) => x + out[k], 0) - Hc;
   ["hist", "price", "uw", "osc"].forEach(k => { if (excess <= 0) return; const cut = Math.min(excess, out[k] - mn[k]); out[k] -= cut; excess -= cut; });
+  // 가격 위 이벤트 이름 줄: 낮은 그래프는 2줄, 그 밖 3줄(넘치는 이름은 점선만 — 마우스를 올리면 설명)
+  out.evRows = out.price < 200 ? 2 : 3;
   return out;
 }
 
@@ -2423,12 +2427,14 @@ function episodeHistogramSvg(episodes, percentiles, domainStart, domainEnd, char
   // 10%(범위가 좁으면 5%, 넓으면 20%) 단위의 옅은 기준선을 배경에 깔아 어느 막대든 대략적인 낙폭
   // 구간을 바로 읽을 수 있게 한다. 라벨 텍스트는 막대를 다 그린 뒤로 미룬다 - SVG는 나중에 그린 요소가 위로
   // 쌓이는데, 텍스트를 막대보다 먼저 그리면 막대 채우기가 halo까지 덮어버린다.
-  const stepPct = Math.abs(yMin * 100) <= 20 ? 5 : (Math.abs(yMin * 100) <= 60 ? 10 : 20);
+  // 눈금 간격: 글자 높이보다 넓게(1%당 픽셀로 5·10·20·25·50% 중 가장 촘촘한 것) — 낮은 히스토그램에서 눈금 글자가 붙지 않게
+  const pxPerPct = innerH / Math.max(1, Math.abs(yMin * 100));
+  const stepPct = [5, 10, 20, 25, 50].find(st => st * pxPerPct >= fs + 5) || 50;
   const gridLevels = [];
   for (let p = -stepPct; p > yMin * 100 + 0.01; p -= stepPct) {
     const gy = margin.top + yAtFixed(p / 100);
     // yMin 자체의 축 라벨(맨 아래)과 너무 가까우면 숫자만 1 다른 라벨 두 개가 거의 겹쳐 보이므로 건너뛴다.
-    if (Math.abs(gy - (margin.top + innerH)) < fs + 3) continue;
+    if (Math.abs(gy - (margin.top + innerH)) < fs + 6) continue;
     gridLevels.push({ p, gy });
     svg += `<line x1="${plotL}" x2="${plotR}" y1="${gy}" y2="${gy}" stroke="var(--grid)" stroke-width="1" stroke-dasharray="1 4"/>`;
   }
@@ -2946,7 +2952,7 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
   const xTicks = stackTickDates(domainStart, domainEnd, chartW - sharedLeft - sharedRight);
 
   const common = { width: chartW, large, marginLeft: sharedLeft, marginRight: sharedRight, domainStart, domainEnd, xTicks };
-  const bigChart = { ...common, height: hs.price, noXAxis: true };
+  const bigChart = { ...common, height: hs.price, noXAxis: true, evRows: hs.evRows };
   const bigUw = { ...common, height: hs.uw, noXAxis: true };
   const bigOsc = { ...common, height: hs.osc, noXAxis: true };
   const bigHist = { ...common, height: hs.hist, nowDepth, nowTroughDate: nowTroughRec ? nowTroughRec.date : null, underwater: fullUnderwater };
@@ -2978,8 +2984,8 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
     const frac = nowEp.depth < 0 ? rec / (0 - nowEp.depth) : 0;
     const troughDate = nowTroughRec ? `(${fmtDateFull(nowTroughRec.date)})` : "";
     nowSummaryHtml = rec > 0.0005
-      ? `<div class="hist-now"><span class="nw">진행중 · 바닥 <b>${(nowEp.depth * 100).toFixed(1)}%</b>${troughDate}</span> → <span class="nw">지금 <b>${(nowDepth * 100).toFixed(1)}%</b></span> · <span class="nw"><b class="up">바닥 대비 +${(rec * 100).toFixed(1)}%p 회복</b></span> <span class="nw">(바닥~신고가의 ${Math.round(frac * 100)}%)</span></div>`
-      : `<div class="hist-now"><span class="nw">진행중(${fmtDateFull(nowEp.start_date)}~)</span> · <span class="nw">지금 <b>${(nowDepth * 100).toFixed(1)}%</b></span> · <span class="nw"><b class="down">바닥 갱신 중(하락 진행)</b></span></div>`;
+      ? `<span class="hist-now"><span class="nw">진행중 · 바닥 <b>${(nowEp.depth * 100).toFixed(1)}%</b>${troughDate}</span> → <span class="nw">지금 <b>${(nowDepth * 100).toFixed(1)}%</b></span> · <span class="nw"><b class="up">바닥 대비 +${(rec * 100).toFixed(1)}%p 회복</b></span> <span class="nw">(바닥~신고가의 ${Math.round(frac * 100)}%)</span></span>`
+      : `<span class="hist-now"><span class="nw">진행중(${fmtDateFull(nowEp.start_date)}~)</span> · <span class="nw">지금 <b>${(nowDepth * 100).toFixed(1)}%</b></span> · <span class="nw"><b class="down">바닥 갱신 중(하락 진행)</b></span></span>`;
   }
 
   const [osc0, ...oscRest] = oscSets;
@@ -2993,8 +2999,8 @@ function detailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
         <div class="chart-block stack-hist">
           <div class="chart-label hist-head"><span class="ttl">낙폭 국면</span>
             <span class="legend"><span><i style="background:var(--bar-done)"></i>완결 ${completeCount}회</span><span><i style="background:var(--status-crit)"></i>진행중 ${incompleteCount}회</span></span>
+            ${nowSummaryHtml}
           </div>
-          ${nowSummaryHtml}
           ${episodeHistogramSvg(episodesAll, detail.percentiles, domainStart, asOfDate, bigHist, selectedEpisode)}
         </div>
       </div>
@@ -3114,7 +3120,7 @@ function renderDetailInto(container, t, detail, large) {
   draw();
   // 크게 보기: 묶음(기간 탭~히스토그램)에서 차트가 아닌 부분(기간 탭·히스토그램 머리·요약 줄·여백)을 실측해, 높이 계산에 쓴
   // 값과 4px 넘게 다르면 한 번 더 그린다 → 묶음이 헤더 아래 한 화면에 꼭 맞는다(최소 높이에 걸리면 그대로).
-  if (large && window.innerWidth > 480) {
+  if (large) {
     const m = measureStackOver(container);
     if (m && (!container._fit || Math.abs(m.over - container._fit.over) > 4 || Math.abs(m.tb - container._fit.tb) > 4)) { container._fit = m; draw(); }
   }
@@ -4177,7 +4183,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
     ],
     markerKey: "divergence_bear", markerMinGap: 14, arrowSeriesKey: "close",
     arrowMarkers: withCycArrows(sellMarkers(evs, domainStart, true)), pointMarks,
-    eventMarkers: priceMarkers, maxEventRows: 5,
+    eventMarkers: priceMarkers, maxEventRows: large ? hs.evRows : 5,
     rates: true,
   });
   const uwChart = lineChartSvg(slice, {
@@ -4227,8 +4233,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
         ${osc0 ? oscillatorChartBlock(osc0.recs, osc0.label, { ...common, height: hs.osc, noXAxis: true, sell: true }, buildSelectionMarkers("osc", osc0.recs, troughDates)) : ""}
         <div class="chart-block stack-uw">${uwChart}</div>
         <div class="chart-block stack-hist">
-          <div class="chart-label hist-head"><span class="ttl">사이클</span><span class="legend">${histLegend}</span></div>
-          ${nowSummaryHtml}
+          <div class="chart-label hist-head"><span class="ttl">사이클</span><span class="legend">${histLegend}</span>${nowSummaryHtml.replace(/^<div class="hist-now">/, '<span class="hist-now">').replace(/<\/div>$/, "</span>")}</div>
           ${histSvg}
         </div>
       </div>
