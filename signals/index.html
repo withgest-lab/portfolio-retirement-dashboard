@@ -914,9 +914,9 @@
       <section>
         <h3>카드를 펼치면 나오는 차트들은요?</h3>
         <div class="help-group">
-        <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
+        <p><b>가격</b> — 가격 위에 지금까지의 최고가선(점선)을 겹쳐, 지금이 그 선에서 얼마나 떨어졌는지 보여줍니다. 빨간 점은 강세 다이버전스 감지일입니다. 선 색은 <b>선택 기간의 시작가</b> 기준으로 위면 초록, 아래면 빨강이고, 짧은 점선이 그 시작가입니다. 그래프 머리 오른쪽에 <b>시작가 → 현재가 · 수익률</b>(선택 기간)이 있고(좁은 화면은 시작·현재 낱말을 빼거나 한 줄 아래로), 수익률 색도 선과 같습니다. <b>주황 선은 200일선</b>(최근 200거래일 종가 평균)으로, 가격이 이 선 위면 긴 흐름이 오르는 중, 아래면 내리는 중으로 봅니다.</p>
         <p><b>차트 묶음</b> — 크게 보기의 가격 · RSI·MFI·공포지수 · 낙폭 · 낙폭 국면 히스토그램은 같은 날짜 축의 한 카드입니다. 위아래 시점을 맞춰 보도록 옅은 세로 격자를 같은 날짜에 긋고, 날짜 글자는 맨 아래 히스토그램에만 적습니다. 펼친 화면에서는 기간 버튼~히스토그램이 한 화면에 들어가게 높이를 화면에 맞춥니다(아주 짧은 화면은 기간 버튼이 위로 지나가고, 그래도 모자라면 글자가 작아지지 않게 조금 스크롤됩니다).</p>
-        <p><b>연준 기준금리</b> — 가격 그래프 뒤 옅은 면은 금리 <b>추세 구간</b>입니다: 연준이 금리를 올리던 기간(인상기)은 빨강, 내리던 기간(인하기)은 파랑, 1년 넘게 그대로면 색이 없습니다(같은 방향 결정이 12개월 안에 이어지면 한 사이클로 봅니다. 마지막 결정 뒤 12개월이 안 지났으면 오늘까지 칠해 지금 추세를 보여 줍니다). 아래쪽 계단선은 기준금리(FOMC 목표 범위 상단) 자체로 오른 단은 빨강·내린 단은 파랑이고, 오른쪽 끝에 지금 값(<b>금리 4.00%</b>처럼, 색 = 지금 추세)이 있습니다. 인상기·인하기의 <b>시작에는 출발 금리, 끝에는 도달 금리</b>를 계단 옆에 적고(지금 이어지는 사이클의 끝은 오른쪽 값), 0.5%p 이상 큰 결정은 <b>빅스텝·빅컷(0.5%p) · 자이언트스텝(0.75%p) · 울트라(1%p 이상)</b>으로 이름을 붙입니다(같은 폭이 연달아면 ×N). 그래프 위 경계의 작은 표시는 FOMC 결정일입니다: <b>▲인상(빨강) · ▼인하(파랑) · •동결(회색)</b>, 화살표 개수가 폭입니다(▲ 0.25%p 스몰 · ▲▲ 0.5%p 빅 · ▲▲▲ 0.75%p 자이언트 · ▲▲▲▲ 1%p), 그 날짜에 아주 옅은 세로 점선(마우스를 올리면 날짜·폭·결정 뒤 범위). 기간이 길어 촘촘하면 동결 표시부터 생략합니다. 금리 사이클과 주가 흐름을 같은 날짜 축으로 견줘 보는 용도입니다. 자료: FRED·뉴욕 연은(금리), 연준 회의 일정(결정일).</p>
+        <p><b>연준 기준금리</b> — 가격 그래프 뒤 옅은 면은 금리 <b>추세 구간</b>입니다: 연준이 금리를 올리던 기간(인상기)은 빨강, 내리던 기간(인하기)은 파랑, 1년 넘게 그대로면 색이 없습니다(같은 방향 결정이 12개월 안에 이어지면 한 사이클로 봅니다. 마지막 결정 뒤 12개월이 안 지났으면 오늘까지 칠해 지금 추세를 보여 줍니다). 아래쪽 계단선은 기준금리(FOMC 목표 범위 상단) 자체로 오른 단은 빨강·내린 단은 파랑이고, 오른쪽 끝에 지금 값(<b>금리 4.00%</b>처럼, 색 = 지금 추세)이 있습니다. 인상기·인하기의 <b>시작에는 출발 금리, 끝에는 도달 금리</b>를 그 계단선 위의 <b>둥근 캡슐(큰 글자, 예: 5.50%)</b>로 적고(지금 이어지는 사이클의 끝은 오른쪽 값), 0.5%p 이상 큰 결정은 캡슐 없는 <b>작은 글자로 이름과 폭</b>을 붙입니다 — <b>빅스텝·빅컷 ±0.5%p · 자이언트 ±0.75%p · 울트라 ±1%p</b>(같은 폭이 연달아면 ×N, 예: 자이언트스텝 +0.75%p ×4). 캡슐 = 그때의 금리 수준(%), 작은 글자 = 한 번에 바꾼 폭(%p)이라 두 숫자가 헷갈리지 않습니다. 그래프 위 경계의 작은 표시는 FOMC 결정일입니다: <b>▲인상(빨강) · ▼인하(파랑) · •동결(회색)</b>, 화살표 개수가 폭입니다(▲ 0.25%p 스몰 · ▲▲ 0.5%p 빅 · ▲▲▲ 0.75%p 자이언트 · ▲▲▲▲ 1%p), 그 날짜에 아주 옅은 세로 점선(마우스를 올리면 날짜·폭·결정 뒤 범위). 기간이 길어 촘촘하면 동결 표시부터 생략합니다. 금리 사이클과 주가 흐름을 같은 날짜 축으로 견줘 보는 용도입니다. 자료: FRED·뉴욕 연은(금리), 연준 회의 일정(결정일).</p>
         <p><b>낙폭</b> — 낙폭%를 시간순으로 그린 그래프입니다. 0%(신고가) 아래로 얼마나, 얼마나 오래 내려가 있었는지 보여줍니다. 기본은 회색이고, 아래 히스토그램에서 박스를 고르면 그 국면의 하락 구간은 빨강, 회복 구간은 초록으로 강조됩니다. 앰버 점선은 코로나19·2022 금리인상 같은 시장 전체 충격 시기, 또는 종목별 큰 낙폭(-25% 이상)의 조사된 원인입니다 — 이름은 바로 위 가격 그래프에 한 번만 적고 여기에는 점선과 저점 값만 둡니다(마우스를 올리면 설명). 원인을 못 찾으면 "확인 안 됨"으로 표시했고 아직 조사 안 된 국면도 있으니 참고용으로만 보세요.</p>
         <p><b>낙폭 국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중입니다. 진행중 박스는 매일 갱신되는 낙폭으로 다시 계산해 지금까지의 가장 깊은 낙폭까지 그립니다. 아래 점이 이번 바닥, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 누르면(박스 근처를 눌러도 가장 가까운 국면이 골라집니다) 하늘색 테두리와 바닥 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다. 박스를 고르면 위 그림에 그 국면 바닥 날짜의 값이 함께 찍힙니다(가격 위 바닥 날짜·바닥 가격, RSI·MFI·공포지수 숫자, 낙폭 %). 설명 박스도 카드 안 히스토그램 바로 아래에 나옵니다. 같은 박스를 다시 누르면 해제됩니다.</p>
         <p><b>RSI·MFI·공포지수</b> — 가격 바로 아래 낮은 칸입니다(0~100). 주황 = RSI, 초록 = MFI, 회보라 = CNN 공포·탐욕 지수이고 오른쪽에 지금 값(공포지수는 극공포·공포·중립·탐욕·극탐욕 + 점수)이 있습니다. 왼쪽 숫자 30/20은 과매도 기준선(RSI 30, MFI 20)이고 그 위 글자가 봉 단위입니다. 공포지수가 <b>극단적 공포(25 이하)인 기간은 보라 세로 띠, 극단적 탐욕(75 이상)인 기간은 금색 세로 띠</b>로 칠해 위 가격과 바로 견줄 수 있고, 보라 띠마다 그 기간의 가장 낮은 공포지수를 점 아래 숫자로 적습니다(지금이 바닥이면 오른쪽 값과 같아 생략). 선택 기간이 3년 이하면 일봉 칸이 가격 아래에, 주·월봉 칸은 맨 아래에 붙고, 3~15년이면 주봉, 15년 초과면 월봉입니다(길수록 일봉이 빽빽해져 자동 전환). 공포지수 자료: CNN Fear &amp; Greed Index, 2011년부터의 이력은 공개 데이터셋 <a href="https://github.com/JakeLaoyu/fear-greed-index" target="_blank" rel="noopener">JakeLaoyu/fear-greed-index</a>(MIT).</p>
@@ -1387,10 +1387,11 @@ function fitAnchor(x, w, minX, maxX) {
 
 // 이벤트/저점 라벨들을 실제 글자 폭 기준으로 여러 줄에 나눠 담아 겹치지 않게 한다. 들어온 순서 = 중요도 순(선택 > 돌파·천정 >
 // 종목 원인 > 시장 충격)으로 자리를 잡고, 어느 줄에도 자리가 없으면 글자는 빼고(row = -1) 점선만 남긴다 — 겹쳐 그리지 않는다.
-// row0Right: 0번 줄 왼쪽의 그래프 제목(opts.cornerTitle) 끝 x.
+// row0Right: 0번 줄 왼쪽의 그래프 제목(opts.cornerTitle) 끝 x — 또는 막힌 구간 목록 [[l, r, 줄], ...](오른쪽 끝 기간 수익률 포함).
 function layoutLabelsByExtent(items, minX, maxX, maxRows, row0Right, keepAll) {
   const rows = Array.from({ length: maxRows }, () => []);
-  if (row0Right != null) rows[0].push([-Infinity, row0Right]);
+  if (Array.isArray(row0Right)) row0Right.forEach(b => { if (rows[b[2] || 0]) rows[b[2] || 0].push([b[0], b[1]]); });
+  else if (row0Right != null) rows[0].push([-Infinity, row0Right]);
   return items.map(it => {
     const anchor = fitAnchor(it.x, it.w, minX, maxX);
     const l = anchor === "start" ? it.x : (anchor === "end" ? it.x - it.w : it.x - it.w / 2);
@@ -1520,6 +1521,29 @@ function lineChartSvg(records, opts) {
     });
     titleR = tx;
   }
+  // opts.cornerRight({variants:[[{text,color,weight,gap}]], title}): 0번 줄 오른쪽 끝(왼쪽 제목과 대칭) — 가격 그래프의 기간 수익률.
+  // 0번 줄 = 머리(왼쪽 제목 · 오른쪽 기간 수익률). 변형은 긴 것부터(시작·현재 낱말 → 숫자만): 제목과 10px 넘게 떨어지는 첫 변형을 0번 줄에,
+  // 숫자만 변형도 안 들어가면(접힘·매도 제목이 길 때) 시작가·현재가가 빠지지 않게 1번 줄 오른쪽에 긴 변형, 그것도 안 되면 '수익률 N%'만.
+  // 수익률이 차지한 자리 때문에 이벤트·구간 글자(매도 '상승·하락' 등)가 빠지지 않게 이벤트 줄을 하나 더 허락한다(필요할 때만 쓰임).
+  let row0Block = titleR, cornerRow = -1;
+  if (opts.cornerRight && opts.cornerRight.variants) {
+    const cx = W - 2;
+    const vs = opts.cornerRight.variants.map(v => {
+      const parts = v.map((pt, i) => ({ ...pt, fz: pt.weight >= 700 ? fSmall + 1 : fSmall, dx: i ? (pt.gap != null ? pt.gap : 4) : 0 }));
+      return { parts, cw: parts.reduce((a, pt) => a + textW(pt.text, pt.fz, pt.weight >= 600) + pt.dx, 0) };
+    });
+    const last = vs.length - 1, fits0 = v => titleR == null || cx - v.cw >= titleR + 10;
+    let pick = vs.findIndex((v, i) => i < last && fits0(v));
+    if (pick >= 0) cornerRow = 0;
+    else if ((pick = vs.findIndex((v, i) => i < last && cx - v.cw >= left)) >= 0) cornerRow = 1;
+    else if (fits0(vs[last])) { pick = last; cornerRow = 0; }
+    if (cornerRow >= 0) {
+      const v = vs[pick];
+      titleSvg += `<text x="${cx}" y="${10 + cornerRow * rowGap}" text-anchor="end">${opts.cornerRight.title ? `<title>${escapeHtml(opts.cornerRight.title)}</title>` : ""}` + v.parts.map(pt =>
+        `<tspan${pt.dx ? ` dx="${pt.dx}"` : ""} font-size="${pt.fz}" font-weight="${pt.weight || 500}" style="fill:${pt.color || "var(--text-muted)"}">${escapeHtml(pt.text)}</tspan>`).join("") + `</text>`;
+      row0Block = [[-Infinity, titleR == null ? -Infinity : titleR, 0], [cx - v.cw, Infinity, cornerRow]];
+    }
+  }
   // opts.eventLabels === false: 이벤트·구간 점선만 긋고 글자 줄은 쓰지 않는다(바로 위 가격 그래프가 같은 글자를 이미 보여 줄 때).
   const showEvLabels = opts.eventLabels !== false;
 
@@ -1554,9 +1578,10 @@ function lineChartSvg(records, opts) {
         return { ...ev, x: xAt(idx), w: textW(ev.label, fSmall, !!ev.isSelection) };
       });
     // 라벨은 실제 글자 폭을 기준으로 줄에 나눠 담고, 차트(0~W) 밖으로 나가지 않게 앵커를 정한다.
-    laidOut = showEvLabels ? layoutLabelsByExtent(events, 2, W - 2, rowCap, titleR) : events.map(ev => ({ ...ev, row: 0, anchor: "middle" }));
+    laidOut = showEvLabels ? layoutLabelsByExtent(events, 2, W - 2, rowCap + (cornerRow >= 0 ? 1 : 0), row0Block) : events.map(ev => ({ ...ev, row: 0, anchor: "middle" }));
   }
-  const usedRows = showEvLabels ? laidOut.reduce((m, e) => Math.max(m, e.row + 1), 0) : 0;
+  // 기간 수익률이 1번 줄로 내려갔으면 그 줄까지 위쪽 여백을 잡는다
+  const usedRows = Math.max(showEvLabels ? laidOut.reduce((m, e) => Math.max(m, e.row + 1), 0) : 0, cornerRow >= 1 ? cornerRow + 1 : 0);
 
   // (+4: 줄이 있으면 0%/신고가 라벨이 마지막 이벤트 줄에 바짝 붙지 않게 여유를 둔다)
   // 임계선 라벨("신고가" 등)이 맨 위 눈금선 바로 위에 놓이므로 이벤트 줄이 없어도 그 글자가 들어갈 만큼은 위쪽을 확보한다.
@@ -1779,6 +1804,7 @@ function lineChartSvg(records, opts) {
 
   // 이벤트 라벨/점선. 구간 띠(band)는 라벨만(경계선은 위에서 이미 그렸다).
   // 색: 국면 구간 = 인디고, 저점 = 빨강, 그 밖의 원인/거시이벤트 = 앰버(--event).
+  let evText = "";
   laidOut.forEach(ev => {
     const hasLabel = showEvLabels && ev.row >= 0;
     const labelY = 10 + Math.max(0, ev.row) * rowGap;
@@ -1788,7 +1814,8 @@ function lineChartSvg(records, opts) {
     if (!ev.isBand) {
       body += `<line x1="${ev.x}" x2="${ev.x}" y1="${hasLabel ? labelY + 4 : margin.top}" y2="${plotB}" stroke="${color}" stroke-width="1" stroke-dasharray="2 3" opacity="0.75"><title>${tooltip}</title></line>`;
     }
-    if (hasLabel) body += `<text x="${ev.x}" y="${labelY}" text-anchor="${ev.anchor}" font-size="${fSmall}" font-weight="${weight}" style="${TEXT_HALO}" fill="${color}"><title>${tooltip}</title>${escapeHtml(ev.label)}</text>`;
+    // 글자는 모든 점선을 그은 뒤에(evText) — 윗줄 이벤트의 점선이 아랫줄 이벤트 글자를 가로지르지 않게(글자 halo가 덮는다)
+    if (hasLabel) evText += `<text x="${ev.x}" y="${labelY}" text-anchor="${ev.anchor}" font-size="${fSmall}" font-weight="${weight}" style="${TEXT_HALO}" fill="${color}"><title>${tooltip}</title>${escapeHtml(ev.label)}</text>`;
     // ev.arrow: 점선 전체는 그대로 두고, 그 날짜의 선(opts.arrowSeriesKey) 위 지점을 꼭짓점으로 가리키는 삼각형(▼천정/▲돌파).
     if (ev.arrow && opts.arrowSeriesKey) {
       let ai = records.findIndex(r => r.date >= ev.date);
@@ -1803,6 +1830,7 @@ function lineChartSvg(records, opts) {
       }
     }
   });
+  body += evText;
 
   // opts.arrowMarkers(매도 모드 ▼천정/▲돌파): 라벨 줄을 쓰지 않고 위~아래 점선 + 그 날짜의 선(opts.arrowSeriesKey) 위 지점을 가리키는 삼각형만
   // 그린다 - 라벨이 위쪽에 여러 줄로 쌓여 차트를 가리는 것을 막는다(의미는 차트 제목의 ▲돌파 ▼천정 안내와 툴팁).
@@ -2006,17 +2034,43 @@ function lineChartSvg(records, opts) {
     body += `<text x="${gx}" y="${ly}" font-size="${fSmall}" font-weight="700" style="fill:${rov.label.color}"><title>${escapeHtml(rov.label.title)}</title>${escapeHtml(rov.label.text)}</text>`;
   }
   if (rov && rov.pend.length) {
-    const fsR = fSmall, mine = [];
+    const mine = [];
+    // 가격·200일선이 지나가는 자리는 피한다(캡슐이 선을 가리지 않게) — 모든 후보가 선과 겹치면 두 번째 판에서 선은 무시하고 놓는다.
+    const lineKeys = opts.series.filter(s => s.split || s.key === "ma200").map(s => s.key);
+    const crossesLine = (l, r, t, b) => records.some((rec, i) => {
+      const x = xAt(i);
+      if (x < l - 1 || x > r + 1) return false;
+      return lineKeys.some(k => { if (rec[k] == null) return false; const y = yAt(rec[k]); return y >= t - 1 && y <= b + 1; });
+    });
+    // 금리 수준(level) = 틴트 캡슐 + 큰 글자(5.50%), 결정 폭(step) = 캡슐 없이 한 단계 작은 글자(빅스텝 +0.5%p) — 두 숫자가 한눈에 구분되게
     rov.pend.forEach(q => {
-      const w = textW(q.txt, fsR, true);
-      for (const [x, yy, a] of q.cands) {
-        const an = a === "middle" ? fitAnchor(x, w, plotL, plotR) : a;
-        const l = an === "start" ? x : an === "end" ? x - w : x - w / 2, r = l + w, t = yy - fsR, b = yy + 2;
-        if (l < plotL || r > plotR || t < margin.top || b > plotB) continue;
-        if (occ.concat(mine).some(o => l < o.r + 3 && r > o.l - 3 && t < o.b + 1 && b > o.t - 1)) continue;
+      const lvl = q.kind === "level";
+      const fsR = lvl ? fSmall : Math.max(8, fSmall - 1.5), pad = lvl ? 4 : 0;
+      const w = textW(q.txt, fsR, true) + pad * 2;
+      let spot = null;
+      for (const strict of [true, false]) {
+        for (const [x, yy, a] of q.cands) {
+          const an = a === "middle" ? fitAnchor(x, w, plotL, plotR) : a;
+          const l = an === "start" ? x : an === "end" ? x - w : x - w / 2, r = l + w;
+          const t = yy - fsR - (lvl ? 1 : 0), b = yy + (lvl ? 3.5 : 2);
+          if (l < plotL || r > plotR || t < margin.top || b > plotB) continue;
+          if (occ.concat(mine).some(o => l < o.r + 3 && r > o.l - 3 && t < o.b + 1 && b > o.t - 1)) continue;
+          if (strict && crossesLine(l, r, t, b)) continue;
+          spot = { x, yy, an, l, r, t, b };
+          break;
+        }
+        if (spot) break;
+      }
+      if (spot) {
+        const { yy, an, l, r, t, b } = spot;
         mine.push({ l, r, t, b });
-        body += `<text x="${x.toFixed(1)}" y="${yy.toFixed(1)}" text-anchor="${an}" font-size="${fsR}" font-weight="${q.weight}" style="fill:${q.color};${TEXT_HALO}">${q.txt}</text>`;
-        break;
+        const tx = an === "start" ? l + pad : an === "end" ? r - pad : (l + r) / 2;
+        if (lvl) {
+          const bh = b - t;
+          body += `<rect x="${l.toFixed(1)}" y="${t.toFixed(1)}" width="${w.toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bh / 2).toFixed(1)}" style="fill:var(--surface-1)"/>`
+            + `<rect x="${l.toFixed(1)}" y="${t.toFixed(1)}" width="${w.toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bh / 2).toFixed(1)}" style="fill:${q.color};stroke:${q.color}" fill-opacity="0.13" stroke-opacity="0.45" stroke-width="0.8"><title>기준금리 ${q.txt}</title></rect>`;
+        }
+        body += `<text x="${tx.toFixed(1)}" y="${yy.toFixed(1)}" text-anchor="${an}" font-size="${fsR}" font-weight="${q.weight}" style="fill:${q.color};${lvl ? "" : TEXT_HALO}">${q.txt}</text>`;
       }
     });
   }
@@ -2197,7 +2251,9 @@ function rateOverlaySvg(dStart, dEnd, g) {
     // 금리 글자(그래프 위 맨 앞 층): ① 인상기·인하기 시작 = 첫 결정 전 수준(단 왼쪽), 끝 = 마지막 결정 뒤 수준(단 오른쪽)
     //   — 지금 이어지는 사이클의 끝 값은 오른쪽 거터 '금리 N%'와 같아 뺀다. ② 0.5%p 이상 결정은 이름(빅스텝·빅컷·자이언트·울트라),
     //   같은 폭이 연달아 나오면 한 번에 '×N'. 서로·그래프 밖과 겹치면 다음 자리, 자리가 없으면 뺀다.
-    const putR = (txt, cands, color, weight) => { pend.push({ txt, cands, color, weight }); };
+    // kind "level" = 금리 수준(그 계단선 위에 얹힌 틴트 캡슐, 큰 글자 · %), "step" = 결정 폭(캡슐 없는 작은 글자 · 부호 + %p)
+    const putR = (txt, cands, color, weight, kind) => { pend.push({ txt, cands, color, weight, kind }); };
+    const onL = fs * 0.36;   // 캡슐을 계단선 높이 가운데에 얹는 글자 기준선 보정
     const lv = v => `${(+v).toFixed(2)}%`;
     const cycAll = rateCycles();
     let prevEnd = null;   // 앞 사이클 끝에 적은 수준 — 다음 사이클 시작이 같은 수준(그 사이 동결)이면 한 번만 적는다
@@ -2207,15 +2263,18 @@ function rateOverlaySvg(dStart, dEnd, g) {
       if (c.start >= dStart && c.start <= dEnd) {
         const k = rateIdx(c.start), pre = RATES.steps[k - 1] ? RATES.steps[k - 1][1] : null;
         if (pre != null && !(prevEnd != null && Math.abs(prevEnd - pre) < 1e-6)) {
-          const x = clampX(dx(c.start)), yy = y(pre);
-          putR(lv(pre), [[x - 3, yy - 3, "end"], [x - 3, yy + fs + 2, "end"], [x + 3, yy - 3, "start"]], col, 700);
+          const x = clampX(dx(c.start)), yy = y(pre), xPrev = k >= 2 ? clampX(dx(RATES.steps[k - 1][0])) : plotL;
+          // 캡슐은 그 수준의 계단선(앞 결정 ~ 사이클 시작) 위에 — 가격선을 피해 왼쪽으로 30px씩 밀어 보고, 그다음 선 위·아래
+          const on = [3, 33, 63, 93, 123].filter(d => x - d > xPrev + 24).map(d => [x - d, yy + onL, "end"]);
+          putR(lv(pre), [...(on.length ? on : [[x - 3, yy + onL, "end"]]), [x - 3, yy - 5, "end"], [x - 3, yy + fs + 5, "end"], [x + 3, yy - 5, "start"]], col, 700, "level");
         }
       }
       prevEnd = null;
       if (!ongoing && c.end >= dStart && c.end <= dEnd) {
         const k = rateIdx(c.end), post = RATES.steps[k][1];
-        const x = clampX(dx(c.end)), yy = y(post);
-        putR(lv(post), [[x + 3, yy - 3, "start"], [x + 3, yy + fs + 2, "start"], [x - 3, yy - 3, "end"]], col, 700);
+        const x = clampX(dx(c.end)), yy = y(post), xNext = RATES.steps[k + 1] ? clampX(dx(RATES.steps[k + 1][0])) : plotR;
+        const on = [3, 33, 63, 93, 123].filter(d => x + d < xNext - 24).map(d => [x + d, yy + onL, "start"]);
+        putR(lv(post), [...(on.length ? on : [[x + 3, yy + onL, "start"]]), [x + 3, yy - 5, "start"], [x + 3, yy + fs + 5, "start"], [x - 3, yy - 5, "end"]], col, 700, "level");
         prevEnd = post;
       }
     });
@@ -2227,11 +2286,12 @@ function rateOverlaySvg(dStart, dEnd, g) {
       if (g && g.last === chg.indexOf(d) - 1 && Math.abs(g.delta - d.delta) < 0.01) { g.n++; g.last++; }
       else groups.push({ d, delta: d.delta, n: 1, last: chg.indexOf(d) });
     });
-    groups.filter(g => stepName(g.delta)).forEach(g => {
+    // 자리는 큰 결정부터(울트라 > 자이언트 > 빅, 같은 폭이면 긴 연속 먼저) — 빅스텝 하나에 자이언트 ×4가 밀려 빠지지 않게
+    groups.filter(g => stepName(g.delta)).sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || b.n - a.n).forEach(g => {
       const k = g.d.k, x = clampX(dx(RATES.steps[k][0]));
       const yTop = Math.min(y(RATES.steps[k][1]), y(RATES.steps[k - 1][1])), yMid = (y(RATES.steps[k][1]) + y(RATES.steps[k - 1][1])) / 2;
-      const txt = stepName(g.delta) + (g.n > 1 ? ` ×${g.n}` : "");
-      putR(txt, [[x, yTop - 4, "middle"], [x + 4, yMid + fs * 0.35, "start"], [x - 4, yMid + fs * 0.35, "end"], [x, yTop - 4 - fs - 1, "middle"]], g.delta > 0 ? up : down, 600);
+      const txt = `${stepName(g.delta)} ${fmtPp(g.delta)}` + (g.n > 1 ? ` ×${g.n}` : "");
+      putR(txt, [[x, yTop - 4, "middle"], [x + 4, yMid + fs * 0.3, "start"], [x - 4, yMid + fs * 0.3, "end"], [x, yTop - 4 - fs, "middle"]], g.delta > 0 ? up : down, 600, "step");
     });
     label = { y: y(pts[pts.length - 1][1]), text: `금리 ${RATES.steps[k1][1].toFixed(2)}%`, color: tr > 0 ? up : tr < 0 ? down : "var(--text-secondary)",
       title: `기준금리 ${fmtRateRange(k1)} · ${tr > 0 ? "인상 추세" : tr < 0 ? "인하 추세" : "동결"}` };
@@ -2310,6 +2370,29 @@ function priceTitle(sell, chartW) {
   return t;
 }
 
+// 가격 그래프 0번 줄 오른쪽: 기간 수익률 "시작 $645.20 → 현재 $689.81 · 수익률 +6.9%"(사용자 지정 형식 — 시작가·현재가·수익률).
+// 수익률 색은 가격 선과 같은 규칙(시작가 이상 초록 · 아래 빨강). 기간 이름(1Y 등)은 바로 위 기간 버튼이 보여 주므로 쓰지 않는다.
+// 좁으면 낱말(시작·현재)부터 빼고, 그래도 안 되면 수익률만.
+function priceReturnCorner(records, currency) {
+  const cl = (records || []).filter(r => r.close != null);
+  if (cl.length < 2 || !(cl[0].close > 0)) return null;
+  const a = cl[0], z = cl[cl.length - 1], v = z.close / a.close - 1;
+  const p0 = fmtExactPrice(a.close, currency), p1 = fmtExactPrice(z.close, currency);
+  const L = t => ({ text: t, color: "var(--text-muted)" });
+  const P = t => ({ text: t, color: "var(--text-secondary)", weight: 600 });
+  const arrow = { text: "→", color: "var(--text-muted)" }, dot = { text: "·", color: "var(--text-muted)" };
+  const R = { text: fmtMovePct(v), color: v >= 0 ? "var(--gain)" : "var(--loss)", weight: 700 };
+  return {
+    title: `기간 시작 ${fmtDateFull(a.date)} ${p0} → 현재 ${fmtDateFull(z.date)} ${p1} · 수익률 ${fmtMovePct(v)}`,
+    variants: [
+      [L("시작"), { ...P(p0), gap: 3 }, arrow, L("현재"), { ...P(p1), gap: 3 }, dot, L("수익률"), { ...R, gap: 3 }],
+      [P(p0), arrow, P(p1), dot, L("수익률"), { ...R, gap: 3 }],
+      [P(p0), arrow, P(p1), { ...R, gap: 6 }],
+      [L("수익률"), { ...R, gap: 3 }],
+    ],
+  };
+}
+
 function priceChartBlock(records, currency, eventMarkers, chartOpts) {
   const large = chartOpts && chartOpts.large;
   const W = (chartOpts && chartOpts.width) || 320;
@@ -2336,6 +2419,7 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
     kpiAt: chartOpts && chartOpts.kpiAt,
     rates: true,
     cornerTitle: priceTitle(false, W),
+    cornerRight: priceReturnCorner(records, currency),
     noXAxis: chartOpts && chartOpts.noXAxis,
     xTicks: chartOpts && chartOpts.xTicks,
   });
@@ -3630,7 +3714,7 @@ function buyTierRank(t) {
 function fmtMovePct(v) {
   if (v == null) return "-";
   const a = Math.abs(v * 100);
-  return (v >= 0 ? "+" : "-") + (a < 10 ? a.toFixed(1) : Math.round(a)) + "%";
+  return (v >= 0 ? "+" : "-") + (a < 10 ? a.toFixed(1) : Math.round(a).toLocaleString("en-US")) + "%";
 }
 function fmtShare(v) { return v == null ? "-" : Math.round(v * 100) + "%"; }
 // 근거 조각: 조각 안에서는 줄을 바꾸지 않고, 조각 사이 " · "의 뒤에서만 끊는다(점이 줄 맨 앞에 오지 않게 앞 공백은 nbsp)
@@ -4330,7 +4414,7 @@ function sellDetailContentHtml(t, detail, large, selectedEpisode, availW, fit) {
   const uwMarkers = chartEvents.concat(bandMarkers, buildSelectionMarkers("underwater", slice, troughDates, null));
 
   const priceChart = lineChartSvg(slice, {
-    ...common, height: hs.price, yFloor: 0, noXAxis: true, cornerTitle: priceTitle(true, chartW),
+    ...common, height: hs.price, yFloor: 0, noXAxis: true, cornerTitle: priceTitle(true, chartW), cornerRight: priceReturnCorner(slice, t.currency),
     yFormat: v => fmtAxisPrice(v, t.currency), nowFormat: v => fmtExactPrice(v, t.currency),
     series: [
       { key: "rolling_high", color: "var(--text-muted)", width: 1.2, dashed: true },
