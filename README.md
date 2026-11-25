@@ -87,10 +87,10 @@
 ## KIS 기반 매수·매도 전략 대시보드 & 배포 방식
 
 `signals/`는 별도 저장소([withgest-lab/kis-buy-signal](https://github.com/withgest-lab/kis-buy-signal))의
-Python 파이프라인(KIS Open API 시세 수집 → MDD/RSI/MFI 스코어링 → 텔레그램 알림)이 매일
+Python 파이프라인(KIS Open API 시세 수집 → MDD/RSI/MFI 스코어링)이 매일
 발행하는 `index.html`/`scores.json`/`detail/*.json`을 그대로 보여주는 읽기 전용 화면입니다.
 
-- 이 저장소는 그 파이프라인의 API 키·텔레그램 토큰을 전혀 갖고 있지 않습니다. 두 저장소는
+- 이 저장소는 그 파이프라인의 API 키를 전혀 갖고 있지 않습니다. 두 저장소는
   완전히 독립적으로 운영됩니다.
 - GitHub Pages 배포 방식이 "브랜치에서 배포"에서 "GitHub Actions로 배포"로 바뀌었습니다
   (`.github/workflows/deploy.yml`). 이 워크플로는 push/스케줄(매일 KST 08:00경)/수동 실행 시

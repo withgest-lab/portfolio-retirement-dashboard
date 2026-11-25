@@ -7,12 +7,12 @@
 | 바꾸고 싶은 것 | 고칠 곳 | 반영 |
 |---|---|---|
 | 포트폴리오·현금흐름·홈·**매매전략 화면**·나란히 비교·풀다운 | 이 저장소 (`portfolio-retirement-dashboard`) | `main`에 push → 자동 배포 |
-| 종목 추가, 신호 계산·알림 규칙, ETF 매칭 규칙(`signal_bot/proxies.py`), 금리·공포지수 데이터 | 전략 저장소 (`kis-buy-signal`) | `main`에 push → **바로 `daily.yml` 수동 실행 1회**(`gh workflow run daily.yml -R withgest-lab/kis-buy-signal --ref main`) → data 브랜치 발행 → 이 저장소 배포. 다음 정기 실행까지 기다리지 않는다(Claude는 엔진 수정 검증 때 항상). 로컬에서 KIS API를 부른 직후 1분 안에는 실행 금지(토큰 발급 1분 1회) |
+| 종목 추가, 신호 계산·신규 신호(NEW) 규칙, ETF 매칭 규칙(`signal_bot/proxies.py`), 금리·공포지수 데이터 | 전략 저장소 (`kis-buy-signal`) | `main`에 push → **바로 `daily.yml` 수동 실행 1회**(`gh workflow run daily.yml -R withgest-lab/kis-buy-signal --ref main`) → data 브랜치 발행 → 이 저장소 배포. 다음 정기 실행까지 기다리지 않는다(Claude는 엔진 수정 검증 때 항상). 로컬에서 KIS API를 부른 직후 1분 안에는 실행 금지(토큰 발급 1분 1회) |
 | 시세·신호 데이터 | 자동 — 평일 미국 정규장 마감 직후(16:02 ET, 겨울 06:02·여름 05:02 KST)와 **확정 종가 보정 20:30 ET(겨울 10:30·여름 09:30 KST)** 에 전략 저장소 `us-close-timer.yml`(스스로 잇는 시계)이 `daily.yml`을 실행, 주말·대체 실행은 매일 07:30 KST 예약. KIS 미국 종가는 마감 뒤 몇 시간 시간외 가격이 섞이다 19~22시 ET쯤 공식 종가가 된다 — 그 사이 화면 기준일 줄에 '미국 종가 확정 전'. 끝나지 않은 장의 오늘 봉(장중 값)은 엔진이 버린다(`fetch_universe.drop_unfinished_bar`) | 이 저장소 `signals-watch.yml`(같은 시계)이 16:05·20:33 ET부터 30초마다 확인해 새 데이터가 올라오는 즉시 배포(실측: 시작부터 화면까지 약 7분 30초 → 06:10·10:38 KST). `deploy.yml`도 2시간마다 확인(대체) |
 
 ```
 [전략 저장소 us-close-timer.yml] 환경 clock-4h 대기(240분, 러너 없음) 칸을 이어 가다 16:02 ET에 daily.yml 실행
-[전략 저장소 daily.yml: 16:04 ET까지 대기·SPY 확인 → 시세→신호→텔레그램]
+[전략 저장소 daily.yml: 16:04 ET까지 대기·SPY 확인 → 시세→신호 계산]
         └─ data 브랜치에 scores.json + detail/*.json 발행
                           │  (signals-watch.yml: 같은 시계로 16:05 ET부터 30초마다 확인 → 올라오면 바로 / deploy.yml: 2시간마다)
 [이 저장소 deploy.yml] ◀──┘
@@ -32,12 +32,11 @@
 |---|---|
 | 브라우저 데이터 삭제·새 기기 | 포트폴리오 우측 상단 **백업 / 복원 → JSON 파일 선택**. 백업 파일이 있어야 한다 |
 | 백업을 오래 안 했다 | 💾 버튼에 빨간 점이 뜬다(30일 초과·없음). 열어서 JSON 다운로드 후 **저장소 밖**(구글 드라이브 등)에 보관 |
-| 전략 데이터(`data` 브랜치)가 깨졌다 | 전략 저장소 Actions → *KIS 매수신호 알림* → **Run workflow**. 끝나면 이 저장소 Actions → **Run workflow** |
+| 전략 데이터(`data` 브랜치)가 깨졌다 | 전략 저장소 Actions → *KIS 매수신호 일일 실행* → **Run workflow**. 끝나면 이 저장소 Actions → **Run workflow** |
 | MDD 기준 캐시 만료 | 자동 재수집(첫 실행은 10분 이상 걸릴 수 있음) |
-| 일일 실행이 실패했다 | 텔레그램에 "실행이 실패했습니다" 알림이 온다. 실행 기록 링크에서 어느 단계인지 확인 |
-| 아침에 매매전략이 안 바뀌었다 | ① 화면을 새로 고침(열어 둔 탭은 돌아올 때 자동 확인) ② 전략 저장소 Actions → *미국장 마감 타이머*: 대기 중(Waiting) 실행이 하나 있어야 정상, plan 줄의 '목표·남은 분', fire 줄의 '목표보다 +N초' 확인 ③ 이 저장소 *매매전략 데이터 마감 직후 배포*의 fire 줄 '데이터보다 +N초'. 사슬이 없으면 그 워크플로 → **Run workflow**(입력은 비워 둠). 급하면 *KIS 매수신호 알림* → **Run workflow** 뒤 이 저장소 *Deploy* → **Run workflow** |
+| 일일 실행이 실패했다 | 화면 기준일 줄이 바뀌지 않는다(텔레그램 알림은 2026-11-25 삭제). 전략 저장소 Actions → *KIS 매수신호 일일 실행*의 빨간 실행에서 어느 단계인지 확인. 기준일이 5일 넘게 묵으면 이 저장소 *Deploy* 예약 실행이 실패해 GitHub 실패 메일이 온다 |
+| 아침에 매매전략이 안 바뀌었다 | ① 화면을 새로 고침(열어 둔 탭은 돌아올 때 자동 확인) ② 전략 저장소 Actions → *미국장 마감 타이머*: 대기 중(Waiting) 실행이 하나 있어야 정상, plan 줄의 '목표·남은 분', fire 줄의 '목표보다 +N초' 확인 ③ 이 저장소 *매매전략 데이터 마감 직후 배포*의 fire 줄 '데이터보다 +N초'. 사슬이 없으면 그 워크플로 → **Run workflow**(입력은 비워 둠). 급하면 *KIS 매수신호 일일 실행* → **Run workflow** 뒤 이 저장소 *Deploy* → **Run workflow** |
 | 한국투자증권 키 만료·교체 | 전략 저장소 Settings → Secrets: `KIS_APP_KEY`, `KIS_APP_SECRET`, `KIS_ACCT_NO` 갱신 후 수동 실행 |
-| 텔레그램 봇 교체 | Secrets `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` 갱신 |
 | 시세 프록시(Cloudflare Worker) 장애 | `portfolio/cors-worker.js`를 Cloudflare Worker로 다시 배포하고 `portfolio/index.html`의 주소 갱신 |
 | Pages가 안 뜬다 | 이 저장소 Settings → Pages → Source = **GitHub Actions**. (전략 저장소 Pages는 `data` 브랜치 `/docs` — 안내 페이지만 있음) |
 | 저장소 자체가 지워질 위험 대비 | 월 1회 `git bundle create 저장소밖경로/portfolio.bundle --all` 후 보관, 또는 로컬 clone 유지. 복원은 `git clone 번들파일` |
@@ -47,7 +46,7 @@
 
 - [ ] GitHub 계정 **2단계 인증** 켜져 있는지 (Settings → Password and authentication)
 - [ ] GitHub **이메일 비공개**: Settings → Emails → *Keep my email addresses private* + *Block command line pushes that expose my email*
-- [ ] Secrets 5개가 아직 유효한지(한국투자증권 앱키 만료일, 텔레그램 봇), 필요하면 교체
+- [ ] 전략 저장소 Secrets(`KIS_APP_KEY`·`KIS_APP_SECRET`·`KIS_ACCT_NO`)가 아직 유효한지(한국투자증권 앱키 만료일), 필요하면 교체
 - [ ] Dependabot PR(월 1회 액션 버전) 확인·병합
 - [ ] 백업 JSON이 저장소 밖에 있고 최근 것인지
 
