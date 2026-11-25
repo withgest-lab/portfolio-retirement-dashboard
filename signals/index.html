@@ -919,7 +919,7 @@
         <p><b>연준 기준금리</b> — 가격 그래프 뒤 옅은 면은 금리 <b>추세 구간</b>입니다: 연준이 금리를 올리던 기간(인상기)은 빨강, 내리던 기간(인하기)은 파랑, 1년 넘게 그대로면 색이 없습니다(같은 방향 결정이 12개월 안에 이어지면 한 사이클로 봅니다. 마지막 결정 뒤 12개월이 안 지났으면 오늘까지 칠해 지금 추세를 보여 줍니다). 아래쪽 계단선은 기준금리(FOMC 목표 범위 상단) 자체로 오른 단은 빨강·내린 단은 파랑이고, 오른쪽 끝에 지금 값(<b>금리 4.00%</b>처럼, 색 = 지금 추세)이 있습니다. 인상기·인하기의 <b>시작에는 출발 금리, 끝에는 도달 금리</b>를 그 계단선 위의 <b>둥근 캡슐(큰 글자, 예: 5.50%)</b>로 적고(지금 이어지는 사이클의 끝은 오른쪽 값), 0.5%p 이상 큰 결정은 캡슐 없는 <b>작은 글자로 이름과 폭</b>을 붙입니다 — <b>빅스텝·빅컷 ±0.5%p · 자이언트 ±0.75%p · 울트라 ±1%p</b>(같은 폭이 연달아면 ×N, 예: 자이언트스텝 +0.75%p ×4). 캡슐 = 그때의 금리 수준(%), 작은 글자 = 한 번에 바꾼 폭(%p)이라 두 숫자가 헷갈리지 않습니다. 그래프 위 경계의 작은 표시는 FOMC 결정일입니다: <b>▲인상(빨강) · ▼인하(파랑) · •동결(회색)</b>, 화살표 개수가 폭입니다(▲ 0.25%p 스몰 · ▲▲ 0.5%p 빅 · ▲▲▲ 0.75%p 자이언트 · ▲▲▲▲ 1%p), 그 날짜에 아주 옅은 세로 점선(마우스를 올리면 날짜·폭·결정 뒤 범위). 기간이 길어 촘촘하면 동결 표시부터 생략합니다. 금리 사이클과 주가 흐름을 같은 날짜 축으로 견줘 보는 용도입니다. 자료: FRED·뉴욕 연은(금리), 연준 회의 일정(결정일).</p>
         <p><b>낙폭</b> — 낙폭%를 시간순으로 그린 그래프입니다. 0%(신고가) 아래로 얼마나, 얼마나 오래 내려가 있었는지 보여줍니다. 기본은 회색이고, 아래 히스토그램에서 박스를 고르면 그 국면의 하락 구간은 빨강, 회복 구간은 초록으로 강조됩니다. 앰버 점선은 코로나19·2022 금리인상 같은 시장 전체 충격 시기, 또는 종목별 큰 낙폭(-25% 이상)의 조사된 원인입니다 — 이름은 바로 위 가격 그래프에 한 번만 적고 여기에는 점선과 저점 값만 둡니다(마우스를 올리면 설명). 원인을 못 찾으면 "확인 안 됨"으로 표시했고 아직 조사 안 된 국면도 있으니 참고용으로만 보세요.</p>
         <p><b>낙폭 국면 히스토그램</b> — 과거 국면을 막대로 나열합니다. 세로 길이는 깊이, 가로 폭은 신고가 복귀까지 걸린 기간입니다(얇으면 빨리, 두꺼우면 오래). 점선은 P50/P25/P10, 회색은 완결, 빨강은 진행중입니다. 진행중 박스는 매일 갱신되는 낙폭으로 다시 계산해 지금까지의 가장 깊은 낙폭까지 그립니다. 아래 점이 이번 바닥, 오른쪽 끝 점이 지금이고, 둘을 잇는 초록 선이 회복한 폭입니다. 박스를 누르면(박스 근처를 눌러도 가장 가까운 국면이 골라집니다) 하늘색 테두리와 바닥 날짜가 표시되고, 과거 완결 박스는 안에 시작→최저점→신고가 복귀 경로가 점선으로 그려집니다. 박스를 고르면 위 그림에 그 국면 바닥 날짜의 값이 함께 찍힙니다(가격 위 바닥 날짜·바닥 가격, RSI·MFI·공포지수 숫자, 낙폭 %). 설명 박스도 카드 안 히스토그램 바로 아래에 나옵니다. 같은 박스를 다시 누르면 해제됩니다.</p>
-        <p><b>RSI·MFI·공포지수</b> — 가격 바로 아래 낮은 칸입니다(0~100). 주황 = RSI, 초록 = MFI, 회보라 = CNN 공포·탐욕 지수이고 오른쪽에 지금 값(공포지수는 극공포·공포·중립·탐욕·극탐욕 + 점수)이 있습니다. 왼쪽 숫자 30/20은 과매도 기준선(RSI 30, MFI 20)이고 그 위 글자가 봉 단위입니다. 공포지수가 <b>극단적 공포(25 이하)인 기간은 보라 세로 띠, 극단적 탐욕(75 이상)인 기간은 금색 세로 띠</b>로 칠해 위 가격과 바로 견줄 수 있고, 보라 띠마다 그 기간의 가장 낮은 공포지수를 점 아래 숫자로 적습니다(지금이 바닥이면 오른쪽 값과 같아 생략). 선택 기간이 3년 이하면 일봉 칸이 가격 아래에, 주·월봉 칸은 맨 아래에 붙고, 3~15년이면 주봉, 15년 초과면 월봉입니다(길수록 일봉이 빽빽해져 자동 전환). 공포지수 자료: CNN Fear &amp; Greed Index, 2011년부터의 이력은 공개 데이터셋 <a href="https://github.com/JakeLaoyu/fear-greed-index" target="_blank" rel="noopener">JakeLaoyu/fear-greed-index</a>(MIT).</p>
+        <p><b>RSI·MFI·공포지수</b> — 가격 바로 아래 낮은 칸입니다(0~100). 주황 = RSI, 초록 = MFI, 회보라 = CNN 공포·탐욕 지수이고 오른쪽에 지금 값(공포지수는 공포·중립·탐욕 + 점수, 극단 구간 25 이하·75 이상이면 <b>(극)</b> — 예: 공포 10(극))이 있습니다. 왼쪽 숫자 30/20은 과매도 기준선(RSI 30, MFI 20)이고 그 위 글자가 봉 단위입니다. 공포지수가 <b>극단적 공포(25 이하)인 기간은 보라 세로 띠, 극단적 탐욕(75 이상)인 기간은 금색 세로 띠</b>로 칠해 위 가격과 바로 견줄 수 있고, 보라 띠마다 그 기간의 가장 낮은 공포지수를 점 아래 숫자로 적습니다(지금이 바닥이면 오른쪽 값과 같아 생략). 선택 기간이 3년 이하면 일봉 칸이 가격 아래에, 주·월봉 칸은 맨 아래에 붙고, 3~15년이면 주봉, 15년 초과면 월봉입니다(길수록 일봉이 빽빽해져 자동 전환). 공포지수 자료: CNN Fear &amp; Greed Index, 2011년부터의 이력은 공개 데이터셋 <a href="https://github.com/JakeLaoyu/fear-greed-index" target="_blank" rel="noopener">JakeLaoyu/fear-greed-index</a>(MIT).</p>
         <p><b>기간 버튼(1Y~ALL)</b> — 고른 기간이 카드 안의 가격·낙폭·RSI·MFI 차트에 모두 적용됩니다. 상승장·하락장이 언제 시작됐는지 보려면 10Y 이상으로 늘려 보세요. 보유 데이터보다 긴 기간은 흐리게 표시되며 선택할 수 없습니다.</p>
         <p><b>과거에 이런 하락에서 샀다면</b> — 하락 종류(드물게 깊은 하락·깊은 조정·깊지만 흔한 깊이·급등 뒤 하락·1단계 조정·얕은 조정·사상 최대 낙폭)별로 그런 날 샀다면 1년 뒤 수익률과 손해(100번 중 N번)가 어땠는지, 맨 아래 <b>아무 때나</b>(비교 기준)와 견주는 한 표입니다. 왼쪽 열 묶음이 회색 박스 판단에 쓴 자료(<b>판단에 씀</b>), 오른쪽이 견줘 볼 다른 자료(이 종목 또는 비슷한 묶음 — 묶음에 든 종목은 표 아래 한 줄)입니다. 지금 단계 줄은 판단에 쓴 쪽이 파랑, 다른 쪽이 회색으로 칠해져 같은 단계를 나란히 볼 수 있습니다. 맨 위 한 줄이 결론, 초록 칸은 아무 때나보다 나았던 칸, 빨강은 못했던 칸, 회색 글자는 과거 사례 5번 미만이라 판단에 쓰지 않는 칸입니다. 하락 종류는 과거 매일 그날까지의 자료만으로 나눴습니다.</p>
         <p><b>크게 보기 <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#ic-expand"/></svg></b> — 카드를 전체 화면으로 열어 요약과 큰 차트를 봅니다. 오른쪽 위 "닫기"(또는 Esc)로 돌아옵니다.</p>
@@ -1820,8 +1820,40 @@ function lineChartSvg(records, opts) {
     });
   }
 
-  // 공포지수 바닥 숫자: 깊은 바닥부터 점 아래 → 위 → 오른쪽 → 왼쪽 중 다른 숫자와 안 겹치는 첫 자리. 바닥이 마지막 점(지금)이면
-  // 오른쪽 거터 '극공포 N'과 같은 값이라 뺀다(한 화면 중복 문구 금지).
+  // 히스토그램에서 고른 국면의 바닥 날짜(opts.kpiAt) 값 자리: 지금 값을 보여 주는 시리즈마다 점 + 숫자(색 = 시리즈, 공포지수는 구간 색).
+  // 세로선 오른쪽(자리 없으면 왼쪽)에 값 높이 순으로 겹치지 않게 쌓는다. 그리기는 아래(선택 표시 뒤)에서 — 여기서 먼저 자리를 잡아
+  // 공포지수 바닥 숫자가 이 알약 자리를 피하게 한다.
+  const kpiItems = [];
+  if (opts.kpiAt && kpiI >= 0) {
+    const kx = xAt(kpiI);
+    const PADX = 4, OFF = 10, PH = fSmall + 4, STEP = PH + 2;   // 알약 좌우 여백·점에서 글자까지·알약 높이·쌓는 간격
+    const items = labelSeries.map(s => {
+      const v = records[kpiI][s.key];
+      if (v == null) return null;
+      const txt = s.split ? nowFmt(v) : String(Math.round(v));
+      const col = s.nowColorFn ? s.nowColorFn(v) : (s.split ? "var(--text-primary)" : s.color);
+      return { kx, y: yAt(v), txt, col, w: textW(txt, fSmall, true), ph: PH };
+    }).filter(Boolean).sort((a, b) => a.y - b.y);
+    if (items.length) {
+      const right = kx + OFF + Math.max(...items.map(i => i.w)) + PADX <= plotR;
+      const lo = margin.top + fSmall, hi = plotB + Math.min(fSmall, margin.bottom - 3);
+      let prev = -Infinity;
+      items.forEach(it => { it.ly = Math.max(it.y + fSmall * 0.35, prev + STEP, lo); prev = it.ly; });
+      let lim = hi;
+      for (let i = items.length - 1; i >= 0; i--) { items[i].ly = Math.min(items[i].ly, lim); lim = items[i].ly - STEP; }
+      items.forEach(it => {
+        it.tx = right ? kx + OFF : kx - OFF;
+        it.anchor = right ? "start" : "end";
+        it.bl = right ? it.tx - PADX : it.tx - it.w - PADX;
+        it.bt = it.ly - fSmall * 0.8 - 2;
+        it.bw = it.w + PADX * 2;
+        kpiItems.push(it);
+      });
+    }
+  }
+
+  // 공포지수 바닥 숫자: 깊은 바닥부터 점 아래 → 위 → 오른쪽 → 왼쪽 중 다른 숫자·고른 국면 값 알약과 안 겹치는 첫 자리. 바닥이 마지막 점(지금)이면
+  // 오른쪽 거터 '공포 N(극)'과 같은 값이라 뺀다(한 화면 중복 문구 금지).
   if (fngLows.length) {
     const lastI = (() => { const zs = opts.series.find(s => s.zone); let k = n - 1; while (k >= 0 && records[k][zs.key] == null) k--; return k; })();
     const placedF = [];
@@ -1833,7 +1865,8 @@ function lineChartSvg(records, opts) {
         const l = an === "start" ? x : an === "end" ? x - w : x - w / 2;
         return { x, y, an, l, r: l + w, top: y - fSmall, bot: y + 2 };
       }).find(q => q.l >= plotL && q.r <= plotR && q.top >= margin.top - 1 && q.bot <= H - 1
-        && !placedF.some(o => q.l < o.r + 3 && q.r > o.l - 3 && q.top < o.bot + 1 && q.bot > o.top - 1));
+        && !placedF.some(o => q.l < o.r + 3 && q.r > o.l - 3 && q.top < o.bot + 1 && q.bot > o.top - 1)
+        && !kpiItems.some(o => q.l < o.bl + o.bw + 2 && q.r > o.bl - 2 && q.top < o.bt + o.ph + 1 && q.bot > o.bt - 1));
       body += `<circle cx="${fx}" cy="${fy}" r="2.4" style="fill:var(--fng-fear)" stroke="var(--surface-1)" stroke-width="1"><title>극단적 공포 바닥 ${Math.round(f.v)} · ${fmtDateFull(records[f.i].date)}</title></circle>`;
       if (!spot) return;
       placedF.push(spot);
@@ -1974,31 +2007,15 @@ function lineChartSvg(records, opts) {
     });
   }
 
-  // 히스토그램에서 고른 국면의 바닥 날짜(opts.kpiAt) 값: 지금 값을 보여 주는 시리즈마다 점 + 숫자(색 = 시리즈, 공포지수는 구간 색).
-  // 세로선 오른쪽(자리 없으면 왼쪽)에 값 높이 순으로 겹치지 않게 쌓는다.
-  if (opts.kpiAt && kpiI >= 0) {
-    const kx = xAt(kpiI);
-    const items = labelSeries.map(s => {
-      const v = records[kpiI][s.key];
-      if (v == null) return null;
-      const txt = s.split ? nowFmt(v) : String(Math.round(v));
-      const col = s.nowColorFn ? s.nowColorFn(v) : (s.split ? "var(--text-primary)" : s.color);
-      return { y: yAt(v), txt, col, w: textW(txt, fSmall, true) };
-    }).filter(Boolean).sort((a, b) => a.y - b.y);
-    if (items.length) {
-      const right = kx + 7 + Math.max(...items.map(i => i.w)) <= plotR;
-      const lo = margin.top + fSmall, hi = plotB + Math.min(fSmall, margin.bottom - 3);
-      let prev = -Infinity;
-      items.forEach(it => { it.ly = Math.max(it.y + fSmall * 0.35, prev + fSmall + 1, lo); prev = it.ly; });
-      let lim = hi;
-      for (let i = items.length - 1; i >= 0; i--) { items[i].ly = Math.min(items[i].ly, lim); lim = items[i].ly - fSmall - 1; }
-      items.forEach(it => {
-        body += `<circle cx="${kx}" cy="${it.y}" r="3" style="fill:${it.col}" stroke="var(--surface-1)" stroke-width="1.5"/>`;
-        body += `<text x="${right ? kx + 7 : kx - 7}" y="${it.ly}" text-anchor="${right ? "start" : "end"}" font-size="${fSmall}" font-weight="700" style="fill:${it.col};${TEXT_HALO}">${it.txt}</text>`;
-        occ.push(right ? { l: kx + 7, r: kx + 7 + it.w, t: it.ly - fSmall, b: it.ly + 2 } : { l: kx - 7 - it.w, r: kx - 7, t: it.ly - fSmall, b: it.ly + 2 });
-      });
-    }
-  }
+  // 히스토그램에서 고른 국면의 바닥 날짜(opts.kpiAt) 값 — 자리는 위(kpiItems)에서 미리 잡았다. 그 값만 눈에 띄게 숫자 뒤에
+  // 옅은 틴트 알약(불투명 바탕 위 시리즈 색 16% — iOS 틴트 캡슐, 뒤 격자·선이 비치지 않음). 다른 글자(지금 값·바닥 숫자)는 그대로.
+  kpiItems.forEach(it => {
+    body += `<circle cx="${it.kx}" cy="${it.y}" r="3" style="fill:${it.col}" stroke="var(--surface-1)" stroke-width="1.5"/>`;
+    body += `<rect class="kpi-pill" x="${it.bl}" y="${it.bt}" width="${it.bw}" height="${it.ph}" rx="${it.ph / 2}" fill="var(--surface-1)"/>`;
+    body += `<rect x="${it.bl}" y="${it.bt}" width="${it.bw}" height="${it.ph}" rx="${it.ph / 2}" style="fill:${it.col};fill-opacity:.16"/>`;
+    body += `<text x="${it.tx}" y="${it.ly}" text-anchor="${it.anchor}" font-size="${fSmall}" font-weight="700" style="fill:${it.col}">${it.txt}</text>`;
+    occ.push({ l: it.bl, r: it.bl + it.bw, t: it.bt, b: it.bt + it.ph });
+  });
 
   // y축: 위/중간/아래 3곳에 값을 찍는다(각 눈금선 높이에 맞춰). 압축 칸(0~100 고정)은 숫자 대신
   // 왼쪽 여백 위에 시간축 이름(일봉·주봉·월봉), 기준선 높이에 기준값(예: 30/20 — 색이 곧 어느 지표인지)을 한 번만.
@@ -2394,10 +2411,11 @@ function withFng(records, tfKey) {
   const tol = tfKey === "monthly" ? 40 : tfKey === "weekly" ? 10 : 6;
   return records.map(r => ({ ...r, fng: fngOn(r.date, tol) }));
 }
-const fngWord = v => (v <= FNG_FEAR ? "극공포" : v < 45 ? "공포" : v <= 55 ? "중립" : v < FNG_GREED ? "탐욕" : "극탐욕");
+// 거터 지금 값(한 줄): 방향(공포·중립·탐욕) + 점수, 극단 구간(25 이하·75 이상)이면 "(극)" — CNN 5단계(극공포·공포·중립·탐욕·극탐욕)와 같은 뜻.
+const fngNowLabel = v => { const r = Math.round(v); return v <= FNG_FEAR ? `공포 ${r}(극)` : v < 45 ? `공포 ${r}` : v <= 55 ? `중립 ${r}` : v < FNG_GREED ? `탐욕 ${r}` : `탐욕 ${r}(극)`; };
 const fngColor = v => (v <= FNG_FEAR ? "var(--fng-fear)" : v >= FNG_GREED ? "var(--fng-greed)" : "var(--fng-line)");
 const FNG_SERIES = { key: "fng", color: "var(--fng-line)", width: 1.3, labelCurrent: true, zone: true,
-  nowLabel: v => `${fngWord(v)} ${Math.round(v)}`, nowColorFn: fngColor };
+  nowLabel: v => fngNowLabel(v), nowColorFn: fngColor };
 
 // 가격 그래프 제목(그래프 안 0번 줄): "가격 ━200일선" (매도는 ┄신고가 · ▲돌파 ▼천정 — 좁으면 뺀다)
 function priceTitle(sell, chartW) {
@@ -2468,7 +2486,7 @@ function priceChartBlock(records, currency, eventMarkers, chartOpts) {
 }
 
 // RSI·MFI·공포지수 압축 칸(0~100): 가격 바로 아래. 날짜 축 없음(묶음 맨 아래 히스토그램에), 기준선 숫자·시간축 이름은 왼쪽 여백,
-// 지금 값은 오른쪽 거터("RSI 25"·"MFI 17"·"극공포 10"). 공포지수는 극단 구간을 세로 띠로(보라 공포/금색 탐욕).
+// 지금 값은 오른쪽 거터("RSI 25"·"MFI 17"·"공포 10(극)"). 공포지수는 극단 구간을 세로 띠로(보라 공포/금색 탐욕).
 function oscillatorChartBlock(records, tag, chartOpts, eventMarkers) {
   const large = chartOpts && chartOpts.large;
   const W = (chartOpts && chartOpts.width) || 320;
