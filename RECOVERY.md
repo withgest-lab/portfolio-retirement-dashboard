@@ -8,7 +8,7 @@
 |---|---|---|
 | 포트폴리오·현금흐름·홈·**매매전략 화면**·나란히 비교·풀다운 | 이 저장소 (`portfolio-retirement-dashboard`) | `main`에 push → 자동 배포 |
 | 종목 추가, 신호 계산·알림 규칙, ETF 매칭 규칙(`signal_bot/proxies.py`), 금리·공포지수 데이터 | 전략 저장소 (`kis-buy-signal`) | `main`에 push → **바로 `daily.yml` 수동 실행 1회**(`gh workflow run daily.yml -R withgest-lab/kis-buy-signal --ref main`) → data 브랜치 발행 → 이 저장소 배포. 다음 정기 실행까지 기다리지 않는다(Claude는 엔진 수정 검증 때 항상). 로컬에서 KIS API를 부른 직후 1분 안에는 실행 금지(토큰 발급 1분 1회) |
-| 시세·신호 데이터 | 자동 — 평일 미국 정규장 마감 직후(16:02 ET, 겨울 06:02·여름 05:02 KST) 전략 저장소 `us-close-timer.yml`(스스로 잇는 시계)이 `daily.yml`을 실행, 주말·대체 실행은 매일 07:30 KST 예약 | 이 저장소 `signals-watch.yml`(같은 시계)이 16:05 ET부터 30초마다 확인해 새 데이터가 올라오는 즉시 배포(약 06:12 KST). `deploy.yml`도 2시간마다 확인(대체) |
+| 시세·신호 데이터 | 자동 — 평일 미국 정규장 마감 직후(16:02 ET, 겨울 06:02·여름 05:02 KST)와 **확정 종가 보정 20:30 ET(겨울 10:30·여름 09:30 KST)** 에 전략 저장소 `us-close-timer.yml`(스스로 잇는 시계)이 `daily.yml`을 실행, 주말·대체 실행은 매일 07:30 KST 예약. KIS 미국 종가는 마감 뒤 몇 시간 시간외 가격이 섞이다 19~22시 ET쯤 공식 종가가 된다 — 그 사이 화면 기준일 줄에 '미국 종가 확정 전'. 끝나지 않은 장의 오늘 봉(장중 값)은 엔진이 버린다(`fetch_universe.drop_unfinished_bar`) | 이 저장소 `signals-watch.yml`(같은 시계)이 16:05·20:33 ET부터 30초마다 확인해 새 데이터가 올라오는 즉시 배포(실측: 시작부터 화면까지 약 7분 30초 → 06:10·10:38 KST). `deploy.yml`도 2시간마다 확인(대체) |
 
 ```
 [전략 저장소 us-close-timer.yml] 환경 clock-4h 대기(240분, 러너 없음) 칸을 이어 가다 16:02 ET에 daily.yml 실행

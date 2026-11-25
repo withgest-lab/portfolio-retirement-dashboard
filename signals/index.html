@@ -1235,28 +1235,47 @@ function zonedDay(iso, tz) {
     hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso)).map(x => [x.type, x.value]));
   return { date: `${p.year}-${p.month}-${p.day}`, min: (+p.hour) * 60 + (+p.minute) };
 }
-function marketAsOf(data, pred, tz, closeMin) {
+// finalMin: 이 시각(현지) 전이면 마감 뒤라도 종가 확정 전 — KIS 미국 종가는 마감 뒤 시간외 가격이 섞이다 저녁에 공식 종가로 바뀌어,
+// 엔진이 20:30 ET에 한 번 더 받아 보정한다(전략 저장소 us-close-timer.yml).
+const US_FINAL_MIN = 20 * 60 + 30;
+function marketAsOf(data, pred, tz, closeMin, finalMin) {
   const ds = data.tickers.filter(pred).map(t => t.date).filter(Boolean).sort();
   if (!ds.length) return null;
   const date = ds[ds.length - 1];
-  let live = false;
-  try { const g = zonedDay(data.generated_at, tz); live = g.date === date && g.min < closeMin; } catch (e) { /* 만든 시각 없으면 마감으로 본다 */ }
-  return { date, live };
+  let live = false, prelim = false;
+  try {
+    const g = zonedDay(data.generated_at, tz);
+    live = g.date === date && g.min < closeMin;
+    prelim = !!finalMin && g.date === date && g.min >= closeMin && g.min < finalMin;
+  } catch (e) { /* 만든 시각 없으면 확정된 마감으로 본다 */ }
+  return { date, live, prelim };
 }
 function asOfLabel(data) {
   const notBtc = t => t.category !== "비트코인";
-  const us = marketAsOf(data, t => t.currency === "USD" && notBtc(t), "America/New_York", 16 * 60);
+  const us = marketAsOf(data, t => t.currency === "USD" && notBtc(t), "America/New_York", 16 * 60, US_FINAL_MIN);
   const kr = marketAsOf(data, t => t.currency === "KRW" && notBtc(t), "Asia/Seoul", 15 * 60 + 30);
   if (!us) return `기준일 ${fmtDateFull(data.as_of_date)}`;
   const day = s => `${fmtDateFull(s.date)}(${"일월화수목금토"[new Date(s.date + "T12:00:00Z").getUTCDay()]})`;
   const st = s => (s.live ? "장중" : "마감");
-  if (!kr || (kr.date === us.date && kr.live === us.live)) return `기준일 ${day(us)} ${kr ? "미국·한국장" : "미국장"} ${st(us)} 반영`;
-  return `기준일 ${day(us)} 미국장 ${st(us)} · 한국장 ${day(kr)} ${st(kr)}`;
+  const pre = us.prelim ? " · 미국 종가 확정 전" : "";
+  if (!kr || (kr.date === us.date && kr.live === us.live)) return `기준일 ${day(us)} ${kr ? "미국·한국장" : "미국장"} ${st(us)} 반영${pre}`;
+  return `기준일 ${day(us)} 미국장 ${st(us)} · 한국장 ${day(kr)} ${st(kr)}${pre}`;
 }
 function setMetaLine() {
   const el = document.getElementById("meta-line");
   el.textContent = asOfLabel(DATA);
-  try { const g = zonedDay(DATA.generated_at, "Asia/Seoul"); el.title = `데이터 만든 시각 ${g.date.slice(5).replace("-", ".")} ${String(Math.floor(g.min / 60)).padStart(2, "0")}:${String(g.min % 60).padStart(2, "0")} (한국)`; } catch (e) { el.title = ""; }
+  const hm = m => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  try {
+    const g = zonedDay(DATA.generated_at, "Asia/Seoul");
+    let tip = `데이터 만든 시각 ${g.date.slice(5).replace("-", ".")} ${hm(g.min)} (한국)`;
+    if (el.textContent.includes("확정 전")) {   // 보정 시각 20:30 ET를 한국 시각으로(겨울 10:30, 서머타임 09:30)
+      const ny = zonedDay(DATA.generated_at, "America/New_York");
+      const [y, mo, d] = ny.date.split("-").map(Number);
+      const off = Math.round((Date.UTC(y, mo - 1, d, 0, ny.min) - new Date(DATA.generated_at).getTime()) / 3600000);   // 뉴욕 UTC 차(-5/-4)
+      tip += ` · 미국 종가는 마감 뒤 시간외 가격이 섞인 값 — 한국 ${hm((US_FINAL_MIN + (9 - off) * 60) % 1440)}에 확정 종가로 자동 갱신`;
+    }
+    el.title = tip;
+  } catch (e) { el.title = ""; }
 }
 
 function fmtDays(days) {
@@ -5036,7 +5055,7 @@ async function init() {
     lastFreshCheck = Date.now();
     setMetaLine();   // 종목 수는 아래 grid-count가 보여준다
     document.getElementById("footer").textContent =
-      "평일 미국장 마감 직후(한국시간 06시대, 서머타임 05시대) 자동 갱신 · 조회/알림 전용 시스템(자동매매 없음) · " +
+      "평일 미국장 마감 직후(한국시간 06시대, 서머타임 05시대) 자동 갱신, 미국 확정 종가로 10:30(서머타임 09:30) 한 번 더 · 조회/알림 전용 시스템(자동매매 없음) · " +
       "MDD/RSI/MFI/다이버전스는 참고 지표이며 최종 매수판단은 사용자가 직접 합니다";
     render();
     if (EMBED) { await embedOpen(URLQ.get("symb") || ""); postParent({ type: "kis:ready", symb: fullscreenSymb || URLQ.get("symb"), mode: state.mode }); }

@@ -1,14 +1,14 @@
 name: 매매전략 데이터 마감 직후 배포
 
-# 전략 저장소(kis-buy-signal)는 미국 정규장 마감 직후 16:02 ET(겨울 06:02 KST, 여름 05:02 KST)에 daily.yml을 시작해
-# 약 6~8분 뒤 data 브랜치에 새 데이터를 올린다. 이 워크플로는 16:05 ET부터 30초마다 data 브랜치를 확인해 올라오는 즉시
-# deploy.yml을 실행한다(목표 화면 반영 ≈ 16:12 ET = 겨울 06:12 KST).
+# 전략 저장소(kis-buy-signal)는 미국 정규장 마감 직후 16:02 ET(겨울 06:02 KST, 여름 05:02 KST)와 확정 종가 보정 20:30 ET
+# (겨울 10:30·여름 09:30 KST)에 daily.yml을 시작해 약 6분 뒤 data 브랜치에 새 데이터를 올린다. 이 워크플로는 16:05·20:33 ET부터
+# 30초마다 data 브랜치를 확인해 올라오는 즉시 deploy.yml을 실행한다(실측 2026-11-25: 시작부터 화면 반영까지 약 7분 30초).
 #
 # 왜 '스스로 잇는 시계'인가: GitHub 예약(schedule)은 하루 1번꼴, 몇 시간 늦게만 돈다(2026-11 실측). 그래서
 # GitHub 환경 `clock-4h`의 대기 타이머(240분 — 러너 없이 기다림)로 한 칸을 기다리고, 칸이 끝나면 이 워크플로를
 # workflow_dispatch로 다시 실행해(GITHUB_TOKEN으로 즉시 생성) 사슬을 잇는다. 구조는 전략 저장소 us-close-timer.yml과 같다.
 #   plan  — 먼저 '데이터는 새것인데 배포가 안 됨'이면 바로 배포(늦게 깨거나 대체 실행분도 다음 칸 안에 반영).
-#           그다음 목표(다음 평일 16:05 ET)까지 남은 시간 계산. 이미 도는 사슬이 있으면 stop.
+#           그다음 목표(평일 16:05·20:33 ET)까지 남은 시간 계산. 이미 도는 사슬이 있으면 stop.
 #   wait  — 남은 시간이 대기 한 칸 + 10분보다 길면 환경 대기 타이머로 기다림(러너 없음)
 #   fire  — 그 안이면 목표까지 sleep → 최대 90분 동안 30초마다 data 브랜치 확인 → 올라오면 deploy.yml
 #   relay — wait가 끝났거나 fire가 성공했으면 다음 칸(시험 실행은 fire 뒤 잇지 않음)
@@ -64,8 +64,8 @@ jobs:
           NY = zoneinfo.ZoneInfo("America/New_York")
           UTC = dt.timezone.utc
           WF = "signals-watch.yml"
-          FIRE_AT = dt.time(16, 5)            # 평일 이 시각(ET)부터 감시
-          LEAD = dt.timedelta(minutes=3)      # 감시 시작 3분 전(= daily.yml 시작 16:02 ET) 뒤의 data 커밋 = 새 데이터
+          FIRE_TIMES = (dt.time(16, 5), dt.time(20, 33))   # 평일 이 시각(ET)부터 감시 — 마감 직후 + 확정 종가 보정
+          LEAD = dt.timedelta(minutes=3)      # 감시 시작 3분 전(= daily.yml 시작 16:02·20:30 ET) 뒤의 data 커밋 = 새 데이터
           WATCH = dt.timedelta(minutes=90)    # 감시 시간
           MARGIN = 10
           FIRE_MAX = 250
@@ -94,14 +94,15 @@ jobs:
               return (int(fr) if fr else None), t, dry == "true"
 
           def next_target(now, done):
-              """다음 감시 시작(뉴욕 평일 FIRE_AT). 오늘 것이 지났어도 감시 시간 안이고 아직 배포 전이면 오늘 것(바로 감시)."""
+              """다음 감시 시작(뉴욕 평일 FIRE_TIMES 중). 오늘 것이 지났어도 감시 시간 안이고 아직 배포 전이면 그것(바로 감시)."""
               for i in range(8):
                   day = now.date() + dt.timedelta(days=i)
                   if day.weekday() >= 5:
                       continue
-                  t = dt.datetime.combine(day, FIRE_AT, NY)
-                  if t > now or (i == 0 and now < t + WATCH and not done(t)):
-                      return t
+                  for ft in FIRE_TIMES:
+                      t = dt.datetime.combine(day, ft, NY)
+                      if t > now or (i == 0 and now < t + WATCH and not done(t)):
+                          return t
               raise RuntimeError("다음 평일을 찾지 못함")
 
           def decide(now, target, hop):
