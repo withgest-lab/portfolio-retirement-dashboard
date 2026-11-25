@@ -1228,6 +1228,37 @@ function fmtExactPrice(v, currency) {
 function fmtDateShort(d) { return d ? `'${d.slice(2, 4)}.${Number(d.slice(5, 7))}` : ""; }
 function fmtDateFull(d) { return d ? `'${d.slice(2, 4)}.${d.slice(5, 7)}.${d.slice(8, 10)}` : ""; }
 
+// 기준일 줄 — 어느 장의 어느 날 시세인지 분명하게: 시장별 마지막 봉 날짜 + 마감/장중(데이터를 만든 시각이 그 장 마감 전이면 장중).
+// as_of_date는 모든 종목 중 가장 늦은 날이라, 한국 장중에 만든 데이터면 미국은 전날 마감인데도 오늘 날짜가 된다.
+function zonedDay(iso, tz) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso)).map(x => [x.type, x.value]));
+  return { date: `${p.year}-${p.month}-${p.day}`, min: (+p.hour) * 60 + (+p.minute) };
+}
+function marketAsOf(data, pred, tz, closeMin) {
+  const ds = data.tickers.filter(pred).map(t => t.date).filter(Boolean).sort();
+  if (!ds.length) return null;
+  const date = ds[ds.length - 1];
+  let live = false;
+  try { const g = zonedDay(data.generated_at, tz); live = g.date === date && g.min < closeMin; } catch (e) { /* 만든 시각 없으면 마감으로 본다 */ }
+  return { date, live };
+}
+function asOfLabel(data) {
+  const notBtc = t => t.category !== "비트코인";
+  const us = marketAsOf(data, t => t.currency === "USD" && notBtc(t), "America/New_York", 16 * 60);
+  const kr = marketAsOf(data, t => t.currency === "KRW" && notBtc(t), "Asia/Seoul", 15 * 60 + 30);
+  if (!us) return `기준일 ${fmtDateFull(data.as_of_date)}`;
+  const day = s => `${fmtDateFull(s.date)}(${"일월화수목금토"[new Date(s.date + "T12:00:00Z").getUTCDay()]})`;
+  const st = s => (s.live ? "장중" : "마감");
+  if (!kr || (kr.date === us.date && kr.live === us.live)) return `기준일 ${day(us)} ${kr ? "미국·한국장" : "미국장"} ${st(us)} 반영`;
+  return `기준일 ${day(us)} 미국장 ${st(us)} · 한국장 ${day(kr)} ${st(kr)}`;
+}
+function setMetaLine() {
+  const el = document.getElementById("meta-line");
+  el.textContent = asOfLabel(DATA);
+  try { const g = zonedDay(DATA.generated_at, "Asia/Seoul"); el.title = `데이터 만든 시각 ${g.date.slice(5).replace("-", ".")} ${String(Math.floor(g.min / 60)).padStart(2, "0")}:${String(g.min % 60).padStart(2, "0")} (한국)`; } catch (e) { el.title = ""; }
+}
+
 function fmtDays(days) {
   if (days == null) return "-";
   const years = days / 252;
@@ -3591,7 +3622,7 @@ async function refreshIfNewData() {
     DATA = next;
     SOURCE_SHA = sha;
     for (const k of Object.keys(detailCache)) delete detailCache[k];
-    document.getElementById("meta-line").textContent = `기준일 ${fmtDateFull(DATA.as_of_date)}`;
+    setMetaLine();
     render();
     const fs = fullscreenSymb;   // 크게 보기가 열려 있으면 그 종목도 새 데이터로
     if (fs && !DATA.tickers.some(x => x.symb === fs)) closeFullscreen();
@@ -4985,8 +5016,7 @@ async function init() {
     await ratesP;
     SOURCE_SHA = await srcP;
     lastFreshCheck = Date.now();
-    document.getElementById("meta-line").textContent =
-      `기준일 ${fmtDateFull(DATA.as_of_date)}`;   // 종목 수는 아래 grid-count가 보여준다
+    setMetaLine();   // 종목 수는 아래 grid-count가 보여준다
     document.getElementById("footer").textContent =
       "평일 미국장 마감 직후(한국시간 06시대, 서머타임 05시대) 자동 갱신 · 조회/알림 전용 시스템(자동매매 없음) · " +
       "MDD/RSI/MFI/다이버전스는 참고 지표이며 최종 매수판단은 사용자가 직접 합니다";
