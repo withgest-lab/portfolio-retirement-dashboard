@@ -4,7 +4,7 @@ name: Deploy dashboards to GitHub Pages
 # 전략 저장소(kis-buy-signal)는 데이터(scores.json·detail/*.json)만 만들어 data 브랜치에 올린다.
 # 두 저장소를 잇는 것은 비밀값 없는 폴링 — 2시간마다 data 브랜치의 최신 커밋이 마지막 배포와 같은지 확인하고,
 # 같으면 건너뛴다(push·수동 실행은 항상 배포). 자세한 운영 방법은 RECOVERY.md 참고.
-# 평일 미국장 마감 직후 데이터는 signals-watch.yml이 올라오는 즉시 이 워크플로를 실행한다(2시간 예약은 대체 — 실제로는 하루 3번꼴).
+# 평일 미국장 마감 직후 데이터는 signals-watch.yml(스스로 잇는 시계)이 올라오는 즉시 이 워크플로를 실행한다(2시간 예약은 대체 — 실제로는 하루 3번꼴).
 on:
   push:
     branches:
